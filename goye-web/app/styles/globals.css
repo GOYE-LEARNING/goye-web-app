@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*form container*/
+body {
+    @apply overflow-x-hidden
+}
+
+.form_container {
+    @apply w-[707px] p-[32px] bg-plainColors-0
+}
+
+.form_h1 {
+    @apply font-[500] text-[32.11px]
+}
+
+.form-p {
+    @apply text-[#41415A]
+}
+
+.form {
+    @apply mt-7 flex justify-start items-start flex-col w-full  gap-4
+}
+
+.form_label {
+    @apply relative flex flex-col w-full
+}
+
+.label {
+    @apply text-[#D2D5DA] text-[16px]
+}
+
+.form_input {
+    @apply w-full h-[63px] border border-[#D2D5DA] py-[10px] px-[12px] outline-none transition-all duration-150 text-[0.8rem] font-semibold
+}
+
+.form_link {
+    @apply font-[600] text-primaryColors-0 text-[0.9rem]
+}
+
+.form_btn {
+    @apply py-[15px] flex items-center justify-center gap-3 text-plainColors-0 bg-primaryColors-0 w-full
+}
+
+.form_more {
+    @apply py-[15px] flex items-center justify-center gap-3  w-full
+
+}
+
+.form_option {
+    @apply drop-shadow-sm outline-none py-4
+}
+
+.form_msg {
+    @apply flex items-center gap-2
+}
+
+.scrollbar::-webkit-scrollbar {
+    @apply w-[5px] bg-white
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-[#ccc]
+}
