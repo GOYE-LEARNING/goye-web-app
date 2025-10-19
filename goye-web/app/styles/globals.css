@@ -63,3 +63,5 @@ body {
 .scrollbar::-webkit-scrollbar-thumb {
     @apply rounded-full bg-[#ccc]
 }
+
+/*Sidenav component*/

@@ -10,6 +10,7 @@ import pic4 from "@/public/images/pic4.png";
 import pic5 from "@/public/images/pic5.png";
 import pic6 from "@/public/images/pic6.png";
 import pic7 from "@/public/images/pic7.png";
+import { useRouter } from "next/navigation";
 
 export default function WelcomeAuth() {
   const pics = [
@@ -21,7 +22,9 @@ export default function WelcomeAuth() {
     { pic: pic6 },
     { pic: pic7 },
   ];
+      const router = useRouter()
   return (
+
     <>
   
       <div className="flex justify-center items-center flex-col">
@@ -42,7 +45,7 @@ export default function WelcomeAuth() {
               ))}
             </div>
           </div>
-          <span className="form_btn ">Continue</span>
+          <span className="form_btn " onClick={() => {}}>Continue</span>
         </div>
       </div>
     </>

@@ -1,5 +1,6 @@
 "use client";
 
+import { form } from "framer-motion/m";
 import React, { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
@@ -21,8 +22,8 @@ export default function Signin() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
-    e.preventDefault;
+  const handleSignin = () => {
+    localStorage.setItem('GOYE_FORM_DATA', JSON.stringify(formData))
   };
 
   const signinComponent = [
@@ -82,7 +83,7 @@ export default function Signin() {
               </label>
             </div>
           ))}
-          <span className="form_btn">
+          <span className="form_btn" onClick={handleSignin}>
             Next <FaArrowRight size={13} />
           </span>
         </form>
