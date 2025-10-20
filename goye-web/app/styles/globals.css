@@ -4,64 +4,136 @@
 
 /*form container*/
 body {
-    @apply overflow-x-hidden
+  @apply overflow-x-hidden;
 }
 
 .form_container {
-    @apply w-[707px] p-[32px] bg-plainColors-0
+  @apply w-[707px] p-[32px] bg-plainColors-0;
 }
 
 .form_h1 {
-    @apply font-[500] text-[32.11px]
+  @apply font-[500] text-[32.11px];
 }
 
 .form-p {
-    @apply text-[#41415A]
+  @apply text-[#41415A];
 }
 
 .form {
-    @apply mt-7 flex justify-start items-start flex-col w-full  gap-4
+  @apply mt-7 flex justify-start items-start flex-col w-full  gap-4;
 }
 
 .form_label {
-    @apply relative flex flex-col w-full
+  @apply relative flex flex-col w-full;
 }
 
 .label {
-    @apply text-[#D2D5DA] text-[16px]
+  @apply text-[#D2D5DA] text-[16px];
 }
 
 .form_input {
-    @apply w-full h-[63px] border border-[#D2D5DA] py-[10px] px-[12px] outline-none transition-all duration-150 text-[0.8rem] font-semibold
+  @apply w-full h-[63px] border border-[#D2D5DA] py-[10px] px-[12px] outline-none transition-all duration-150 text-[0.8rem] font-semibold;
 }
 
 .form_link {
-    @apply font-[600] text-primaryColors-0 text-[0.9rem]
+  @apply font-[600] text-primaryColors-0 text-[0.9rem];
 }
 
 .form_btn {
-    @apply py-[15px] flex items-center justify-center gap-3 text-plainColors-0 bg-primaryColors-0 w-full
+  @apply py-[15px] flex items-center justify-center gap-3 text-plainColors-0 bg-primaryColors-0 w-full;
 }
 
 .form_more {
-    @apply py-[15px] flex items-center justify-center gap-3  w-full
-
+  @apply py-[15px] flex items-center justify-center gap-3  w-full;
 }
 
 .form_option {
-    @apply drop-shadow-sm outline-none py-4
+  @apply drop-shadow-sm outline-none py-4;
 }
 
 .form_msg {
-    @apply flex items-center gap-2
+  @apply flex items-center gap-2;
 }
 
 .scrollbar::-webkit-scrollbar {
-    @apply w-[5px] bg-white
+  @apply w-[5px] bg-white;
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-[#ccc]
+  @apply rounded-full bg-[#ccc];
 }
 
 /*Sidenav component*/
+.sidenav {
+  @apply bg-white w-[20%] h-full fixed left-0 px-[32px] py-[40px];
+}
+
+.side_link {
+    @apply transition-all duration-150
+}
+
+.side_link:hover {
+    @apply bg-primaryColors-0/10 
+}
+
+.side_link:hover .icon {
+    @apply text-[#3F1F22]
+}
+
+/*dashboard*/
+.dashboard_h1 {
+  @apply text-[#1F2130] text-[30px] font-[700] font-['Fustat',_'sans-serif']
+}
+
+.dashboard_content_box {
+  @apply  bg-[#ffffff] w-full my-5 py-[20px] px-[16px] border border-[#F1F1F4]
+}
+
+.dashboard_content_header {
+  @apply flex w-full justify-between items-center
+}
+
+.dashboard_content_header h1 {
+  @apply font-[700] text-primaryColors-0 font-['Fustat',_'sans-serif']
+}
+
+.dashboard_content_header span {
+  @apply  text-primaryColors-0 font-['Fustat',_'sans-serif']
+}
+
+.dashboard_content_subbox {
+  @apply bg-[#FAF8F8] my-2 p-[16px] flex justify-start items-start flex-col gap-2 w-full 
+}
+
+.dashboard_content_subbox h1 {
+  @apply font-[700] text-[18px]
+}
+
+.dashboard_content_subbox h2 {
+@apply font-[500] text-[15px]
+}
+
+.dashboard_content_subbox p {
+@apply font-[400] text-[14px] text-[#71748C]
+}
+
+.dashboard_content_progress {
+  @apply w-full flex flex-col gap-2 mb-2
+}
+
+.dashboard_content_progress h3 {
+  @apply text-[13px]
+}
+
+.dashboard_triangle {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 15px solid #ffffff;
+  @apply drop-shadow-sm
+}
+
+.dashboard_course_btns {
+  @apply w-[170.75px] bg-[#EFEFF1] p-[10px] text-[14px] font-[500]
+}

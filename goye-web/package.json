@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@fontsource/fustat": "^5.2.7",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/poppins": "^5.2.7",
     "express": "^5.1.0",
