@@ -1,12 +1,15 @@
 import { IoBookOutline } from "react-icons/io5";
 
-export default function DashboardStudentEvent() {
+interface Props {
+    openEvent: () => void
+}
+export default function DashboardStudentEvent({openEvent} : Props) {
   return (
     <>
       <div className="dashboard_content_box">
         <div className="dashboard_content_header">
           <h1>Upcoming Events</h1>
-          <span>View All</span>
+          <span onClick={openEvent} className="cursor-pointer">View All</span>
         </div>
 
         <div className="dashboard_content_subbox">

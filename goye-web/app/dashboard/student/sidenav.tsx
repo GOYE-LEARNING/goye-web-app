@@ -1,6 +1,6 @@
 "use client";
 
-import SidenavComponent from "@/app/component/sidenav_conponent";
+import SidenavComponent from "@/app/component/sidenav_component";
 import Image from "next/image";
 import logo from "@/public/images/goye-removebg-preview.png";
 import { MdHomeFilled, MdLogout } from "react-icons/md";

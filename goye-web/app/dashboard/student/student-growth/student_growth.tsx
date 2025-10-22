@@ -6,11 +6,15 @@ import DashboardGrowthSubHeader from "@/app/component/dashboard_growth_subheader
 import DashboardStudentGrowthMore from "@/app/component/dashboard_student_growth_more";
 import SubHeader from "@/app/component/dashboard_subheader";
 import { useState } from "react";
-
-export default function StudentGrowth() {
+interface Props {
+  backFunc: () => void
+}
+export default function StudentGrowth({backFunc} : Props) {
   const [acheivements, setAchivement] = useState<boolean>(true);
   const [certificates, setCertificate] = useState<boolean>(false);
-  const backFunction = () => {};
+  const backFunction = () => {
+    backFunc()
+  };
   const acheivement = () => {
     setCertificate(false);
     setAchivement(true);

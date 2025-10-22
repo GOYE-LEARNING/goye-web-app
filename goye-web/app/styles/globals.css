@@ -32,7 +32,7 @@ body {
 }
 
 .form_input {
-  @apply w-full h-[63px] border border-[#D2D5DA] py-[10px] px-[12px] outline-none transition-all duration-150 text-[0.8rem] font-semibold;
+  @apply w-full h-[63px] border border-[#D2D5DA] py-[10px] px-[12px] outline-none transition-all duration-150 text-[16px] font-[500];
 }
 
 .form_link {
@@ -44,7 +44,7 @@ body {
 }
 
 .form_more {
-  @apply py-[15px] flex items-center justify-center gap-3  w-full;
+  @apply h-[48px] flex items-center justify-center gap-3  w-full text-[14px]
 }
 
 .form_option {
@@ -85,6 +85,12 @@ body {
   @apply text-[#1F2130] text-[30px] font-[700] font-['Fustat',_'sans-serif']
 }
 
+.dashboard_hr {
+  @apply h-[1px] w-full bg-[#EFEFF2]
+}
+.dashboard_content_mainbox {
+  @apply bg-[#ffffff] p-[24px] w-full my-5
+}
 .dashboard_content_box {
   @apply  bg-[#ffffff] w-full my-5 py-[20px] px-[16px] border border-[#F1F1F4]
 }
@@ -134,6 +140,28 @@ body {
   @apply drop-shadow-sm
 }
 
+
 .dashboard_course_btns {
-  @apply w-[170.75px] bg-[#EFEFF1] p-[10px] text-[14px] font-[500]
+  @apply w-[170.75px] p-[10px] text-[14px] font-[500]
 }
+
+.cr_p {
+  @apply text-[14px] text-[#71748C]
+}
+
+.cr_list {
+  @apply list-disc text-primaryColors-0 text-[14px]
+}
+
+.cr_box {
+  @apply bg-[#ffffff] w-full p-[24px] my-5 border border-[#F1F1F4]
+}
+
+.course_video:nth-child(odd) {
+
+}
+
+.accord_header:nth-child(even) {
+  @apply mt-5
+}
+

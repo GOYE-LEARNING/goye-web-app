@@ -1,45 +1,61 @@
 "use client";
-import DashboardCourseSubHeader from "@/app/component/dashboard_course_subhead";
-import SubHeader from "@/app/component/dashboard_subheader";
-import Image from "next/image";
-import overviewPic from "@/public/images/overview.png";
+
+import DashboardCourseAll from "@/app/component/dashboard_course_all";
+import DashboardCourseDone from "@/app/component/dashboard_course_done";
+import DashboardCourseEnrolled from "@/app/component/dashboard_course_enroll";
+import DashboardCourseSaved from "@/app/component/dashboard_course_saved";
+import SearchCourse from "@/app/component/dashboard_search_course";
+import DashboardTabSelection from "@/app/component/dashboard_tab_selection";
 import { useState } from "react";
-export default function Course() {
-  const [showOverView, setShowOverView] = useState<boolean>(true);
-  const [showQuizzes, setShowQuizzes] = useState<boolean>(false);
-  const [showMaterials, setShowMaterials] = useState<boolean>(false);
-  const [showForums, setShowForums] = useState<boolean>(false);
-  
-  const backFunction = () => {};
-  const overview = () => {};
-  const quizzes = () => {};
-  const materials = () => {};
-  const forums = () => {};
+
+export default function MainContainer() {
+  const [all, setAll] = useState<boolean>(true);
+  const [enrolled, setEnrolled] = useState<boolean>(false);
+  const [saved, setSaved] = useState<boolean>(false);
+  const [done, setDone] = useState<boolean>(false);
+
+  const allFunc = () => {
+    setAll(true);
+    setEnrolled(false);
+    setSaved(false);
+    setDone(false);
+  };
+
+  const enrolledFunc = () => {
+    setAll(false);
+    setEnrolled(true);
+    setSaved(false);
+    setDone(false);
+  };
+
+  const savedFunc = () => {
+    setAll(false);
+    setEnrolled(false);
+    setSaved(true);
+    setDone(false);
+  };
+
+  const doneFunc = () => {
+    setAll(false);
+    setEnrolled(false);
+    setSaved(false);
+    setDone(true);
+  };
   return (
     <>
-      {" "}
-      <SubHeader
-        backFunction={backFunction}
-        header="Foundation Of Discipleship"
-      />
-      <DashboardCourseSubHeader
-        level="Beginner"
-        video="1hr 30min - 12 lessons"
-      />
       <div>
-        <div className="w-full my-5 bg-[#ccc]">
-          <Image
-            src={overviewPic}
-            alt="pic"
-            className="object-conver h-[300px] w-full"
-          />
-        </div>
-        <div className="w-full flex items-start gap-3">
-          <button className="dashboard_course_btns">Overview</button>
-          <button className="dashboard_course_btns">Quizzes</button>
-          <button className="dashboard_course_btns">Materials</button>
-          <button className="dashboard_course_btns">Forums</button>
-        </div>
+        <h1 className="dashboard_h1">Courses</h1>
+        <SearchCourse placeholder="Search courses"/>
+        <DashboardTabSelection
+          allFunc={allFunc}
+          enrolledFunc={enrolledFunc}
+          savedFunc={savedFunc}
+          doneFunc={doneFunc}
+        />
+        {all && <DashboardCourseAll />}
+        {enrolled && <DashboardCourseEnrolled />}
+        {saved && <DashboardCourseSaved />}
+        {done && <DashboardCourseDone />}
       </div>
     </>
   );

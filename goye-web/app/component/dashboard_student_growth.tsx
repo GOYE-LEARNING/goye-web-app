@@ -1,4 +1,8 @@
-export default function DashboardStudentGrowth() {
+'use client'
+interface Props {
+  openGrowth: () => void
+}
+export default function DashboardStudentGrowth({openGrowth} : Props) {
   return (
     <>
       <div className="dashboard_content_box">
@@ -34,7 +38,7 @@ export default function DashboardStudentGrowth() {
                 <p className="font-[400] text-[#71748C] text-[10px]">Total Point</p>
             </div>
           </div>
-          <button className="h-[36px] py-[17px] bg-[#EBE5E7] flex justify-center items-center w-full text-primaryColors-0 font-[600]">View Growth</button>
+          <button className="h-[36px] py-[17px] bg-[#EBE5E7] flex justify-center items-center w-full text-primaryColors-0 font-[600] cursor-pointer" onClick={openGrowth}>View Growth</button>
         </div>
       </div>
     </>

@@ -20,6 +20,13 @@ export default function WelcomeMoreAuth() {
     level: "",
   });
 
+  //isComplete
+  const isComplete = [
+    formData.country && formData.city && formData.phone,
+    formData.role,
+    formData.level,
+  ];
+
   // ✅ Load saved data (if any)
   useEffect(() => {
     const saved = localStorage.getItem("GOYE_FORM_DATA");
@@ -61,7 +68,11 @@ export default function WelcomeMoreAuth() {
               key={index}
               onClick={() => setStep(index)}
               className={`w-[127.33px] h-[3px] rounded-xl ${
-                step === index ? "bg-primaryColors-0" : "bg-secondaryColors-0"
+                isComplete[index]
+                  ? "bg-primaryColors-0"
+                  : step == index
+                  ? "bg-primaryColors-0/10"
+                  : "bg-[#D9D9D9]"
               }`}
             ></button>
           ))}
@@ -78,22 +89,20 @@ export default function WelcomeMoreAuth() {
         </motion.div>
 
         <div>
-      
-            <div className="grid grid-cols-2 gap-3">
-              <span
-                className="form_more bg-secondaryColors-0 text-primaryColors-0"
-                onClick={prevStep}
-              >
-                Back
-              </span>
-              <span
-                className="form_more text-plainColors-0 bg-primaryColors-0"
-                onClick={nextStep}
-              >
-                Next <FaArrowRight />
-              </span>
-            </div>
-          
+          <div className="grid grid-cols-2 gap-3">
+            <span
+              className="form_more bg-secondaryColors-0 text-primaryColors-0"
+              onClick={prevStep}
+            >
+              Back
+            </span>
+            <span
+              className="form_more text-plainColors-0 bg-primaryColors-0"
+              onClick={nextStep}
+            >
+              Next <FaArrowRight />
+            </span>
+          </div>
         </div>
       </div>
     </div>

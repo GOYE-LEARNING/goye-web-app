@@ -1,10 +1,15 @@
+'use client'
+
+import { useRouter } from "next/navigation";
+
 export default function DashboardStudentCourse() {
+  const navigate = useRouter()
   return (
     <>
       <div className="dashboard_content_box">
         <div className="dashboard_content_header">
           <h1>My Courses</h1>
-          <span>View All</span>
+          <span className="cursor-pointer" onClick={() => navigate.push('../../dashboard/student/course')}>View All</span>
         </div>
 
         <div className="dashboard_content_subbox">
