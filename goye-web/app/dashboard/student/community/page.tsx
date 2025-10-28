@@ -1,5 +1,5 @@
 "use client";
-import SearchCourse from "@/app/component/dashboard_search_course";
+import SearchCourse from "@/app/component/dashboard_search";
 import StudentCommunityGroup from "@/app/component/dashboard_student_community_group";
 import { useState } from "react";
 import { FaRegClock } from "react-icons/fa";

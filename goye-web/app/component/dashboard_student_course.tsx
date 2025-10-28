@@ -1,8 +1,10 @@
 'use client'
 
 import { useRouter } from "next/navigation";
-
-export default function DashboardStudentCourse() {
+interface Props {
+  openCourse: () => void
+}
+export default function DashboardStudentCourse({openCourse} : Props) {
   const navigate = useRouter()
   return (
     <>
@@ -25,7 +27,7 @@ export default function DashboardStudentCourse() {
                 <div className="h-[8px] w-[15%] bg-[#30A46F]"></div>
             </div>
           </div>
-          <button className="h-[36px] py-[17px] bg-primaryColors-0 flex justify-center items-center w-full text-[#ffffff]">Continue Course</button>
+          <button className="h-[36px] py-[17px] bg-primaryColors-0 flex justify-center items-center w-full text-[#ffffff]" onClick={openCourse}>Continue Course</button>
         </div>
       </div>
     </>

@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { IoChevronDown } from "react-icons/io5";
 import { MdNotifications } from "react-icons/md";
-import DashboardStudentNotification from "./dashboard_student_notification";
+import DashboardNotification from "./dashboard_notification";
 
-export default function DashboardStudentHeader() {
+export default function DashboardHeader() {
   const [showNotification, setShowNotification] = useState<boolean>(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
@@ -31,7 +31,7 @@ export default function DashboardStudentHeader() {
           </div>
           {showNotification && (
             <div ref={boxRef}>
-              <DashboardStudentNotification />
+              <DashboardNotification />
             </div>
           )}
         </div>

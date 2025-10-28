@@ -4,7 +4,7 @@ import { CiSearch } from "react-icons/ci"
 interface Props {
     placeholder: string
 }
-export default function SearchCourse({placeholder} : Props) {
+export default function DashboardSearch({placeholder} : Props) {
     return (
         <>
         <div className="h-[40px] border-b border-[#D2D5DA] flex items-center gap-3 w-full my-5">

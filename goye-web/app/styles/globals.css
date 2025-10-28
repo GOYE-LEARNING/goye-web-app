@@ -165,3 +165,11 @@ body {
   @apply mt-5
 }
 
+.dashboard_quiz_options {
+  @apply bg-[#F9F9FBB2] h-[36px] w-full font-[500] text-[13px] px-[40px] flex items-center
+}
+
+.dashboard_thick_hr {
+  @apply bg-[#FAFAFA] border-t border-b border-[#F1F1F4] h-[16px] w-full
+}
+

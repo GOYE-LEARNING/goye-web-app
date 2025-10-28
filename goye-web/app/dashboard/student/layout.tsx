@@ -1,6 +1,6 @@
 "use client";
 
-import DashboardStudentHeader from "@/app/component/dashboard_student_header";
+import DashboardHeader from "@/app/component/dashboard_header";
 import Sidenav from "./sidenav";
 
 export default function DashboardLayout({
@@ -15,7 +15,7 @@ export default function DashboardLayout({
           <Sidenav />
         </div>
         <div className="w-[80%] h-full absolute right-0">
-          <DashboardStudentHeader />
+          <DashboardHeader />
           <div className="flex justify-center items-center flex-col">
             <div className=" w-[707px] ">
               {children}

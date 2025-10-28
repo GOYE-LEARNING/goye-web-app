@@ -4,7 +4,8 @@ import DashboardCourseAll from "@/app/component/dashboard_course_all";
 import DashboardCourseDone from "@/app/component/dashboard_course_done";
 import DashboardCourseEnrolled from "@/app/component/dashboard_course_enroll";
 import DashboardCourseSaved from "@/app/component/dashboard_course_saved";
-import SearchCourse from "@/app/component/dashboard_search_course";
+import DashboardSearch from "@/app/component/dashboard_search";
+import DashboardCourseView from "@/app/component/dashboard_student_courseview";
 import DashboardTabSelection from "@/app/component/dashboard_tab_selection";
 import { useState } from "react";
 
@@ -13,7 +14,8 @@ export default function MainContainer() {
   const [enrolled, setEnrolled] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [done, setDone] = useState<boolean>(false);
-
+  const [showCoursePage, setShowCoursePage] = useState<boolean>(true);
+  const [showCourse, setShowCourse] = useState<boolean>(false)
   const allFunc = () => {
     setAll(true);
     setEnrolled(false);
@@ -41,22 +43,35 @@ export default function MainContainer() {
     setSaved(false);
     setDone(true);
   };
+
+  const openCourse = () => {
+    setShowCourse(true)
+    setShowCoursePage(false);
+  };
+
+  const backFunction = () => {
+    setShowCourse(false)
+    setShowCoursePage(true);
+  }
   return (
     <>
-      <div>
-        <h1 className="dashboard_h1">Courses</h1>
-        <SearchCourse placeholder="Search courses"/>
-        <DashboardTabSelection
-          allFunc={allFunc}
-          enrolledFunc={enrolledFunc}
-          savedFunc={savedFunc}
-          doneFunc={doneFunc}
-        />
-        {all && <DashboardCourseAll />}
-        {enrolled && <DashboardCourseEnrolled />}
-        {saved && <DashboardCourseSaved />}
-        {done && <DashboardCourseDone />}
-      </div>
+      {showCoursePage && (
+        <div>
+          <h1 className="dashboard_h1">Courses</h1>
+          <DashboardSearch placeholder="Search courses" />
+          <DashboardTabSelection
+            allFunc={allFunc}
+            enrolledFunc={enrolledFunc}
+            savedFunc={savedFunc}
+            doneFunc={doneFunc}
+          />
+          {all && <DashboardCourseAll openCourse={openCourse} />}
+          {enrolled && <DashboardCourseEnrolled />}
+          {saved && <DashboardCourseSaved />}
+          {done && <DashboardCourseDone />}
+        </div>
+      )}
+      {showCourse && <DashboardCourseView backFunction={backFunction}/>}
     </>
   );
 }

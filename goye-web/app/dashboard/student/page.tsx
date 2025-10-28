@@ -28,6 +28,8 @@ export default function Dashboard() {
     setShowDashboard(false);
     setShowEvent(true)
   }
+
+  const openCourse = () => {}
   return (
     <>
       <div>
@@ -37,7 +39,7 @@ export default function Dashboard() {
             {" "}
             <h1 className="dashboard_h1">Dashboard</h1>
             <DashboardStudentAnnouncement />
-            <DashboardStudentCourse />
+            <DashboardStudentCourse openCourse={openCourse}/>
             <DashboardStudentGrowth openGrowth={openGrowth} />
             <DashboardStudentEvent openEvent={openEvents}/>
           </>

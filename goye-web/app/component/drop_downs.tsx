@@ -8,7 +8,7 @@ interface Props {
 export default function DropDowns({ value: onChange, countries }: Props) {
   return (
     <>
-      <div className="w-full absolute left-0 h-[230px] overflow-x-hidden scrollbar drop-shadow-md bg-white z-10 rounded-sm">
+      <div className="w-full absolute left-0 h-[auto] overflow-x-hidden scrollbar drop-shadow-md bg-white z-10 rounded-sm">
         {countries as any}
       </div>
     </>

@@ -7,7 +7,10 @@ import { useState } from "react";
 import { IoBookmark } from "react-icons/io5";
 import { LuUser } from "react-icons/lu";
 import { FaAngleDoubleUp } from "react-icons/fa";
-export default function DashboardCourseAll() {
+interface Props {
+    openCourse: () => void
+}
+export default function DashboardCourseAll({openCourse} : Props) {
   const [fill, setFill] = useState<boolean>(false);
   return (
     <>
@@ -48,7 +51,7 @@ export default function DashboardCourseAll() {
             </p>
           </div>
         </div>
-        <button className="h-[36px] text-[14px] bg-primaryColors-0 text-[#ffffff] my-3">Continue Course</button>
+        <button className="h-[36px] text-[14px] bg-primaryColors-0 text-[#ffffff] my-3" onClick={openCourse}>Continue Course</button>
         <div className="h-[1px] w-full bg-[#EFEFF2]"></div>
       </div>
     </>

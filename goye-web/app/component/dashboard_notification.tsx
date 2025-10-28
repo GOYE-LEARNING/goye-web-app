@@ -1,7 +1,7 @@
 import { PiThumbsUpLight } from "react-icons/pi";
 import { RiCheckDoubleFill } from "react-icons/ri";
 
-export default function DashboardStudentNotification() {
+export default function DashboardNotification() {
   return (
     <div className="bg-[#ffffff] drop-shadow-lg h-[509px] w-[390px] z-30 -right-[120px] top-10 absolute p-[24px]">
       <div className="dashboard_triangle absolute right-[123px] -top-[0.9rem]"></div>
