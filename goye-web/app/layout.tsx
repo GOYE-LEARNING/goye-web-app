@@ -14,7 +14,7 @@ export default function RootLayout({
   return (
     <html>
       <body
-        className={`bg-secondaryColors-0 font-['Fustat',_'sans-erif'] scrollbar`}
+        className={`bg-white md:bg-secondaryColors-0 font-['Fustat',_'sans-erif'] scrollbar`}
       >
         {children}
       </body>

@@ -8,6 +8,7 @@ import Pic from "@/public/images/notfound.png";
 import { FaCheck, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { IoTrashOutline } from "react-icons/io5";
 import { MdCancel } from "react-icons/md";
+import SubHeader from "./dashboard_subheader";
 function usePersistentState<T>(
   key: string,
   defaultValue: T
@@ -29,8 +30,7 @@ function usePersistentState<T>(
   return [state, setState];
 }
 interface Props {
-  formData: any;
-  setFormData: React.Dispatch<React.SetStateAction<any>>;
+  removeReview: () => void;
 }
 
 interface Question {
@@ -50,21 +50,15 @@ interface Quiz {
   visible: boolean;
 }
 
-export default function CourseStep4({ formData, setFormData }: Props) {
-  const [quiz, setQuiz] = usePersistentState<Quiz[]>('quiz',[]);
-
+export default function DashboardTutorAddQuiz({ removeReview }: Props) {
+  const [quiz, setQuiz] = usePersistentState<Quiz[]>("quiz", []);
+  const [formData, setFormData] = useState<Quiz[]>([]);
   const quizForm = [
     { label: "Quiz title", type: "text", name: "quiz_title" },
     { label: "Description", type: "text", name: "quiz_description" },
     { label: "Duration (min)", type: "number", name: "quiz_duration" },
     { label: "Passing Score (%)", type: "number", name: "quiz_passing_score" },
   ];
-
-  
-    useEffect(() => {
-      setFormData((prev: any) => ({...prev, quiz: quiz}))
-    }, [quiz])
-  
 
   // ✅ Create new quiz
   const createQuiz = () => {
@@ -217,7 +211,8 @@ export default function CourseStep4({ formData, setFormData }: Props) {
 
   return (
     <>
-      <div>
+      <SubHeader header="Add Quiz" backFunction={removeReview} />
+      <div className="dashboard_content_mainbox">
         <AnimatePresence mode="wait">
           <div key="quiz">
             {/* Header */}
@@ -406,7 +401,6 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                                           )}
                                       </div>
                                     </div>
-
                                   </label>
                                 </div>
                               </div>

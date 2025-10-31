@@ -10,16 +10,12 @@ export default function DashboardLayout({
 }) {
   return (
     <>
-      <div className="min-h-screen w-full">
-        <div className="">
-          <Sidenav />
-        </div>
-        <div className="w-[80%] h-full absolute right-0">
+      <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0 ">
+        <Sidenav />
+        <div className="md:w-[80%] w-full h-full md:absolute right-0">
           <DashboardHeader />
-          <div className="flex justify-center items-center flex-col">
-            <div className=" w-[707px] ">
-              {children}
-            </div>
+          <div className="flex md:justify-center md:items-center flex-col md:px-0 md:py-0 p-[16px] md:rounded-none rounded-tr-xl rounded-tl-xl md:bg-transparent bg-[#FAFAFA] h-[85%] md:h-auto md:static absolute bottom-0 left-0 overflow-y-auto scrollbar">
+            <div className=" md:w-[707px] w-full">{children}</div>
           </div>
         </div>
       </div>

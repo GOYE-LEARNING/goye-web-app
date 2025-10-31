@@ -10,10 +10,12 @@ import { MdAdd } from "react-icons/md";
 import pic from "@/public/images/overview.png";
 import { useState } from "react";
 import DashboardTutorCreateCourse from "@/app/component/dashboard_tutor_create-course";
+import DashboardTutorCourseBreakdown from "@/app/component/dashboard_tutor_course_breakdown";
 
 export default function TutorCourse() {
   const [fill, setFill] = useState<boolean>(false);
   const [showCourse, setShowCourse] = useState<boolean>(true);
+  const [showCourseDetails, setShowCourseDetails] = useState<boolean>(false)
   const [showCreateCourse, setShowCreateCourse] = useState<boolean>(false);
 
   const showCourseFunc = () => {
@@ -25,6 +27,11 @@ export default function TutorCourse() {
     setShowCourse(false);
     setShowCreateCourse(true);
   };
+
+  const showCourseDetailsFunc = () => {
+    setShowCourse(false)
+    setShowCourseDetails(true)
+  }
 
   return (
     <>
@@ -84,7 +91,7 @@ export default function TutorCourse() {
                 </p>
               </div>
             </div>
-            <button className="h-[36px] text-[14px] bg-shadyColor-0 text-primaryColors-0 my-3 w-full">
+            <button className="h-[36px] text-[14px] bg-shadyColor-0 text-primaryColors-0 my-3 w-full" onClick={showCourseDetailsFunc}>
               View Course
             </button>
             <div className="h-[1px] w-full bg-[#EFEFF2]"></div>
@@ -94,6 +101,7 @@ export default function TutorCourse() {
       {showCreateCourse && (
         <DashboardTutorCreateCourse backToCourse={showCourseFunc}/>
       )}
+      {showCourseDetails && <DashboardTutorCourseBreakdown backFunc={showCourseFunc}/>}
     </>
   );
 }

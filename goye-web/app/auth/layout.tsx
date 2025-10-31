@@ -9,8 +9,8 @@ export default function AuthLayout({
 }) {
   return (
     <>
-      <div className="flex justify-center items-center flex-col">
-        <div className="w-[928px] min-h-screen">{children}</div>
+      <div className="flex md:justify-center md:items-center flex-col">
+        <div className="md:w-[928px] w-full min-h-screen">{children}</div>
       </div>
     </>
   );

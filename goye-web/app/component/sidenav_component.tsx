@@ -14,8 +14,8 @@ export default function SidenavComponent({ label, path, icon }: SidenavProps) {
     <>
       <Link
         href={path}
-        className={`flex items-center gap-2 h-[40px] px-2 rounded-[8px] side_link ${
-          isActive ? "bg-primaryColors-0/10" : ""
+        className={`flex items-center md:flex-row flex-col md:justify-start  justify-center  gap-2 h-[40px] px-2 rounded-[8px] side_link ${
+          isActive ? "md:bg-primaryColors-0/10 w-full" : ""
         }`}
       >
         <span className="text-[14px]">{icon}</span>

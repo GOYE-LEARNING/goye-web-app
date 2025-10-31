@@ -9,6 +9,7 @@ import Image from "next/image";
 import Pic from "@/public/images/notfound.png";
 import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
+import SubHeader from "./dashboard_subheader";
 
 function usePersistentState<T>(
   key: string,
@@ -32,8 +33,7 @@ function usePersistentState<T>(
 }
 
 interface Props {
-  formData: any;
-  setFormData: React.Dispatch<React.SetStateAction<any>>;
+    removeModule: () => void
 }
 
 interface Lesson {
@@ -52,7 +52,7 @@ interface Module {
   visible: boolean;
 }
 
-export default function CourseStep2({ formData, setFormData }: Props) {
+export default function DashboardTutorCreateModule({removeModule} : Props) {
   const [modules, setModules] = usePersistentState<Module[]>("module", []);
 
   // --- FORM ARRAYS ---
@@ -82,9 +82,6 @@ export default function CourseStep2({ formData, setFormData }: Props) {
     ]);
   };
 
-  useEffect(() => {
-    setFormData((prev: any) => ({ ...prev, module: modules }));
-  }, [modules]);
 
   const handleModuleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -209,8 +206,9 @@ export default function CourseStep2({ formData, setFormData }: Props) {
 
   return (
     <div>
-      <AnimatePresence mode="wait">
-        <div key="module">
+        <SubHeader header="Add Module" backFunction={removeModule}/>
+      <AnimatePresence mode="wait" >
+        <div key="module" className="dashboard_content_mainbox">
           {/* --- HEADER --- */}
           <div className="flex justify-between items-center">
             <h1 className="text-textSlightDark-0 font-semibold text-[18px]">

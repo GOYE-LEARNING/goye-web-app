@@ -9,6 +9,8 @@ import CourseStep4 from "./create-course/step4";
 import CourseStep5 from "./create-course/step5";
 import { FaArrowRight } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import { TbCancel } from "react-icons/tb";
+import DashboardPop from "./dashboard_popop";
 
 interface Props {
   backToCourse: () => void;
@@ -67,7 +69,7 @@ interface Quiz {
   quiz_title: string;
   quiz_description: string;
   quiz_duration: string;
-  quiz_passsing_score: string;
+  quiz_passing_score: string;
   quiz_questions: Question[];
 }
 
@@ -84,6 +86,8 @@ interface Course {
 }
 
 export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
+  const [showError, setShowError] = useState<boolean>(false);
+  const [showPop, setShowPop] = useState<boolean>(false);
   const [formData, setFormData] = useState<Course>({
     course_title: "",
     course_short_description: "",
@@ -124,9 +128,7 @@ export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
           mod.module_description &&
           mod.module_time &&
           mod.lessons.length > 0 &&
-          mod.lessons.every(
-            (les) => les.lesson_title && les.lesson_video
-          )
+          mod.lessons.every((les) => les.lesson_title && les.lesson_video)
       ),
 
     // Step 3 (materials)
@@ -147,7 +149,7 @@ export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
           qz.quiz_title &&
           qz.quiz_description &&
           qz.quiz_duration &&
-          qz.quiz_passsing_score &&
+          qz.quiz_passing_score &&
           qz.quiz_questions.length > 0
       ),
 
@@ -166,67 +168,137 @@ export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
     <CourseStep5 formData={formData} setFormData={setFormData} />,
   ];
 
+  const clearFormData = () => {
+    setFormData({
+      course_title: "",
+      course_short_description: "",
+      course_description: "",
+      course_level: "",
+      course_image: "",
+      module: [],
+      material: [],
+      quiz: [],
+      objective: [],
+    });
+  };
+
+  const createCourse = () => {
+    const isNotCompleted = isComplete.some((complete) => !complete);
+
+    if (isNotCompleted) {
+      setShowError(true);
+      return;
+    }
+
+    clearFormData();
+    setShowPop(true);
+  };
+
+  const close = () => {
+    setShowPop(false);
+  };
+  const backToCourseFunc = () => {
+    backToCourse()
+  };
+  const reviewCourseFunc = () => {};
+
+  const courseTitle = localStorage.getItem('COURSE TITLE')
   return (
     <div>
-      <SubHeader header="Create Course" backFunction={backToCourse} />
-      <div className="dashboard_content_mainbox overflow-x-hidden">
-        {/* Progress bar */}
-        <div className="flex gap-3">
-          {Array.from({ length: totalSteps }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setStep(index)}
-              className={`h-[3px] w-[74.8px] rounded-full ${
-                isComplete[index]
-                  ? "bg-primaryColors-0"
-                  : step === index
-                  ? "bg-primaryColors-0/10"
-                  : "bg-[#D9D9D9]"
-              }`}
-            ></button>
-          ))}
-        </div>
-
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            initial={{ x: 100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -100, opacity: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 100,
-              damping: 15,
-            }}
-            className="my-5"
-          >
-            {steps[step]}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      <div className="dashboard_content_mainbox">
-        <div className="grid grid-cols-2 gap-3">
-          <span
-            className="form_more bg-secondaryColors-0 text-primaryColors-0"
-            onClick={prevStep}
-          >
-            Back
-          </span>
-          {step < totalSteps - 1 ? (
-            <span
-              className="form_more text-plainColors-0 bg-primaryColors-0"
-              onClick={nextStep}
+      <AnimatePresence mode="wait">
+        {showPop && (
+          <DashboardPop
+            header={`Awsome`}
+            close={close}
+            backToCourse={backToCourseFunc}
+            reviewCourse={reviewCourseFunc}
+            paragraph={`Your course "${courseTitle}" has been created successfully.`}
+            buttonFunc="Review Answers"
+          />
+        )}
+        <div key="create-course">
+          {" "}
+          {showError && (
+            <motion.div
+              key="error"
+              initial={{ y: -50 }}
+              animate={{ y: 0 }}
+              exit={{ y: 50 }}
+              transition={{ duration: 0.3, ease: "easeIn" }}
+              className="fixed top-2 w-full left-0 flex justify-center items-center flex-col"
             >
-              Next <FaArrowRight />
-            </span>
-          ) : (
-            <span className="form_more text-plainColors-0 bg-primaryColors-0">
-              Create Course
-            </span>
+              <div className=" bg-[#da0e2913] py-2 px-[12px] w-[280px] border border-[#DA0E29] flex justify-between items-center">
+                <span>
+                  <TbCancel size={30} color="#DA0E29" />
+                </span>
+                <p className="text-[#DA0E29] text-[13px]">
+                  Sorry all form must be filled
+                </p>
+                <span onClick={() => setShowError(false)}>&times;</span>
+              </div>
+            </motion.div>
           )}
+          <SubHeader header="Create Course" backFunction={backToCourse} />
+          <div className="dashboard_content_mainbox overflow-x-hidden">
+            {/* Progress bar */}
+            <div className="flex gap-3">
+              {Array.from({ length: totalSteps }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setStep(index)}
+                  className={`h-[3px] w-[74.8px] rounded-full ${
+                    isComplete[index]
+                      ? "bg-primaryColors-0"
+                      : step === index
+                      ? "bg-primaryColors-0/10"
+                      : "bg-[#D9D9D9]"
+                  }`}
+                ></button>
+              ))}
+            </div>
+
+            <motion.div
+              key={step}
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -100, opacity: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                damping: 15,
+              }}
+              className="my-5"
+            >
+              {steps[step]}
+            </motion.div>
+          </div>
+          <div className="dashboard_content_mainbox">
+            <div className="grid grid-cols-2 gap-3">
+              <span
+                className="form_more bg-secondaryColors-0 text-primaryColors-0"
+                onClick={prevStep}
+              >
+                Back
+              </span>
+              {step < totalSteps - 1 ? (
+                <span
+                  className="form_more text-plainColors-0 bg-primaryColors-0"
+                  onClick={nextStep}
+                >
+                  Next <FaArrowRight />
+                </span>
+              ) : (
+                <span
+                  className="form_more text-plainColors-0 bg-primaryColors-0"
+                  onClick={createCourse}
+                >
+                  Create Course
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </AnimatePresence>
     </div>
   );
 }

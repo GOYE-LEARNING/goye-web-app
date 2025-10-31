@@ -63,7 +63,7 @@ export default function Login() {
               />
               <label
                 htmlFor={form.name}
-                className={`absolute top-[15px] left-[12px] label peer-focus:text-[14px] peer-focus:top-[2px] transition-all duration-300 ease-in-out peer-placeholder-shown:top-[15px] peer-placeholder-shown:text-[16px] ${
+                className={`absolute  left-[12px] label peer-focus:text-[14px] peer-focus:top-[2px] transition-all duration-300 ease-in-out md:peer-placeholder-shown:top-[18px] peer-placeholder-shown:top-[19.8px] peer-placeholder-shown:text-[16px] ${
                   form.value
                     ? "top-[2px] text-[14px]"
                     : "top-[15px] text-[16px]"
@@ -84,7 +84,7 @@ export default function Login() {
             </div>
           ))}
           <span className="form_link">Forgot Password ?</span>
-          <span className="form_btn">
+          <span className="form_btn mt-9 md:mt-0">
             Login <FaArrowRight size={13} />
           </span>
         </form>

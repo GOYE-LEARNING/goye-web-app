@@ -18,7 +18,7 @@ export default function AuthHeader({
 
   return (
     <>
-      <div className="px-[48px] flex justify-between items-center font-[400]">
+      <div className="px-[48px] md:flex justify-between items-center font-[400] hidden">
         <Image src={logo} alt="logo" height={100} width={100} />
         {changeHeaderToSignin && (
           <span className="text-nearTextColors-0">

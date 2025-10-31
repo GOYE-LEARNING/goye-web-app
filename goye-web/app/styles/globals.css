@@ -1,4 +1,4 @@
-@tailwind base;
+@tailwind  base;
 @tailwind components;
 @tailwind utilities;
 
@@ -8,7 +8,7 @@ body {
 }
 
 .form_container {
-  @apply w-[707px] p-[32px] bg-plainColors-0;
+  @apply md:w-[707px] w-full md:p-[32px] md:bg-plainColors-0 bg-white flex items-start justify-center flex-col;
 }
 
 .form_h1 {
@@ -59,13 +59,17 @@ body {
   @apply w-[5px] bg-white;
 }
 
+.scrollbar2::-webkit-scrollbar {
+  @apply w-0
+}
+
 .scrollbar::-webkit-scrollbar-thumb {
   @apply rounded-full bg-[#ccc];
 }
 
 /*Sidenav component*/
 .sidenav {
-  @apply bg-white w-[20%] h-full fixed left-0 px-[32px] py-[40px];
+  @apply bg-white md:w-[20%] w-full md:h-full h-[auto] fixed left-0 md:top-0 bottom-0 md:px-[32px] md:py-[40px] py-[20px] px-[40px] overflow-hidden md:drop-shadow-none drop-shadow-lg z-30 md:z-10;
 }
 
 .side_link {
@@ -73,7 +77,7 @@ body {
 }
 
 .side_link:hover {
-    @apply bg-primaryColors-0/10 
+    @apply md:bg-primaryColors-0/10 
 }
 
 .side_link:hover .icon {
@@ -82,7 +86,7 @@ body {
 
 /*dashboard*/
 .dashboard_h1 {
-  @apply text-[#1F2130] text-[30px] font-[700] font-['Fustat',_'sans-serif']
+  @apply text-[#1F2130] md:my-0 my-4 text-[30px] font-[700] font-['Fustat',_'sans-serif']
 }
 
 .dashboard_hr {

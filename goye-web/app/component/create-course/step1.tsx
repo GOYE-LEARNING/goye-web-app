@@ -31,12 +31,13 @@ export default function CourseStep1({ formData, setFormData }: Props) {
     setShowDropdown(false);
   };
 
-  
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    localStorage.setItem('COURSE TITLE', formData.course_title)
   };
 
   const form: Form[] = [

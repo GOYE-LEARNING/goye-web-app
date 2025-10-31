@@ -58,6 +58,10 @@ export default function CourseStep3({ formData, setFormData }: Props) {
     []
   );
 
+  useEffect(() => {
+    setFormData((prev: any) => ({...prev, material: material}))
+  }, [material])
+
   const materialForm = [
     { label: "Material title", type: "text", name: "material_title" },
     { label: "Description", type: "text", name: "material_description" },
