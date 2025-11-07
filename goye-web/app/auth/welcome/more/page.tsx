@@ -6,13 +6,17 @@ import { motion } from "framer-motion";
 import Step1 from "./step1";
 import Step2 from "./step2";
 import Step3 from "./step3";
-
+import obj from '@/app/interface/obj'
 export default function WelcomeMoreAuth() {
   const [step, setStep] = useState<number>(0);
   const totalSteps = 3;
 
   // ✅ store all step data
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<obj>({
+    firstname: "",
+    lastname: "",
+    email: "",
+    password: "",
     country: "",
     city: "",
     phone: "",

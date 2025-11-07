@@ -7,6 +7,14 @@ body {
   @apply overflow-x-hidden;
 }
 
+/*Landing Page*/
+.nav_btn {
+  @apply md:h-[40px] h-[50px] font-semibold text-[14px] 
+}
+
+
+/*Form contianer*/
+
 .form_container {
   @apply md:w-[707px] w-full md:p-[32px] md:bg-plainColors-0 bg-white flex items-start justify-center flex-col;
 }

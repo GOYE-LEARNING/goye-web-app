@@ -15,8 +15,14 @@ export default function TutorSidenav() {
   return (
     <>
       <div className="sidenav">
-        <Image src={logo} alt="logo" height={100} width={100} />
-        <nav className="flex flex-col gap-1">
+        <Image
+          src={logo}
+          alt="logo"
+          height={100}
+          width={100}
+          className="md:block hidden"
+        />
+        <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col gap-1 w-full">
           <div>
             <SidenavComponent
               path="/dashboard/tutor"
@@ -38,20 +44,20 @@ export default function TutorSidenav() {
                 pathname !== "/dashboard/tutor/course" ? (
                   <IoSchoolOutline size={25} />
                 ) : (
-                  <IoSchoolSharp size={25} color="#3F1F22"/>
+                  <IoSchoolSharp size={25} color="#3F1F22" />
                 )
               }
             />
           </div>
-                 <div>
+          <div>
             <SidenavComponent
               path="/dashboard/tutor/student"
               label="Student"
               icon={
                 pathname !== "/dashboard/tutor/student" ? (
-                  <BsPeople size={25}/>
+                  <BsPeople size={25} />
                 ) : (
-                    <BsPeopleFill size={25}/>
+                  <BsPeopleFill size={25} />
                 )
               }
             />
@@ -64,7 +70,7 @@ export default function TutorSidenav() {
                 pathname !== "/dashboard/tutor/community" ? (
                   <RiCompass3Line size={25} />
                 ) : (
-                  <RiCompassFill size={25} color="#3F1F22"/>
+                  <RiCompassFill size={25} color="#3F1F22" />
                 )
               }
             />
@@ -77,22 +83,22 @@ export default function TutorSidenav() {
                 pathname !== "/dashboard/tutor/profile" ? (
                   <FaRegUser size={25} />
                 ) : (
-                  <FaUser size={25} color="#3F1F22"/>
+                  <FaUser size={25} color="#3F1F22" />
                 )
               }
             />
           </div>
         </nav>
-        <div className="bg-[#E2E2E2] h-[1px] w-full absolute left-0 my-5"></div>
-
-        <div className="mt-10">
-          {" "}
-          <SidenavComponent
-            path="/"
-            label="Logout"
-            icon={<MdLogout size={25} />}
-          />
-        </div>
+           <div className="bg-[#E2E2E2] h-[1px] w-full absolute left-0 my-5 md:block hidden"></div>
+    
+            <div className="mt-10 md:block hidden md:w-full">
+              {" "}
+              <SidenavComponent
+                path="/"
+                label="Logout"
+                icon={<MdLogout size={25} />}
+              />
+            </div>
       </div>
     </>
   );

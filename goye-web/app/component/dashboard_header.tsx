@@ -26,7 +26,7 @@ export default function DashboardHeader() {
   }, []);
   return (
     <>
-      <div className=" md:px-8 md:py-2 md:bg-secondaryColors-0 py-[25px] px-[16px] md:h-auto bg-primaryColors-0 md:static absolute top-0 left-0 h-[15%] w-full flex md:block justify-between md:justify-end items-center">
+      <div className=" md:px-8 md:py-2 md:bg-secondaryColors-0 py-[25px] px-[16px] md:h-auto bg-primaryColors-0 md:static absolute top-0 left-0 h-[10%] w-full flex md:block justify-between md:justify-end items-center">
         <div className="md:flex justify-end items-center gap-5 hidden">
           <div className="text-[#71748C]/20 relative">
             <div onClick={() => setShowNotification(!showNotification)}>

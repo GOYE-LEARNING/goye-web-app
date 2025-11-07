@@ -7,13 +7,13 @@ import DashboardStudentGrowthMore from "@/app/component/dashboard_student_growth
 import SubHeader from "@/app/component/dashboard_subheader";
 import { useState } from "react";
 interface Props {
-  backFunc: () => void
+  backFunc: () => void;
 }
-export default function StudentGrowth({backFunc} : Props) {
+export default function StudentGrowth({ backFunc }: Props) {
   const [acheivements, setAchivement] = useState<boolean>(true);
   const [certificates, setCertificate] = useState<boolean>(false);
   const backFunction = () => {
-    backFunc()
+    backFunc();
   };
   const acheivement = () => {
     setCertificate(false);
@@ -25,23 +25,25 @@ export default function StudentGrowth({backFunc} : Props) {
   };
   return (
     <>
-      <SubHeader backFunction={backFunction} header="Spiritual Growth" />
-      <DashboardStudentGrowthMore />
-      <DashboardGrowthSubHeader
-        acheivement={acheivement}
-        certificate={certificate}
-      />
+      <div className="">
+        <SubHeader backFunction={backFunction} header="Spiritual Growth" />
+        <DashboardStudentGrowthMore />
+        <DashboardGrowthSubHeader
+          acheivement={acheivement}
+          certificate={certificate}
+        />
 
-      {acheivements && (
-        <div>
-          <DashboardGrowthAchievement />
-        </div>
-      )}
-      {certificates && (
-        <div>
-          <DashboardGrowthCertificate />
-        </div>
-      )}
+        {acheivements && (
+          <div>
+            <DashboardGrowthAchievement />
+          </div>
+        )}
+        {certificates && (
+          <div>
+            <DashboardGrowthCertificate />
+          </div>
+        )}
+      </div>
     </>
   );
 }

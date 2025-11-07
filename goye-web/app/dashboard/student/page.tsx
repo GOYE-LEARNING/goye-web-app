@@ -32,7 +32,7 @@ export default function Dashboard() {
   const openCourse = () => {}
   return (
     <>
-      <div>
+      <div className="w-full">
         {" "}
         {showDashboard && (
           <>

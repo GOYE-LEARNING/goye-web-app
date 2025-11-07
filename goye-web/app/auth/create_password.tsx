@@ -3,9 +3,9 @@
 import React, { useState } from "react";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { MdCancel, MdCheckCircle } from "react-icons/md";
-
+import obj from "@/app/interface/obj";
 export default function CreatePassword() {
-  const [password, setPassword] = useState<string>("");
+  const [password, setPassword] = useState<obj>({ password: "" });
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [touched, setTouched] = useState<boolean>(false);
 
@@ -18,7 +18,7 @@ export default function CreatePassword() {
 
   // ✅ Fixed: handleChange now receives event properly
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
+    setPassword({ ...password, password: e.target.value });
     if (!touched) setTouched(true);
   };
 
@@ -26,7 +26,7 @@ export default function CreatePassword() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-     //const allPassed = rules.every((rule) => rule.test.test(password))
+    //const allPassed = rules.every((rule) => rule.test.test(password))
   };
 
   return (
@@ -42,7 +42,7 @@ export default function CreatePassword() {
             <input
               type={!showPassword ? "password" : "text"}
               name="password"
-              value={password}
+              value={password.password}
               onChange={handleChange}
               onBlur={() => setTouched(true)}
               placeholder=" "
@@ -72,7 +72,7 @@ export default function CreatePassword() {
             {touched && (
               <div className="flex flex-col items-start gap-2 mt-3 text-[14px]">
                 {rules.map((rule, index) => {
-                  const passed = rule.test.test(password)
+                  const passed = rule.test.test(password.password as any);
                   return (
                     <div key={index} className="flex items-center gap-2">
                       {passed ? (

@@ -1,0 +1,1965 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"SignupResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"data": {},
+					"token": {}
+				},
+				"required": [
+					"message",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Pick_User.Exclude_keyofUser.id__": {
+				"properties": {
+					"first_name": {
+						"type": "string"
+					},
+					"last_name": {
+						"type": "string"
+					},
+					"email_address": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string"
+					},
+					"country": {
+						"type": "string"
+					},
+					"state": {
+						"type": "string"
+					},
+					"phone_number": {
+						"type": "string"
+					},
+					"role": {
+						"type": "string"
+					},
+					"level": {
+						"type": "string"
+					},
+					"createAt": {},
+					"updatedAt": {}
+				},
+				"required": [
+					"first_name",
+					"last_name",
+					"email_address",
+					"password",
+					"country",
+					"state",
+					"phone_number",
+					"role",
+					"level"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_User.id_": {
+				"$ref": "#/components/schemas/Pick_User.Exclude_keyofUser.id__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"Partial_User_": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"first_name": {
+						"type": "string"
+					},
+					"last_name": {
+						"type": "string"
+					},
+					"email_address": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string"
+					},
+					"country": {
+						"type": "string"
+					},
+					"state": {
+						"type": "string"
+					},
+					"phone_number": {
+						"type": "string"
+					},
+					"role": {
+						"type": "string"
+					},
+					"level": {
+						"type": "string"
+					},
+					"createAt": {},
+					"updatedAt": {}
+				},
+				"type": "object",
+				"description": "Make all properties in T optional"
+			},
+			"CourseResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"data": {}
+				},
+				"required": [
+					"message",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Lesson": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"lesson_title": {
+						"type": "string"
+					},
+					"lesson_video": {
+						"type": "string"
+					},
+					"moduleId": {
+						"type": "string"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Module": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"module_title": {
+						"type": "string"
+					},
+					"module_description": {
+						"type": "string"
+					},
+					"module_duration": {
+						"type": "string"
+					},
+					"courseId": {
+						"type": "string"
+					},
+					"lesson": {
+						"items": {
+							"$ref": "#/components/schemas/Lesson"
+						},
+						"type": "array"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Material": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"material_title": {
+						"type": "string"
+					},
+					"material_description": {
+						"type": "string"
+					},
+					"material_pages": {
+						"type": "number",
+						"format": "double"
+					},
+					"material_document": {
+						"type": "string"
+					},
+					"courseId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"material_title",
+					"material_description",
+					"material_pages",
+					"material_document",
+					"courseId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateQuestionDTO": {
+				"properties": {
+					"question": {
+						"type": "string"
+					},
+					"options": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"correctAnswer": {
+						"type": "string"
+					},
+					"explanation": {
+						"type": "string"
+					},
+					"points": {
+						"type": "number",
+						"format": "double"
+					},
+					"order": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"question",
+					"options",
+					"correctAnswer",
+					"order"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateQuizDTO": {
+				"properties": {
+					"title": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"courseId": {
+						"type": "string"
+					},
+					"duration": {
+						"type": "number",
+						"format": "double"
+					},
+					"passingScore": {
+						"type": "number",
+						"format": "double"
+					},
+					"maxAttempts": {
+						"type": "number",
+						"format": "double"
+					},
+					"questions": {
+						"items": {
+							"$ref": "#/components/schemas/CreateQuestionDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"title",
+					"courseId",
+					"questions"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Objectives": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"objective_title1": {
+						"type": "string"
+					},
+					"objective_title2": {
+						"type": "string"
+					},
+					"objective_title3": {
+						"type": "string"
+					},
+					"objective_title4": {
+						"type": "string"
+					},
+					"objective_title5": {
+						"type": "string"
+					},
+					"courseId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"objective_title1",
+					"objective_title2",
+					"objective_title3",
+					"objective_title4",
+					"objective_title5",
+					"courseId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Pick_Course.Exclude_keyofCourse.id__": {
+				"properties": {
+					"course_title": {
+						"type": "string"
+					},
+					"course_short_description": {
+						"type": "string"
+					},
+					"course_description": {
+						"type": "string"
+					},
+					"course_level": {
+						"type": "string"
+					},
+					"course_image": {
+						"type": "string"
+					},
+					"module": {
+						"items": {
+							"$ref": "#/components/schemas/Module"
+						},
+						"type": "array"
+					},
+					"material": {
+						"items": {
+							"$ref": "#/components/schemas/Material"
+						},
+						"type": "array"
+					},
+					"quiz": {
+						"items": {
+							"$ref": "#/components/schemas/CreateQuizDTO"
+						},
+						"type": "array"
+					},
+					"objectives": {
+						"items": {
+							"$ref": "#/components/schemas/Objectives"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"course_title",
+					"course_short_description",
+					"course_description",
+					"course_level",
+					"course_image"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_Course.id_": {
+				"$ref": "#/components/schemas/Pick_Course.Exclude_keyofCourse.id__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"UpdateCourseWithRelationsDTO": {
+				"properties": {
+					"course_title": {
+						"type": "string"
+					},
+					"course_short_description": {
+						"type": "string"
+					},
+					"course_description": {
+						"type": "string"
+					},
+					"course_level": {
+						"type": "string"
+					},
+					"course_image": {
+						"type": "string"
+					},
+					"modules": {
+						"items": {
+							"properties": {
+								"lessons": {
+									"items": {
+										"properties": {
+											"lesson_video": {
+												"type": "string"
+											},
+											"lesson_title": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"module_duration": {
+									"type": "string"
+								},
+								"module_description": {
+									"type": "string"
+								},
+								"module_title": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"materials": {
+						"items": {
+							"properties": {
+								"material_document": {
+									"type": "string"
+								},
+								"material_pages": {
+									"type": "number",
+									"format": "double"
+								},
+								"material_description": {
+									"type": "string"
+								},
+								"material_title": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"objectives": {
+						"items": {
+							"properties": {
+								"objective_title5": {
+									"type": "string"
+								},
+								"objective_title4": {
+									"type": "string"
+								},
+								"objective_title3": {
+									"type": "string"
+								},
+								"objective_title2": {
+									"type": "string"
+								},
+								"objective_title1": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"quiz": {
+						"items": {
+							"properties": {
+								"questions": {
+									"items": {
+										"properties": {
+											"question_name": {
+												"type": "string"
+											},
+											"id": {
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"quiz_score": {
+									"type": "number",
+									"format": "double"
+								},
+								"quiz_duration": {
+									"type": "number",
+									"format": "double"
+								},
+								"quiz_description": {
+									"type": "string"
+								},
+								"quiz_title": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Pick_Module.Exclude_keyofModule.id__": {
+				"properties": {
+					"module_title": {
+						"type": "string"
+					},
+					"module_description": {
+						"type": "string"
+					},
+					"module_duration": {
+						"type": "string"
+					},
+					"courseId": {
+						"type": "string"
+					},
+					"lesson": {
+						"items": {
+							"$ref": "#/components/schemas/Lesson"
+						},
+						"type": "array"
+					}
+				},
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_Module.id_": {
+				"$ref": "#/components/schemas/Pick_Module.Exclude_keyofModule.id__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"Course": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"course_title": {
+						"type": "string"
+					},
+					"course_short_description": {
+						"type": "string"
+					},
+					"course_description": {
+						"type": "string"
+					},
+					"course_level": {
+						"type": "string"
+					},
+					"course_image": {
+						"type": "string"
+					},
+					"module": {
+						"items": {
+							"$ref": "#/components/schemas/Module"
+						},
+						"type": "array"
+					},
+					"material": {
+						"items": {
+							"$ref": "#/components/schemas/Material"
+						},
+						"type": "array"
+					},
+					"quiz": {
+						"items": {
+							"$ref": "#/components/schemas/CreateQuizDTO"
+						},
+						"type": "array"
+					},
+					"objectives": {
+						"items": {
+							"$ref": "#/components/schemas/Objectives"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"course_title",
+					"course_short_description",
+					"course_description",
+					"course_level",
+					"course_image"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {
+			"bearerAuth": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "JWT"
+			}
+		}
+	},
+	"info": {
+		"title": "",
+		"contact": {}
+	},
+	"paths": {
+		"/user/signup": {
+			"post": {
+				"operationId": "CreateUser",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SignupResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Omit_User.id_"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/login": {
+			"post": {
+				"operationId": "Login",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"password": {
+										"type": "string"
+									},
+									"email": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"password",
+									"email"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/sendOtp": {
+			"post": {
+				"operationId": "SendOtp",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"email": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"email"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/verify-otp": {
+			"post": {
+				"operationId": "VerifyOtp",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"properties": {
+												"email": {},
+												"message": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"message"
+											],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"email": {
+													"type": "string"
+												},
+												"message": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"email",
+												"message"
+											],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"sessionToken": {
+										"type": "string"
+									},
+									"otp": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"sessionToken",
+									"otp"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/upload-profile-picture": {
+			"post": {
+				"operationId": "UploadPicture",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"mimeType": {
+										"type": "string"
+									},
+									"fileName": {
+										"type": "string"
+									},
+									"file": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"mimeType",
+									"fileName",
+									"file"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/get-user/{id}": {
+			"get": {
+				"operationId": "GetUser",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/user/update-user/{id}": {
+			"put": {
+				"operationId": "UpdateUser",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SignupResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Partial_User_"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/delete-user/{id}": {
+			"delete": {
+				"operationId": "DeleteUser",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"user": {
+											"properties": {
+												"user_pic": {
+													"type": "string"
+												},
+												"lastActive": {
+													"type": "string",
+													"format": "date-time"
+												},
+												"isOnline": {
+													"type": "boolean"
+												},
+												"createdAt": {
+													"type": "string",
+													"format": "date-time"
+												},
+												"completed": {
+													"type": "string"
+												},
+												"updatedAt": {
+													"type": "string",
+													"format": "date-time"
+												},
+												"level": {
+													"type": "string"
+												},
+												"role": {
+													"type": "string"
+												},
+												"phone_number": {
+													"type": "string"
+												},
+												"state": {
+													"type": "string"
+												},
+												"country": {
+													"type": "string"
+												},
+												"password": {
+													"type": "string"
+												},
+												"email_address": {
+													"type": "string"
+												},
+												"last_name": {
+													"type": "string"
+												},
+												"first_name": {
+													"type": "string"
+												},
+												"id": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"user_pic",
+												"lastActive",
+												"isOnline",
+												"createdAt",
+												"completed",
+												"updatedAt",
+												"level",
+												"role",
+												"phone_number",
+												"state",
+												"country",
+												"password",
+												"email_address",
+												"last_name",
+												"first_name",
+												"id"
+											],
+											"type": "object"
+										},
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"user",
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/user/fetch-users-student": {
+			"get": {
+				"operationId": "GetStudent",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/user/fetch-users-tutors": {
+			"get": {
+				"operationId": "GetTutor",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/user/profile": {
+			"get": {
+				"operationId": "GetProfile",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"properties": {
+												"user": {},
+												"message": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"message"
+											],
+											"type": "object"
+										},
+										{
+											"properties": {
+												"user": {
+													"properties": {
+														"user_pic": {
+															"type": "string"
+														},
+														"lastActive": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"isOnline": {
+															"type": "boolean"
+														},
+														"createdAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"completed": {
+															"type": "string"
+														},
+														"updatedAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"level": {
+															"type": "string"
+														},
+														"role": {
+															"type": "string"
+														},
+														"phone_number": {
+															"type": "string"
+														},
+														"state": {
+															"type": "string"
+														},
+														"country": {
+															"type": "string"
+														},
+														"password": {
+															"type": "string"
+														},
+														"email_address": {
+															"type": "string"
+														},
+														"last_name": {
+															"type": "string"
+														},
+														"first_name": {
+															"type": "string"
+														},
+														"id": {
+															"type": "string"
+														}
+													},
+													"required": [
+														"user_pic",
+														"lastActive",
+														"isOnline",
+														"createdAt",
+														"completed",
+														"updatedAt",
+														"level",
+														"role",
+														"phone_number",
+														"state",
+														"country",
+														"password",
+														"email_address",
+														"last_name",
+														"first_name",
+														"id"
+													],
+													"type": "object"
+												},
+												"message": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"user",
+												"message"
+											],
+											"type": "object"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/user/forgot-password": {
+			"post": {
+				"operationId": "ForgotPassword",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"link": {
+										"type": "string"
+									},
+									"email": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"link",
+									"email"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/user-student-status": {
+			"get": {
+				"operationId": "GetUserStatus",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/user/logout": {
+			"post": {
+				"operationId": "Logout",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User control APIs"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {}
+						}
+					}
+				}
+			}
+		},
+		"/course/create-course": {
+			"post": {
+				"operationId": "CreateCourse",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CourseResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Omit_Course.id_"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/course/get-courses": {
+			"get": {
+				"operationId": "GetCourse",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/course/get-courses/{id}": {
+			"get": {
+				"operationId": "GetCourseById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"data": {
+											"type": "string"
+										},
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"data",
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/course/update-course/{id}": {
+			"put": {
+				"operationId": "UpdateCourse",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateCourseWithRelationsDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/course/delete-course/{id}": {
+			"delete": {
+				"operationId": "DeleteCourse",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/course/create-module": {
+			"post": {
+				"operationId": "CreateModule",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Omit_Module.id_"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/course/get-modules": {
+			"get": {
+				"operationId": "GetModules",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/course/get-module/{courseId}/{moduleId}": {
+			"get": {
+				"operationId": "GetModuleById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "moduleId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "courseId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/course/update-module/{id}": {
+			"put": {
+				"operationId": "UpdateModule",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Course"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/course/delete-module/{id}": {
+			"delete": {
+				"operationId": "DeleteModule",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"data": {
+											"type": "string"
+										},
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"data",
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/course/create-quiz": {
+			"post": {
+				"operationId": "CreateQuiz",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"questions": {
+										"items": {
+											"properties": {
+												"order": {
+													"type": "number",
+													"format": "double"
+												},
+												"points": {
+													"type": "number",
+													"format": "double"
+												},
+												"explanation": {
+													"type": "string"
+												},
+												"correctAnswer": {
+													"type": "string"
+												},
+												"options": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"question": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"order",
+												"correctAnswer",
+												"options",
+												"question"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"maxAttempts": {
+										"type": "number",
+										"format": "double"
+									},
+									"passingScore": {
+										"type": "number",
+										"format": "double"
+									},
+									"duration": {
+										"type": "number",
+										"format": "double"
+									},
+									"courseId": {
+										"type": "string"
+									},
+									"description": {
+										"type": "string"
+									},
+									"title": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"questions",
+									"courseId",
+									"title"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/course/update-quiz/{quizId}": {
+			"put": {
+				"operationId": "UpdateQuiz",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "quizId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"questions": {
+										"items": {
+											"properties": {
+												"order": {
+													"type": "number",
+													"format": "double"
+												},
+												"points": {
+													"type": "number",
+													"format": "double"
+												},
+												"explanation": {
+													"type": "string"
+												},
+												"correctAnswer": {
+													"type": "string"
+												},
+												"options": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"question": {
+													"type": "string"
+												},
+												"id": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"order",
+												"correctAnswer",
+												"options",
+												"question"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"maxAttempts": {
+										"type": "number",
+										"format": "double"
+									},
+									"passingScore": {
+										"type": "number",
+										"format": "double"
+									},
+									"duration": {
+										"type": "number",
+										"format": "double"
+									},
+									"description": {
+										"type": "string"
+									},
+									"title": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/course/get-quizes": {
+			"get": {
+				"operationId": "GetQuizzes",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/course/get-quiz/{courseId}/{quizId}": {
+			"get": {
+				"operationId": "GetQuizById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "courseId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "quizId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/course/get-course-quizzes/{courseId}": {
+			"get": {
+				"operationId": "GetCourseQuizzes",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "courseId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/course/delete-quiz/{id}": {
+			"delete": {
+				"operationId": "DeleteQuiz",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Course Control APIs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/api"
+		}
+	]
+}
