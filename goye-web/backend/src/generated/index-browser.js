@@ -163,6 +163,14 @@ exports.Prisma.ReplyScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.LikesScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  postId: 'postId',
+  replyId: 'replyId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.CourseScalarFieldEnum = {
   id: 'id',
   course_title: 'course_title',
@@ -172,6 +180,16 @@ exports.Prisma.CourseScalarFieldEnum = {
   course_image: 'course_image',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EventScalarFieldEnum = {
+  id: 'id',
+  event_name: 'event_name',
+  event_description: 'event_description',
+  event_time: 'event_time',
+  event_data: 'event_data',
+  event_type: 'event_type',
+  event_link: 'event_link'
 };
 
 exports.Prisma.EnrollmentScalarFieldEnum = {
@@ -293,7 +311,9 @@ exports.Prisma.ModelName = {
   Otp: 'Otp',
   Post: 'Post',
   Reply: 'Reply',
+  Likes: 'Likes',
   Course: 'Course',
+  Event: 'Event',
   Enrollment: 'Enrollment',
   Module: 'Module',
   Lesson: 'Lesson',

@@ -51,7 +51,6 @@ export interface Material {
   courseId: string;
 }
 
-
 export interface CreateQuizDTO {
   title: string;
   description?: string;
@@ -93,16 +92,37 @@ export interface Objectives {
   objective_title4: string;
   objective_title5: string;
   courseId: string;
-
 }
 
 export interface SignupResponse {
-  message: string
-  data: any
-  token?: any
+  message: string;
+  data: any;
+  token?: any;
 }
 
 export interface CourseResponse {
-  message: string
-  data: any
+  message: string;
+  data: any;
+}
+
+export interface PostDTO {
+  postId: string;
+  title: string;
+  content: string;
+}
+
+export interface ReplyDTO {
+  Id: string;
+  content: string;
+  postId: string;
+}
+
+export interface EventDTO {
+  id: string;
+  event_name?: string;
+  event_description?: string;
+  event_time?: string;
+  event_date?: string;
+  event_type?: string;
+  event_link?: string;
 }
