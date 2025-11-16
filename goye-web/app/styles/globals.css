@@ -1,4 +1,4 @@
-@tailwind  base;
+@tailwind   base;
 @tailwind components;
 @tailwind utilities;
 
@@ -16,7 +16,7 @@ body {
 /*Form contianer*/
 
 .form_container {
-  @apply md:w-[707px] w-full md:p-[32px] md:bg-plainColors-0 bg-white flex items-start justify-center flex-col;
+  @apply md:w-[707px] w-full md:p-[32px] md:bg-plainColors-0 bg-white flex items-start justify-center flex-col md:mt-7;
 }
 
 .form_h1 {
@@ -28,7 +28,7 @@ body {
 }
 
 .form {
-  @apply mt-7 flex justify-start items-start flex-col w-full  gap-4;
+  @apply mt-7 flex justify-start items-start flex-col w-full gap-4;
 }
 
 .form_label {
@@ -101,7 +101,7 @@ body {
   @apply h-[1px] w-full bg-[#EFEFF2]
 }
 .dashboard_content_mainbox {
-  @apply bg-[#ffffff] p-[24px] w-full my-5
+  @apply bg-[#ffffff] md:p-[24px] w-full my-5
 }
 .dashboard_content_box {
   @apply  bg-[#ffffff] w-full my-5 py-[20px] px-[16px] border border-[#F1F1F4]

@@ -25,9 +25,18 @@ export default function LoadingPage() {
   }, []);
 
   useEffect(() => {
+    const role = localStorage.getItem("role");
+
     if (progress === 100) {
       const timeout = setTimeout(() => {
-        router.push("../dashboard"); // 👈 Change this to your desired page
+        if (role == 'student') {
+          router.push('../dashboard/student')
+        } else if (role == 'instructor') {
+          router.push("../dashboard/tutor")
+        } else {
+          console.log('Na wa ooo')
+          return
+        } // 👈 Change this to your desired page
       }, 800); // short delay before redirect for smooth feel
       return () => clearTimeout(timeout);
     }

@@ -25,19 +25,32 @@ export default function CourseStep1({ formData, setFormData }: Props) {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [selectedValue, setSelectedValue] = useState<string[]>([]);
   const courseLevel = formData.course_level;
+
   const handleChangeLevel = (level: string) => {
     setFormData({ ...formData, course_level: level });
     setSelectedValue(level as any);
     setShowDropdown(false);
   };
 
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    localStorage.setItem('COURSE TITLE', formData.course_title)
+  };
+
+  // ✅ Fixed: Handle file upload properly
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setFormData({
+        ...formData,
+        course_image: previewUrl, // For preview
+        courseImageFile: file,    // For actual upload
+      });
+    }
   };
 
   const form: Form[] = [
@@ -80,7 +93,7 @@ export default function CourseStep1({ formData, setFormData }: Props) {
   const levels = ["Beginner", "Intermediate"];
 
   return (
-    <form className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <h1 className="text-textSlightDark-0 font-semibold text-[18px]">Course Information</h1>
       {form.map((data, i) => {
         return (
@@ -105,18 +118,18 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                   name={data.name}
                   value={data.value}
                   onChange={data.onchange}
-                  className="border-none outline-none text-textSlightDark-0 h-[154px] font-[500] resize-none"
+                  className="border-none outline-none text-textSlightDark-0 h-[100px] font-[500] resize-none"
                 />
               ) : data.type === "file" ? (
-                /* FILE UPLOAD FIELD */
+                /* ✅ FIXED: FILE UPLOAD FIELD */
                 <div
                   className={`flex justify-center items-center flex-col gap-2 my-4 h-[120px] border border-dashed border-[#D2D5DA] rounded-md relative overflow-hidden`}
                 >
-                  {!formData[data.name] ? (
+                  {!formData.course_image ? (
                     <>
                       <label
-                        htmlFor={data.name}
-                        className="flex justify-center items-center flex-col w-full h-full absolute top-0 left-0"
+                        htmlFor="course-image"
+                        className="flex justify-center items-center flex-col w-full h-full absolute top-0 left-0 cursor-pointer"
                       >
                         <h1 className="text-nearTextColors-0 text-[14px] font-[500]">
                           Upload thumbnail image
@@ -126,70 +139,45 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                         </p>
                       </label>
                       <input
-                        id={data.name}
+                        id="course-image"
                         type="file"
-                        accept="image/png, image/jpeg"
-                        name={data.name}
+                        accept="image/png, image/jpeg, image/jpg"
                         className="hidden"
-                        onChange={(e: any) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setFormData({
-                                ...formData,
-                                [data.name]: reader.result,
-                              });
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
+                        onChange={handleFileChange}
                       />
                     </>
                   ) : (
                     <div className="relative w-full h-full">
                       <img
-                        src={formData[data.name]}
+                        src={formData.course_image}
                         alt="Thumbnail preview"
                         className="absolute top-0 left-0 w-full h-full object-cover rounded-md"
                       />
                       <div className="flex justify-center items-center gap-2 w-full h-full text-white absolute top-0 left bg-[#0000004D]">
                         <button
                           type="button"
-                          onClick={() =>
-                            setFormData({ ...formData, [data.name]: "" })
-                          }
+                          onClick={() => setFormData({ 
+                            ...formData, 
+                            course_image: "",
+                            courseImageFile: undefined 
+                          })}
                           className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66]"
                         >
                           <MdDelete /> Remove
                         </button>
                         <div>
                           <label
-                            htmlFor={data.name}
-                            className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66]"
+                            htmlFor="course-image-replace"
+                            className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66] cursor-pointer"
                           >
                             <IoIosRefresh /> Retake
                           </label>
                           <input
-                            id={data.name}
+                            id="course-image-replace"
                             type="file"
-                            accept="image/png, image/jpeg"
-                            name={data.name}
+                            accept="image/png, image/jpeg, image/jpg"
                             className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onloadend = () => {
-                                  setFormData({
-                                    ...formData,
-                                    [data.name]: reader.result,
-                                  });
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                            }}
+                            onChange={handleFileChange}
                           />
                         </div>
                       </div>
@@ -200,7 +188,6 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                 <div className="relative w-full">
                   {showDropdown && (
                     <div>
-                      {" "}
                       <DropDowns
                         value={courseLevel}
                         onChange={() => {}}
@@ -220,13 +207,11 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                             </div>
                           );
                         })}
-                      />{" "}
+                      />
                     </div>
                   )}
                   {selectedValue}
                 </div>
-              ) : data.name == "course_level" ? (
-                selectedValue
               ) : (
                 /* TEXT INPUT FIELDS */
                 <input
@@ -248,6 +233,6 @@ export default function CourseStep1({ formData, setFormData }: Props) {
           </div>
         );
       })}
-    </form>
+    </div>
   );
 }

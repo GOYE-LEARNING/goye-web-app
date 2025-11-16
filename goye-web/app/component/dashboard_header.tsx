@@ -4,14 +4,67 @@ import { useEffect, useRef, useState } from "react";
 import { IoChevronDown } from "react-icons/io5";
 import { MdNotifications } from "react-icons/md";
 import DashboardNotification from "./dashboard_notification";
-import pic from "@/public/images/pic2.png";
-import Image from "next/image";
 import { FaBell } from "react-icons/fa";
+import { HiUserCircle } from "react-icons/hi";
+import {motion} from 'framer-motion'
+interface Details {
+  first_name?: string;
+  profile_pic?: string;
+}
 export default function DashboardHeader() {
+  //TO SHOW NOTIFICATION
   const [showNotification, setShowNotification] = useState<boolean>(false);
+  const [details, setDetails] = useState<Details>({
+    first_name: "",
+    profile_pic: "",
+  });
+  //greeting
+  const [getHours, setGetHours] = useState<string>("");
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const [user, setUser] = useState<string>("");
 
   useEffect(() => {
+    const savedUser = localStorage.getItem("first_name");
+    if (savedUser) {
+      setUser(savedUser);
+    }
+    //fetch mere details
+    const fetchSomeDetails = async () => {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+      try {
+        const res = await fetch(`${API_URL}/api/user/profile`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          console.error("Profile error", res.status, err);
+          return;
+        }
+
+        const data = await res.json();
+        const profilePic = data.user?.user_pic;
+        setDetails({
+          profile_pic: profilePic,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchSomeDetails();
+
+    //grettings
+    const hours = new Date().getHours();
+    if (hours < 12) {
+      setGetHours("Good mourning");
+    } else if (hours < 17) {
+      setGetHours("Good afternoon");
+    } else {
+      setGetHours("Good evening");
+    }
+    //click outside
     const handleClickOutside = (e: MouseEvent) => {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) {
         setShowNotification(false);
@@ -39,17 +92,41 @@ export default function DashboardHeader() {
             )}
           </div>
           <div className="h-[40px] w-[1px] bg-[#71748C]/10"></div>
-          <div className="h-[45px] w-[45px] bg-[#71748C]/10 rounded-full"></div>
+          <div className="h-[45px] w-[45px] bg-[#71748C]/10 rounded-full overflow-hidden">
+            {details.profile_pic ? (
+              <img
+                src={details.profile_pic}
+                alt="Profile"
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                {/* Optional: Add a placeholder icon */}
+                <HiUserCircle size={24} color="#666" />
+              </div>
+            )}
+          </div>
           <IoChevronDown />
         </div>
         <div className="md:hidden flex items-center justify-between text-white w-full">
           <div className="flex items-center gap-4">
             <span className="w-[50px] h-[50px] rounded-full border-2 border-white overflow-hidden">
-              <Image src={pic} alt="pic" className="object-cover w-full h-full"/>
+              {details.profile_pic ? (
+                <img
+                  src={details.profile_pic}
+                  alt="Profile"
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                  {/* Optional: Add a placeholder icon */}
+                  <HiUserCircle size={24} color="#666" />
+                </div>
+              )}
             </span>
             <div className="flex flex-col gap-1">
-              <h1 className="text-[12px]">Good Evening</h1>
-              <p className="font-semibold text-[22px]">Pst Rhoda</p>
+              <h1 className="text-[12px]">{getHours}</h1>
+              <p className="font-semibold text-[22px]">Pst {user}</p>
             </div>
           </div>
           <div>

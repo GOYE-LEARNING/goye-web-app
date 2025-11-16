@@ -5,9 +5,7 @@ import Login from "./login";
 import Signin from "./signup";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import ForgotPassword from "./forgot_password";
-import LinkSent from "./link_sent";
-import PasswordReset from "./password_reset";
+
 
 export default function AuthPage() {
   const [showLogin, setShowLogin] = useState<boolean>(true);
@@ -28,7 +26,7 @@ export default function AuthPage() {
         changeTextToLogin={changeContentLogin}
         changeTextToSignin={changeContentSignin}
       />
-      <div className="w-full flex justify-center items-center pt-[128px] md:pt-0">
+      <div className="w-full flex justify-center items-center md:pt-[30px] pt-[128px]">
         <AnimatePresence mode="wait">
           {showLogin && (
             <motion.div

@@ -37,7 +37,7 @@ interface Question {
   id: number;
   quiz_question: string;
   quiz_options: string[];
-  correct_answer: string;
+  correctAnswer: string;
 }
 
 interface Quiz {
@@ -52,7 +52,6 @@ interface Quiz {
 
 export default function DashboardTutorAddQuiz({ removeReview }: Props) {
   const [quiz, setQuiz] = usePersistentState<Quiz[]>("quiz", []);
-  const [formData, setFormData] = useState<Quiz[]>([]);
   const quizForm = [
     { label: "Quiz title", type: "text", name: "quiz_title" },
     { label: "Description", type: "text", name: "quiz_description" },
@@ -94,7 +93,7 @@ export default function DashboardTutorAddQuiz({ removeReview }: Props) {
                   id: Date.now(),
                   quiz_question: "",
                   quiz_options: ["", "", "", ""],
-                  correct_answer: "",
+                  correctAnswer: "",
                 },
               ],
             }
@@ -201,7 +200,7 @@ export default function DashboardTutorAddQuiz({ removeReview }: Props) {
           ? {
               ...quiz,
               quiz_questions: quiz.quiz_questions.map((q) =>
-                q.id === questionId ? { ...q, correct_answer: correct } : q
+                q.id === questionId ? { ...q, correctAnswer: correct } : q
               ),
             }
           : quiz
@@ -352,7 +351,7 @@ export default function DashboardTutorAddQuiz({ removeReview }: Props) {
                                     <input
                                       type="radio"
                                       name={`correct-${q.id}`}
-                                      checked={q.correct_answer === opt}
+                                      checked={q.correctAnswer === opt}
                                       onChange={() =>
                                         handleCorrectAnswer(qz.id, q.id, opt)
                                       }
@@ -367,12 +366,12 @@ export default function DashboardTutorAddQuiz({ removeReview }: Props) {
                                           handleCorrectAnswer(qz.id, q.id, opt)
                                         }
                                         className={`flex-1 flex justify-center items-center border-b border-[#D5D5DD] transition-colors ${
-                                          q.correct_answer === opt
+                                          q.correctAnswer === opt
                                             ? "bg-[#30A46F]"
                                             : "bg-white"
                                         }`}
                                       >
-                                        {q.correct_answer === opt && (
+                                        {q.correctAnswer === opt && (
                                           <FaCheck
                                             className="text-white"
                                             size={10}
@@ -386,14 +385,14 @@ export default function DashboardTutorAddQuiz({ removeReview }: Props) {
                                           handleCorrectAnswer(qz.id, q.id, "")
                                         } // Clear the answer
                                         className={`flex-1 flex justify-center items-center transition-colors ${
-                                          q.correct_answer !== opt &&
-                                          q.correct_answer !== ""
+                                          q.correctAnswer !== opt &&
+                                          q.correctAnswer !== ""
                                             ? "bg-[#DA0E29]"
                                             : "bg-[#6A6A6A0D]"
                                         }`}
                                       >
-                                        {q.correct_answer !== opt &&
-                                          q.correct_answer !== "" && (
+                                        {q.correctAnswer !== opt &&
+                                          q.correctAnswer !== "" && (
                                             <MdCancel
                                               className="text-white"
                                               size={10}

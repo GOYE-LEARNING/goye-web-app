@@ -11,7 +11,7 @@ export default function WelcomeLayout({
   return (
     <>
       <div className="flex justify-center items-center flex-col">
-        <div className="w-[928px] min-h-screen">
+        <div className="md:w-[928px] w-[450px] min-h-screen">
           {" "}
           <AuthWelcomeHeader />
           {children}

@@ -2,24 +2,57 @@
 
 import React, { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
-
-export default function ForgotPassword() {
+import { FaArrowLeft } from "react-icons/fa6";
+import { AnimatePresence, motion } from "framer-motion";
+import LinkSent from "./link_sent";
+interface Props {
+  showLoginPage: () => void;
+}
+export default function ForgotPassword({ showLoginPage }: Props) {
   const [email, setEmail] = useState<string>("");
+  const [showRecoveryPage, setShowRecoveryPage] = useState<boolean>(false)
+  const [showForgotPassword, setShowForgotPassword] = useState<boolean>(true)
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
   };
 
-  const handleSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
-    e.preventDefault;
+  const handleSubmit = async (e: React.ChangeEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+   try {
+     const res = await fetch(`${API_URL}/api/user/forgot-password`, {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify({
+        link: "http://localhost:3000/auth/reset-password",
+        email: email,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      console.error("An error occured")
+    }
+    console.log(data)
+    setShowRecoveryPage(true)
+    setShowForgotPassword(false)
+   } catch (error) {
+    console.error(error)
+   }
+    
   };
 
   return (
     <>
-      <div className="form_container">
+      {showForgotPassword && <div className="form_container">
+        <span className="my-3">
+          <FaArrowLeft />
+        </span>
         <h1 className="form_h1">Forgot Password</h1>
         <p className="form-p">Enter your details below to sign in</p>
-        <form noValidate className="form">
+        <form method="POST" onSubmit={handleSubmit} noValidate className="form">
           <div className="form_label">
             <input
               type="email"
@@ -42,12 +75,13 @@ export default function ForgotPassword() {
             <span className="form_more bg-secondaryColors-0 text-primaryColors-0">
               Back
             </span>
-            <span className="form_more text-plainColors-0 bg-primaryColors-0">
+            <button type="submit" className="form_more text-plainColors-0 bg-primaryColors-0">
               Next <FaArrowRight />
-            </span>
+            </button>
           </div>
         </form>
-      </div>
+      </div>}
+      {showRecoveryPage && <LinkSent />}
     </>
   );
 }

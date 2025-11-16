@@ -41,6 +41,7 @@ interface Lesson {
   lesson_title: string;
   lesson_video: string;
   video_preview?: string | null;
+  videoFile?: File; // ✅ Added for file upload
 }
 
 interface Module {
@@ -55,7 +56,6 @@ interface Module {
 export default function CourseStep2({ formData, setFormData }: Props) {
   const [modules, setModules] = usePersistentState<Module[]>("module", []);
 
-  // --- FORM ARRAYS ---
   const modulesForm = [
     { label: "Module Title", type: "text", name: "module_title" },
     { label: "Description", type: "text", name: "module_description" },
@@ -67,7 +67,6 @@ export default function CourseStep2({ formData, setFormData }: Props) {
     { label: "Lesson Video", type: "file", name: "lesson_video" },
   ];
 
-  // --- MODULE FUNCTIONS ---
   const createModule = () => {
     setModules((prev) => [
       ...prev,
@@ -108,7 +107,6 @@ export default function CourseStep2({ formData, setFormData }: Props) {
     setModules((prev) => prev.filter((m) => m.id !== id));
   };
 
-  // --- LESSON FUNCTIONS ---
   const createLesson = (moduleId: number) => {
     setModules((prev) =>
       prev.map((m) =>
@@ -160,7 +158,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
     );
   };
 
-  // --- VIDEO UPLOAD / REMOVE ---
+  // ✅ FIXED: Handle video upload with file object
   const handleVideoUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
     moduleId: number,
@@ -178,8 +176,9 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                   l.id === lessonId
                     ? {
                         ...l,
-                        lesson_video: file.name,
-                        video_preview: previewURL,
+                        lesson_video: previewURL, // For preview
+                        video_preview: previewURL, // For preview display
+                        videoFile: file,           // For actual upload
                       }
                     : l
                 ),
@@ -198,7 +197,12 @@ export default function CourseStep2({ formData, setFormData }: Props) {
               ...m,
               lessons: m.lessons.map((l) =>
                 l.id === lessonId
-                  ? { ...l, lesson_video: "", video_preview: null }
+                  ? { 
+                      ...l, 
+                      lesson_video: "", 
+                      video_preview: null,
+                      videoFile: undefined 
+                    }
                   : l
               ),
             }
@@ -211,7 +215,6 @@ export default function CourseStep2({ formData, setFormData }: Props) {
     <div>
       <AnimatePresence mode="wait">
         <div key="module">
-          {/* --- HEADER --- */}
           <div className="flex justify-between items-center">
             <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
               Course Structure
@@ -236,7 +239,6 @@ export default function CourseStep2({ formData, setFormData }: Props) {
             <div>
               {modules.map((mod, i) => (
                 <div key={mod.id} className="w-full my-3">
-                  {/* MODULE HEADER */}
                   <div className="w-full flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <span className="h-[20px] w-[20px] bg-boldGreen-0 text-white flex justify-center items-center rounded-[2px]">
@@ -244,7 +246,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                       </span>
                       <h1>Module</h1>
                       <div
-                        className="flex flex-col text-[0.5em]"
+                        className="flex flex-col text-[0.5em] cursor-pointer"
                         onClick={() => moduleShow(mod.id)}
                       >
                         <FaChevronUp />
@@ -268,7 +270,6 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      {/* MODULE FORM */}
                       <div className="my-3 flex flex-col gap-3">
                         {modulesForm.map((form, index) => (
                           <div
@@ -306,7 +307,6 @@ export default function CourseStep2({ formData, setFormData }: Props) {
 
                       <div className="dashboard_hr my-3"></div>
 
-                      {/* LESSONS */}
                       <div className="my-3 w-full">
                         {mod.lessons.map((lesson) => (
                           <div
@@ -368,17 +368,25 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                                           >
                                             <MdDelete /> Remove
                                           </button>
-                                          <button
-                                            onClick={() =>
-                                              handleVideoRemove(
+                                          <label
+                                            htmlFor={`video-replace-${lesson.id}`}
+                                            className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66] cursor-pointer"
+                                          >
+                                            <IoIosRefresh /> Retake
+                                          </label>
+                                          <input
+                                            id={`video-replace-${lesson.id}`}
+                                            type="file"
+                                            accept="video/*"
+                                            className="hidden"
+                                            onChange={(e) =>
+                                              handleVideoUpload(
+                                                e,
                                                 mod.id,
                                                 lesson.id
                                               )
                                             }
-                                            className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66]"
-                                          >
-                                            <IoIosRefresh /> Retake
-                                          </button>
+                                          />
                                         </div>
                                       </div>
                                     )}
@@ -411,13 +419,12 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                         ))}
                       </div>
 
-                      {/* ADD LESSON BUTTON */}
-                      <button
+                      <span
                         onClick={() => createLesson(mod.id)}
                         className="h-[48px] bg-boldShadyColor-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
                       >
                         <BsPlus /> Add Lesson
-                      </button>
+                      </span>
                     </motion.div>
                   )}
 

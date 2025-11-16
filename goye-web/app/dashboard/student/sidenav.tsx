@@ -15,8 +15,8 @@ export default function Sidenav() {
     <>
       <div className="sidenav">
         <Image src={logo} alt="logo" height={100} width={100} className="md:block hidden"/>
-        <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col gap-1 w-full">
-          <div className="md:w-full">
+        <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col gap-1 w-full mt-0 md:mt-[2rem]">
+          <div className="w-full">
             <SidenavComponent
               path="/dashboard/student"
               label="Dashboard"
@@ -29,7 +29,7 @@ export default function Sidenav() {
               }
             />
           </div>
-          <div className="md:w-full">
+          <div className="w-full">
             <SidenavComponent
               path="/dashboard/student/course"
               label="Course"
@@ -42,7 +42,7 @@ export default function Sidenav() {
               }
             />
           </div>
-          <div className="md:w-full">
+          <div className="w-full">
             <SidenavComponent
               path="/dashboard/student/community"
               label="Community"
@@ -55,7 +55,7 @@ export default function Sidenav() {
               }
             />
           </div>
-          <div className="md:w-full">
+          <div className="w-full">
             <SidenavComponent
               path="/dashboard/student/profile"
               label="Profile"
@@ -71,7 +71,7 @@ export default function Sidenav() {
         </nav>
         <div className="bg-[#E2E2E2] h-[1px] w-full absolute left-0 my-5 md:block hidden"></div>
 
-        <div className="mt-10 md:block hidden md:w-full">
+        <div className="mt-10 md:block hidden w-full">
           {" "}
           <SidenavComponent
             path="/"

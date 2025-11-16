@@ -1,4 +1,4 @@
-export default interface Signup {
+export interface Signup {
     firstname?: string
     lastname?: string
     email?: string

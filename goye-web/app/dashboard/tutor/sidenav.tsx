@@ -22,8 +22,8 @@ export default function TutorSidenav() {
           width={100}
           className="md:block hidden"
         />
-        <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col gap-1 w-full">
-          <div>
+        <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col gap-1 w-full mt-0 md:mt-[2rem]">
+          <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/tutor"
               label="Dashboard"
@@ -36,7 +36,7 @@ export default function TutorSidenav() {
               }
             />
           </div>
-          <div>
+          <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/tutor/course"
               label="Course"
@@ -49,7 +49,7 @@ export default function TutorSidenav() {
               }
             />
           </div>
-          <div>
+          <div className="md:w-full hidden md:block">
             <SidenavComponent
               path="/dashboard/tutor/student"
               label="Student"
@@ -62,7 +62,7 @@ export default function TutorSidenav() {
               }
             />
           </div>
-          <div>
+          <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/tutor/community"
               label="Community"
@@ -75,7 +75,7 @@ export default function TutorSidenav() {
               }
             />
           </div>
-          <div>
+          <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/tutor/profile"
               label="Profile"
@@ -89,16 +89,16 @@ export default function TutorSidenav() {
             />
           </div>
         </nav>
-           <div className="bg-[#E2E2E2] h-[1px] w-full absolute left-0 my-5 md:block hidden"></div>
-    
-            <div className="mt-10 md:block hidden md:w-full">
-              {" "}
-              <SidenavComponent
-                path="/"
-                label="Logout"
-                icon={<MdLogout size={25} />}
-              />
-            </div>
+        <div className="bg-[#E2E2E2] h-[1px] w-full absolute left-0 my-5 md:block hidden"></div>
+
+        <div className="mt-10 md:block hidden md:w-full">
+          {" "}
+          <SidenavComponent
+            path="/"
+            label="Logout"
+            icon={<MdLogout size={25} />}
+          />
+        </div>
       </div>
     </>
   );

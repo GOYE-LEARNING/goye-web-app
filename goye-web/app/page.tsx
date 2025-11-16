@@ -12,13 +12,15 @@ import LandingPageNavBar from "./component/landing_page_navbar";
 export default function Home() {
   return (
     <>
-      <LandingPageNavBar />
-      <HeroSection1 />
-      <HeroSection2 />
-      <HeroSection3 />
-      <HeroSection4 />
-      <HeroSection5 />
-      <Footer />
+      <div className="bg-shadyColor-0">
+        <LandingPageNavBar />
+        <HeroSection1 />
+        <HeroSection2 />
+        <HeroSection3 />
+        <HeroSection4 />
+        <HeroSection5 />
+        <Footer />
+      </div>
     </>
   );
 }

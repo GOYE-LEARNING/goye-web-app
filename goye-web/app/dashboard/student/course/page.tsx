@@ -15,7 +15,9 @@ export default function MainContainer() {
   const [saved, setSaved] = useState<boolean>(false);
   const [done, setDone] = useState<boolean>(false);
   const [showCoursePage, setShowCoursePage] = useState<boolean>(true);
-  const [showCourse, setShowCourse] = useState<boolean>(false)
+  const [showCourse, setShowCourse] = useState<boolean>(false);
+  const [search, setSearch] = useState<string>("");
+
   const allFunc = () => {
     setAll(true);
     setEnrolled(false);
@@ -45,33 +47,39 @@ export default function MainContainer() {
   };
 
   const openCourse = () => {
-    setShowCourse(true)
+    setShowCourse(true);
     setShowCoursePage(false);
   };
 
   const backFunction = () => {
-    setShowCourse(false)
+    setShowCourse(false);
     setShowCoursePage(true);
-  }
+  };
   return (
     <>
       {showCoursePage && (
         <div>
           <h1 className="dashboard_h1">Courses</h1>
-          <DashboardSearch placeholder="Search courses" />
+          <DashboardSearch
+            placeholder="Search courses"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
           <DashboardTabSelection
             allFunc={allFunc}
             enrolledFunc={enrolledFunc}
             savedFunc={savedFunc}
             doneFunc={doneFunc}
           />
-          {all && <DashboardCourseAll openCourse={openCourse} />}
+          {all && (
+            <DashboardCourseAll search={search} openCourse={openCourse} />
+          )}
           {enrolled && <DashboardCourseEnrolled />}
           {saved && <DashboardCourseSaved />}
           {done && <DashboardCourseDone />}
         </div>
       )}
-      {showCourse && <DashboardCourseView backFunction={backFunction}/>}
+      {showCourse && <DashboardCourseView backFunction={backFunction} />}
     </>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-
+import React, { useEffect, useRef, useState } from "react";
+import { useTimer } from "use-timer";
 interface OtpInputProps {
   length?: number;
   onComplete?: (otp: string) => void;
@@ -10,6 +10,7 @@ interface OtpInputProps {
 export default function OtpLength({ length = 6, onComplete }: OtpInputProps) {
   const [otp, setOtp] = useState<string[]>(Array(length).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
 
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -36,19 +37,19 @@ export default function OtpLength({ length = 6, onComplete }: OtpInputProps) {
   };
   return (
     <>
-      <div className="w-full flex justify-center items-center flex-col my-8">
-        <div className="flex justify-center items-center gap-3">
+      <div className="w-full  md:my-8 my-4">
+        <div className="flex justify-center items-center gap-3 w-full">
           {otp.map((value, index) => (
             <input
               key={index}
-              ref={(el) => (inputRefs.current[index] = el)}
+              ref={(el) => (inputRefs.current[index] = el as any)}
               type="text"
               inputMode="numeric"
               maxLength={1}
               value={value}
               onChange={(e) => handleChange(e.target.value, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              className={`h-[76.5px] w-[76.5px] border text-center font-bold text-[1.2rem] outline-none`}
+              className={`md:h-[76.5px] h-[50.33px] md:w-[76.5px] w-[50.33px] border text-center font-bold text-[1.2rem] outline-none`}
             />
           ))}
         </div>

@@ -22,30 +22,47 @@ export default function WelcomeAuth() {
     { pic: pic6 },
     { pic: pic7 },
   ];
-      const router = useRouter()
+  const router = useRouter();
   return (
-
     <>
-  
       <div className="flex justify-center items-center flex-col">
         <div className="form_container">
-          <h1 className="form_h1 text-center">
-            Welcome to your new <br /> experience.
-          </h1>
-          <p className="form_p text-center my-7">Grow deeper, walk stronger.</p>
-          <div className="flex justify-center items-center flex-col my-5">
+          <div className="flex justify-center items-center flex-col  md:mt-0 md:my-[1rem] my-[7rem] w-full">
+            <h1 className="md:form_h1 font-semibold text-[40px] text-center">
+              Welcome to your new <br /> experience.
+            </h1>
+            <p className="md:form_p text-[#41415A]  text-center my-7">
+              Grow deeper, walk stronger.
+            </p>
+          </div>
+          <div className=" flex justify-center items-center w-full">
             <div className="w-[390px] h-[1px] bg-[#D9D9D9]"></div>
+          </div>
 
+          <div className="flex justify-center items-center flex-col my-5">
             <div className="w-[80%] flex flex-wrap gap-4 justify-center mt-8">
               {pics.map((pic, i) => (
                 <div
                   key={i}
                   className="bg-secondaryColors-0 h-[74.51px] w-[74.51px] rounded-full flex justify-center items-center overflow-hidden"
-                ><Image src={pic.pic} alt="pics" className="h-[74.51px] w-[74.51px] object-cover"/></div>
+                >
+                  <Image
+                    src={pic.pic}
+                    alt="pics"
+                    className="h-[74.51px] w-[74.51px] object-cover"
+                  />
+                </div>
               ))}
             </div>
           </div>
-          <span className="form_btn " onClick={() => {}}>Continue</span>
+          <span
+            className="form_btn md:mt-0 mt-[4rem]"
+            onClick={() => {
+              router.push("./welcome/auth");
+            }}
+          >
+            Continue
+          </span>
         </div>
       </div>
     </>

@@ -58,7 +58,7 @@ export default function Step1({
   };
 
   return (
-    <div>
+    <div className="w-full">
       <h1 className="form_h1">Tell us more about you.</h1>
       <p className="form-p my-5">Share your contact where you are coming from.</p>
 
@@ -155,7 +155,7 @@ export default function Step1({
           <input
             type="tel"
             name="phone"
-            value={phoneNumber}
+            value={phoneNumber as any}
             onChange={handleChangePhoneNumber}
             placeholder=" "
             className={`form_input peer focus:outline-none`}

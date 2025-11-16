@@ -10,7 +10,6 @@ import Pic from "@/public/images/notfound.png";
 import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
 
-// ✅ Persistent local storage hook
 function usePersistentState<T>(
   key: string,
   defaultValue: T
@@ -41,6 +40,7 @@ interface Document {
   id: number;
   material_document: string;
   document_preview?: string | null;
+  documentFile?: File; // ✅ Added for file upload
 }
 
 interface Material {
@@ -120,6 +120,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
     );
   };
 
+  // ✅ FIXED: Handle document upload with file object
   const handleDocumentUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
     materialId: number,
@@ -137,8 +138,9 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                   doc.id === documentId
                     ? {
                         ...doc,
-                        material_document: file.name,
-                        document_preview: previewURL,
+                        material_document: previewURL, // For preview
+                        document_preview: previewURL,  // For preview display
+                        documentFile: file,           // For actual upload
                       }
                     : doc
                 ),
@@ -157,7 +159,12 @@ export default function CourseStep3({ formData, setFormData }: Props) {
               ...mat,
               material_document: mat.material_document.map((doc) =>
                 doc.id === documentId
-                  ? { ...doc, material_document: "", document_preview: null }
+                  ? { 
+                      ...doc, 
+                      material_document: "", 
+                      document_preview: null,
+                      documentFile: undefined 
+                    }
                   : doc
               ),
             }
@@ -185,7 +192,6 @@ export default function CourseStep3({ formData, setFormData }: Props) {
     <div>
       <AnimatePresence mode="wait">
         <div key="module">
-          {/* HEADER */}
           <div className="flex justify-between items-center">
             <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
               Material
@@ -210,7 +216,6 @@ export default function CourseStep3({ formData, setFormData }: Props) {
             <div>
               {material.map((mat, i) => (
                 <div key={mat.id} className="w-full my-3">
-                  {/* Material Header */}
                   <div className="w-full flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <span className="h-[20px] w-[20px] bg-boldGreen-0 text-white flex justify-center items-center rounded-[2px]">
@@ -242,7 +247,6 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      {/* Material Form */}
                       <div className="my-3 flex flex-col gap-3">
                         {materialForm.map((form, index) => (
                           <div
@@ -274,7 +278,6 @@ export default function CourseStep3({ formData, setFormData }: Props) {
 
                       <div className="dashboard_hr my-3"></div>
 
-                      {/* Material Documents */}
                       <div className="my-3 w-full">
                         {mat.material_document.map((doc) => (
                           <div
@@ -295,7 +298,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                                 <input
                                   id={`document-${doc.id}`}
                                   type="file"
-                                  accept=".pdf,.doc,.docx"
+                                  accept=".pdf,.doc,.docx,.txt"
                                   className="hidden"
                                   onChange={(e) =>
                                     handleDocumentUpload(e, mat.id, doc.id)
@@ -307,6 +310,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                                 <iframe
                                   src={doc.document_preview}
                                   className="object-cover w-full h-full"
+                                  title="Document preview"
                                 ></iframe>
                                 <div className="flex justify-center items-center gap-2 w-full h-full text-white absolute top-0 left bg-[#0000004D]">
                                   <button
@@ -317,14 +321,21 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                                   >
                                     <MdDelete /> Remove
                                   </button>
-                                  <button
-                                    onClick={() =>
-                                      handleRemoveDocument(mat.id, doc.id)
-                                    }
-                                    className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66]"
+                                  <label
+                                    htmlFor={`document-replace-${doc.id}`}
+                                    className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66] cursor-pointer"
                                   >
                                     <IoIosRefresh /> Retake
-                                  </button>
+                                  </label>
+                                  <input
+                                    id={`document-replace-${doc.id}`}
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.txt"
+                                    className="hidden"
+                                    onChange={(e) =>
+                                      handleDocumentUpload(e, mat.id, doc.id)
+                                    }
+                                  />
                                 </div>
                               </div>
                             )}
@@ -338,13 +349,12 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                         ))}
                       </div>
 
-                      {/* Add Document Button */}
-                      <button
+                      <span
                         onClick={() => createDocument(mat.id)}
                         className="h-[48px] bg-boldShadyColor-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
                       >
                         <BsPlus /> Add Document
-                      </button>
+                      </span>
                     </motion.div>
                   )}
 

@@ -5,6 +5,9 @@ import StudentCommunityGroup from "@/app/component/dashboard_student_community_g
 import { useState } from "react";
 import { FaRegClock } from "react-icons/fa";
 import { RiGroupLine } from "react-icons/ri";
+import { MdAdd } from "react-icons/md";
+import DashboardSearch from "@/app/component/dashboard_search";
+import DashboardTutorCreateGroup from "@/app/component/dashboard_tutor_create-group";
 interface Group {
   header: string;
   switch: string;
@@ -17,16 +20,20 @@ interface Group {
 export default function TutorCommunity() {
   const [showCommunityGroup, setShowCommunityGroup] = useState<boolean>(false);
   const [showCommunity, setShowCommunity] = useState<boolean>(true);
-
+  const [search, setSearch] = useState<string>("");
+  const [showGroup, setShowGroup] = useState<boolean>(false);
   const bactToMainPage = () => {
     setShowCommunity(true);
     setShowCommunityGroup(false);
+    setShowGroup(false)
   };
 
-  const showCommunityGroupFunc = () => {
+  const showCreateGroup = () => {
     setShowCommunity(false);
-    setShowCommunityGroup(true);
+    setShowCommunityGroup(false);
+    setShowGroup(true);
   };
+
   const groups: Group[] = [
     {
       header: "Young Adult Fellowship",
@@ -52,8 +59,32 @@ export default function TutorCommunity() {
         {showCommunity && (
           <>
             {" "}
-            <h1 className="dashboard_h1">Community</h1>
-            <SearchCourse placeholder="Search Community" />
+            <div className="flex justify-between items-center">
+              <h1 className="dashboard_h1">Community</h1>
+              <span
+                className="text-primaryColors-0 font-semibold flex items-center gap-2 md:hidden"
+                onClick={showCreateGroup}
+              >
+                <MdAdd /> New Group
+              </span>
+            </div>
+            <div className="flex justify-between items-center gap-4">
+              <div className="md:w-[78%] w-full">
+                <DashboardSearch
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                  }}
+                  placeholder="Search courses..."
+                />
+              </div>
+              <button
+                className="md:flex items-center justify-center gap-2 border border-[#D9D9D9] bg-white h-[36px] md:w-[131px] hidden text-primaryColors-0"
+                onClick={showCreateGroup}
+              >
+                <MdAdd /> New Group
+              </button>
+            </div>
             {groups.map((data, i) => (
               <div
                 className="border border-[#D2D5DA] bg-[#ffffff] py-[20px] px-[16px] flex flex-col gap-1 cursor-pointer"
@@ -102,6 +133,9 @@ export default function TutorCommunity() {
           </div>
         )}
       </div>
+      {showGroup && (
+        <DashboardTutorCreateGroup cancel={bactToMainPage} />
+      )}
     </>
   );
 }
