@@ -12,7 +12,7 @@ import {
   Path,
 } from "tsoa";
 import prisma from "../db.js";
-import { SignupResponse, User } from "../interface/interfaces.js";
+import { User } from "../interface/interfaces.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -27,14 +27,22 @@ export class UserController extends Controller {
   public async CreateUser(
     @Body() body: Omit<User, "id">,
     @Request() req: any
-  ): Promise<SignupResponse> {
+  ): Promise<any> {
     const hashedPassword = await bcrypt.hash(body.password, 10);
-    const data = await prisma.user.create({
+    //To store password in token
+    const user = await prisma.user.create({
       data: { ...body, password: hashedPassword },
     });
 
+    if (!user) {
+      this.setStatus(401);
+      return {
+        messgae: "User already exist",
+      };
+    }
+
     const updateUser = await prisma.user.update({
-      where: { id: data.id },
+      where: { id: user.id },
       data: {
         isOnline: true,
         lastActive: new Date(),
@@ -44,28 +52,35 @@ export class UserController extends Controller {
     const token = jwt.sign(
       {
         id: updateUser.id,
+        full_name: `${updateUser.first_name} ${updateUser.last_name}`,
         email: updateUser.email_address,
         role: updateUser.role,
+        password: body.password,
         updateStatus: updateUser.isOnline,
       },
-      (process.env.bearerAuth_SECRET as string) || "secret-key",
-      { expiresIn: "1h" }
+      (process.env.BEARERAUTH_SECRET as string) || "secret-key",
+      { expiresIn: "7d" }
     );
 
     if (req.res) {
       req.res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // HTTPS in production
-        sameSite: "lax",
-        maxAge: 1 * 60 * 60 * 1000, // 1hr days
+        secure: true, // because you're on localhost
+        sameSite: "none", // must be none for cross-port cookie sharing
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
     }
 
     this.setStatus(201);
     return {
       message: "Signup successfull",
-      data,
       token,
+      user: {
+        id: updateUser.id,
+        first_name: updateUser.first_name,
+        last_name: updateUser.last_name,
+        email_address: updateUser.email_address,
+      },
     };
   }
 
@@ -92,12 +107,14 @@ export class UserController extends Controller {
     const token = jwt.sign(
       {
         id: updateUser.id,
+        full_name: `${updateUser.first_name} ${updateUser.last_name}`,
         email: updateUser.email_address,
         role: updateUser.role,
+        password: creditials.password,
         updateStatus: updateUser.isOnline,
       },
-      (process.env.bearerAuth_SECRET as string) || "secret-key",
-      { expiresIn: "1h" }
+      (process.env.BEARERAUTH_SECRET! as string) || "secret-key",
+      { expiresIn: "7d" }
     );
     if (!user) {
       this.setStatus(404);
@@ -121,15 +138,24 @@ export class UserController extends Controller {
     if (req.res) {
       req.res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // HTTPS in production
-        sameSite: "lax",
-        maxAge: 1 * 60 * 60 * 1000, // 1hr days
+        secure: true, // because you're on localhost
+        sameSite: "none", // must be none for cross-port cookie sharing
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
     }
 
     this.setStatus(200);
     return {
-      data: { message: "Login successfull", token },
+      data: {
+        message: "Login successfull",
+        token,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          role: user.role,
+        },
+      },
     };
   }
 
@@ -137,7 +163,7 @@ export class UserController extends Controller {
   @Post("/sendOtp")
   public async SendOtp(@Body() body: { email: string }): Promise<any> {
     const otp = crypto.randomInt(100000, 999999).toString();
-    const expires = new Date(Date.now() + 5 * 60 * 1000);
+    const expires = new Date(Date.now() + 5 * 60 * 1000); // expires in 5min
 
     const newOtp = await prisma.otp.create({
       data: {
@@ -163,6 +189,7 @@ export class UserController extends Controller {
     return {
       message: "Otp sent successfully",
       sessionToken,
+      otp,
       email: body.email,
     };
   }
@@ -190,12 +217,13 @@ export class UserController extends Controller {
     });
 
     if (!verifyOtp) {
+      this.setStatus(400);
       return {
         message: "Oops otp not verified.",
       };
     } else if (verifyOtp.expiresIn < new Date()) {
       return {
-        message: "Otp has expited",
+        message: "Otp has expired",
       };
     }
 
@@ -210,7 +238,6 @@ export class UserController extends Controller {
     };
   }
 
-  //Uploadind of profile picture
   @Security("bearerAuth")
   @Post("/upload-profile-picture")
   public async UploadPicture(
@@ -224,6 +251,8 @@ export class UserController extends Controller {
   ): Promise<any> {
     const userId = req.user?.id;
     const fileBuffer = Buffer.from(body.file, "base64");
+
+    // 1. Upload to Firebase
     const { url, error } = await MediaService.uploadUserAvatar(
       userId,
       fileBuffer,
@@ -232,53 +261,91 @@ export class UserController extends Controller {
     );
 
     if (error) {
-      this.setStatus(500); // Server error
+      this.setStatus(500);
       return { message: "Upload failed", error };
-    }
+    }  
 
-    const updatedUser = await prisma.user.update({
+    try {
+      // 2. Try to update user with Prisma
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { user_pic: url },
+        select: { first_name: true, user_pic: true },
+      });
+
+      this.setStatus(200);
+      return {
+        message: "Avatar uploaded successfully",
+        user: updatedUser,
+      };
+    } catch (error: any) {
+      // 3. If RLS error, use raw SQL fallback
+      if (error.message.includes("row-level security")) {
+        console.log("RLS detected, using raw SQL fallback");
+
+        try {
+          await prisma.$executeRaw`UPDATE "User" SET user_pic = ${url} WHERE id = ${userId}`;
+
+          this.setStatus(200);
+          return {
+            message: "Avatar uploaded successfully (used fallback)",
+            user: { user_pic: url },
+          };
+        } catch (rawError) {
+          this.setStatus(500);
+          return {
+            message: "Failed to update user profile",
+            error: rawError.message,
+          };
+        }
+      }
+
+      // 4. Handle other errors
+      this.setStatus(500);
+      return { message: "Failed to update user profile", error: error.message };
+    }
+  }
+
+  @Security("bearerAuth")
+  @Get("/get-user-password")
+  public async GetPassword(@Request() req: any): Promise<any> {
+    const userId = req.user?.id;
+    const password = req.user?.password;
+    const user = await prisma.user.findUnique({
       where: { id: userId },
-      data: {
-        user_pic: url,
-      },
       select: {
-        first_name: true,
-        user_pic: true,
+        id: true,
       },
     });
 
     this.setStatus(200);
     return {
-      message: "Avatar uploaded successfully",
-      user: updatedUser,
+      message: "Password fetched successfully",
+      user,
+      password,
     };
   }
 
   @Security("bearerAuth")
-  @Put("/update-password/{id}")
+  @Put("/update-password")
   public async UpdatePassword(
-    @Path() id: string,
     @Request() req: any,
     @Body() body: { newPassword: string }
   ): Promise<any> {
-    const userId = req.user?.Id
-    if (userId !== id) {
-      return {
-        message: "User must update his own password."
-      }
-    }
-    const hashedPassword = await bcrypt.hash(body.newPassword, 10)
-      await prisma.user.update({
-      where: {id},
+    const userId = req.user?.id;
+
+    const hashedPassword = await bcrypt.hash(body.newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
       data: {
         password: hashedPassword,
-        updatedAt: new Date()
-      }
-    })
+        updatedAt: new Date(),
+      },
+    });
 
     this.setStatus(200);
     return {
-      message: "Password updated successfully"
+      message: "Password updated successfully",
     };
   }
 
@@ -307,6 +374,7 @@ export class UserController extends Controller {
     });
 
     if (!getUser) {
+      this.setStatus(404);
       return {
         message: "User not found",
       };
@@ -320,19 +388,41 @@ export class UserController extends Controller {
 
   //update User
   @Security("bearerAuth")
-  @Put("update-user/{id}")
+  @Put("/update-user")
   public async UpdateUser(
-    @Path() id: string,
-    @Body() data: Partial<User>
-  ): Promise<SignupResponse> {
+    @Request() req: any,
+    @Body()
+    data: {
+      first_name: string;
+      last_name: string;
+      country: string;
+      state: string;
+      phone_number: string;
+    }
+  ): Promise<any> {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      this.setStatus(404);
+      return {
+        message: "User not found",
+      };
+    }
+
     const user = await prisma.user.update({
-      where: { id: id },
-      data: { ...data },
+      where: { id: userId },
+      data: {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        country: data.country,
+        state: data.state,
+        phone_number: data.phone_number,
+      },
     });
 
     this.setStatus(201);
     return {
-      message: "User is updated",
+      message: "User is updated succefully",
       data: user,
     };
   }
@@ -449,18 +539,19 @@ export class UserController extends Controller {
   @Security("bearerAuth")
   @Get("/profile")
   public async GetProfile(@Request() req: any) {
-    const userId = (req as any).user?.id;
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const userId = req.user?.id;
 
     if (!userId) {
       this.setStatus(401);
-      return { message: "Unauthorized" };
+      return { message: "Unauthorized", status: 401 };
     }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     this.setStatus(200);
     return {
       message: "Profile fetched succfully",
-      user: user,
+      user,
     };
   }
 
@@ -482,7 +573,7 @@ export class UserController extends Controller {
     await SendEmail(
       checkEmail.email_address,
       "Forgot Password Link",
-      "http://blahblah.com"
+      body.link
     );
     this.setStatus(200);
     return {

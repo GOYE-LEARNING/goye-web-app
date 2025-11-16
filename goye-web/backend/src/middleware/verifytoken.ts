@@ -1,39 +1,59 @@
+// ...existing code...
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import prisma from "../db.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 export async function VerifyToken(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(404).json({ message: "No token found" });
-  }
-
-  const token = req.cookies.token || authHeader.split(" ")[1];
-
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "secret-key"
-    ) as any;
+    console.log("=== VERIFY TOKEN DEBUG ===");
+    console.log("Request URL:", req.originalUrl);
+    console.log("Request Headers:", req.headers);
+    console.log("Cookies:", req.cookies);
+
+    const tokenFromCookie = req.cookies?.token;
+    const tokenFromHeader = req.headers.authorization?.split(" ")[1];
+    const token = tokenFromCookie || tokenFromHeader;
+
+    console.log("Token from cookie:", tokenFromCookie);
+    console.log("Token from header:", tokenFromHeader);
+    console.log("Token used:", token);
+
+    if (!token) {
+      console.warn("❌ No token found");
+      return res.status(401).json({ message: "No token found" });
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, process.env.BEARERAUTH_SECRET!);
+      console.log("✅ Token decoded:", decoded);
+    } catch (err) {
+      console.error("❌ Token verification failed:", err);
+      return res.status(403).json({ message: "Invalid or expired token" });
+    }
+
     req.user = decoded;
 
+    // OPTIONAL: mark user online
     if (decoded.id) {
-      await prisma.user
+      prisma.user
         .update({
           where: { id: decoded.id },
-          data: {
-            isOnline: true,
-            lastActive: new Date(),
-          },
+          data: { isOnline: true, lastActive: new Date() },
         })
-        .catch((err) => console.error(err));
+        .then(() => console.log(`✅ User ${decoded.id} marked online`))
+        .catch((err) => console.error("⚠️ Failed to mark user online:", err));
     }
-    next();
-  } catch (error) {
-    return res.status(403).json({ message: "Invalid or expired token" });
+
+    return next();
+  } catch (err) {
+    console.error("Unexpected error in VerifyToken:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 }

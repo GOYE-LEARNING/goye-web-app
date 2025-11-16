@@ -1,4 +1,4 @@
-import { supabase, BUCKETS } from "../utils/supabase.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export class MediaService {
   static async uploadUserAvatar(
@@ -8,31 +8,30 @@ export class MediaService {
     mimeType: string
   ): Promise<{ url: string; error: string | null }> {
     try {
-      const fileExt = fileName.split(".").pop();
-      const filePath = `${userId}/avatar-${Date.now()}.${fileExt}`;
+      console.log("📤 Uploading to Cloudinary...");
 
-      const { data, error } = await supabase.storage
-        .from(BUCKETS.USER_AVATARS)
-        .upload(filePath, file, {
-          contentType: mimeType,
-          upsert: true,
-        });
+      // Convert buffer to base64
+      const base64File = `data:${mimeType};base64,${file.toString("base64")}`;
 
-      if (error) {
-        return { url: "", error: error.message };
-      }
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(base64File, {
+        folder: "user_avatars",
+        public_id: `avatar_${userId}_${Date.now()}`,
+        overwrite: true,
+        resource_type: "image", // Automatically detect image/video
+        chunk_size: 6000000, // 6MB chunks for large files
+        timeout: 60000, // 60 second timeout
+        quality: "auto", // Optimize quality vs size
+      });
 
-      const { data: { publicUrl } } = supabase.storage
-        .from(BUCKETS.USER_AVATARS)
-        .getPublicUrl(filePath);
-      
-      return { url: publicUrl, error: null };
+      console.log("✅ Upload successful:", result.secure_url);
+      return { url: result.secure_url, error: null };
     } catch (error: any) {
+      console.error("❌ Cloudinary upload error:", error);
       return { url: "", error: error.message };
     }
   }
 
-  // Upload course image
   static async uploadCourseImage(
     courseId: string,
     file: Buffer,
@@ -40,31 +39,24 @@ export class MediaService {
     mimeType: string
   ): Promise<{ url: string; error: string | null }> {
     try {
-      const fileExt = fileName.split('.').pop();
-      const filePath = `courses/${courseId}/images/${Date.now()}.${fileExt}`;
+      const base64File = `data:${mimeType};base64,${file.toString("base64")}`;
 
-      const { data, error } = await supabase.storage
-        .from(BUCKETS.COURSE_IMAGES)
-        .upload(filePath, file, {
-          contentType: mimeType,
-          upsert: true
-        });
+      const result = await cloudinary.uploader.upload(base64File, {
+        folder: "course_images",
+        public_id: `course_${courseId}_${Date.now()}`,
+        overwrite: true,
+        resource_type: "image", // Automatically detect image/video
+        chunk_size: 6000000, // 6MB chunks for large files
+        timeout: 60000, // 60 second timeout
+        quality: "auto",
+      });
 
-      if (error) {
-        return { url: '', error: error.message };
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(BUCKETS.COURSE_IMAGES)
-        .getPublicUrl(filePath);
-
-      return { url: publicUrl, error: null };
+      return { url: result.secure_url, error: null };
     } catch (error: any) {
-      return { url: '', error: error.message };
+      return { url: "", error: error.message };
     }
   }
 
-  // Upload lesson video
   static async uploadLessonVideo(
     courseId: string,
     moduleId: string,
@@ -73,31 +65,24 @@ export class MediaService {
     mimeType: string
   ): Promise<{ url: string; error: string | null }> {
     try {
-      const fileExt = fileName.split('.').pop();
-      const filePath = `courses/${courseId}/modules/${moduleId}/videos/${Date.now()}.${fileExt}`;
+      const base64File = `data:${mimeType};base64,${file.toString("base64")}`;
 
-      const { data, error } = await supabase.storage
-        .from(BUCKETS.LESSON_VIDEOS)
-        .upload(filePath, file, {
-          contentType: mimeType,
-          upsert: false
-        });
+      const result = await cloudinary.uploader.upload(base64File, {
+        folder: `lesson_videos/${courseId}/${moduleId}`,
+        public_id: `video_${Date.now()}`,
+        overwrite: true,
+        resource_type: "video", // Automatically detect image/video
+        chunk_size: 6000000, // 6MB chunks for large files
+        timeout: 60000, // 60 second timeout
+        quality: "auto", // 6MB chunks for large videos
+      });
 
-      if (error) {
-        return { url: '', error: error.message };
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(BUCKETS.LESSON_VIDEOS)
-        .getPublicUrl(filePath);
-
-      return { url: publicUrl, error: null };
+      return { url: result.secure_url, error: null };
     } catch (error: any) {
-      return { url: '', error: error.message };
+      return { url: "", error: error.message };
     }
   }
 
-  // Upload course material document
   static async uploadCourseMaterial(
     courseId: string,
     file: Buffer,
@@ -105,39 +90,26 @@ export class MediaService {
     mimeType: string
   ): Promise<{ url: string; error: string | null }> {
     try {
-      const fileExt = fileName.split('.').pop();
-      const filePath = `courses/${courseId}/materials/${Date.now()}-${fileName}`;
+      const base64File = `data:${mimeType};base64,${file.toString("base64")}`;
 
-      const { data, error } = await supabase.storage
-        .from(BUCKETS.COURSE_MATERIALS)
-        .upload(filePath, file, {
-          contentType: mimeType,
-          upsert: false
-        });
+      const result = await cloudinary.uploader.upload(base64File, {
+        folder: "course_materials",
+        public_id: `material_${courseId}_${Date.now()}_${fileName}`,
+        resource_type: "auto", // Handles PDFs, docs, etc.
+      });
 
-      if (error) {
-        return { url: '', error: error.message };
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(BUCKETS.COURSE_MATERIALS)
-        .getPublicUrl(filePath);
-
-      return { url: publicUrl, error: null };
+      return { url: result.secure_url, error: null };
     } catch (error: any) {
-      return { url: '', error: error.message };
+      return { url: "", error: error.message };
     }
   }
 
-  // Delete file
-  static async deleteFile(bucket: string, filePath: string): Promise<boolean> {
+  static async deleteFile(publicId: string): Promise<boolean> {
     try {
-      const { error } = await supabase.storage
-        .from(bucket)
-        .remove([filePath]);
-
-      return !error;
+      const result = await cloudinary.uploader.destroy(publicId);
+      return result.result === "ok";
     } catch (error) {
+      console.error("Delete error:", error);
       return false;
     }
   }
