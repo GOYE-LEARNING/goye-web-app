@@ -31,8 +31,8 @@ export class CourseController extends Controller {
     @Body() body: CreateCourseDTO,
     @Request() req: any
   ): Promise<CourseResponse> {
-    const tutorName = req.user?.full_name
-    const tutorId = req.user?.id
+    const tutorName = req.user?.full_name;
+    const tutorId = req.user?.id;
     try {
       const course = await prisma.course.create({
         data: {
@@ -220,7 +220,11 @@ export class CourseController extends Controller {
   @Get("/get-all-courses")
   public async GetAllCourses(): Promise<CourseResponse> {
     try {
-      const getAllCourses = await prisma.course.findMany();
+      const getAllCourses = await prisma.course.findMany({
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
       this.setStatus(200);
       return {
         message: "Courses fetched successfully",
@@ -234,6 +238,58 @@ export class CourseController extends Controller {
         message: "Error fetching courses: " + error.message,
         data: null,
       };
+    }
+  }
+
+  @Security("bearerAuth")
+  @Get("/get-courses-by-tutor")
+  public async GetUserCourse(@Request() req: any) {
+    const userId = req.user?.id;
+    const tutor = req.user?.role;
+    try {
+      if (!userId) {
+        this.setStatus(401);
+        return {
+          message: "User unauthorized",
+        };
+      } else if (tutor !== "instructor") {
+        this.setStatus(401);
+        return {
+          message: "User must be a tutor to fetch his courses",
+        };
+      }
+
+      const userCourses = await prisma.user.findMany({
+        where: { id: userId },
+        select: {
+          Courses: {
+            include: {
+              enrollment: true,
+              material: true,
+              module: true,
+              objectives: true,
+              quiz: {
+                include: {
+                  questions: true,
+                },
+              },
+            },
+
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
+        },
+      });
+
+      this.setStatus(200);
+      return {
+        message: "Courses fetched successfully",
+        data: userCourses,
+      };
+    } catch (error) {
+      this.setStatus(500);
+      console.error(error);
     }
   }
 
@@ -332,7 +388,6 @@ export class CourseController extends Controller {
   }
 
   // FILE UPLOAD ENDPOINTS
-
   @Post("/upload-course-image/{courseId}")
   @Security("bearerAuth")
   public async UploadCourseImage(

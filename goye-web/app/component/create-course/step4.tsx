@@ -8,7 +8,7 @@ import Pic from "@/public/images/notfound.png";
 import { FaCheck, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { IoTrashOutline } from "react-icons/io5";
 import { MdCancel } from "react-icons/md";
-import { SiPandas } from "react-icons/si";
+
 function usePersistentState<T>(
   key: string,
   defaultValue: T
@@ -29,6 +29,7 @@ function usePersistentState<T>(
 
   return [state, setState];
 }
+
 interface Props {
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
@@ -61,11 +62,9 @@ export default function CourseStep4({ formData, setFormData }: Props) {
     { label: "Passing Score (%)", type: "number", name: "quiz_passing_score" },
   ];
 
-  
-    useEffect(() => {
-      setFormData((prev: any) => ({...prev, quiz: quiz}))
-    }, [quiz])
-  
+  useEffect(() => {
+    setFormData((prev: any) => ({...prev, quiz: quiz}));
+  }, [quiz]);
 
   // ✅ Create new quiz
   const createQuiz = () => {
@@ -303,6 +302,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                                   name={form.name}
                                   value={qz[form.name as keyof Quiz] as string}
                                   onChange={(e) => handleChangeQuiz(e, qz.id)}
+                                  placeholder={`${form.name == 'quiz_duration' ? '(e.g 40)' : ''}`}
                                   className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px]"
                                 />
                               )}

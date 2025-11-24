@@ -5,19 +5,26 @@ import React, { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import ForgotPassword from "./forgot_password";
+import Message from "../component/message";
+import { FaCheck } from "react-icons/fa6";
+
 interface formData {
   email: string;
   password: string;
 }
+
 export default function Login() {
   const router = useRouter();
   const [formData, setFormData] = useState<formData>({
     email: "",
     password: "",
   });
-  const [showForgotPasswordPage, setForgotPassowrdPage] =
-    useState<boolean>(false);
+  const [showMessage, setShowMessage] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>("");
+  const [error, setError] = useState<boolean>(false);
+  const [showForgotPasswordPage, setForgotPassowrdPage] = useState<boolean>(false);
   const [showLoginPage, setShowLoginPage] = useState<boolean>(true);
+  
   const showForgotPage = () => {
     setForgotPassowrdPage(true);
     setShowLoginPage(false);
@@ -27,16 +34,25 @@ export default function Login() {
     setForgotPassowrdPage(false);
     setShowLoginPage(true);
   };
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // ✅ Reset message state before new submission
+    setShowMessage(false);
+    setError(false);
+    setMessage("");
+    
     try {
       const res = await fetch(`${API_URL}/api/user/login`, {
         method: "POST",
@@ -49,24 +65,29 @@ export default function Login() {
       });
 
       const data = await res.json();
+      setMessage(data.message);
 
       if (!res.ok) {
-        console.log("An error occured");
+        setError(true);
+        setShowMessage(true);
+        return;
       }
 
-      //To display the data
-      console.log(data);
-      //To store firstname
       localStorage.setItem("first_name", `${data.data.user.first_name}`);
-      localStorage.removeItem("token")
-      //To direct to loading page
-      router.push("../loading");
-      //To store role
+      localStorage.removeItem("token");
       localStorage.setItem("role", data.data.user.role);
+      
       setFormData({ email: "", password: "" });
+      
+      // Redirect to loading page
+      router.push("../loading");
+      
     } catch (error) {
-      console.error(error);
+      setError(true);
+      setMessage("Network error: Unable to connect to server");
+      setShowMessage(true);
     }
+    // ✅ REMOVED: finally block that was causing the issue
   };
 
   const loginComponent = [
@@ -91,6 +112,14 @@ export default function Login() {
 
   return (
     <>
+      {showMessage && (
+        <Message
+          icon={error ? <span>&times;</span> : <FaCheck color="white" />}
+          color={error ? "#DA0E29" : "#007E50"}
+          message={message}
+          width={100}
+        />
+      )}
       {showLoginPage && (
         <div className="form_container">
           <h1 className="form_h1">Login</h1>
@@ -114,7 +143,7 @@ export default function Login() {
                 />
                 <label
                   htmlFor={form.name}
-                  className={`absolute  left-[12px] label peer-focus:text-[14px] peer-focus:top-[2px] transition-all duration-300 ease-in-out md:peer-placeholder-shown:top-[18px] peer-placeholder-shown:top-[19.8px] peer-placeholder-shown:text-[16px] ${
+                  className={`absolute left-[12px] label peer-focus:text-[14px] peer-focus:top-[2px] transition-all duration-300 ease-in-out md:peer-placeholder-shown:top-[18px] peer-placeholder-shown:top-[19.8px] peer-placeholder-shown:text-[16px] ${
                     form.value
                       ? "top-[2px] text-[14px]"
                       : "top-[15px] text-[16px]"

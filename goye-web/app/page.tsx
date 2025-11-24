@@ -12,7 +12,7 @@ import LandingPageNavBar from "./component/landing_page_navbar";
 export default function Home() {
   return (
     <>
-      <div className="bg-shadyColor-0">
+      <div className="bg-shadyColor-0 overflow-x-hidden">
         <LandingPageNavBar />
         <HeroSection1 />
         <HeroSection2 />

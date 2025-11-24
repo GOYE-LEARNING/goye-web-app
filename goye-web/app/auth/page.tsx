@@ -35,7 +35,7 @@ export default function AuthPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.3, ease: "easeIn" }}
-              className="w-[360px] md:w-auto"
+              className="w-[300px] md:w-auto"
             >
               <Login />
             </motion.div>
@@ -47,7 +47,7 @@ export default function AuthPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.3, ease: "easeIn" }}
-              className="w-[360px] md:w-auto"
+              className="w-[300px] md:w-auto"
             >
               <Signin />
             </motion.div>

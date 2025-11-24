@@ -22,9 +22,9 @@ export default function Footer() {
             </div>
           </div>
           <div className="h-[1px] w-full bg-[#42433E] mt-[40px] mb-[60px]"></div>
-          <div className="flex justify-between items-center">
+          <div className="flex md:justify-between text-center md:text-left items-center md:flex-row flex-col">
             <Image src={pic1} height={80} width={80} alt="logo"/>
-            <p className="text-[14px] text-white    ">© 2025 Disciple Training School. All Right Reserved</p>
+            <p className="text-[14px] text-white">© 2025 Disciple Training School. All Right Reserved</p>
           </div>
         </div>
       </div>

@@ -9,23 +9,23 @@ import pic5 from '@/public/images/bigframe.png'
 export default function HeroSection1() {
   return (
     <div className="px-[160px] md:pt-[100px] pt-[60px] flex justify-center items-center flex-col">
-      <div className="flex justify-center items-center md:gap-5 gap-9 flex-col">
+      <div className="flex justify-center items-center md:gap-5 gap-9 flex-col md:w-full w-[300px]">
         <h1 className="font-medium text-[56px] text-center">Grow. Teach. Multiply</h1>
         <p className="md:w-[70%] w-[100%] text-center text-textSlightDark-0 md:text-[20px] text-[23px]">
           A self-learning discipleship platform built for both students seeking
           growth and tutors guiding transformation.
         </p>
-        <div className="flex items-center gap-3">
-          <button className="nav_btn text-primaryColors-0 bg-boldShadyColor-0 md:w-[171px] w-[190px] md:text-[14px] text-[18px]">
+        <div className="flex items-center gap-3 md:mb-0 mb-5">
+          <button className="nav_btn text-primaryColors-0 bg-boldShadyColor-0 md:w-[171px] w-[130px] md:text-[14px] text-[18px]">
             Start Teaching
           </button>
-          <button className="nav_btn md:w-[171px] w-[190px] bg-primaryColors-0 text-white md:text-[14px] text-[18px]">
+          <button className="nav_btn md:w-[171px] w-[130px] bg-primaryColors-0 text-white md:text-[14px] text-[18px]">
             Start Learning
           </button>
         </div>
       </div>
 
-      <div className="py-[80px]">
+      <div className="py-[80px] hidden md:block">
         <div className="flex items-center">
           <div className="bg-gray-100 h-[312.88px] w-[235.08999633789062px] rounded-[8px] mr-[-130px] overflow-hidden pr-[5rem]">
             <Image src={pic1} alt="pic1" className="w-full h-full object-cover" />

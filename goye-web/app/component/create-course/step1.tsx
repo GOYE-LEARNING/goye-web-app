@@ -9,6 +9,7 @@ import { FaCheck, FaChevronDown } from "react-icons/fa";
 interface Props {
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
+  uploadCourseImage?: (file: File, courseId: string) => Promise<string>; // Add this prop
 }
 
 interface Form {
@@ -21,14 +22,19 @@ interface Form {
   ) => void;
 }
 
-export default function CourseStep1({ formData, setFormData }: Props) {
+export default function CourseStep1({
+  formData,
+  setFormData,
+  uploadCourseImage,
+}: Props) {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [selectedValue, setSelectedValue] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false);
   const courseLevel = formData.course_level;
 
   const handleChangeLevel = (level: string) => {
     setFormData({ ...formData, course_level: level });
-    setSelectedValue(level as any);
+    setSelectedValue([level]);
     setShowDropdown(false);
   };
 
@@ -39,18 +45,56 @@ export default function CourseStep1({ formData, setFormData }: Props) {
     setFormData({ ...formData, [name]: value });
   };
 
-  // ✅ Fixed: Handle file upload properly
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ✅ IMPROVED: Handle file upload with immediate upload option
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Create preview URL
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+
+      // Create preview URL for immediate UI feedback
       const previewUrl = URL.createObjectURL(file);
+
+      // Update form with preview immediately
       setFormData({
         ...formData,
-        course_image: previewUrl, // For preview
-        courseImageFile: file,    // For actual upload
+        course_image: previewUrl,
+        courseImageFile: file,
       });
+
+      if (formData.courseId && uploadCourseImage) {
+        const imageUrl = await uploadCourseImage(file, formData.courseId);
+        setFormData({
+          ...formData,
+          course_image: imageUrl, // Replace with actual URL
+          courseImageFile: undefined, // Clear the file since it's uploaded
+        });
+      }
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      // Optionally show error message to user
+      setFormData({
+        ...formData,
+        course_image: "",
+        courseImageFile: undefined,
+      });
+    } finally {
+      setUploadingImage(false);
     }
+  };
+
+  const removeImage = () => {
+    // Revoke the object URL to prevent memory leaks
+    if (formData.course_image && formData.course_image.startsWith("blob:")) {
+      URL.revokeObjectURL(formData.course_image);
+    }
+
+    setFormData({
+      ...formData,
+      course_image: "",
+      courseImageFile: undefined,
+    });
   };
 
   const form: Form[] = [
@@ -94,7 +138,9 @@ export default function CourseStep1({ formData, setFormData }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-textSlightDark-0 font-semibold text-[18px]">Course Information</h1>
+      <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
+        Course Information
+      </h1>
       {form.map((data, i) => {
         return (
           <div
@@ -107,7 +153,11 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                 : ""
             }`}
           >
-            <div className={`flex flex-col w-full ${data.name == 'course_level' ? 'h-[48px]' : ''}`}>
+            <div
+              className={`flex flex-col w-full ${
+                data.name == "course_level" ? "h-[48px]" : ""
+              }`}
+            >
               <label className="text-textGrey-0 text-[12px]">
                 {data.label}
               </label>
@@ -121,22 +171,37 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                   className="border-none outline-none text-textSlightDark-0 h-[100px] font-[500] resize-none"
                 />
               ) : data.type === "file" ? (
-                /* ✅ FIXED: FILE UPLOAD FIELD */
+                /* ✅ IMPROVED: FILE UPLOAD FIELD */
                 <div
-                  className={`flex justify-center items-center flex-col gap-2 my-4 h-[120px] border border-dashed border-[#D2D5DA] rounded-md relative overflow-hidden`}
+                  className={`flex justify-center items-center flex-col gap-2 my-4 h-[120px] border border-dashed border-[#D2D5DA] rounded-md relative overflow-hidden ${
+                    uploadingImage ? "opacity-50" : ""
+                  }`}
                 >
                   {!formData.course_image ? (
                     <>
                       <label
                         htmlFor="course-image"
-                        className="flex justify-center items-center flex-col w-full h-full absolute top-0 left-0 cursor-pointer"
+                        className={`flex justify-center items-center flex-col w-full h-full absolute top-0 left-0 cursor-pointer ${
+                          uploadingImage ? "pointer-events-none" : ""
+                        }`}
                       >
-                        <h1 className="text-nearTextColors-0 text-[14px] font-[500]">
-                          Upload thumbnail image
-                        </h1>
-                        <p className="text-textGrey-0 text-[12px]">
-                          Supports JPEG or PNG
-                        </p>
+                        {uploadingImage ? (
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primaryColors-0 mx-auto mb-2"></div>
+                            <p className="text-textGrey-0 text-[12px]">
+                              Uploading...
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            <h1 className="text-nearTextColors-0 text-[14px] font-[500]">
+                              Upload thumbnail image
+                            </h1>
+                            <p className="text-textGrey-0 text-[12px]">
+                              Supports JPEG or PNG
+                            </p>
+                          </>
+                        )}
                       </label>
                       <input
                         id="course-image"
@@ -144,6 +209,7 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                         accept="image/png, image/jpeg, image/jpg"
                         className="hidden"
                         onChange={handleFileChange}
+                        disabled={uploadingImage}
                       />
                     </>
                   ) : (
@@ -153,24 +219,25 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                         alt="Thumbnail preview"
                         className="absolute top-0 left-0 w-full h-full object-cover rounded-md"
                       />
-                      <div className="flex justify-center items-center gap-2 w-full h-full text-white absolute top-0 left bg-[#0000004D]">
+                      <div className="flex justify-center items-center gap-2 w-full h-full text-white absolute top-0 left-0 bg-[#0000004D]">
                         <button
                           type="button"
-                          onClick={() => setFormData({ 
-                            ...formData, 
-                            course_image: "",
-                            courseImageFile: undefined 
-                          })}
-                          className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66]"
+                          onClick={removeImage}
+                          className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66] hover:bg-[#FFFFFF99] transition-colors"
+                          disabled={uploadingImage}
                         >
                           <MdDelete /> Remove
                         </button>
                         <div>
                           <label
                             htmlFor="course-image-replace"
-                            className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66] cursor-pointer"
+                            className={`h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66] hover:bg-[#FFFFFF99] transition-colors cursor-pointer ${
+                              uploadingImage
+                                ? "pointer-events-none opacity-50"
+                                : ""
+                            }`}
                           >
-                            <IoIosRefresh /> Retake
+                            <IoIosRefresh /> Replace
                           </label>
                           <input
                             id="course-image-replace"
@@ -178,6 +245,7 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                             accept="image/png, image/jpeg, image/jpg"
                             className="hidden"
                             onChange={handleFileChange}
+                            disabled={uploadingImage}
                           />
                         </div>
                       </div>
@@ -186,8 +254,28 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                 </div>
               ) : data.name == "course_level" ? (
                 <div className="relative w-full">
+                  <div
+                    className="flex justify-between items-center w-full cursor-pointer"
+                    onClick={() => setShowDropdown(!showDropdown)}
+                  >
+                    <span
+                      className={
+                        courseLevel
+                          ? "text-textSlightDark-0"
+                          : "text-textGrey-0"
+                      }
+                    >
+                      {courseLevel}
+                    </span>
+                    <FaChevronDown
+                      className={`transition-transform ${
+                        showDropdown ? "rotate-180" : ""
+                      }`}
+                    />
+                  </div>
+
                   {showDropdown && (
-                    <div>
+                    <div className="absolute top-full left-0 right-0 bg-white border border-[#D2D5DA] shadow-lg z-10">
                       <DropDowns
                         value={courseLevel}
                         onChange={() => {}}
@@ -198,7 +286,15 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                               onClick={() => handleChangeLevel(level)}
                               className="flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 cursor-pointer"
                             >
-                              <div>{level}</div>
+                              <div
+                                className={
+                                  courseLevel === level
+                                    ? "text-primaryColors-0 font-medium"
+                                    : ""
+                                }
+                              >
+                                {level}
+                              </div>
                               {courseLevel === level && (
                                 <span className="text-primaryColors-0">
                                   <FaCheck size={12} />
@@ -210,7 +306,6 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                       />
                     </div>
                   )}
-                  {selectedValue}
                 </div>
               ) : (
                 /* TEXT INPUT FIELDS */
@@ -223,13 +318,6 @@ export default function CourseStep1({ formData, setFormData }: Props) {
                 />
               )}
             </div>
-            {data.name == "course_level" ? (
-              <div className="">
-                <FaChevronDown onClick={() => setShowDropdown(true)} />
-              </div>
-            ) : (
-              ""
-            )}
           </div>
         );
       })}

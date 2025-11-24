@@ -6,10 +6,11 @@ import { MdOutlineCancel } from "react-icons/md";
 
 interface Props {
   cancel: () => void;
-  openPosts: () => void
+  openPosts: () => void;
+  courseId: string
 }
 
-export default function DashboardNewPost({ cancel, openPosts }: Props) {
+export default function DashboardNewPost({ cancel, openPosts, courseId }: Props) {
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
 
@@ -21,14 +22,27 @@ export default function DashboardNewPost({ cancel, openPosts }: Props) {
     setContent(e.target.value);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
     if (!title || !content) {
       alert("Please fill out both fields before posting!");
       return;
     }
+    const res = await fetch(`${API_URL}/api/socials/create-post/${courseId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: title, content: content }),
+      credentials: "include",
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      console.log("An erro occured while submitting the post");
+    }
+    console.log(data.message);
     console.log({ title, content });
-    openPosts()
+    openPosts();
     setTitle("");
     setContent("");
     cancel(); // Close sidebar after successful post
@@ -48,7 +62,11 @@ export default function DashboardNewPost({ cancel, openPosts }: Props) {
         <div className="dashboard_hr my-5"></div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-3"
+          noValidate
+        >
           {/* Title Input */}
           <div className="w-full h-[63px] border border-[#D2D5DA] py-[8px] px-[12px] flex items-center relative">
             <div className="flex flex-col w-full">

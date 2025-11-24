@@ -16,16 +16,16 @@ interface Group {
 export default function Community() {
   const [showCommunityGroup, setShowCommunityGroup] = useState<boolean>(false);
   const [showCommunity, setShowCommunity] = useState<boolean>(true);
-
+  const [search, setSearch] = useState<string>("")
   const bactToMainPage = () => {
-    setShowCommunity(true)
-    setShowCommunityGroup(false)
-  }
+    setShowCommunity(true);
+    setShowCommunityGroup(false);
+  };
 
   const showCommunityGroupFunc = () => {
-  setShowCommunity(false)
-    setShowCommunityGroup(true)
-  }
+    setShowCommunity(false);
+    setShowCommunityGroup(true);
+  };
   const groups: Group[] = [
     {
       header: "Young Adult Fellowship",
@@ -52,7 +52,11 @@ export default function Community() {
           <>
             {" "}
             <h1 className="dashboard_h1">Community</h1>
-            <SearchCourse placeholder="Search Community" />
+            <SearchCourse
+              placeholder="Search Community"
+              value=""
+              onChange={() => {}}
+            />
             {groups.map((data, i) => (
               <div
                 className="border border-[#D2D5DA] bg-[#ffffff] py-[20px] px-[16px] flex flex-col gap-1"
@@ -99,7 +103,7 @@ export default function Community() {
 
         {showCommunityGroup && (
           <div>
-            <StudentCommunityGroup backToMainPage={bactToMainPage}/>
+            <StudentCommunityGroup backToMainPage={bactToMainPage} />
           </div>
         )}
       </div>

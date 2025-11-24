@@ -25,7 +25,7 @@ export default function TutorCommunity() {
   const bactToMainPage = () => {
     setShowCommunity(true);
     setShowCommunityGroup(false);
-    setShowGroup(false)
+    setShowGroup(false);
   };
 
   const showCreateGroup = () => {
@@ -53,6 +53,10 @@ export default function TutorCommunity() {
       tutorName: "Pst. Rhonda Rhodes",
     },
   ];
+  const filterCourse = groups.filter((groups) =>
+    groups.header.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <>
       <div>
@@ -85,7 +89,7 @@ export default function TutorCommunity() {
                 <MdAdd /> New Group
               </button>
             </div>
-            {groups.map((data, i) => (
+            {filterCourse.map((data, i) => (
               <div
                 className="border border-[#D2D5DA] bg-[#ffffff] py-[20px] px-[16px] flex flex-col gap-1 cursor-pointer"
                 key={i}
@@ -133,9 +137,7 @@ export default function TutorCommunity() {
           </div>
         )}
       </div>
-      {showGroup && (
-        <DashboardTutorCreateGroup cancel={bactToMainPage} />
-      )}
+      {showGroup && <DashboardTutorCreateGroup cancel={bactToMainPage} />}
     </>
   );
 }

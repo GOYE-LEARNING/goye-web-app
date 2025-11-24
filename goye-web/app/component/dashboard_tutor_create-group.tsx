@@ -67,6 +67,7 @@ export default function DashboardTutorCreateGroup({ cancel }: Props) {
       group_image: "",
       group_preview: null,
     }));
+    URL.revokeObjectURL(formData.group_preview as any);
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -96,16 +97,32 @@ export default function DashboardTutorCreateGroup({ cancel }: Props) {
     },
   ];
 
+  const clearData = () => {
+    setFormData({
+      group_title: "",
+      group_description: "",
+      group_short_description: "",
+      group_image: "",
+      group_preview: "",
+    });
+  };
+
   return (
     <>
       <SubHeader header="Create Group" backFunction={cancel} />
 
       <div className="dashboard_content_mainbox">
-        <form method="POST" onSubmit={handleSubmit} className="flex flex-col gap-4">
-
+        <form
+          method="POST"
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4"
+        >
           {/* RENDER NORMAL INPUTS */}
           {form.map((f, i) => (
-            <div key={i} className="border border-[#D2D5DA] flex flex-col w-full py-2 px-3">
+            <div
+              key={i}
+              className="border border-[#D2D5DA] flex flex-col w-full py-2 px-3"
+            >
               <label className="text-textGrey-0 text-[12px]">{f.label}</label>
 
               {f.name === "group_description" ? (
@@ -142,7 +159,9 @@ export default function DashboardTutorCreateGroup({ cancel }: Props) {
                 <h1 className="text-nearTextColors-0 text-[14px] font-[500]">
                   Upload thumbnail image
                 </h1>
-                <p className="text-textGrey-0 text-[12px]">Supports JPEG or PNG</p>
+                <p className="text-textGrey-0 text-[12px]">
+                  Supports JPEG or PNG
+                </p>
               </label>
             )}
 
@@ -181,6 +200,22 @@ export default function DashboardTutorCreateGroup({ cancel }: Props) {
                 </div>
               </div>
             )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              className="form_more bg-secondaryColors-0 text-primaryColors-0"
+              onClick={clearData}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              className="form_more text-plainColors-0 bg-primaryColors-0"
+            >
+              Create Group
+            </button>
           </div>
         </form>
       </div>

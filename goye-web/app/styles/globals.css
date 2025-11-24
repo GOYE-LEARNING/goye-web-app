@@ -185,3 +185,7 @@ body {
   @apply bg-[#FAFAFA] border-t border-b border-[#F1F1F4] h-[16px] w-full
 }
 
+.reply_hook::after {
+  content: "";
+  @apply h-[80%] w-[1px] bg-[#f0eeee] absolute bottom-[1px] left-0
+}

@@ -7,20 +7,17 @@ import { MdOutlineQuiz, MdPeople } from "react-icons/md";
 interface Props {
   createQuiz: () => void;
   createModule: () => void;
+  course_description: string;
 }
 export default function DashboardTutorTabOverview({
   createQuiz,
   createModule,
+  course_description,
 }: Props) {
   return (
     <div>
       <div className="dashboard_content_mainbox">
-        <p className="text-[14px] text-textGrey-0">
-          Discover what it means to truly follow Jesus in your daily life. This
-          foundational course helps you build strong spiritual habits,
-          understand key biblical principles, and live as a disciple in your
-          community.
-        </p>
+        <p className="text-[14px] text-textGrey-0">{course_description}</p>
 
         <div className="flex items-center gap-5 text-textGrey-0 my-3">
           <span className="flex items-center gap-2 text-[14px]">

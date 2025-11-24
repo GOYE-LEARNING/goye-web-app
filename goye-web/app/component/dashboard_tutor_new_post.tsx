@@ -6,9 +6,15 @@ import { MdOutlineCancel } from "react-icons/md";
 
 interface Props {
   cancel: () => void;
+  courseId: string;
+  onPostUpdate?: (postUpdate?: any) => void;
 }
 
-export default function DashboardTutorNewPost({ cancel }: Props) {
+export default function DashboardTutorNewPost({
+  cancel,
+  courseId,
+  onPostUpdate,
+}: Props) {
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
 
@@ -20,13 +26,28 @@ export default function DashboardTutorNewPost({ cancel }: Props) {
     setContent(e.target.value);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
     if (!title || !content) {
-      alert("Please fill out both fields before posting!");
       return;
     }
-    console.log({ title, content });
+    const res = await fetch(`${API_URL}/api/socials/create-post/${courseId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: title, content: content }),
+      credentials: "include",
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.log("An error occured");
+    }
+    console.log(data);
+    if (onPostUpdate && data.data) {
+      onPostUpdate(data.data);
+    }
     setTitle("");
     setContent("");
     cancel(); // Close sidebar after successful post

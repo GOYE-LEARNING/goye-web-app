@@ -32,16 +32,21 @@ export default function HeroSection2() {
   return (
     <>
       <div className="bg-white w-full  py-[88px] flex md:justify-center items-center flex-col gap-5">
-        <h1 className="md:text-[48px] text-[32px] text-center font-medium text-textSlightDark-0">
-          The Perfect Learning Experience
-        </h1>
-        <p className="text-center text-[20px] text-textSlightDark-0">
-          Everything you need to grow in faith and guide others on <br /> their
-          spiritual journey.
-        </p>
+        <div className="w-[300px] md:w-full flex justify-center items-center flex-col">
+          <h1 className="md:text-[48px] text-[32px] text-center font-medium text-textSlightDark-0">
+            The Perfect Learning Experience
+          </h1>
+          <p className="text-center text-[20px] text-textSlightDark-0">
+            Everything you need to grow in faith and guide others on <br />{" "}
+            their spiritual journey.
+          </p>
+        </div>
         <div className="flex justify-center items-center flex-wrap w-full gap-[24px]">
           {content.map((c, i) => (
-            <div className="bg-shadyColor-0 p-[24px] rounded-[4px] md:w-[272px] w-[330px]" key={i}>
+            <div
+              className="bg-shadyColor-0 p-[24px] rounded-[4px] md:w-[272px] w-[330px]"
+              key={i}
+            >
               <span
                 className={`w-[56px] h-[56px] bg-[#ffffff] flex justify-center items-center flex-col ${
                   i == 0

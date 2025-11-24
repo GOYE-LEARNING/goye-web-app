@@ -25,7 +25,7 @@ export default function HeroSection4() {
     {
       pic: {
         image: (
-          <Image src={pic2} alt="pic2" className="mt-[4.5rem] w-[80%] h-auto" />
+          <Image src={pic2} alt="pic2" className="mt-[4.5rem] md:w-[80%] w-full h-auto" />
         ),
       },
       header: "Your journey of faith, made simple.",
@@ -41,8 +41,8 @@ export default function HeroSection4() {
   ];
   return (
     <>
-      <div className="bg-shadyColor-0 py-[88px] px-[48px] md:px-[136px] flex justify-between md:items-center items-start flex-col gap-[35px] w-full">
-        <div className="w-full">
+      <div className="bg-shadyColor-0 py-[88px] md:px-[136px] flex justify-center items-center flex-col gap-[35px] w-full">
+        <div className="md:w-full w-[300px]">
           {content.map((c, i) => (
             <div
               key={i}
@@ -52,9 +52,9 @@ export default function HeroSection4() {
                   : ''
               }`}
             >
-              <div className="flex flex-col gap-3 w-[456.66px]">
+              <div className="flex flex-col gap-3 md:w-[456.66px] w-full">
                 <h1 className="text-[48px] font-medium">{c.header}</h1>
-                <p className="text-textSlightDark-0 text-[16px] w-[75%]">
+                <p className="text-textSlightDark-0 text-[16px] md:w-[75%] w-full">
                   {c.p}
                 </p>
                 <ul>
@@ -95,11 +95,11 @@ export default function HeroSection4() {
                     {c.list.l4}
                   </li>
                 </ul>
-                <button className="bg-primaryColors-0 w-[50%] text-white h-[40px]  text-[14px]">
+                <button className="bg-primaryColors-0 md:w-[50%] w-[75%] text-white h-[40px]  text-[14px]">
                   {c.button}
                 </button>
               </div>
-              <div className="h-[283px] md:w-[400px] bg-boldShadyColor-0 rounded-[8px] overflow-hidden flex justify-center items-center">
+              <div className="h-[283px] md:w-[400px] w-full bg-boldShadyColor-0 rounded-[8px] overflow-hidden flex justify-center items-center">
                 {c.pic.image}
               </div>
             </div>

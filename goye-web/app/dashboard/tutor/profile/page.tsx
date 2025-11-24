@@ -115,6 +115,10 @@ export default function Profile() {
     }
   };
 
+  const profileUpdate = (profileUpdate: Partial<Details>) => {
+    setDetails((prev) => ({...prev, ...profileUpdate}))
+  }
+
   // Upload the image
   const handleUpload = async (selectedFile?: File) => {
     const uploadFile = selectedFile || file;
@@ -329,6 +333,7 @@ export default function Profile() {
                     setShowProfile(true);
                     setShowActivePages(false);
                   }}
+                  onProfileUpdate={profileUpdate}
                 />
               ) : activePages == "password" ? (
                 <DashboardChangePassword

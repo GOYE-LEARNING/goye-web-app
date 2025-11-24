@@ -30,17 +30,24 @@ export default function HeroSection3() {
   ];
   return (
     <>
-      <div className="w-full bg-primaryColors-0 py-[88px] px-[50px] flex justify-between items-center flex-col gap-[35px]">
-        <h1 className="text-white font-medium md:text-[48px] text-[35px]">
-          Everything you need to grow together. 
-        </h1>
-        <p className="text-white text-[20px]">
-          Designed for meaningful discipleship in today's world.
-        </p>
-        <div className="flex flex-wrap justify-center items-center gap-[24px]">
+      <div className="md:w-full bg-primaryColors-0 py-[88px] flex justify-between items-center flex-col gap-[35px]">
+        <div className="w-[300px] md:w-full flex justify-center items-center flex-col">
+          <h1 className="text-white font-medium md:text-[48px] text-[35px] text-center md:">
+            Everything you need to grow together.
+          </h1>
+          <p className="text-white text-center text-[20px] md:mt-0 mt-[1rem]">
+            Designed for meaningful discipleship in today's world.
+          </p>
+        </div>
+        <div className="flex flex-wrap justify-center items-center gap-[24px] md:w-full w-[300px]">
           {content.map((c, i) => (
-            <div key={i} className="bg-white rounded-[4px] p-[32px] md:w-[524px] w-full h-[389px]">
-              <div className="h-[226px] w-full bg-shadyColor-0 flex items-center justify-center">{c.image}</div>
+            <div
+              key={i}
+              className="bg-white rounded-[4px] p-[32px] md:w-[524px] w-full h-[389px]"
+            >
+              <div className="h-[226px] w-full bg-shadyColor-0 flex items-center justify-center">
+                {c.image}
+              </div>
               <h1 className="text-textSlightDark-0 font-semibold text-[18px] my-2">
                 {c.header}
               </h1>

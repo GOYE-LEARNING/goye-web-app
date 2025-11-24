@@ -1,16 +1,45 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CiGlobe } from "react-icons/ci";
 import { GoPeople, GoTrophy, GoVideo } from "react-icons/go";
 import { HiOutlineBookOpen } from "react-icons/hi";
 import { MdChevronRight } from "react-icons/md";
 import { motion } from "framer-motion";
 import { SlBadge } from "react-icons/sl";
+import Loader from "./loader";
 
 interface Props {
   removeFunc: () => void;
+  courseId: string;
 }
+
+interface Course {
+  id?: string;
+  course_image: string | null;
+  course_title: string;
+  course_description: string;
+  createdBy: string;
+  course_duration: string;
+  course_level: string;
+  enrolled: string;
+  module?: [
+    {
+      module_title: string
+      module_description: string;
+    }
+  ];
+  objectives?: [
+    {
+      objective_title1: string;
+      objective_title2: string;
+      objective_title3: string;
+      objective_title4: string;
+      objective_title5: string;
+    }
+  ];
+}
+
 interface AccordionItem1 {
   header: string;
   body: {
@@ -48,12 +77,17 @@ interface Accordion4 {
   };
 }
 
-export default function DashboardCourseOverView({ removeFunc }: Props) {
+export default function DashboardCourseOverView({
+  removeFunc,
+  courseId,
+}: Props) {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [course, setCourse] = useState<boolean>(true);
   const [coursesPlace, setCoursesPlace] = useState<boolean>(true);
   const [courseList, setCourseList] = useState<boolean>(false);
   const [courseVideo, setCourseVideo] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [courseDetails, setCourseDetails] = useState<Course | null>(null);
 
   const openCourse = () => {
     setCourse(false);
@@ -61,6 +95,39 @@ export default function DashboardCourseOverView({ removeFunc }: Props) {
     setCoursesPlace(false);
     removeFunc();
   };
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const fetchCourse = async () => {
+    if (!courseId) {
+      console.error("No courseId provided");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const res = await fetch(`${API_URL}/api/course/get-course/${courseId}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch course: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("Fetched course details Innit:", data);
+      setCourseDetails(data.data);
+    } catch (error) {
+      console.error("Error fetching course:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCourse();
+  }, []);
 
   const accordion1: AccordionItem1[] = [
     {
@@ -128,12 +195,21 @@ export default function DashboardCourseOverView({ removeFunc }: Props) {
     <>
       {course && (
         <div className="cr_box">
-          <p className="cr_p">
-            Discover what it means to truly follow Jesus in your daily life.
-            This foundational course helps you build strong spiritual habits,
-            understand key biblical principles, and live as a disciple in your
-            community.
-          </p>
+          <div className="cr_p">
+            {!isLoading ? (
+              <div>{courseDetails?.course_description}</div>
+            ) : (
+              <div>
+                <Loader
+                  height={30}
+                  width={30}
+                  border_width={2}
+                  full_border_color="transparent"
+                  small_border_color="#3F1F22"
+                />
+              </div>
+            )}
+          </div>
 
           <p className="cr_p flex items-center gap-4 my-5">
             <span className="flex items-center justify-center gap-2">
@@ -153,14 +229,31 @@ export default function DashboardCourseOverView({ removeFunc }: Props) {
               Learning Objectives
             </h1>
             <ul className="pl-[24px] flex flex-col gap-1">
-              <li className="cr_list">Understand the call to discipleship</li>
-              <li className="cr_list">
-                Build daily habits of prayer and Bible study
-              </li>
-              <li className="cr_list">
-                Apply biblical truths in everyday life
-              </li>
-              <li className="cr_list">Learn how to share your faith</li>
+              {!isLoading ? (
+                <div>
+                  {" "}
+                  {courseDetails?.objectives?.map((obj, i) => (
+                    <div key={i}>
+                      <li className="cr_list">{obj.objective_title1}</li>
+                      <li className="cr_list">{obj.objective_title2}</li>
+                      <li className="cr_list">{obj.objective_title3}</li>
+                      <li className="cr_list">{obj.objective_title4}</li>
+                      <li className="cr_list">{obj.objective_title5}</li>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  {" "}
+                  <Loader
+                    height={30}
+                    width={30}
+                    border_width={2}
+                    full_border_color="transparent"
+                    small_border_color="#3F1F22"
+                  />
+                </div>
+              )}
             </ul>
           </ol>
 
@@ -186,7 +279,7 @@ export default function DashboardCourseOverView({ removeFunc }: Props) {
                       toggleAccordion(i);
                     }}
                   >
-                    <p className="font-[600]">{data.header}</p>
+                    <p className="font-[600]">{courseDetails?.module?.[0].module_title}</p>
                     <span className="text-[1.3rem]">
                       <div
                         className={`${activeIndex === i ? "rotate-90" : ""}`}
@@ -203,7 +296,7 @@ export default function DashboardCourseOverView({ removeFunc }: Props) {
                       className="my-3 flex flex-col gap-2 items-start"
                     >
                       <p className="text-[#71748C] text-[14px] font-[400]">
-                        {data.body.paragraph}
+                        {courseDetails?.module?.[0].module_description}
                       </p>
                       <span className="flex items-center gap-3">
                         {data.body.icon1}
@@ -326,7 +419,7 @@ export default function DashboardCourseOverView({ removeFunc }: Props) {
               <span className="h-[40px] w-[40px] rounded-full bg-secondaryColors-0"></span>
               <span className="flex items-start flex-col gap-1">
                 <h1 className="text-[13px] text-primaryColors-0 font-[600]">
-                  Pst Imayi Osifo Sean
+                  {courseDetails?.createdBy}
                 </h1>
                 <p className="text-[12px] font-[400] text-[#71748C]">
                   GOYE Instructor

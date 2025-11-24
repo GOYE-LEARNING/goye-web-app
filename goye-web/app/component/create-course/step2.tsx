@@ -178,7 +178,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                         ...l,
                         lesson_video: previewURL, // For preview
                         video_preview: previewURL, // For preview display
-                        videoFile: file,           // For actual upload
+                        videoFile: file, // For actual upload
                       }
                     : l
                 ),
@@ -197,11 +197,11 @@ export default function CourseStep2({ formData, setFormData }: Props) {
               ...m,
               lessons: m.lessons.map((l) =>
                 l.id === lessonId
-                  ? { 
-                      ...l, 
-                      lesson_video: "", 
+                  ? {
+                      ...l,
+                      lesson_video: "",
                       video_preview: null,
-                      videoFile: undefined 
+                      videoFile: undefined,
                     }
                   : l
               ),
@@ -298,6 +298,9 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                                     : ""
                                 }
                                 onChange={(e) => handleModuleChange(e, mod.id)}
+                                placeholder={`${
+                                  form.name == "module_time" ? "e.g(1hr 45min)" : ''
+                                }`}
                                 className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px]"
                               />
                             )}

@@ -106,16 +106,16 @@ export interface CourseResponse {
 }
 
 export interface PostDTO {
-  postId: string;
+  id?: string
   title: string;
   content: string;
 }
 
 export interface ReplyDTO {
-  Id: string;
+  parentId?: string
   content: string;
-  postId: string;
 }
+
 
 export interface EventDTO {
   id: string;

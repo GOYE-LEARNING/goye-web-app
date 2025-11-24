@@ -7,9 +7,10 @@ import DashboardNewPost from "./dashboard_new_post";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 interface Props {
-    openPost: () => void
+  openPost: () => void;
+  courseId: string
 }
-export default function DashboardCourseForums({ openPost} : Props) {
+export default function DashboardCourseForums({ openPost, courseId }: Props) {
   const [showPost, setShowPost] = useState<boolean>(false);
   return (
     <>
@@ -62,15 +63,18 @@ export default function DashboardCourseForums({ openPost} : Props) {
       </div>
 
       {/* Sidebar Overlay and Animation */}
-    
-        {/* Sidebar Panel */}
-        <div
-          className={`fixed top-0 right-0 h-full bg-white w-[390px] transform transition-transform duration-300 ease-in-out
-    ${showPost ? "translate-x-0" : "translate-x-full"}`}
-        >
-          <DashboardNewPost cancel={() => setShowPost(false)} openPosts={openPost}/>
-        </div>
 
+      {/* Sidebar Panel */}
+      <div
+        className={`fixed top-0 right-0 h-full bg-white w-[390px] transform transition-transform duration-300 ease-in-out
+    ${showPost ? "translate-x-0" : "translate-x-full"}`}
+      >
+        <DashboardNewPost
+          cancel={() => setShowPost(false)}
+          openPosts={openPost}
+          courseId={courseId}
+        />
+      </div>
     </>
   );
 }

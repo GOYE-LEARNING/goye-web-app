@@ -18,7 +18,7 @@ export default function RootLayout({
       <body
         className={`bg-white md:bg-secondaryColors-0 font-['Fustat',_'sans-erif'] scrollbar`}
       >
-        <div className={`min-h-[100vh] w-full md:bg-secondaryColors-0 bg-white `}>
+        <div className={`min-h-[100vh] w-full md:bg-secondaryColors-0 bg-white overflow-hidden`}>
           {children}
         </div>
       </body>

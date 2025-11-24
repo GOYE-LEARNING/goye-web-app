@@ -8,12 +8,13 @@ import CourseStep3 from "./create-course/step3";
 import CourseStep4 from "./create-course/step4";
 import CourseStep5 from "./create-course/step5";
 import { FaArrowRight } from "react-icons/fa";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, number } from "framer-motion";
 import { TbCancel } from "react-icons/tb";
 import DashboardPop from "./dashboard_popop";
 
 interface Props {
   backToCourse: () => void;
+  onCourseUpdate?: (newCourse: any) => void;
 }
 
 interface Objectives {
@@ -55,16 +56,9 @@ interface Material {
   visible: boolean;
 }
 
-interface Options {
-  option1: string;
-  option2: string;
-  option3: string;
-  option4: string;
-}
-
 interface Question {
   quiz_question: string;
-  quiz_options: Options;
+  quiz_options: string[];
   correctAnswer?: string;
 }
 
@@ -90,7 +84,10 @@ interface Course {
   objective: Objectives[];
 }
 
-export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
+export default function DashboardTutorCreateCourse({
+  backToCourse,
+  onCourseUpdate,
+}: Props) {
   const [showError, setShowError] = useState<boolean>(false);
   const [showPop, setShowPop] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -110,7 +107,6 @@ export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
     objective: [],
   });
 
-  // Fixed file upload function that matches backend format
   const uploadFile = async (file: File, endpoint: string): Promise<string> => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -190,26 +186,52 @@ export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     try {
-      // Convert quiz options properly
+      // Convert quiz options properly - FIXED VERSION
+      // Convert quiz options properly - SIMPLE VERSION
+      // Convert quiz options properly - FIXED VERSION
       const quizPayload = formData.quiz.map((qz) => {
         const questions = qz.quiz_questions.map((q, qIndex) => {
-          const options = q.quiz_options;
-          const optionsArray: string[] = [];
+          let optionsArray: string[] = [];
 
-          if (options.option1?.trim())
-            optionsArray.push(options.option1.trim());
-          if (options.option2?.trim())
-            optionsArray.push(options.option2.trim());
-          if (options.option3?.trim())
-            optionsArray.push(options.option3.trim());
-          if (options.option4?.trim())
-            optionsArray.push(options.option4.trim());
+          // Method 1: If it's already an array, use it directly
+          if (Array.isArray(q.quiz_options)) {
+            optionsArray = q.quiz_options
+              .filter(
+                (opt) => opt && typeof opt === "string" && opt.trim() !== ""
+              )
+              .map((opt) => opt.trim());
+          }
+          // Method 2: If it's an object, extract all string values
+          else if (q.quiz_options && typeof q.quiz_options === "object") {
+            const optionsObj = q.quiz_options as any;
 
-          if (optionsArray.length < 2) {
-            const defaultOptions = ["True", "False"];
-            optionsArray.push(
-              ...defaultOptions.slice(0, 2 - optionsArray.length)
-            );
+            // Extract from option1, option2, option3, option4 properties
+            if (optionsObj.option1?.trim())
+              optionsArray.push(optionsObj.option1.trim());
+            if (optionsObj.option2?.trim())
+              optionsArray.push(optionsObj.option2.trim());
+            if (optionsObj.option3?.trim())
+              optionsArray.push(optionsObj.option3.trim());
+            if (optionsObj.option4?.trim())
+              optionsArray.push(optionsObj.option4.trim());
+
+            // Alternative: Extract all values and filter strings
+            const allValues = Object.values(optionsObj);
+            const stringValues = allValues.filter(
+              (val) => typeof val === "string" && val.trim()
+            ) as string[];
+            optionsArray = [
+              ...optionsArray,
+              ...stringValues.map((val) => val.trim()),
+            ];
+          }
+
+          // Remove duplicates and ensure we have options
+          optionsArray = [...new Set(optionsArray)]; // Remove duplicates
+
+          // Final fallback if still no options
+          if (optionsArray.length === 0) {
+            optionsArray = ["Option A", "Option B", "Option C", "Option D"];
           }
 
           return {
@@ -378,6 +400,9 @@ export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
       }
 
       setUploadProgress(100);
+      if (onCourseUpdate) {
+        onCourseUpdate(courseData.data);
+      }
       setShowPop(true);
 
       setFormData({
@@ -395,6 +420,7 @@ export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
       localStorage.removeItem("module");
       localStorage.removeItem("COURSE TITLE");
       localStorage.removeItem("quiz");
+      localStorage.removeItem("course_materials");
     } catch (error) {
       setShowError(true);
     } finally {
@@ -432,9 +458,29 @@ export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
           )
       ),
 
-    true,
+    formData.material.length > 0 &&
+      formData.material.every(
+        (mat) =>
+          !!mat.material_title &&
+          !!mat.material_document &&
+          !!mat.material_page &&
+          !!mat.material_description
+      ),
 
-    true,
+    formData.quiz.length > 0 &&
+      formData.quiz.every(
+        (qz) =>
+          !!qz.quiz_title &&
+          !!qz.quiz_description &&
+          !!qz.quiz_duration &&
+          !!qz.quiz_passing_score &&
+          qz.quiz_questions.length > 0 &&
+          qz.quiz_questions.every(
+            (qzo) =>
+              Array.isArray(qzo.quiz_options) &&
+              qzo.quiz_options.filter((opt) => opt?.trim()).length >= 2
+          )
+      ),
 
     formData.objective.length > 0 &&
       !!formData.objective[0]?.obj1?.trim() &&
@@ -445,7 +491,11 @@ export default function DashboardTutorCreateCourse({ backToCourse }: Props) {
   ];
 
   const steps = [
-    <CourseStep1 formData={formData} setFormData={setFormData} />,
+    <CourseStep1
+      formData={formData}
+      setFormData={setFormData}
+      uploadCourseImage={uploadCourseImage}
+    />,
     <CourseStep2 formData={formData} setFormData={setFormData} />,
     <CourseStep3 formData={formData} setFormData={setFormData} />,
     <CourseStep4 formData={formData} setFormData={setFormData} />,
