@@ -1,0 +1,598 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*form container*/
+/* In your globals.css */
+
+/* Dark mode base — deeper contrast when .dark is on */
+.dark body {
+  @apply dark:bg-[#0b0b0e] bg-lightSecondaryColor-0 dark:text-[#E6E7EB] text-lightBoldText-0/50;
+}
+
+/* Ensure body doesn't scroll on mobile when chat is open */
+/* Add these to your globals.css */
+
+/* Fix for chat layout issues */
+/* Add this at the top of your CSS file, after the imports */
+
+/* Prevent layout shift when scrollbar is hidden */
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+/* Alternative fallback for browsers that don't support scrollbar-gutter */
+@supports not (scrollbar-gutter: stable) {
+  body {
+    overflow-y: scroll;
+  }
+}
+
+/* When chat is open - no layout shift */
+body.chat-open {
+  overflow: hidden !important;
+  /* No need for padding-right because scrollbar-gutter reserves the space */
+}
+
+/* For desktop chat pages */
+body.chat-page-desktop {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Prevent body scroll when chat is open on mobile */
+.chat-full-height {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure all chat containers inherit height */
+.chat-container,
+.chat-container > div,
+.chat-container > div > div {
+  height: 100%;
+}
+.dark .sidenav {
+  @apply bg-[#0a0b0f] drop-shadow-none;
+}
+
+.dark .dashboard_content_mainbox,
+.dark .dashboard_content_box,
+.dark .cr_box {
+  @apply bg-secondaryColors-0/50 backdrop-blur-md border-[#1f2937] drop-shadow-2xl;
+}
+
+.dashboard_content_mainbox, .dashboard_content_box, .cr_box {
+  @apply bg-white/50 backdrop-blur-md border border-[#ccc]/10 drop-shadow-2xl
+} 
+
+.dark .dashboard_h1 {
+  @apply text-[#E6E7EB];
+}
+
+.dark .dashboard_hr {
+  @apply bg-[#1f2937];
+}
+
+.dark .dashboard_content_subbox,
+.dark .admin_dashboard_data,
+.dark .admin_dashboard_data2 {
+  @apply bg-[#111827];
+}
+
+.dark .admin_data_date_select:hover {
+  @apply bg-[#111827];
+}
+
+/*Landing Page*/
+.nav_btn {
+  @apply md:h-[40px] h-[50px] font-semibold text-[14px];
+}
+
+.box {
+  /* glow */
+  @apply flex justify-center items-center text-white border-2 border-white/50 cursor-pointer;
+}
+
+.radial-gradient,
+.radial_gradient2 {
+  position: relative;
+  overflow: hidden;
+}
+
+.radial-gradient::before {
+  content: "";
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  top: -10%;
+  left: -10%;
+  background: radial-gradient(circle, rgba(255, 165, 0, 0.6), transparent 50%);
+  filter: blur(40px);
+  animation: moveGradient 5s infinite ease-in-out;
+}
+
+.radial_gradient2::before {
+  content: "";
+  position: fixed;
+  width: 120%;
+  height: 120%;
+  top: -10%;
+  left: -10%;
+  background: radial-gradient(circle, rgba(255, 166, 0, 0.326), transparent 50%);
+  filter: blur(40px);
+  animation: moveGradient 5s infinite ease-in-out;
+}
+
+.dark .radial-gradient::before,
+.dark .radial_gradient2::before {
+  background: radial-gradient(circle, rgba(255, 165, 0, 0.2), transparent 70%);
+}
+
+@keyframes moveGradient {
+  0% {
+    transform: translate(0%, 0%);
+  }
+  25% {
+    transform: translate(10%, -10%);
+  }
+  50% {
+    transform: translate(10%, 0%);
+  }
+  75% {
+    transform: translate(5%, 5%);
+  }
+  100% {
+    transform: translate(0%, 0%);
+  }
+}
+
+.loader {
+    width: 40px;
+    height: 40px;
+    --c:no-repeat linear-gradient(orange 0 0);
+    background: var(--c),var(--c),var(--c),var(--c);
+    background-size: 21px 21px;
+    animation: l5 1.5s infinite cubic-bezier(0.3,1,0,1);
+}
+@keyframes l5 {
+   0%   {background-position: 0    0,100% 0   ,100% 100%,0 100%}
+   33%  {background-position: 0    0,100% 0   ,100% 100%,0 100%;width:60px;height: 60px}
+   66%  {background-position: 100% 0,100% 100%,0    100%,0 0   ;width:60px;height: 60px}
+   100% {background-position: 100% 0,100% 100%,0    100%,0 0   }
+}
+.pricing_card:hover button {
+  @apply bg-white text-secondaryColors-0
+}
+
+/*Form contianer*/
+
+.form_container {
+  @apply md:w-[707px] w-full max-w-full md:p-[32px]  p-5 dark:bg-secondaryColors-0/50 backdrop-blur-md flex items-start justify-center flex-col md:mt-7 rounded-xl border border-[#ccc]/10 drop-shadow-2xl bg-white/80;
+}
+
+.form_h1 {
+  @apply font-[500] text-[32.11px] dark:text-textSlightDark-0 text-lightBoldText-0;
+}
+
+.form-p {
+  @apply text-textGrey-0;
+}
+
+.form {
+  @apply mt-7 flex justify-start items-start flex-col w-full gap-4;
+}
+
+.form_label {
+  @apply relative flex flex-col w-full justify-center items-center;
+}
+
+.label {
+  @apply dark:text-[#D2D5DA] text-lightBoldText-0 text-[16px];
+}
+
+.form_input {
+  @apply w-full h-[63px] border border-[#ccc]/10 dark:bg-shadyColor-0/30 bg-white backdrop-blur-md dark:text-textSlightDark-0 text-textGrey-0 pt-[18px] px-[12px] outline-none transition-all duration-150 text-[14px] font-[500] rounded-lg;
+}
+
+.form_link {
+  @apply font-[600] text-primaryColors-0 text-[0.9rem];
+}
+
+.form_btn {
+  @apply py-[15px] flex items-center justify-center gap-3 text-plainColors-0 bg-primaryColors-0 w-full hover:bg-primaryColors-0/50 transition-all duration-200;
+}
+
+.form_more {
+  @apply h-[48px] flex items-center justify-center gap-3  w-full text-[14px];
+}
+
+.form_option {
+  @apply drop-shadow-sm outline-none py-4;
+}
+
+.form_msg {
+  @apply flex items-center gap-2;
+}
+
+.form_box {
+  @apply border-[2px] border-dashed  rounded-[20px] flex justify-center items-center flex-col transition-all duration-200;
+}
+
+.form_box:hover {
+  @apply border-[2px] border-dashed border-primaryColors-0;
+}
+
+.org_bg {
+  background: url("../../public/images/9126.jpg") no-repeat center/cover;
+}
+
+.parent_check {
+}
+
+.parent_check:hover .type_check {
+  @apply text-slate-800;
+}
+
+.glass_effect {
+  @apply bg-gradient-to-br from-white/15 via-white/10 to-white/5
+    backdrop-blur-[40px]
+    backdrop-saturate-200
+    
+    before:absolute before:inset-0 
+    before:bg-gradient-to-br before:from-gray-300/10 before:via-transparent before:to-gray-500/10
+    before:rounded-tr-[30px] before:rounded-br-[30px] before:md:rounded-full
+    
+    after:absolute after:top-1/3 after:right-1/4 
+    after:w-32 after:h-32 after:md:w-40 after:md:h-40
+    after:bg-gradient-to-br after:from-gray-200/15 after:to-gray-400/10
+    after:rounded-full after:blur-xl
+    
+    border border-white/25
+    border-t-white/40
+    border-l-white/40
+    
+    shadow-2xl shadow-black/20
+
+    ring-1 ring-inset ring-white/10;
+}
+.glass_input {
+  @apply h-[50px]
+    px-3
+    rounded-xl
+    bg-white/25
+    backdrop-blur-md
+    backdrop-saturate-150
+    border border-white/30
+    shadow-inner
+    outline-none
+    text-[0.9rem]
+    focus:bg-white/30
+    focus:border-white/50
+    transition-all
+    placeholder:text-white
+    placeholder:opacity-80;
+}
+
+.org_type_box {
+  @apply h-[210px]   
+    bg-white/25
+    backdrop-blur-md
+    backdrop-saturate-150
+    border border-white/30
+    shadow-inner;
+}
+
+.org_type_box:hover {
+  @apply rounded-none drop-shadow-2xl;
+}
+
+.org_shadow {
+  box-shadow: 8px 8px;
+  @apply rounded-none;
+}
+
+.org_type_box:hover div {
+  @apply scale-105;
+}
+
+.org_h1::before {
+  content: "";
+  @apply absolute left-[-50px] bottom-0 h-[1px] min-w-[100vw] bg-white/25;
+}
+
+.scrollbar::-webkit-scrollbar {
+  @apply w-[5px] bg-boldShadyColor-0;
+}
+
+.scrollbar2::-webkit-scrollbar {
+  @apply w-0;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-[#ccc];
+}
+
+/*Sidenav component*/
+.sidenav {
+  @apply dark:bg-secondaryColors-0 bg-white md:w-[20%] w-full min-w-0 md:h-full h-[auto] fixed left-0 md:top-0 bottom-0 md:px-[32px] md:py-[40px] py-[20px] px-[20px] overflow-hidden md:drop-shadow-none drop-shadow-lg z-10 md:z-10 border-r dark:border-boldShadyColor-0/80 border-r-[#ccc]/20;
+}
+
+.side_link {
+  @apply transition-all duration-150;
+}
+
+.side_link:hover {
+  @apply md:bg-primaryColors-0/10;
+}
+
+.side_link:hover .icon {
+  @apply text-primaryColors-0;
+}
+
+.chat_scroll2::-webkit-scrollbar {
+  @apply w-[2px] bg-transparent;
+}
+
+.chat_scroll3::-webkit-scrollbar {
+  @apply w-0;
+}
+
+.chat_scroll2::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-primaryColors-0;
+}
+
+.circle {
+  @apply h-[40px] w-[40px] rounded-full bg-primaryColors-0;
+}
+
+/*dashboard*/
+.dashboard_h1 {
+  @apply dark:text-textSlightDark-0 text-lightBoldText-0/80 md:my-0 my-4 text-[clamp(1.35rem,4vw,1.875rem)] font-[700] font-['Fustat',_'sans-serif'];
+}
+
+.dashboard_subh1 {
+  @apply text-[24px] text-primaryColors-0 font-[700] my-5;
+}
+
+.dashboard_hr {
+  @apply h-[1px] w-full bg-boldShadyColor-0;
+}
+
+.dashboard_content_mainbox {
+  @apply bg-shadyColor-0 p-[clamp(16px,3vw,24px)] w-full max-w-full my-5 rounded-xl border border-boldShadyColor-0/80;
+}
+
+.dashboard_content_box {
+  @apply dark:bg-secondaryColors-0 bg-white/70 backdrop-blur-md w-full max-w-full my-5 py-[20px] px-[clamp(12px,3vw,16px)] border dark:border-boldShadyColor-0/80 border-[#ccc]/30 rounded-xl dark:drop-shadow-2xl drop-shadow-none;
+}
+
+.dashboard_content_header {
+  @apply flex w-full justify-between items-center;
+}
+
+.dashboard_content_header h1 {
+  @apply font-[700] text-primaryColors-0 font-['Fustat',_'sans-serif'];
+}
+
+.dashboard_content_header span {
+  @apply text-primaryColors-0 font-['Fustat',_'sans-serif'];
+}
+
+.dashboard_content_subbox {
+  @apply dark:bg-boldShadyColor-0 bg-white my-2 p-[16px] flex justify-start items-start flex-col gap-2 w-full rounded-lg border dark:border-boldShadyColor-0/50 border-[#ccc]/20;
+}
+
+.dashboard_content_subbox h1 {
+  @apply font-[700] text-[18px];
+}
+
+.dashboard_content_subbox h2 {
+  @apply font-[500] text-[15px];
+}
+
+.dashboard_content_subbox p {
+  @apply font-[400] text-[14px] text-[#71748C];
+}
+
+.dashboard_content_progress {
+  @apply w-full flex flex-col gap-2 mb-2;
+}
+
+.dashboard_content_progress h3 {
+  @apply text-[13px];
+}
+
+.dashboard_triangle {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 15px solid #1a1d26;
+  @apply drop-shadow-sm;
+}
+
+.dashboard_triangle2 {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 15px solid #334155;
+  @apply drop-shadow-sm;
+}
+
+.dashboard_course_btns {
+  @apply w-[170.75px] p-[10px] text-[14px] font-[500];
+}
+
+.cr_p {
+  @apply text-[14px] text-[#71748C];
+}
+
+.cr_list {
+  @apply list-disc text-primaryColors-0 text-[14px] capitalize;
+}
+
+.cr_box {
+  @apply bg-shadyColor-0 w-full max-w-full p-[clamp(16px,3vw,24px)] my-5 border border-boldShadyColor-0/80 rounded-xl;
+}
+
+.course_video:nth-child(odd) {
+}
+
+.accord_header:nth-child(even) {
+  @apply mt-5;
+}
+
+.dashboard_quiz_options {
+  @apply bg-boldShadyColor-0 h-[36px] w-full font-[500] text-[13px] px-[clamp(12px,4vw,40px)] flex items-center text-textSlightDark-0 rounded-md border border-boldShadyColor-0;
+}
+
+.dashboard_thick_hr {
+  @apply bg-boldShadyColor-0 border-t border-b border-boldShadyColor-0 h-[16px] w-full;
+}
+
+.reply_hook::after {
+  content: "";
+  @apply h-[80%] w-[1px] bg-boldShadyColor-0 absolute bottom-[1px] left-0;
+}
+
+.admin_data_date_select {
+  @apply px-4 py-1 text-[13px] transition-all duration-150;
+}
+
+.admin_data_date_select:hover {
+  @apply bg-boldShadyColor-0;
+}
+
+.admin_dashboard_data {
+  @apply bg-boldShadyColor-0 p-[16px] flex justify-between items-center rounded-lg border border-boldShadyColor-0;
+}
+
+.admin_dashboard_data2 {
+  @apply bg-boldShadyColor-0 p-[12px] flex justify-between rounded-lg border border-boldShadyColor-0;
+}
+
+.admin_dashboard_data3 {
+  @apply bg-boldShadyColor-0 h-[72px] text-primaryColors-0 flex justify-center items-center flex-col gap-1 cursor-pointer rounded-lg border border-boldShadyColor-0;
+}
+
+.chat_tabs {
+  @apply text-textGrey-0 font-[500] relative;
+}
+
+.chat_tabs_after::after {
+  content: "";
+  @apply h-[2px] bg-primaryColors-0 w-full absolute bottom-0 left-0 rounded;
+}
+
+.chat_people:not(:first-child) {
+  @apply py-[18px];
+}
+
+.chat_people:first-child {
+  @apply pb-[18px];
+}
+
+.chat_people::after {
+  content: "";
+  @apply absolute h-[1px] bg-boldShadyColor-0 min-w-[100vw] bottom-0 left-[-2rem];
+}
+
+.chat_scroll::-webkit-scrollbar {
+  @apply w-[2px] bg-transparent;
+}
+
+.chat_scroll::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-secondaryColors-0;
+}
+
+/* Add to your global CSS or component */
+.chat-container {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 500px;
+  max-height: 700px;
+}
+
+.chat-messages {
+  min-height: 200px;
+  overflow-y: auto;
+}
+
+.button-zoom:hover {
+  transform: scale(1.1);
+}
+
+/* Invite User styling */
+.background {
+  background: url("../../public//images/Jesus-has-me.png") center/cover
+    no-repeat;
+}
+
+.input {
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  outline: none;
+  padding: 12px;
+  color: white;
+  width: 100%;
+}
+
+.dropdown {
+  position: absolute;
+  background: #111;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 4px;
+  z-index: 20;
+}
+
+.dropdown-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.game_button {
+  @apply text-white bg-primaryColors-0 h-[40px] px-3 hover:scale-105 transition-all duration-200 rounded drop-shadow-lg;
+}
+
+.leaderboard_box {
+  @apply w-full bg-boldShadyColor-0 rounded-[15px] relative border border-boldShadyColor-0;
+}
+
+.leaderboard_image {
+  @apply h-[90px] w-[90px] rounded-full;
+}
+
+.leaderboard_pic {
+  @apply object-cover h-full w-full;
+}
+
+.leaderboard_positions {
+  @apply ml-5 h-[40px] bg-primaryColors-0 top-0 w-[25px] flex justify-center items-center text-plainColors-0 font-semibold rounded-bl-[15px] rounded-br-[15px] text-[1.2rem];
+}
+
+.leaderboard_content {
+  @apply flex items-center justify-center flex-col;
+}
+
+.leader_board_table_header {
+  @apply text-nearTextColors-0/20 text-[12px] font-semibold;
+}
+
+.leader_icon {
+  @apply h-[30px] w-[30px] rounded-full hover:bg-nearTextColors-0/5 flex justify-center items-center text-nearTextColors-0 text-[12px] transition-all duration-200;
+}
