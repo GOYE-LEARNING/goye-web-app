@@ -31,30 +31,50 @@ export default function DashboardLayout({
     const verifyAuth = async () => {
       setIsCheckingAuth(true);
 
-      let isAuthenticated = authStatus.isExistingUser;
+      // Check for tokens in cookies
+      const hasAccessToken = document.cookie.includes("accessToken");
+      const hasRefreshToken = document.cookie.includes("refreshToken");
+      
+      // Check localStorage for user data
+      const userId = localStorage.getItem("user_id");
+      const userRole = localStorage.getItem("role");
 
-      if (!isAuthenticated) {
+      console.log("Dashboard Layout - Auth check:", {
+        hasAccessToken,
+        hasRefreshToken,
+        userId,
+        userRole,
+        authStatus: authStatus.isExistingUser
+      });
+
+      let isAuthenticated = false;
+
+      if (authStatus.isExistingUser) {
+        isAuthenticated = true;
+      } else if (hasAccessToken || hasRefreshToken) {
         const refreshed = await refreshToken();
         if (refreshed) {
           const isValid = await checkAuth();
           isAuthenticated = isValid;
         }
+      } else if (userId && userRole) {
+        // Fallback to localStorage
+        isAuthenticated = true;
       }
 
       if (!isAuthenticated) {
-        const redirectUrl = `/auth`;
-        router.push(redirectUrl);
+        console.log("Not authenticated, redirecting to login");
+        router.push("/auth");
         setIsCheckingAuth(false);
         return;
       }
-
 
       setIsAuthorized(true);
       setIsCheckingAuth(false);
     };
 
     verifyAuth();
-  }, [authStatus.isExistingUser, authStatus.isProfileComplete, checkAuth, refreshToken, router, pathname]);
+  }, [authStatus.isExistingUser, checkAuth, refreshToken, router]);
 
   // Check for mobile
   useEffect(() => {

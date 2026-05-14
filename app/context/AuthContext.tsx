@@ -19,6 +19,7 @@ export interface AuthContextType {
     role: string;
     user_pic?: string;
     type?: string;
+    level?: string
   };
 }
 
@@ -45,19 +46,24 @@ export default function AuthProvider({ children }: Props) {
     isLoading: true,
     user: undefined,
   });
+  
+  // Add a ref to prevent multiple auth checks
+  const isCheckingRef = React.useRef(false);
 
   // Refresh the access token
   const refreshToken = React.useCallback(async (): Promise<boolean> => {
     try {
+      console.log("🔄 Attempting to refresh token...");
       const response = await fetch(`${API_URL}/api/verify/refresh-token`, {
         method: "POST",
-        credentials: "include", // Sends cookies automatically
+        credentials: "include",
       });
       
       if (response.ok) {
-        const data = await response.json();
+        console.log("✅ Token refresh successful");
         return true;
       }
+      console.log("❌ Token refresh failed with status:", response.status);
       return false;
     } catch (error) {
       console.error("Token refresh failed:", error);
@@ -67,16 +73,49 @@ export default function AuthProvider({ children }: Props) {
 
   // Check authentication status by calling backend
   const checkAuth = React.useCallback(async (): Promise<boolean> => {
+    // Prevent multiple concurrent checks
+    if (isCheckingRef.current) {
+      console.log("Auth check already in progress, skipping...");
+      return false;
+    }
+    
+    isCheckingRef.current = true;
     setAuthStatus(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // First try to access a protected endpoint
+      // Check if we have cookies
+      const hasAccessToken = document.cookie.includes("accessToken");
+      const hasRefreshToken = document.cookie.includes("refreshToken");
+      
+      console.log("🔍 Checking auth - Cookies:", { hasAccessToken, hasRefreshToken });
+      
+      // If no tokens at all, don't even try
+      if (!hasAccessToken && !hasRefreshToken) {
+        console.log("No tokens found, skipping auth check");
+        setAuthStatus({
+          isExistingUser: false,
+          isProfileComplete: false,
+          requiresProfileCompletion: false,
+          isLoading: false,
+          user: undefined,
+        });
+        isCheckingRef.current = false;
+        return false;
+      }
+      
+      // Try to get user profile
       const response = await fetch(`${API_URL}/api/user/profile`, {
-        credentials: 'include', // Sends HTTP-only cookies automatically
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache',
+        }
       });
+      
+      console.log("📡 Profile response status:", response.status);
       
       if (response.ok) {
         const data = await response.json();
+        console.log("✅ Auth check successful:", data.user?.email);
         setAuthStatus({
           isExistingUser: true,
           isProfileComplete: data.user?.isProfileComplete || false,
@@ -84,8 +123,12 @@ export default function AuthProvider({ children }: Props) {
           isLoading: false,
           user: data.user,
         });
+        isCheckingRef.current = false;
         return true;
-      } else if (response.status === 401) {
+      } 
+      
+      if (response.status === 401) {
+        console.log("⚠️ Token expired, attempting refresh...");
         // Token expired, try to refresh
         const refreshed = await refreshToken();
         
@@ -97,6 +140,7 @@ export default function AuthProvider({ children }: Props) {
           
           if (retryResponse.ok) {
             const retryData = await retryResponse.json();
+            console.log("✅ Auth check successful after refresh");
             setAuthStatus({
               isExistingUser: true,
               isProfileComplete: retryData.user?.isProfileComplete || false,
@@ -104,11 +148,13 @@ export default function AuthProvider({ children }: Props) {
               isLoading: false,
               user: retryData.user,
             });
+            isCheckingRef.current = false;
             return true;
           }
         }
         
-        // Refresh failed or retry failed - redirect to auth
+        // Refresh failed
+        console.log("❌ Auth check failed - not authenticated");
         setAuthStatus({
           isExistingUser: false,
           isProfileComplete: false,
@@ -116,20 +162,20 @@ export default function AuthProvider({ children }: Props) {
           isLoading: false,
           user: undefined,
         });
-        
-        // Redirect to auth page
-        router.push("/auth");
-        return false;
-      } else {
-        setAuthStatus({
-          isExistingUser: false,
-          isProfileComplete: false,
-          requiresProfileCompletion: false,
-          isLoading: false,
-          user: undefined,
-        });
+        isCheckingRef.current = false;
         return false;
       }
+      
+      console.log("❌ Auth check failed with status:", response.status);
+      setAuthStatus({
+        isExistingUser: false,
+        isProfileComplete: false,
+        requiresProfileCompletion: false,
+        isLoading: false,
+        user: undefined,
+      });
+      isCheckingRef.current = false;
+      return false;
     } catch (error) {
       console.error("Auth check error:", error);
       setAuthStatus({
@@ -139,9 +185,10 @@ export default function AuthProvider({ children }: Props) {
         isLoading: false,
         user: undefined,
       });
+      isCheckingRef.current = false;
       return false;
     }
-  }, [refreshToken, router]);
+  }, [refreshToken]);
 
   // Logout function
   const logout = React.useCallback(async (): Promise<void> => {
@@ -170,11 +217,12 @@ export default function AuthProvider({ children }: Props) {
     }
   }, [router]);
 
-  const updateAuthStatus = (status: Partial<AuthContextType>) => {
-    setAuthStatus((prev) => ({ ...prev, ...status }));
-  };
+  const updateAuthStatus = React.useCallback((status: Partial<AuthContextType>) => {
+    console.log("📝 Updating auth status:", status);
+    setAuthStatus((prev) => ({ ...prev, ...status, isLoading: false }));
+  }, []);
 
-  const clearAuth = () => {
+  const clearAuth = React.useCallback(() => {
     setAuthStatus({
       isExistingUser: false,
       isProfileComplete: false,
@@ -182,11 +230,16 @@ export default function AuthProvider({ children }: Props) {
       isLoading: false,
       user: undefined,
     });
-  };
+  }, []);
 
-  // Check auth on app load
+  // Only check auth once on mount, not on every render
   React.useEffect(() => {
-    checkAuth();
+    // Small delay to allow cookies to be set from previous session
+    const timer = setTimeout(() => {
+      checkAuth();
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [checkAuth]);
 
   return (

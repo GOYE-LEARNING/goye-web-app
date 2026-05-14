@@ -112,7 +112,7 @@ export default function TutorSidenav() {
         <div className="mt-10 md:block hidden md:w-full" onClick={logout}>
           {" "}
           <SidenavComponent
-            path="/"
+            path="/auth"
             label="Logout"
             icon={<MdLogout size={25} />}
           />

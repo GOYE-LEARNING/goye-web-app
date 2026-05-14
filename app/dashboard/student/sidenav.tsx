@@ -106,7 +106,7 @@ export default function Sidenav() {
         <div className="mt-10 md:block hidden w-full" onClick={logout}>
           {" "}
           <SidenavComponent
-            path="/"
+            path="/auth"
             label="Logout"
             icon={<MdLogout size={25} />}
           />
