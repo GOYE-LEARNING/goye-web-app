@@ -9,7 +9,6 @@ import { HiUserCircle } from "react-icons/hi";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../context/theme_provider";
 import { FiMoon, FiSun } from "react-icons/fi";
-import { useResizable } from "../context/resizeAbleContext";
 import ToogleDarkMode from "./toogleDarkMode";
 
 interface Details {
@@ -26,91 +25,72 @@ interface Details {
 
 export default function DashboardHeader() {
   const { darkMode, setDarkMode } = useTheme();
-  const [showNotification, setShowNotification] = useState<boolean>(false);
+
+  const [showNotification, setShowNotification] = useState(false);
+  const [showProfileBox, setShowProfileBox] = useState(false);
+
   const [details, setDetails] = useState<Details>({});
-  const [getHours, setGetHours] = useState<string>("");
-  const notificationRef = useRef<HTMLDivElement | null>(null);
-  const notificationButtonRef = useRef<HTMLDivElement | null>(null);
-  const profileBoxRef = useRef<HTMLDivElement | null>(null);
-  const [showProfileBox, setShowProfileBox] = useState<boolean>(false);
-  const [user, setUser] = useState<string>("");
-  const [type, setType] = useState<string>("");
-  const [formType, setFormType] = useState<string>("");
-  const [org_name, setOrg_name] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const scrollRefs = useRef<HTMLDivElement | null>(null);
-  const maxRetries = 3;
+  const [getHours, setGetHours] = useState("");
+  const [user, setUser] = useState("");
+  const [type, setType] = useState("");
+  const [formType, setFormType] = useState("");
+  const [org_name, setOrg_name] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
   const router = useRouter();
 
+  const scrollRefs = useRef<HTMLDivElement | null>(null);
+  const profileBoxRef = useRef<HTMLDivElement | null>(null);
+
+  const desktopNotificationBtnRef = useRef<HTMLButtonElement | null>(null);
+  const mobileNotificationBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const desktopNotificationRef = useRef<HTMLDivElement | null>(null);
+  const mobileNotificationRef = useRef<HTMLDivElement | null>(null);
+
+  // ================= PROFILE FETCH =================
   useEffect(() => {
     const savedUser = localStorage.getItem("first_name");
-    const savedOrgniazation = localStorage.getItem("organization_name");
-    if (savedUser) {
-      setUser(savedUser);
-    } else if (savedOrgniazation) {
-      setOrg_name(savedOrgniazation);
-    }
+    const savedOrg = localStorage.getItem("organization_name");
 
-    scrollRefs.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    if (savedUser) setUser(savedUser);
+    else if (savedOrg) setOrg_name(savedOrg);
 
-    // Fetch profile with retry logic
-    const fetchWithRetry = async (retryAttempt = 0) => {
+    const h = new Date().getHours();
+    setGetHours(
+      h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening",
+    );
+
+    const fetchProfile = async () => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const role = localStorage.getItem("type");
-      setType(role as any);
+
+      const role = localStorage.getItem("type") || localStorage.getItem("role");
+
+      const normalized = role?.toLowerCase();
+      setType(role || "");
+
+      const isUser = normalized === "user" || normalized === "invited_user";
+
+      const endpoint = isUser
+        ? `${API_URL}/api/user/profile`
+        : `${API_URL}/api/organizations/profile`;
 
       try {
-        if (retryAttempt > 0) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 500 * retryAttempt),
-          );
-        }
-
-        const res = await fetch(
-          role == "user" || role == "invited_user"
-            ? `${API_URL}/api/user/profile`
-            : `${API_URL}/api/organizations/profile`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              "Cache-Control": "no-cache",
-              Pragma: "no-cache",
-            },
-          },
-        );
-
-        if (!res.ok) {
-          if (res.status === 401 && retryAttempt < maxRetries) {
-            console.log(
-              `🔄 Retry ${retryAttempt + 1}/${maxRetries} for profile fetch...`,
-            );
-            await fetchWithRetry(retryAttempt + 1);
-            return;
-          }
-
-          const err = await res.json().catch(() => ({}));
-          console.error("Profile error", res.status, err);
-          setIsLoading(false);
-          return;
-        }
+        const res = await fetch(endpoint, {
+          method: "GET",
+          credentials: "include",
+        });
 
         const data = await res.json();
-        console.log(data);
-        setFormType(
-          data?.user?.form_type ? data?.user?.form_type : "ORGANIZATION",
-        );
 
-        if (role == "user" || role == "invited_user") {
-          const user_pic = data.user?.user_pic;
+        setFormType(data?.user?.form_type || "ORGANIZATION");
+        console.log(data);
+        if (isUser) {
           setDetails({
             first_name: data.user?.first_name,
             last_name: data.user?.last_name,
             email: data.user?.email_address,
-            user_pic: user_pic,
+            user_pic: data.user?.user_pic,
           });
         } else {
           setDetails({
@@ -123,248 +103,178 @@ export default function DashboardHeader() {
               data.organization?.user?.last_name,
           });
         }
-
+      } finally {
         setIsLoading(false);
-        console.log("✅ Profile fetched successfully");
-      } catch (error) {
-        console.error("Fetch error:", error);
-        if (retryAttempt < maxRetries) {
-          console.log(
-            `🔄 Retry ${retryAttempt + 1}/${maxRetries} due to error...`,
-          );
-          await fetchWithRetry(retryAttempt + 1);
-        } else {
-          setIsLoading(false);
-        }
       }
     };
 
-    setTimeout(() => {
-      fetchWithRetry(0);
-    }, 300);
+    fetchProfile();
+  }, []);
 
-    const hours = new Date().getHours();
-    if (hours < 12) {
-      setGetHours("Good morning");
-    } else if (hours < 17) {
-      setGetHours("Good afternoon");
-    } else {
-      setGetHours("Good evening");
-    }
-
-    // Click outside handler for both mobile and desktop
+  // ================= OUTSIDE CLICK FIX =================
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
+      const t = e.target as Node;
 
-      // Check for notification click outside
-      if (showNotification) {
-        // Check if click is inside notification panel or on the notification button
-        const isClickInsideNotification =
-          notificationRef.current?.contains(target);
-        const isClickOnNotificationButton =
-          notificationButtonRef.current?.contains(target);
+      const clickedDesktopBtn = desktopNotificationBtnRef.current?.contains(t);
+      const clickedMobileBtn = mobileNotificationBtnRef.current?.contains(t);
 
-        // Only close if click is outside both the notification panel AND the button
-        if (!isClickInsideNotification && !isClickOnNotificationButton) {
-          setShowNotification(false);
-        }
+      const clickedDesktopPanel = desktopNotificationRef.current?.contains(t);
+      const clickedMobilePanel = mobileNotificationRef.current?.contains(t);
+
+      const clickedProfile = profileBoxRef.current?.contains(t);
+
+      const clickedNotification = clickedDesktopPanel || clickedMobilePanel;
+
+      if (
+        showNotification &&
+        !clickedDesktopBtn &&
+        !clickedMobileBtn &&
+        !clickedNotification
+      ) {
+        setShowNotification(false);
       }
 
-      // Check for profile box click outside
-      if (showProfileBox) {
-        const isClickInsideProfile = profileBoxRef.current?.contains(target);
-        if (!isClickInsideProfile) {
-          setShowProfileBox(false);
-        }
+      if (showProfileBox && !clickedProfile) {
+        setShowProfileBox(false);
       }
     };
 
-    // Use a slight delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      document.addEventListener("click", handleClickOutside);
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("click", handleClickOutside);
-    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showNotification, showProfileBox]);
 
-  const toggleNotification = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowNotification(!showNotification);
+  const toggleNotification = () => {
+    setShowNotification((p) => !p);
+    setShowProfileBox(false);
   };
 
+  // ================= LOADING (MATCH YOUR UI) =================
   if (isLoading) {
     return (
-      <div className="md:px-8 md:py-2 md:bg-lightSecondaryColor-0 py-[25px] px-[16px] md:h-auto bg-primaryColors-0 md:static sticky top-0 left-0 h-[10%] w-full flex md:block justify-between md:justify-end items-center">
-        <div className="flex items-center gap-4">
-          <div className="w-[50px] h-[50px] rounded-full bg-gray-300 animate-pulse"></div>
+      <div className="md:px-8 md:py-2 py-[25px] px-[16px] bg-primaryColors-0 md:bg-white/50 dark:md:bg-secondaryColors-0 border-b border-b-[#ccc]/20 flex justify-between items-center sticky top-0 z-[9999]">
+        {/* left skeleton */}
+        <div className="flex items-center gap-3">
+          <div className="w-[45px] h-[45px] rounded-full bg-gray-300 animate-pulse" />
+
           <div className="flex flex-col gap-2">
-            <div className="h-4 w-24 bg-gray-300 animate-pulse rounded"></div>
-            <div className="h-6 w-32 bg-gray-300 animate-pulse rounded"></div>
+            <div className="w-[100px] h-[10px] bg-gray-300 rounded animate-pulse" />
+            <div className="w-[140px] h-[14px] bg-gray-300 rounded animate-pulse" />
           </div>
+        </div>
+
+        {/* right skeleton */}
+        <div className="flex items-center gap-3">
+          <div className="w-[35px] h-[35px] rounded-full bg-gray-300 animate-pulse" />
+          <div className="w-[35px] h-[35px] rounded-full bg-gray-300 animate-pulse" />
+          <div className="w-[35px] h-[35px] rounded-full bg-gray-300 animate-pulse" />
         </div>
       </div>
     );
   }
 
+  // ================= UI =================
   return (
-    <>
-      <div
-        ref={scrollRefs}
-        className=" md:px-8 md:py-2 dark:md:bg-secondaryColors-0/20 md:bg-white/50 border-b border-b-[#ccc]/20 md:backdrop-blur-md  py-[25px] px-[16px] md:h-auto bg-primaryColors-0 sticky top-0 left-0 h-[10%] z-[20] w-full flex md:block justify-between md:justify-end items-center"
-      >
-        <div className="md:flex justify-end items-center gap-5 hidden relative text-textSlightDark-0">
-          <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
-          <div className="dark:text-textSlightDark-0/90 text-lightBoldText-0/50 relative">
-            <div
-              ref={notificationButtonRef}
-              onClick={toggleNotification}
-              className="cursor-pointer"
-            >
-              <MdNotifications size={23} />
-            </div>
-            {showNotification && (
-              <div ref={notificationRef} className="absolute right-0 z-50">
-                <DashboardNotification
-                  onClose={() => setShowNotification(false)}
-                />
-              </div>
-            )}
-          </div>
-          <div
-            className="dark:text-textSlightDark-0/90 text-lightBoldText-0/50 cursor-pointer"
-            onClick={() => router.push("/dashboard/student/chat")}
-          >
-            <IoChatboxSharp size={23} />
-          </div>
-          <div className="h-[40px] w-[1px] bg-[#71748C]/25"></div>
+    <div ref={scrollRefs} className="w-full sticky top-0 z-[9999] bg-primaryColors-0 md:bg-white/50 dark:md:bg-secondaryColors-0 border-b border-b-[#ccc]/20 ">
+      {/* ================= DESKTOP ================= */}
+      <div className="hidden md:flex justify-end items-center gap-5 px-8 py-3 relative">
+        <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
 
-          <div className="flex items-center gap-3 relative">
+        {/* NOTIFICATION */}
+        <div className="relative">
+          <button
+            ref={desktopNotificationBtnRef}
+            onClick={toggleNotification}
+            className="text-textSlightDark-0/90"
+          >
+            <MdNotifications size={23} />
+          </button>
+
+          {showNotification && (
             <div
-              ref={profileBoxRef as any}
-              className={`flex justify-center gap-3 items-center ${
-                showProfileBox == true
-                  ? "absolute transition-all duration-150 drop-shadow-xl w-[auto] right-[8px] dark:bg-boldShadyColor-0 bg-white border dark:border-boldShadyColor-0 border-[#ccc]/20 text-textSlightDark-0 p-3 rounded-md top-6"
-                  : ""
-              }`}
+              ref={desktopNotificationRef}
+              className="absolute right-0 top-12 z-[99999]"
             >
-              <div
-                className={`h-[45px] w-[45px] bg-[#71748C]/10 rounded-full overflow-hidden relative`}
-              >
-                {details.user_pic || details.organization_image ? (
-                  <img
-                    src={details.user_pic || details.organization_image}
-                    alt="Profile"
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    {type == "user" || type == "invited_user" ? (
-                      <span className="font-semibold text-lg">
-                        {details.first_name?.charAt(0)}
-                        {details.last_name?.charAt(0)}
-                      </span>
-                    ) : (
-                      <div className="font-bold text-lg">
-                        {details.organization_name?.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              {showProfileBox && (
-                <div>
-                  <h1 className="font-semibold text-[0.9rem] dark:text-white text-lightBoldText-0">
-                    {type == "user" || type == "invited_user" ? (
-                      <span>
-                        {details.first_name} {details.last_name}
-                      </span>
-                    ) : (
-                      <div className="line-clamp-1">
-                        {details.organization_name}
-                      </div>
-                    )}
-                  </h1>
-                  <span className="text-textGrey-0 text-[0.8rem]">
-                    {type == "user" || type == "invited_user" ? (
-                      <span>{details.email}</span>
-                    ) : (
-                      <span>{details.organization_email}</span>
-                    )}
-                  </span>
-                </div>
-              )}
+              <DashboardNotification
+                onClose={() => setShowNotification(false)}
+              />
             </div>
-            <IoChevronDown
-              onClick={() => setShowProfileBox(true)}
-              className="cursor-pointer"
-            />
-          </div>
+          )}
         </div>
-        <div className="md:hidden flex items-center justify-between text-white w-full">
-          <div className="flex items-center gap-4">
-            <span className="w-[50px] h-[50px] rounded-full border-2 border-white overflow-hidden">
+
+        <button onClick={() => router.push("/dashboard/student/chat")}>
+          <IoChatboxSharp size={23} />
+        </button>
+
+        {/* PROFILE */}
+        <div ref={profileBoxRef} className="relative">
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => setShowProfileBox((p) => !p)}
+          >
+            <div className="w-[45px] h-[45px] rounded-full overflow-hidden bg-gray-200">
               {details.user_pic || details.organization_image ? (
                 <img
                   src={details.user_pic || details.organization_image}
-                  alt="Profile"
-                  className="object-cover w-full h-full"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                  <HiUserCircle size={24} color="#666" />
-                </div>
+                <HiUserCircle size={35} />
               )}
-            </span>
-            <div className="flex flex-col gap-1">
-              <h1 className="text-[12px]">{getHours}</h1>
-              <p className="font-semibold text-[22px]">
-                {formType == "INVITED" || formType == "INDIVIDUAL"
-                  ? ""
-                  : formType == "ORGANIZATION"
-                    ? "Pst"
-                    : ""}
-                {type == "user" || type == "invited_user" ? (
-                  user
-                ) : (
-                  <span>
-                    {details.organization_administrator_firstname}{" "}
-                    {details.organization_administrator_lastname}
-                  </span>
-                )}
+            </div>
+
+            <IoChevronDown />
+          </div>
+
+          {showProfileBox && (
+            <div className="absolute right-0 top-12 w-[220px] bg-white dark:bg-[#1f1f1f] shadow-lg rounded-md p-3 z-[99999]">
+              <p className="font-semibold">
+                {details.first_name
+                  ? `${details.first_name} ${details.last_name}`
+                  : details.organization_name}
+              </p>
+              <p className="text-xs text-gray-500">
+                {details.email || details.organization_email}
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setDarkMode(!darkMode)}
-              className="h-[34px] w-[34px] rounded-full bg-white/15 text-white flex items-center justify-center"
-              aria-label="Toggle dark mode"
-              title="Toggle dark mode"
-            >
-              {darkMode ? <FiSun size={16} /> : <FiMoon size={16} />}
-            </button>
-            <div className="relative">
-              <div onClick={toggleNotification} className="cursor-pointer">
-                <FaBell />
-              </div>
-              {showNotification && (
-                <div ref={notificationRef} className="absolute right-0 z-50">
-                  <DashboardNotification
-                    onClose={() => setShowNotification(false)}
-                  />
-                </div>
-              )}
-            </div>
-            <div>
-              <IoChatboxSharp size={23} />
-            </div>
-          </div>
+          )}
         </div>
       </div>
-    </>
+
+      {/* ================= MOBILE ================= */}
+      <div className="md:hidden flex justify-between items-center px-[16px] py-[20px] bg-primaryColors-0 text-white">
+        <div>
+          <p className="text-[12px]">{getHours}</p>
+          <p className="text-[20px] font-semibold">
+            {user || details.organization_administrator_firstname}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button onClick={() => setDarkMode(!darkMode)}>
+            {darkMode ? <FiSun /> : <FiMoon />}
+          </button>
+
+          <button ref={mobileNotificationBtnRef} onClick={toggleNotification}>
+            <FaBell size={20} />
+          </button>
+
+          {showNotification && (
+            <div
+              ref={mobileNotificationRef}
+              className="absolute right-3 top-16 z-[99999]"
+            >
+              <DashboardNotification
+                onClose={() => setShowNotification(false)}
+              />
+            </div>
+          )}
+
+          <button onClick={() => router.push("/dashboard/student/chat")}>
+            <IoChatboxSharp size={20} />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

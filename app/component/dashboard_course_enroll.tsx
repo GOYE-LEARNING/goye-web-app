@@ -3,12 +3,12 @@
 import Image from "next/image";
 import pic from "@/public/images/overview.png";
 import { CiBookmark } from "react-icons/ci";
-import { useEffect, useState, } from "react";
+import { useEffect, useState } from "react";
 import { IoBookmark } from "react-icons/io5";
 import { LuUser } from "react-icons/lu";
 import { FaAngleDoubleUp } from "react-icons/fa";
 import pic2 from "@/public/images/notfound.png";
-import logo from "@/public/images/logo.png"
+import logo from "@/public/images/logo.png";
 import Loader from "./loader";
 interface Course {
   id?: string;
@@ -34,7 +34,7 @@ export default function DashboardCourseEnrolled({
   const [fill, setFill] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [courseDetails, setCourseDetails] = useState<Course[]>([]);
-
+  const [toogleMark, setToogleMark] = useState<string[]>([]);
   const course: Course[] = [
     {
       course_image: pic as any,
@@ -48,20 +48,17 @@ export default function DashboardCourseEnrolled({
     },
   ];
 
-  const toogleBookMark = (id: string) => {
-    setFill((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const fetchCourse = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${API_URL}/api/enroll/get-courses-enrolled-by-student`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${API_URL}/api/enroll/get-courses-enrolled-by-student`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
       const data = await res.json();
       if (!res.ok) {
         console.log("An error occured while fetching courses");
@@ -77,13 +74,21 @@ export default function DashboardCourseEnrolled({
 
   useEffect(() => {
     fetchCourse();
-
   }, []);
+
+  const toogleBookMark = (id: string) => {
+    setToogleMark((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((p) => p !== id);
+      }
+      return [...prev, id];
+    });
+  };
 
   const filterCourse = courseDetails.filter(
     (course) =>
       course.course_title.toLowerCase().includes(search.toLowerCase()) ||
-      course.course_description.toLowerCase().includes(search.toLowerCase())
+      course.course_description.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -109,7 +114,7 @@ export default function DashboardCourseEnrolled({
                   <div className="flex justify-start items-start w-full gap-3">
                     <div className="relative">
                       <img
-                        src={course.course_image as any || logo}
+                        src={(course.course_image as any) || logo}
                         alt="pic"
                         className="h-[89.16px] w-[130px]"
                       />
@@ -117,7 +122,7 @@ export default function DashboardCourseEnrolled({
                         className="absolute top-1 right-1"
                         onClick={() => toogleBookMark(course.id as any)}
                       >
-                        {!fill.includes(course.id as any) ? (
+                        {!toogleMark.includes(course.id as any) ? (
                           <CiBookmark color="#B1B1B6" size={23} />
                         ) : (
                           <IoBookmark color="#ffffff" size={23} />

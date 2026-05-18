@@ -45,6 +45,7 @@ export default function Login({
   // Add a ref to track if we're already processing Google auth
   const isProcessingGoogleRef = useRef(false);
   const loginTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle Google loading state
   useEffect(() => {
@@ -66,11 +67,14 @@ export default function Login({
     }
   }, [googleError]);
 
-  // Cleanup timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (loginTimeoutRef.current) {
         clearTimeout(loginTimeoutRef.current);
+      }
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
       }
     };
   }, []);
@@ -215,78 +219,76 @@ export default function Login({
     
     const { userData, status } = data;
     
+    // Save user data to localStorage
     if (userData) {
       localStorage.setItem("user_id", userData.id);
       localStorage.setItem("first_name", userData.first_name || "");
       localStorage.setItem("last_name", userData.last_name || "");
       localStorage.setItem("role", userData.role || "student");
       localStorage.setItem("type", userData.type || "user");
+      localStorage.setItem("isProfileComplete", String(status?.isProfileComplete || false));
       
-      if (userData.progressId) {
-        localStorage.setItem("progress_id", userData.progressId);
-      }
-      
-      if (userData.planId) {
-        localStorage.setItem("plan_id", userData.planId);
-      }
       
       if (userData.organizationId) {
         localStorage.setItem("organization_id", userData.organizationId);
+        setOrganizationId(userData.organizationId);
       }
       
-      console.log("Saved to localStorage:", {
-        user_id: userData.id,
-        role: userData.role,
-        type: userData.type,
-        isProfileComplete: status?.isProfileComplete
-      });
-    }
-    
-    // Small delay to ensure localStorage is written
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Determine next step
-    if (status) {
-      if (!status.isExistingUser) {
-        console.log("New user, showing signup form");
-        changeContentSignin();
-      } else if (status.isExistingUser && !status.isProfileComplete) {
-        console.log("Existing user with incomplete profile, showing signup form");
-        changeContentSignin();
-      } else {
-        console.log("Existing user with complete profile, redirecting to loading");
-        router.push("/loading");
+      if (userData.user_pic) {
+        localStorage.setItem("user_pic", userData.user_pic);
       }
-    } else {
-      router.push("/loading");
+      
+      if (userData.level) {
+        localStorage.setItem("level", userData.level);
+      }
+      
+      console.log("✅ Saved user data to localStorage");
     }
+    
+    // Clear any existing redirect timeout
+    if (redirectTimeoutRef.current) {
+      clearTimeout(redirectTimeoutRef.current);
+    }
+    
+    // ✅ CRITICAL: Wait for cookies to be fully set before redirecting
+    // Give the backend time to set cookies properly
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Determine next step - let the GoogleSignInButton handle the redirect
+    // Only handle profile completion here
+    if (status && !status.isProfileComplete) {
+      console.log("Profile incomplete, showing signup form");
+      if (setRequireProfileCompletion) {
+        setRequireProfileCompletion(true);
+      }
+      changeContentSignin();
+    }
+    // For complete profiles, the GoogleSignInButton will handle the redirect
     
     setTimeout(() => {
       isProcessingGoogleRef.current = false;
-    }, 1000);
+    }, 2000);
   };
 
   const handleGoogleNewUser = (data: any) => {
-    console.log("New Google user:", data);
-    if (!isProcessingGoogleRef.current) {
-      changeContentSignin();
+    console.log("New Google user - showing signup form");
+    if (setRequireProfileCompletion) {
+      setRequireProfileCompletion(true);
     }
+    changeContentSignin();
   };
 
   const handleGoogleExistingUser = (data: any) => {
-    console.log("Existing Google user:", data);
-    if (!isProcessingGoogleRef.current) {
-      const { isProfileComplete } = data;
-      
-      if (!isProfileComplete) {
-        changeContentSignin();
-      } else {
-        router.push("/loading");
-      }
-    }
+    console.log("Existing Google user");
+    // The GoogleSignInButton will handle redirect
+    // Just clear any processing flag if needed
+    setTimeout(() => {
+      isProcessingGoogleRef.current = false;
+    }, 500);
   };
 
   const handleGoogleError = (error: string) => {
+    console.error("Google auth error:", error);
     setError(true);
     setMessage(error);
     setShowMessage(true);

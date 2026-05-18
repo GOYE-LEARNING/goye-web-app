@@ -1,29 +1,28 @@
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import { CiUser } from "react-icons/ci";
 import { FaArrowRight } from "react-icons/fa6";
 import { GoOrganization } from "react-icons/go";
 import { IoInformationCircle } from "react-icons/io5";
 interface Props {
   openSignup: () => void;
-  changeContentLogin: () => void
+  changeContentLogin: () => void;
 }
 export default function Intro({ openSignup, changeContentLogin }: Props) {
   const router = useRouter();
   const [role, setRole] = useState<string>("");
-
   const selectRole = (value: string) => {
     setRole(value);
   };
 
   const roleData = [
     {
-      icon: <CiUser size={45}  />,
+      icon: <CiUser size={45} />,
       header: "Individual",
       value: "individual",
     },
     {
-      icon: <GoOrganization size={45}  />,
+      icon: <GoOrganization size={45} />,
       header: "Organization",
       value: "organization",
     },
@@ -62,9 +61,13 @@ export default function Intro({ openSignup, changeContentLogin }: Props) {
                 key={i}
                 onClick={() => selectRole(r.value)}
               >
-                <div className={`flex justify-center items-center flex-col gap-2 ${role == r.value ? "text-primaryColors-0" : "dark:text-textSlightDark-0 text-lightBoldText-0"}`}>
+                <div
+                  className={`flex justify-center items-center flex-col gap-2 ${role == r.value ? "text-primaryColors-0" : "dark:text-textSlightDark-0 text-lightBoldText-0"}`}
+                >
                   {r.icon}{" "}
-                  <h1 className={`text-[18px] font-[500] ${role == r.value ? "text-primaryColors-0" : "dark:text-textSlightDark-0 text-lightBoldText-0"}`}>
+                  <h1
+                    className={`text-[18px] font-[500] ${role == r.value ? "text-primaryColors-0" : "dark:text-textSlightDark-0 text-lightBoldText-0"}`}
+                  >
                     {r.header}
                   </h1>
                 </div>
@@ -78,16 +81,16 @@ export default function Intro({ openSignup, changeContentLogin }: Props) {
             Continue <FaArrowRight />
           </button>
 
-            <div className="md:hidden flex items-center gap-2 pt-[24px]">
-                        {" "}
-                        <p className="text-textGrey-0">Have an account?</p>
-                        <span
-                          className="text-primaryColors-0 font-semibold cursor-pointer"
-                          onClick={changeContentLogin}
-                        >
-                          Log in
-                        </span>
-                      </div>
+          <div className="md:hidden flex items-center gap-2 pt-[24px]">
+            {" "}
+            <p className="text-textGrey-0">Have an account?</p>
+            <span
+              className="text-primaryColors-0 font-semibold cursor-pointer"
+              onClick={changeContentLogin}
+            >
+              Log in
+            </span>
+          </div>
         </div>
       </div>
     </div>

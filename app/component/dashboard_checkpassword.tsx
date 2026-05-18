@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SubHeader from "./dashboard_subheader";
 import { IoEye, IoEyeOff } from "react-icons/io5";
 import Loader from "./loader";
-import { CiCircleInfo } from "react-icons/ci";
-import { IoIosInformationCircle } from "react-icons/io";
 
 interface Props {
   submitFunc: () => void;
@@ -21,6 +19,7 @@ export default function DashboardCheckPassword({
   backFunc,
 }: Props) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const [formData, setFormData] = useState<FormData>({
     current_password: "",
   });
@@ -90,17 +89,12 @@ export default function DashboardCheckPassword({
     <>
       <div>
         <SubHeader
-          header="Remember Password"
+          header="Reset Password"
           backFunction={() => {
             backFunc();
           }}
         />
-        <div className="flex items-center gap-2">
-          <IoIosInformationCircle color="gold" size={20} />
-          <p className="text-nearTextColors-0 text-[12px]">
-            To change password, you must remember the current one.
-          </p>
-        </div>
+ 
         <div className="dashboard_content_mainbox">
           <form
             onSubmit={handleSubmit}

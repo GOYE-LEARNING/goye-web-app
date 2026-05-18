@@ -9,7 +9,6 @@ import Step3 from "./step3";
 import Finished from "../../finished";
 import { useSignup } from "../../../context/SignupContext";
 import { useAuthContext } from "@/app/context/AuthContext";
-import { auth } from "@/backend/src/config/firebaseConfig";
 
 export default function WelcomeMoreAuth() {
   const [step, setStep] = useState<number>(0);

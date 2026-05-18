@@ -4,6 +4,7 @@ import useGoogleSignupButton from "../hook/useGoogleSignupButton";
 import Image from "next/image";
 import googleIcon from "@/public/images/google_logo2.png";
 import { useRouter } from "next/navigation";
+import { useAuthContext } from "../context/AuthContext";
 
 const GoogleSignInButton = ({
   onSuccess,
@@ -19,11 +20,11 @@ const GoogleSignInButton = ({
   requireProfileCompletion?: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const { signInWithGoogle, loading, error } = useGoogleSignupButton();
+  const { updateAuthStatus, checkAuth } = useAuthContext();
   const router = useRouter();
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Clear timeout on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -33,10 +34,8 @@ const GoogleSignInButton = ({
   }, []);
 
   const handleClick = async () => {
-    // Clear any previous errors
     setTimeoutError(null);
     
-    // Set a timeout for slow loading (20 seconds)
     timeoutRef.current = setTimeout(() => {
       setTimeoutError("Google sign-in is taking too long. Please check your internet connection and try again.");
       onError("Google sign-in is taking too long. Please check your internet connection and try again.");
@@ -45,7 +44,6 @@ const GoogleSignInButton = ({
     try {
       const result = await signInWithGoogle();
 
-      // Clear timeout since we got a response
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -63,42 +61,58 @@ const GoogleSignInButton = ({
           userData
         });
 
+        // Update auth context
+        updateAuthStatus({
+          isExistingUser: isExistingUser,
+          isProfileComplete: isProfileComplete,
+          requiresProfileCompletion: !isProfileComplete,
+          user: userData,
+          isLoading: false,
+        });
+
+        // ✅ Wait for cookies to be set
+        console.log("Waiting for cookies to be set...");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // ✅ Verify authentication
+        console.log("Verifying authentication...");
+        let isAuthenticated = false;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (!isAuthenticated && retryCount < maxRetries) {
+          try {
+            isAuthenticated = await checkAuth();
+            console.log(`Auth check attempt ${retryCount + 1}:`, isAuthenticated);
+            
+            if (!isAuthenticated && retryCount < maxRetries - 1) {
+              console.log("Waiting before retry...");
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            retryCount++;
+          } catch (err) {
+            console.error(`Auth check attempt ${retryCount + 1} failed:`, err);
+            retryCount++;
+          }
+        }
+        
+        if (!isAuthenticated) {
+          console.error("Authentication verification failed after retries");
+          onError("Authentication failed. Please try again.");
+          return;
+        }
+
+        console.log("✅ Authentication verified successfully!");
+
+        // Now decide where to go
         if (isProfileComplete && isExistingUser) {
           console.log("Profile complete, redirecting to loading...");
-          
-          if (userData) {
-            localStorage.setItem("user_id", userData.id);
-            localStorage.setItem("first_name", userData.first_name || "");
-            localStorage.setItem("last_name", userData.last_name || "");
-            localStorage.setItem("role", userData.role || "student");
-            localStorage.setItem("type", userData.type || "user");
-            
-            if (userData.progressId) {
-              localStorage.setItem("progress_id", userData.progressId);
-            }
-            
-            if (userData.planId) {
-              localStorage.setItem("plan_id", userData.planId);
-            }
-          }
-
           router.push("/loading");
         } else {
           console.log("Profile incomplete, showing signup form...");
-          
-          if (userData) {
-            localStorage.setItem("user_id", userData.id);
-            localStorage.setItem("first_name", userData.first_name || "");
-            localStorage.setItem("last_name", userData.last_name || "");
-            localStorage.setItem("email", userData.email_address || "");
-            localStorage.setItem("role", userData.role || "student");
-            localStorage.setItem("type", userData.type || "user");
-          }
-          
           if (requireProfileCompletion) {
             requireProfileCompletion(true);
           }
-          
           onNewUser(result);
         }
         
@@ -110,7 +124,7 @@ const GoogleSignInButton = ({
         onError(result.error);
       }
     } catch (err: any) {
-      // Clear timeout on error
+      console.error("Google sign-in error:", err);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;

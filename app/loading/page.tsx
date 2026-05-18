@@ -5,14 +5,17 @@ import logo from "@/public/images/goye_white.png";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
+import { useAuthContext } from "@/app/context/AuthContext";
 
 export default function LoadingPage() {
   const { organizationId } = useOrganizationContext();
+  const { updateAuthStatus, checkAuth } = useAuthContext();
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Authenticating...");
   const [error, setError] = useState<string | null>(null);
   const redirectAttempted = useRef(false);
+  const authCheckedRef = useRef(false);
 
   // Status messages based on progress
   const statusMessages = [
@@ -33,22 +36,75 @@ export default function LoadingPage() {
     setStatus(currentStatus);
   }, [progress]);
 
+  // Check auth and ensure context is updated
   useEffect(() => {
-    // Get user data from localStorage
-    const role = localStorage.getItem("role");
-    const userType = localStorage.getItem("type");
+    const verifyAndUpdateAuth = async () => {
+      if (authCheckedRef.current) return;
+      authCheckedRef.current = true;
+      
+      // Get user data from localStorage (ONLY user data, NO tokens)
+      const userId = localStorage.getItem("user_id");
+      const role = localStorage.getItem("role");
+      const userType = localStorage.getItem("type");
+      const isProfileComplete = localStorage.getItem("isProfileComplete") === "true";
+      const firstName = localStorage.getItem("first_name");
+      const lastName = localStorage.getItem("last_name");
+      const email = localStorage.getItem("email");
+      const userLevel = localStorage.getItem("level");
 
-    // Validate that we have necessary data
-    if (!role && !userType) {
-      console.error("No user role or type found in localStorage");
-      setError("Session expired. Please login again.");
-      
-      const timeout = setTimeout(() => {
-        router.push("/auth");
-      }, 3000);
-      
-      return () => clearTimeout(timeout);
-    }
+      console.log("Loading page - user data check:", { 
+        userId,
+        role,
+        userType,
+        isProfileComplete,
+        firstName,
+        lastName,
+        email,
+        userLevel
+      });
+
+      // ✅ ONLY check if we have user data (NO token checks)
+      if (userId && role) {
+        // Update auth context with the data from localStorage
+        updateAuthStatus({
+          isExistingUser: true,
+          isProfileComplete: isProfileComplete,
+          requiresProfileCompletion: !isProfileComplete,
+          isLoading: false,
+          user: {
+            id: userId,
+            first_name: firstName || "",
+            last_name: lastName || "",
+            email_address: email || "",
+            role: role,
+            type: userType || "user",
+            level: userLevel || "Beginners"
+          }
+        });
+        console.log("✅ Updated auth context from localStorage");
+        
+        // Verify with backend (cookies will be sent automatically)
+        try {
+          const isValid = await checkAuth();
+          console.log("Backend auth check result:", isValid);
+          
+          if (!isValid) {
+            console.warn("⚠️ Backend check failed, but continuing with user data");
+          }
+        } catch (err) {
+          console.warn("⚠️ Backend check error, continuing with user data:", err);
+        }
+      } else {
+        console.error("❌ No user data found - redirecting to login");
+        setError("No user session found. Please login again.");
+        const timeout = setTimeout(() => {
+          router.push("/auth");
+        }, 3000);
+        return () => clearTimeout(timeout);
+      }
+    };
+
+    verifyAndUpdateAuth();
 
     // Simulate loading progress
     const interval = setInterval(() => {
@@ -62,7 +118,7 @@ export default function LoadingPage() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [router]);
+  }, [router, updateAuthStatus, checkAuth]);
 
   useEffect(() => {
     // Only redirect once when progress reaches 100
@@ -73,6 +129,8 @@ export default function LoadingPage() {
       const userType = localStorage.getItem("type")?.toLowerCase();
       const organizationId_local = localStorage.getItem("organization_id");
       const finalOrgId = organizationId || organizationId_local;
+
+      console.log("Redirecting with role:", role, "userType:", userType);
 
       // Small delay for smooth transition
       const timeout = setTimeout(() => {
@@ -114,10 +172,9 @@ export default function LoadingPage() {
           }
           
           console.log("Final redirect path:", redirectPath);
-          console.log("Role from localStorage:", role);
-          console.log("UserType from localStorage:", userType);
           
-          router.replace(redirectPath);
+          // Use router.push to ensure state is preserved
+          router.push(redirectPath);
         } catch (err) {
           console.error("Redirect error:", err);
           setError("Failed to redirect. Please try again.");
@@ -134,10 +191,14 @@ export default function LoadingPage() {
     setError(null);
     setProgress(0);
     redirectAttempted.current = false;
+    authCheckedRef.current = false;
     
     const role = localStorage.getItem("role");
     if (!role) {
       router.push("/auth");
+    } else {
+      // Retry the verification
+      window.location.reload();
     }
   };
 

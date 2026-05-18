@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import {  useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { MdCancel, MdCheckCircle } from "react-icons/md";
@@ -18,6 +18,7 @@ export default function CreatePassword() {
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showSignin, setShowSignin] = useState<boolean>(false);
   const [showResetPassword, setShowResetPassword] = useState<boolean>(true);
+
   const changeContentLogin = () => {
     setShowLogin(false);
     setShowSignin(true);

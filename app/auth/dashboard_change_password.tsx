@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import SubHeader from "../component/dashboard_subheader";
-import { IoEye, IoEyeOff } from "react-icons/io5";
-import Loader from "../component/loader";
 import { AnimatePresence, motion } from "framer-motion";
+import { IoIosInformationCircle } from "react-icons/io";
+import VerifyEmail from "./verify_email";
+import DashboardProfileResetPassword from "../component/dashboard_profile_reset_password";
+import DashboardProfileVerifyEmail from "../component/dashboard_profile_verify_email";
 
 interface FormData {
-  new_password: string;
-  confirm_password: string;
+  emailAddress: string;
 }
 
 interface Props {
@@ -18,22 +19,42 @@ interface Props {
 export default function DashboardChangePassword({ backFunction }: Props) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
+  const [mainContainer, setMainContainer] = useState<boolean>(true);
+  const [showVerifyEmail, setShowVerifyEmail] = useState<boolean>(false);
+  const [resetPassword, setResetPassword] = useState<boolean>(false);
   const [showMessage, setShowMessage] = useState<boolean>(false);
   const [status, setStatus] = useState<number | null>(null);
   const [formData, setFormData] = useState<FormData>({
-    new_password: "",
-    confirm_password: "",
+    emailAddress: "",
   });
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  // Track which field is visible
-  const [activeShowPassword, setActiveShowPassword] = useState<
-    "new" | "confirm" | null
-  >(null);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true)
+      try {
+        const res = await fetch(`${API_URL}/api/user/profile`, {
+          method: "GET",
+          credentials: "include",
+        });
 
-  const handleClick = (tab: "new" | "confirm") => {
-    // Toggle logic: if already open, close it
-    setActiveShowPassword((prev) => (prev === tab ? null : tab));
-  };
+        const data = await res.json();
+
+        setFormData((prev) => ({
+          ...prev,
+          emailAddress: data.user.email_address,
+        }));
+
+        setIsLoading(false)
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false)
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -41,24 +62,40 @@ export default function DashboardChangePassword({ backFunction }: Props) {
   };
 
   const validate = (): boolean => {
-    if (formData.new_password !== formData.new_password) {
+    if (formData.emailAddress == null || formData.emailAddress == "") {
       return false;
     }
 
     return true;
   };
 
+  const messageFunc = (message: string, status: number) => {
+    setMessage(message);
+    setShowMessage(true);
+    setStatus(status);
+    setTimeout(() => {
+      setShowMessage(false);
+      setStatus(null);
+      setMessage("");
+    }, 2000);
+  };
+
+  const openOtpContainer = useCallback(() => {
+    setShowVerifyEmail(true);
+    setMainContainer(false);
+    setResetPassword(false);
+  }, []);
+
   const handleSubmit = async (e: React.ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     if (validate()) {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
       try {
-        const res = await fetch(`${API_URL}/api/user/update-password`, {
-          method: "PUT",
+        const res = await fetch(`${API_URL}/api/user/sendOtp`, {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            newPassword: formData.new_password,
+            email: formData.emailAddress,
           }),
           credentials: "include",
         });
@@ -66,24 +103,20 @@ export default function DashboardChangePassword({ backFunction }: Props) {
         const data = await res.json();
 
         if (!res.ok) {
-          console.log("Error updating passowrd");
+          console.log("Error updating password");
+          messageFunc("Error updating Password", 400);
           return;
         }
 
         setIsLoading(false);
 
-        setMessage(data.message);
-        setShowMessage(true);
-        setStatus(200);
-        setTimeout(() => {
-          setShowMessage(false);
-          setStatus(null);
-          setMessage("");
-        }, 2000);
+        messageFunc("We just send an OTP to your gmail", 200);
         setFormData({
-          new_password: "",
-          confirm_password: "",
+          emailAddress: "",
         });
+        console.log(data);
+        localStorage.setItem("otp-token", data.sessionToken);
+        openOtpContainer();
       } catch (error) {
         console.error(error);
       } finally {
@@ -95,16 +128,17 @@ export default function DashboardChangePassword({ backFunction }: Props) {
   // Define all password input fields
   const forms = [
     {
-      label: "New password",
-      name: "new_password",
-      key: "new" as const,
-    },
-    {
-      label: "Confirm password",
-      name: "confirm_password",
-      key: "confirm" as const,
+      label: "Email address",
+      name: "email_address",
+      key: "email" as const,
     },
   ];
+
+  const createNewPassword = useCallback(() => {
+    setShowVerifyEmail(false);
+    setMainContainer(false);
+    setResetPassword(true);
+  }, []);
 
   return (
     <>
@@ -123,89 +157,71 @@ export default function DashboardChangePassword({ backFunction }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
-      <div>
-        <SubHeader header="Change Password" backFunction={backFunction} />
-        <div className="dashboard_content_mainbox">
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-5"
-            noValidate
-          >
-            {forms.map((form, i) => (
-              <div
-                key={i}
-                className="w-full h-[63px] border border-[#D2D5DA] py-[8px] px-[12px] flex items-center relative"
-              >
-                <div className="flex flex-col w-full">
-                  <label className="text-[#71748C] text-[12px]">
-                    {form.label}
-                  </label>
-                  <input
-                    type={activeShowPassword === form.key ? "text" : "password"} // ✅ correct logic
-                    name={form.name}
-                    onChange={handleChange}
-                    value={(formData as any)[form.name]}
-                    className={`text-[#1F2937] text-[16px] font-[500] outline-none border-none `}
-                    required
-                  />
-                </div>
-
-                {/* 👁 Show/Hide button */}
-                <div>
-                  {isLoading ? (
-                    <Loader
-                      height={20}
-                      width={20}
-                      border_width={2}
-                      full_border_color="white"
-                      small_border_color="#FFA500"
+      {mainContainer && (
+        <div>
+          <SubHeader header="Verify Gmail" backFunction={backFunction} />
+          <div className="dashboard_content_mainbox">
+            <div className="flex items-center gap-2 my-3">
+              <IoIosInformationCircle color="gold" size={20} />
+              <p className="text-nearTextColors-0 text-[12px]">
+                We will be sending you an OTP to this email
+              </p>
+            </div>
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col gap-5"
+              noValidate
+            >
+              {forms.map((form, i) => (
+                <div
+                  key={i}
+                  className="w-full h-[63px] border dark:border-[#ccc]/10 border-lightBoldText-0/10 py-[8px] px-[12px] flex items-center relative"
+                >
+                  <div className="flex flex-col w-full">
+                    <label className="text-[#1F2937]/20 dark:text-white/50 text-[12px]">
+                      {form.label}
+                    </label>
+                    <input
+                      type="email"
+                      name={form.name}
+                      onChange={handleChange}
+                      value={isLoading ? 'Loading...' : formData.emailAddress}
+                      disabled={true}
+                      className={`text-[#1F2937]/20 dark:text-white/50 text-[16px] font-[500] outline-none border-none bg-transparent`}
+                      required
                     />
-                  ) : (
-                    <div
-                      className="cursor-pointer ml-2"
-                      onClick={() => handleClick(form.key)}
-                    >
-                      {activeShowPassword === form.key ? (
-                        <IoEyeOff className="text-[#6B7280]" />
-                      ) : (
-                        <IoEye className="text-[#6B7280]" />
-                      )}
+                  </div>
+                </div>
+              ))}
+
+              <div className="">
+                <div>
+                  {isLoading == true ? (
+                    <div className="form_more md:mt-0 opacity-70">
+                      <div className="animate-spin h-[30px] w-[30px] border-[4px] border-r-[white] rounded-full bg-transparent"></div>
                     </div>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="form_more text-white bg-primaryColors-0 md:mt-0"
+                    >
+                      Send OTP
+                    </button>
                   )}
                 </div>
               </div>
-            ))}
-
-            <div className="grid grid-cols-2 gap-3">
-              <span
-                className="form_more bg-[#ffffff] text-[#71748C] border border-[#D9D9D9]"
-                onClick={() => {
-                  setFormData({
-                    new_password: "",
-                    confirm_password: "",
-                  });
-                }}
-              >
-                Clear
-              </span>
-              <div>
-                {isLoading == true ? (
-                  <div className="form_more md:mt-0 opacity-70">
-                    <div className="animate-spin h-[30px] w-[30px] border-[4px] border-r-[white] rounded-full bg-transparent"></div>
-                  </div>
-                ) : (
-                  <button
-                    type="submit"
-                    className="form_more text-white bg-primaryColors-0 md:mt-0"
-                  >
-                    Save Changes
-                  </button>
-                )}
-              </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
+      {showVerifyEmail && (
+        <DashboardProfileVerifyEmail
+          openSignup={() => {}}
+          openCreateNewPassword={createNewPassword}
+          type="fg_password"
+        />
+      )}
+      {resetPassword && <DashboardProfileResetPassword />}
     </>
   );
 }

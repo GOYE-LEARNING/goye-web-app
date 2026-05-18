@@ -140,7 +140,7 @@ export default function DashboardCourseAllProvider({
                     </div>
                   </div>
                   <button
-                    className="h-[36px] text-[14px] bg-shadyColor-0 text-primaryColors-0 my-3 w-full"
+                    className="h-[36px] text-[14px] dark:bg-shadyColor-0 dark:text-primaryColors-0 bg-primaryColors-0 text-white my-3 w-full"
                     onClick={() => {
                       setIsLoadingFunc(course.id as any);
                     }}

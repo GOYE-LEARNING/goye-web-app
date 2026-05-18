@@ -181,7 +181,7 @@ export default function DashboardEditProfile({
   const [countries, setCountry] = useState<Country[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const params = useParams<{ org_name: string }>();
-  const typeFromLoacalStorage = localStorage.getItem("type")
+  const typeFromLoacalStorage = localStorage.getItem("type");
   const [type, setType] = useState<"ORGANIZATION" | "INDIVIDUAL" | null>(null);
 
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -202,14 +202,16 @@ export default function DashboardEditProfile({
     organization_role: organization_role || "",
     organization_year: organization_year || "",
     organization_type: organization_type || "",
-    Church: Church ? {
-      church_min_name: Church.church_min_name || "",
-      church_ld_pastor: Church.church_ld_pastor || "",
-      church_email: Church.church_email || "",
-      church_address: Church.church_address || "",
-      church_website: Church.church_website || "",
-      church_weekly_service: Church.church_weekly_service || "",
-    } : undefined,
+    Church: Church
+      ? {
+          church_min_name: Church.church_min_name || "",
+          church_ld_pastor: Church.church_ld_pastor || "",
+          church_email: Church.church_email || "",
+          church_address: Church.church_address || "",
+          church_website: Church.church_website || "",
+          church_weekly_service: Church.church_weekly_service || "",
+        }
+      : undefined,
     school: school || undefined,
     Club: Club || undefined,
   });
@@ -252,14 +254,13 @@ export default function DashboardEditProfile({
 
       localStorage.setItem("first_name", data.data.first_name);
       localStorage.setItem("last_name", data.data.last_name);
-      
+
       if (onProfileUpdate) {
         onProfileUpdate(formData);
       }
 
       // Show success message
       alert("Profile updated successfully!");
-      
     } catch (error) {
       console.error(error);
       alert("Failed to update profile. Please try again.");
@@ -268,23 +269,25 @@ export default function DashboardEditProfile({
     }
   };
 
+
+
   const updateOrganization = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    
+
     const organizationId = params?.org_name;
-    
+
     if (!organizationId) {
       console.error("Organization ID not found");
       alert("Organization ID not found");
       return;
     }
 
-       let userFormType = "";
- 
+    let userFormType = "";
+
     if (type === "ORGANIZATION") {
-      userFormType = "ORGANIZATION"; 
+      userFormType = "ORGANIZATION";
     } else if (type === "INDIVIDUAL") {
-      userFormType = "INDIVIDUAL"; 
+      userFormType = "INDIVIDUAL";
     }
     try {
       setIsLoading(true);
@@ -298,7 +301,7 @@ export default function DashboardEditProfile({
         organization_description: formData.organization_description,
         organization_role: formData.organization_role,
         organization_year: formData.organization_year,
-        
+
         user_first_name: formData.first_name,
         user_last_name: formData.last_name,
         user_email_address: formData.email_address,
@@ -329,7 +332,8 @@ export default function DashboardEditProfile({
           school_admin_name: formData.school.school_admin_name,
           school_role: formData.school.school_role,
           school_website: formData.school.school_website,
-          school_accreditation_number: formData.school.school_accreditation_number,
+          school_accreditation_number:
+            formData.school.school_accreditation_number,
           school_document: formData.school.school_document,
         };
       }
@@ -348,14 +352,17 @@ export default function DashboardEditProfile({
         };
       }
 
-      const res = await fetch(`${API_URL}/api/organizations/update-organization/${organizationId}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${API_URL}/api/organizations/update-organization/${organizationId}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updateData),
         },
-        body: JSON.stringify(updateData),
-      });
+      );
 
       const data = await res.json();
 
@@ -369,7 +376,6 @@ export default function DashboardEditProfile({
           organization_type,
         });
       }
-      
     } catch (error) {
       console.error("Error updating organization:", error);
       alert("Failed to update organization. Please try again.");
@@ -380,7 +386,7 @@ export default function DashboardEditProfile({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (type === "INDIVIDUAL") {
       await updateProfile();
     } else {
@@ -390,19 +396,19 @@ export default function DashboardEditProfile({
 
   const handleOrganizationDocumentUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    documentType: 'school' | 'club'
+    documentType: "school" | "club",
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('organizationId', params?.org_name as string);
-    formData.append('documentType', documentType);
+    formData.append("file", file);
+    formData.append("organizationId", params?.org_name as string);
+    formData.append("documentType", documentType);
 
     try {
       setIsLoading(true);
-      
+
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${API_URL}/api/upload-organization-document`, {
         method: "POST",
@@ -416,26 +422,25 @@ export default function DashboardEditProfile({
         throw new Error(data.message || "Failed to upload document");
       }
 
-      if (documentType === 'school') {
-        setFormData(prev => ({
+      if (documentType === "school") {
+        setFormData((prev) => ({
           ...prev,
           school: {
             ...prev.school,
             school_document: data.documentUrl,
-          }
+          },
         }));
       } else {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           Club: {
             ...prev.Club,
             club_document: data.documentUrl,
-          }
+          },
         }));
       }
 
       alert("Document uploaded successfully!");
-      
     } catch (error) {
       console.error("Error uploading document:", error);
       alert("Failed to upload document. Please try again.");
@@ -463,18 +468,20 @@ export default function DashboardEditProfile({
   const selectedCity = formData.state;
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {  
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
   const handleNestedChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    section: 'Church' | 'school' | 'Club'
+    section: "Church" | "school" | "Club",
   ) => {
     const { name, value } = e.target;
-    
+
     setFormData((prev: FormData) => ({
       ...prev,
       [section]: {
@@ -601,13 +608,13 @@ export default function DashboardEditProfile({
       label: "Church Ministry Name",
       type: "text",
       name: "organization_name",
-      onchange: (e: any) => handleNestedChange(e, 'Church'),
+      onchange: (e: any) => handleNestedChange(e, "Church"),
     },
     {
       label: "Church Lead Pastor",
       type: "text",
       name: "church_ld_pastor",
-      onchange: (e: any) => handleNestedChange(e, 'Church'),
+      onchange: (e: any) => handleNestedChange(e, "Church"),
     },
     {
       label: "Church Role",
@@ -619,25 +626,25 @@ export default function DashboardEditProfile({
       label: "Church Email",
       type: "text",
       name: "church_email",
-      onchange: (e: any) => handleNestedChange(e, 'Church'),
+      onchange: (e: any) => handleNestedChange(e, "Church"),
     },
     {
       label: "Church Address",
       type: "text",
       name: "church_address",
-      onchange: (e: any) => handleNestedChange(e, 'Church'),
+      onchange: (e: any) => handleNestedChange(e, "Church"),
     },
     {
       label: "Church Weekly Service",
       type: "text",
       name: "church_weekly_service",
-      onchange: (e: any) => handleNestedChange(e, 'Church'),
+      onchange: (e: any) => handleNestedChange(e, "Church"),
     },
     {
       label: "Church Website",
       type: "text",
       name: "church_website",
-      onchange: (e: any) => handleNestedChange(e, 'Church'),
+      onchange: (e: any) => handleNestedChange(e, "Church"),
     },
   ];
 
@@ -646,56 +653,56 @@ export default function DashboardEditProfile({
       label: "School Name",
       type: "text",
       name: "school_name",
-      onchange: (e: any) => handleNestedChange(e, 'school'),
+      onchange: (e: any) => handleNestedChange(e, "school"),
     },
     {
       label: "School Email",
       type: "text",
       name: "school_email",
-      onchange: (e: any) => handleNestedChange(e, 'school'),
+      onchange: (e: any) => handleNestedChange(e, "school"),
     },
     {
       label: "School Type",
       type: "text",
       name: "school_type",
-      onchange: (e: any) => handleNestedChange(e, 'school'),
+      onchange: (e: any) => handleNestedChange(e, "school"),
     },
     {
       label: "School Address",
       type: "text",
       name: "school_address",
-      onchange: (e: any) => handleNestedChange(e, 'school'),
+      onchange: (e: any) => handleNestedChange(e, "school"),
     },
     {
       label: "School Role",
       type: "text",
       name: "school_role",
-      onchange: (e: any) => handleNestedChange(e, 'school'),
+      onchange: (e: any) => handleNestedChange(e, "school"),
     },
     {
       label: "School Website",
       type: "text",
       name: "school_website",
-      onchange: (e: any) => handleNestedChange(e, 'school'),
+      onchange: (e: any) => handleNestedChange(e, "school"),
     },
     {
       label: "School Accreditation Number",
       type: "text",
       name: "school_accreditation_number",
-      onchange: (e: any) => handleNestedChange(e, 'school'),
+      onchange: (e: any) => handleNestedChange(e, "school"),
     },
     {
       label: "School Admin Name",
       type: "text",
       name: "school_admin_name",
-      onchange: (e: any) => handleNestedChange(e, 'school'),
+      onchange: (e: any) => handleNestedChange(e, "school"),
     },
     {
       label: "School Document",
       type: "file",
       name: "school_document",
-      onchange: (e: React.ChangeEvent<HTMLInputElement>) => 
-        handleOrganizationDocumentUpload(e, 'school'),
+      onchange: (e: React.ChangeEvent<HTMLInputElement>) =>
+        handleOrganizationDocumentUpload(e, "school"),
     },
   ];
 
@@ -704,56 +711,56 @@ export default function DashboardEditProfile({
       label: "Club Name",
       type: "text",
       name: "club_name",
-      onchange: (e: any) => handleNestedChange(e, 'Club'),
+      onchange: (e: any) => handleNestedChange(e, "Club"),
     },
     {
       label: "Club Type",
       type: "text",
       name: "club_type",
-      onchange: (e: any) => handleNestedChange(e, 'Club'),
+      onchange: (e: any) => handleNestedChange(e, "Club"),
     },
     {
       label: "Club Leader Name",
       type: "text",
       name: "club_leader_name",
-      onchange: (e: any) => handleNestedChange(e, 'Club'),
+      onchange: (e: any) => handleNestedChange(e, "Club"),
     },
     {
       label: "Club Meeting Frequency",
       type: "text",
       name: "club_meeting_frequency",
-      onchange: (e: any) => handleNestedChange(e, 'Club'),
+      onchange: (e: any) => handleNestedChange(e, "Club"),
     },
     {
       label: "Club Social Link",
       type: "text",
       name: "club_social_link",
-      onchange: (e: any) => handleNestedChange(e, 'Club'),
+      onchange: (e: any) => handleNestedChange(e, "Club"),
     },
     {
       label: "Club Parent Organization",
       type: "text",
       name: "club_parent_org",
-      onchange: (e: any) => handleNestedChange(e, 'Club'),
+      onchange: (e: any) => handleNestedChange(e, "Club"),
     },
     {
       label: "Club Role",
       type: "text",
       name: "club_role",
-      onchange: (e: any) => handleNestedChange(e, 'Club'),
+      onchange: (e: any) => handleNestedChange(e, "Club"),
     },
     {
       label: "Club Description",
       type: "text",
       name: "club_description",
-      onchange: (e: any) => handleNestedChange(e, 'Club'),
+      onchange: (e: any) => handleNestedChange(e, "Club"),
     },
     {
       label: "Club Document",
       type: "file",
       name: "club_document",
-      onchange: (e: React.ChangeEvent<HTMLInputElement>) => 
-        handleOrganizationDocumentUpload(e, 'club'),
+      onchange: (e: React.ChangeEvent<HTMLInputElement>) =>
+        handleOrganizationDocumentUpload(e, "club"),
     },
   ];
 
@@ -761,7 +768,7 @@ export default function DashboardEditProfile({
     <>
       <div>
         <SubHeader header="Edit Profile" backFunction={backFunc} />
-        <div className="bg-[#ffffff] p-[24px] w-full my-5">
+        <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] w-full my-5">
           <div className="w-full flex justify-center items-center overflow-hidden">
             <div className="h-[72px] w-[72px] bg-[#D9D9D9] rounded-full overflow-hidden">
               <img
@@ -771,7 +778,7 @@ export default function DashboardEditProfile({
               />
             </div>
           </div>
-          {type == "INDIVIDUAL" || typeFromLoacalStorage == 'user' ? (
+          {type == "INDIVIDUAL" || typeFromLoacalStorage == "user" ? (
             <form
               onSubmit={handleSubmit}
               className="my-5 flex flex-col gap-5"
@@ -780,7 +787,7 @@ export default function DashboardEditProfile({
               {forms.map((form, i) => (
                 <div
                   key={i}
-                  className="w-full h-[63px] border border-[#D2D5DA] py-[8px] px-[12px] flex items-center relative"
+                  className="w-full h-[63px] border border-[#D2D5DA] dark:border-[#ccc]/10 py-[8px] px-[12px] flex items-center relative"
                 >
                   <div className="flex flex-col w-full">
                     <label className="text-[#71748C] text-[12px]">
@@ -791,10 +798,10 @@ export default function DashboardEditProfile({
                       name={form.name}
                       onChange={form.onchange}
                       value={(formData as any)[form.name] || ""}
-                      className={`text-[#1F2937] text-[16px] font-[500] outline-none border-none ${
+                      className={`bg-transparent text-[#1F2937]  text-[16px] font-[500] outline-none border-none ${
                         form.name == "email_address"
                           ? "text-[#71748C] bg-transparent"
-                          : ""
+                          : "dark:text-white"
                       }`}
                       disabled={form.name == "email_address"}
                       required
@@ -871,7 +878,7 @@ export default function DashboardEditProfile({
                 <button
                   type="button"
                   onClick={backFunc}
-                  className="form_more bg-[#ffffff] text-[#71748C] border border-[#D9D9D9]"
+                  className="form_more bg-[#ffffff] dark:bg-shadyColor-0 text-[#71748C] border border-[#D9D9D9] dark:border-[#ccc]/10"
                 >
                   Cancel
                 </button>
@@ -1130,16 +1137,17 @@ export default function DashboardEditProfile({
                             type={form.type}
                             name={form.name}
                             onChange={form.onchange}
-                            value={form.name.includes('church') 
-                              ? (formData.Church as any)?.[form.name] || ""
-                              : (formData as any)[form.name] || ""
+                            value={
+                              form.name.includes("church")
+                                ? (formData.Church as any)?.[form.name] || ""
+                                : (formData as any)[form.name] || ""
                             }
-                                                      className={`text-[#1F2937] text-[14px] font-[500] outline-none border-none ${
-                            form.name == "church_email"
-                              ? "text-[#71748C] bg-transparent"
-                              : ""
-                          }`}
-                          disabled={form.name == "church_email"}
+                            className={`text-[#1F2937] text-[14px] font-[500] outline-none border-none ${
+                              form.name == "church_email"
+                                ? "text-[#71748C] bg-transparent"
+                                : ""
+                            }`}
+                            disabled={form.name == "church_email"}
                             required
                           />
                         </div>
@@ -1169,7 +1177,7 @@ export default function DashboardEditProfile({
                               onChange={form.onchange}
                               accept=".pdf,.doc,.docx"
                             />
-                            <label 
+                            <label
                               htmlFor="school-document"
                               className="flex justify-center items-center flex-col w-full h-full cursor-pointer"
                             >
@@ -1205,13 +1213,15 @@ export default function DashboardEditProfile({
                               type={form.type}
                               name={form.name}
                               onChange={form.onchange}
-                              value={(formData.school as any)?.[form.name] || ""}
-                          className={`text-[#1F2937] text-[14px] font-[500] outline-none border-none ${
-                            form.name == "school_email"
-                              ? "text-[#71748C] bg-transparent"
-                              : ""
-                          }`}
-                          disabled={form.name == "school_email"}
+                              value={
+                                (formData.school as any)?.[form.name] || ""
+                              }
+                              className={`text-[#1F2937] text-[14px] font-[500] outline-none border-none ${
+                                form.name == "school_email"
+                                  ? "text-[#71748C] bg-transparent"
+                                  : ""
+                              }`}
+                              disabled={form.name == "school_email"}
                               required
                             />
                           </div>
@@ -1242,7 +1252,7 @@ export default function DashboardEditProfile({
                               onChange={form.onchange}
                               accept=".pdf,.doc,.docx"
                             />
-                            <label 
+                            <label
                               htmlFor="club-document"
                               className="flex justify-center items-center flex-col w-full h-full cursor-pointer"
                             >

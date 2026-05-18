@@ -5,7 +5,7 @@ import Sidenav from "./sidenav";
 import { usePathname, useRouter } from "next/navigation";
 import ProgressProvider from "@/app/context/progressContext";
 import QuizProvider from "@/app/context/quizContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuthContext } from "@/app/context/AuthContext";
 import AuthLoader from "@/app/auth/auth_loader";
 
@@ -16,9 +16,10 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { authStatus, checkAuth, refreshToken } = useAuthContext();
+  const { authStatus, checkAuth, refreshToken, updateAuthStatus } = useAuthContext();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const authCheckedRef = useRef(false);
 
   const path = ["/dashboard/student/course", "/dashboard/student/community"];
   const path2 = ["/dashboard/student/chat"];
@@ -29,6 +30,10 @@ export default function DashboardLayout({
   // Check authentication on mount
   useEffect(() => {
     const verifyAuth = async () => {
+      // Prevent multiple checks
+      if (authCheckedRef.current) return;
+      authCheckedRef.current = true;
+      
       setIsCheckingAuth(true);
 
       // Check for tokens in cookies
@@ -38,32 +43,75 @@ export default function DashboardLayout({
       // Check localStorage for user data
       const userId = localStorage.getItem("user_id");
       const userRole = localStorage.getItem("role");
+      const userType = localStorage.getItem("type");
+      const isProfileComplete = localStorage.getItem("isProfileComplete") === "true";
+      const firstName = localStorage.getItem("first_name");
+      const lastName = localStorage.getItem("last_name");
+      const email = localStorage.getItem("email");
+      const progressId = localStorage.getItem("progress_id");
+      const planId = localStorage.getItem("plan_id");
 
-      console.log("Dashboard Layout - Auth check:", {
+      console.log("Dashboard Layout - Detailed auth check:", {
         hasAccessToken,
         hasRefreshToken,
         userId,
         userRole,
+        userType,
+        isProfileComplete,
         authStatus: authStatus.isExistingUser
       });
 
+      // FIRST: Check localStorage immediately - this is the most reliable
+      if (userId && userRole) {
+        console.log("✅ Dashboard: Found user in localStorage, authorizing...");
+        
+        // Update auth context if needed
+        if (!authStatus.isExistingUser) {
+          updateAuthStatus({
+            isExistingUser: true,
+            isProfileComplete: isProfileComplete,
+            requiresProfileCompletion: !isProfileComplete,
+            isLoading: false,
+            user: {
+              id: userId,
+              first_name: firstName || "",
+              last_name: lastName || "",
+              email_address: email || "",
+              role: userRole,
+              type: userType || "user",
+              level: localStorage.getItem("level") || "Beginners"
+            }
+          });
+        }
+        
+        setIsAuthorized(true);
+        setIsCheckingAuth(false);
+        
+        // Still verify with backend in background, but don't block
+        verifyWithBackend();
+        return;
+      }
+
+      // SECOND: Check auth context
       let isAuthenticated = false;
 
       if (authStatus.isExistingUser) {
         isAuthenticated = true;
-      } else if (hasAccessToken || hasRefreshToken) {
+        console.log("✅ Dashboard: Auth context says authenticated");
+      } 
+      // THIRD: Try to refresh token
+      else if (hasAccessToken || hasRefreshToken) {
+        console.log("🔄 Dashboard: Attempting token refresh...");
         const refreshed = await refreshToken();
         if (refreshed) {
           const isValid = await checkAuth();
           isAuthenticated = isValid;
+          console.log("✅ Dashboard: Token refresh result:", isAuthenticated);
         }
-      } else if (userId && userRole) {
-        // Fallback to localStorage
-        isAuthenticated = true;
       }
 
       if (!isAuthenticated) {
-        console.log("Not authenticated, redirecting to login");
+        console.log("❌ Dashboard: Not authenticated, redirecting to login");
         router.push("/auth");
         setIsCheckingAuth(false);
         return;
@@ -73,8 +121,21 @@ export default function DashboardLayout({
       setIsCheckingAuth(false);
     };
 
+    const verifyWithBackend = async () => {
+      // Background verification - don't block UI
+      try {
+        const hasTokens = document.cookie.includes("accessToken") || document.cookie.includes("refreshToken");
+        if (hasTokens) {
+          await checkAuth();
+          console.log("✅ Dashboard: Background verification completed");
+        }
+      } catch (err) {
+        console.log("Background verification failed, but user is still authorized from localStorage");
+      }
+    };
+
     verifyAuth();
-  }, [authStatus.isExistingUser, checkAuth, refreshToken, router]);
+  }, [authStatus.isExistingUser, checkAuth, refreshToken, router, updateAuthStatus]);
 
   // Check for mobile
   useEffect(() => {

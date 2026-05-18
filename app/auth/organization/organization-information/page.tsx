@@ -7,6 +7,7 @@ import { Country, State } from "country-state-city";
 import { useEffect, useRef, useState } from "react";
 import DropDowns from "@/app/component/drop_downs";
 import { useRouter } from "next/navigation";
+import { useSignup } from "@/app/context/SignupContext";
 
 interface CountryType {
   name: string;
@@ -32,7 +33,6 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
   const [stateDropdown, setStateDropdown] = useState(false);
   const [OrgTypeDropdown, setOrgTypeDropdown] = useState(false);
   const [selectedCountryISO, setSelectedCountryISO] = useState<string>("");
-
   const showBtn = !hideButton;
   const router = useRouter();
 
@@ -77,6 +77,12 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
     const allStates = State.getStatesOfCountry(selectedCountryISO);
     setStates(allStates);
   }, [selectedCountryISO]);
+
+  useEffect(() => {
+    if (formData.main_type == "organization") {
+      setFormData((prev) => ({...prev, org_email: ""}))
+    }
+  }, [formData.main_type])
 
   const filterCountry = countries.filter((c) =>
     c.name.toLowerCase().includes(formData.org_country?.toLowerCase() || ""),

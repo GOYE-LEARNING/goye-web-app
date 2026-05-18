@@ -65,11 +65,11 @@ body.chat-page-desktop {
 .dark .dashboard_content_mainbox,
 .dark .dashboard_content_box,
 .dark .cr_box {
-  @apply bg-secondaryColors-0/50 backdrop-blur-md border-[#1f2937] drop-shadow-2xl;
+  @apply bg-secondaryColors-0/50 backdrop-blur-md border-[#1f2937] ;
 }
 
 .dashboard_content_mainbox, .dashboard_content_box, .cr_box {
-  @apply bg-white/50 backdrop-blur-md border border-[#ccc]/10 drop-shadow-2xl
+  @apply bg-white/50 backdrop-blur-md border border-[#ccc]/10
 } 
 
 .dark .dashboard_h1 {
@@ -362,11 +362,11 @@ body.chat-page-desktop {
 }
 
 .dashboard_hr {
-  @apply h-[1px] w-full bg-boldShadyColor-0;
+  @apply h-[1px] w-full bg-[#ccc]/10;
 }
 
 .dashboard_content_mainbox {
-  @apply bg-shadyColor-0 p-[clamp(16px,3vw,24px)] w-full max-w-full my-5 rounded-xl border border-boldShadyColor-0/80;
+  @apply dark:bg-shadyColor-0 bg-white p-[clamp(16px,3vw,24px)] w-full max-w-full my-5 rounded-xl border dark:border-boldShadyColor-0/80 border-[#ccc]/10;
 }
 
 .dashboard_content_box {
@@ -414,9 +414,15 @@ body.chat-page-desktop {
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-bottom: 15px solid #1a1d26;
+   border-bottom: 15px solid white;
   @apply drop-shadow-sm;
 }
+
+.dark .dashboard_triangle {
+   border-bottom: 15px solid #1a1d26;
+}
+
+
 
 .dashboard_triangle2 {
   width: 0;

@@ -22,6 +22,7 @@ interface Details {
   phone_number: string;
   country: string;
   state: string;
+  form_type: string
 }
 
 export default function Profile() {
@@ -36,6 +37,7 @@ export default function Profile() {
     phone_number: "",
     country: "",
     state: "",
+    form_type: ""
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [activePages, setActivePages] = useState<
@@ -157,7 +159,7 @@ export default function Profile() {
       {showProfile && (
         <>
           <h1 className="dashboard_h1 ">Profile</h1>
-          <div className="bg-[#ffffff] p-[24px] w-full my-5">
+          <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] w-full my-5">
             <div className="flex justify-center items-center flex-col">
               <label className="relative cursor-pointer">
                 <input
@@ -181,10 +183,10 @@ export default function Profile() {
               </label>
             </div>
 
-            <div className="bg-[#FAF8F8] p-[16px] flex flex-col gap-3">
+            <div className="bg-[#FAF8F8] dark:bg-shadyColor-0 p-[16px] flex flex-col gap-3 dark:text-white text-[#41415A]">
               <div className="flex justify-between items-center">
-                <p className="text-[#41415A] text-[14px]">Email</p>
-                <span className="text-[#41415A] font-[600] text-[14px]">
+                <p className=" text-[14px]">Email</p>
+                <span className=" font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
@@ -194,8 +196,8 @@ export default function Profile() {
               </div>
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
-                <p className="text-[#41415A] text-[14px]">Phone Number</p>
-                <span className="text-[#41415A] font-[600] text-[14px]">
+                <p className=" text-[14px]">Phone Number</p>
+                <span className=" font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
@@ -205,8 +207,8 @@ export default function Profile() {
               </div>
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
-                <p className="text-[#41415A] text-[14px]">Location</p>
-                <span className="text-[#41415A] font-[600] text-[14px]">
+                <p className=" text-[14px]">Location</p>
+                <span className=" font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
@@ -220,15 +222,15 @@ export default function Profile() {
 
             <div className="flex flex-col gap-2 my-5">
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1]"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1] dark:border-[#ccc]/10"
                 onClick={() => handleClickPage("edit")}
               >
                 <div className="flex gap-2 items-center">
-                  <div className="bg-[#FAF8F8] h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
+                  <div className="bg-[#FAF8F8] dark:bg-shadyColor-0 h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
                     <LuSquareUserRound />
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
-                    <h1 className="text-textSlightDark-0 font-[600] text-[14px]">
+                    <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-[600] text-[14px]">
                       Profile
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
@@ -241,15 +243,15 @@ export default function Profile() {
                 </span>
               </div>
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1]"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1] dark:border-[#ccc]/10"
                 onClick={() => handleClickPage("password")}
               >
                 <div className="flex gap-2 items-center">
-                  <div className="bg-[#FAF8F8] h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
+                  <div className="bg-[#FAF8F8] dark:bg-shadyColor-0  h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
                     <MdSecurity />
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
-                    <h1 className="text-textSlightDark-0 font-[600] text-[14px]">
+                    <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-[600] text-[14px]">
                       Password
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
@@ -262,15 +264,15 @@ export default function Profile() {
                 </span>
               </div>
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1]"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1] dark:border-[#ccc]/10"
                 onClick={() => handleClickPage("notification")}
               >
                 <div className="flex gap-2 items-center">
-                  <div className="bg-[#FAF8F8] h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
+                  <div className="bg-[#FAF8F8] dark:bg-shadyColor-0  h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
                     <MdNotifications />
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
-                    <h1 className="text-textSlightDark-0 font-[600] text-[14px]">
+                    <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-[600] text-[14px]">
                       Notifications
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
@@ -283,15 +285,15 @@ export default function Profile() {
                 </span>
               </div>
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1]"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1] dark:border-[#ccc]/10"
                 onClick={() => handleClickPage("language")}
               >
                 <div className="flex gap-2 items-center">
-                  <div className="bg-[#FAF8F8] h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
+                  <div className="bg-[#FAF8F8] dark:bg-shadyColor-0  h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
                     <IoMdGlobe />
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
-                    <h1 className="text-textSlightDark-0 font-[600] text-[14px]">
+                    <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-[600] text-[14px]">
                       Language
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
@@ -303,7 +305,7 @@ export default function Profile() {
                   <MdChevronRight size={29} />
                 </span>
               </div>
-              <button className="text-[#DA0E29] border border-[#D9D9D9] h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px]" onClick={logout}>
+              <button className="text-[#DA0E29] border border-[#D9D9D9] dark:border-[#ccc]/10 h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px]" onClick={logout}>
                 <MdLogout /> Logout
               </button>
             </div>
@@ -323,6 +325,7 @@ export default function Profile() {
                   email_address={details.email_address as string}
                   country={details.country as string}
                   state={details.state as string}
+                  level={details.form_type}
                   phone_number={details.phone_number as string}
                   backFunction={() => {
                     setShowProfile(true);
