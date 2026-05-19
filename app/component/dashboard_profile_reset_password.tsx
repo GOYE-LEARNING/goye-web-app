@@ -6,11 +6,29 @@ import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { MdCancel, MdCheckCircle } from "react-icons/md";
 import { AnimatePresence, motion } from "framer-motion";
 import Loader from "./loader";
-import { GetRole } from "../hook/getRole";
 
 interface Props {
   backFunction?: () => void;
 }
+
+const getRoleRedirectPath = (): string => {
+  const role = localStorage.getItem("role");
+  const org_name = localStorage.getItem("org_name");
+  
+  console.log("getRoleRedirectPath - role:", role);
+  console.log("getRoleRedirectPath - org_name:", org_name);
+
+  if (role === "student") {
+    return "/dashboard/student/profile";
+  } else if (role === "tutor") {
+    return "/dashboard/tutor/profile";
+  } else if (role === "invited_user") {
+    return `/dashboard/${org_name}/organization/profile`;
+  } else if (role === "org_admin") {
+    return `/dashboard/${org_name}/admin/profile`;
+  }
+  return "/dashboard/student/profile";
+};
 
 export default function DashboardProfileResetPassword({ backFunction }: Props) {
   const [formData, setFormData] = useState<{ password: string }>({
@@ -19,12 +37,12 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [touched, setTouched] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
   const router = useRouter();
 
-  const [showResetPassword, setShowResetPassword] = useState<boolean>(true);
-
-  // Password validation rules
   const rules = [
     { text: "At least 8 characters", test: /.{8,}/ },
     { text: "At least one number", test: /\d/ },
@@ -34,23 +52,36 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, password: e.target.value });
     if (!touched) setTouched(true);
-    // Clear message when user starts typing
     if (message) setMessage(null);
   };
 
   const validatePassword = (): boolean => {
     const allPassed = rules.every((rule) => rule.test.test(formData.password));
     if (!allPassed) {
-      setMessage({ text: "Please meet all password requirements", type: "error" });
+      setMessage({
+        text: "Please meet all password requirements",
+        type: "error",
+      });
       return false;
     }
     return true;
   };
 
+  const handleRedirect = () => {
+    console.log("handleRedirect called");
+    if (backFunction) {
+      console.log("Calling backFunction");
+      backFunction();
+    } else {
+      const redirectPath = getRoleRedirectPath();
+      console.log("Redirecting to:", redirectPath);
+      router.push(redirectPath);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (!validatePassword()) {
       return;
     }
@@ -76,27 +107,20 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
         throw new Error(data.message || data.error || "Failed to update password");
       }
 
-      // Success
       setMessage({ text: "Password updated successfully!", type: "success" });
-      
-      // Clear form
       setFormData({ password: "" });
       setTouched(false);
-      
-      // Redirect after 2 seconds
+
+      // Redirect after showing success message
       setTimeout(() => {
-        if (backFunction) {
-          backFunction();
-        } else {
-            GetRole()
-        }
-      }, 2000);
+        handleRedirect();
+      }, 1500);
       
     } catch (error) {
       console.error("Error updating password:", error);
-      setMessage({ 
-        text: error instanceof Error ? error.message : "Failed to update password. Please try again.", 
-        type: "error" 
+      setMessage({
+        text: error instanceof Error ? error.message : "Failed to update password. Please try again.",
+        type: "error",
       });
     } finally {
       setIsLoading(false);
@@ -106,8 +130,7 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
   return (
     <>
       <div className="md:hidden block"></div>
-      
-      {/* Success/Error Message Popup */}
+
       <AnimatePresence mode="wait">
         {message && (
           <motion.div
@@ -117,8 +140,8 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
             exit={{ opacity: 0, y: -30 }}
             transition={{ duration: 0.3, ease: "easeIn" }}
             className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg ${
-              message.type === "success" 
-                ? "bg-green-500 text-white" 
+              message.type === "success"
+                ? "bg-green-500 text-white"
                 : "bg-red-500 text-white"
             }`}
           >
@@ -128,7 +151,7 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {showResetPassword && (
+        {true && (
           <motion.div
             key="reset-password"
             initial={{ opacity: 0, x: 50 }}
@@ -176,9 +199,8 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
                   {!showPassword ? <IoMdEye /> : <IoMdEyeOff />}
                 </div>
 
-                {/* Password rule validation below input */}
                 {touched && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="flex flex-col items-start justify-start gap-2 mt-3 text-[14px] w-full"
@@ -192,7 +214,9 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
                           ) : (
                             <MdCancel className="text-red-500" size={16} />
                           )}
-                          <span className={`text-sm ${passed ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>
+                          <span
+                            className={`text-sm ${passed ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}
+                          >
                             {rule.text}
                           </span>
                         </div>
@@ -208,7 +232,7 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
                 className="form_btn md:mt-0 mt-[8rem] flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <>
+                  <div className="flex items-center gap-2 justify-center">
                     <Loader
                       height={20}
                       width={20}
@@ -217,7 +241,7 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
                       small_border_color="#FFA500"
                     />
                     <span>Updating...</span>
-                  </>
+                  </div>
                 ) : (
                   "Update Password"
                 )}

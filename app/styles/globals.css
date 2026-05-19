@@ -366,7 +366,7 @@ body.chat-page-desktop {
 }
 
 .dashboard_content_mainbox {
-  @apply dark:bg-shadyColor-0 bg-white p-[clamp(16px,3vw,24px)] w-full max-w-full my-5 rounded-xl border dark:border-boldShadyColor-0/80 border-[#ccc]/10;
+  @apply dark:bg-secondaryColors-0 bg-white p-[clamp(16px,3vw,24px)] w-full max-w-full my-5 rounded-xl border dark:border-boldShadyColor-0/80 border-[#ccc]/10;
 }
 
 .dashboard_content_box {
