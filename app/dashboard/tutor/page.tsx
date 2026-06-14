@@ -7,7 +7,6 @@ import DashboardTutorQuickAction from "@/app/component/dashboard_tutor_quick_act
 import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardTutorCourseBreakdown from "@/app/component/dashboard_tutor_course_breakdown";
-import { set } from "date-fns";
 
 export default function TutorDashboard() {
   const [showCreateCoursePage, setShowCreateCourse] = useState<boolean>(false);
@@ -104,7 +103,7 @@ export default function TutorDashboard() {
 
 
   return (
-    <div className="min-h-screen">
+    <div>
       <br />
       <AnimatePresence mode="wait">
         {showTutorPage && (

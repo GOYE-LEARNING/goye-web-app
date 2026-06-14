@@ -148,7 +148,7 @@ export default function DashboardStudentEvent({ openEvent }: Props) {
                     <IoBookOutline />
                   </span>
                   <div className="flex justify-start items-start flex-col gap-[12px]">
-                    <h1 className="text-[14px] font-[600] text-[#41415A]">
+                    <h1 className="text-[14px] font-[600] text-[#41415A] dark:text-white">
                       {event.event_name || "Untitled Event"}
                     </h1>
                     <p className="text-[12px]">

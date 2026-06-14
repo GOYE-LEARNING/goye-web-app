@@ -139,6 +139,7 @@ export default function DashboardChangePassword({ backFunction }: Props) {
     setMainContainer(false);
     setResetPassword(true);
   }, []);
+  
 
   return (
     <>
@@ -221,7 +222,7 @@ export default function DashboardChangePassword({ backFunction }: Props) {
           type="fg_password"
         />
       )}
-      {resetPassword && <DashboardProfileResetPassword />}
+      {resetPassword && <DashboardProfileResetPassword backFunction={backFunction}/>}
     </>
   );
 }

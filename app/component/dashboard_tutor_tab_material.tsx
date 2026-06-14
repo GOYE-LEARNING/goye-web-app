@@ -52,19 +52,19 @@ export default function DashboardTutorTabMaterial({ courseId }: Props) {
   return (
     <div>
       <div className="dashboard_content_mainbox">
-        <h1 className="text-textSlightDark-0 text-[18px] font-bold">All Materials</h1>
+        <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0text-[18px] font-bold">All Materials</h1>
         {!isLoading ? (
           <div>
             {" "}
             {materials.map((m, i) => (
               <div key={i} className="flex flex-col gap-2 my-5">
-                <h1 className="text-[16px] text-textSlightDark-0 font-[600]">
+                <h1 className="text-[16px] dark:text-textSlightDark-0 text-lightBoldText-0 font-[600]">
                   {m.material_title}
                 </h1>
-                <p className="text-[#71748C] text-[14px]">
+                <p className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">
                {m.material_description}
                 </p>
-                <p className="flex gap-4 text-[#71748C] text-[14px]">
+                <p className="flex gap-4 dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">
                   <span className="flex items-center gap-2">
                     <FaRegFileAlt />
                     3.1 MB{" "}
@@ -73,7 +73,7 @@ export default function DashboardTutorTabMaterial({ courseId }: Props) {
                     <HiOutlineBookOpen /> {m.material_pages} Pages
                   </span>
                 </p>
-                <button className="form_more bg-white text-primaryColors-0 border border-[#D9D9D9] font-semibold flex justify-center items-center">
+                <button className="form_more bg-lightWhite-0 dark:bg-shadyColor-0 text-primaryColors-0 border border-[#ccc]/10 font-semibold flex justify-center items-center">
                   <GoDownload /> Download
                 </button>
                 <div className="dashboard_hr my-5"></div>

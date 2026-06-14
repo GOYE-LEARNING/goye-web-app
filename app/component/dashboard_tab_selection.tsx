@@ -1,71 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { SetStateAction, useState } from "react";
+
+type TabType = "all" | "enrolled" | "saved" | "done";
 
 interface Props {
-  allFunc: (all: boolean) => void;
-  enrolledFunc: (enrolled: boolean) => void;
-  savedFunc: (saved: boolean) => void;
-  doneFunc: (done: boolean) => void;
+  activeTab: TabType;
+  setActiveTab: React.Dispatch<SetStateAction<TabType>>;
 }
-export default function DashboardTabSelection({
-  allFunc,
-  enrolledFunc,
-  savedFunc,
-  doneFunc,
-}: Props) {
-  const [activeTab, setActiveTab] = useState<
-    "all" | "enrolled" | "saved" | "done"
-  >("all");
 
-  const handleClick = (tab: "all" | "enrolled" | "saved" | "done") => {
+export default function DashboardTabSelection({
+  activeTab,
+  setActiveTab,
+}: Props) {
+  const handleClick = (tab: TabType) => {
     setActiveTab(tab);
-    if (tab == "all") {
-      allFunc(true);
-    } else if (tab == "enrolled") {
-      enrolledFunc(true);
-    } else if (tab == "saved") {
-      savedFunc(true);
-    } else if (tab == "done") {
-      doneFunc(true);
-    }
   };
 
   const design = (tab: string) =>
-    `${activeTab === tab ? "bg-primaryColors-0 text-white" : "dark:bg-secondaryColors-0 bg-white border border-[#ccc]/20"}`;
+    `${activeTab === tab 
+      ? "bg-primaryColors-0 text-white shadow-md" 
+      : "dark:bg-secondaryColors-0 bg-white border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"} 
+     h-[34px] rounded-md transition-all duration-200 font-medium cursor-pointer`;
+
   return (
-    <>
-      <div className="flex justify-between items-center gap-3 text-[14px] font-[500]">
-        <button
+    <div className="flex justify-between items-center gap-3 text-[14px] font-[500] my-5">
+      <button
         type="button"
-          className={`h-[34px] w-[10%] text-center ${design("all")}`}
-          onClick={() => {
-            handleClick("all");
-          }}
-        >
-          All
-        </button>
-        <button
-          className={`h-[34px]  w-[30%] text-center ${design("enrolled")}`}
-          onClick={() => {
-            handleClick("enrolled");
-          }}
-        >
-          Enrolled
-        </button>
-        <button
-          className={`h-[34px]  w-[30%] text-center ${design("saved")}`}
-          onClick={() => handleClick("saved")}
-        >
-          Saved
-        </button>
-        <button
-          className={`h-[34px]  w-[30%] text-center ${design("done")}`}
-          onClick={() => handleClick("done")}
-        >
-          Done
-        </button>
-      </div>
-    </>
+        className={`${design("all")} w-[10%] min-w-[70px]`}
+        onClick={() => handleClick("all")}
+      >
+        All
+      </button>
+      <button
+        type="button"
+        className={`${design("enrolled")} w-[30%] min-w-[100px]`}
+        onClick={() => handleClick("enrolled")}
+      >
+        Enrolled
+      </button>
+      <button
+        type="button"
+        className={`${design("saved")} w-[30%] min-w-[100px]`}
+        onClick={() => handleClick("saved")}
+      >
+        Saved
+      </button>
+      <button
+        type="button"
+        className={`${design("done")} w-[30%] min-w-[100px]`}
+        onClick={() => handleClick("done")}
+      >
+        Done
+      </button>
+    </div>
   );
 }

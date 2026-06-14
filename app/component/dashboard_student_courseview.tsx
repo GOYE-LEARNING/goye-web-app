@@ -15,6 +15,9 @@ import DashboardStudentCourseList from "./dashboard_student_course_list";
 import { HiChevronDoubleUp } from "react-icons/hi";
 import { FaVideo } from "react-icons/fa6";
 import { useQuiz } from "../context/quizContext";
+import { BiLogIn, BiLock } from "react-icons/bi";
+import { GoLock } from "react-icons/go";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
   backFunction: () => void;
@@ -51,6 +54,11 @@ export default function DashboardCourseView({ backFunction, courseId }: Props) {
   const [quizIdForReview, setQuizIdForReview] = useState<string>("");
   const [courseDetails, setCourseDetails] = useState<Course | null>(null);
   const [courseStatus, setCourseStatus] = useState<string>("");
+  const [isEnrolled, setIsEnrolled] = useState<boolean>(false);
+  const [checkingEnrollment, setCheckingEnrollment] = useState<boolean>(true);
+  const [enrollmentProgress, setEnrollmentProgress] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const { setQuizContext } = useQuiz();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -81,9 +89,43 @@ export default function DashboardCourseView({ backFunction, courseId }: Props) {
     }
   };
 
+  const checkEnrollmentStatus = async () => {
+    if (!courseId) return;
+    
+    setCheckingEnrollment(true);
+    try {
+      const res = await fetch(`${API_URL}/api/enroll/check-if-enrolled/${courseId}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log("Error checking enrollment:", data);
+        setIsEnrolled(false);
+        return;
+      }
+
+      console.log("Enrollment status:", data);
+      setIsEnrolled(data.data.is_enrolled);
+      setEnrollmentProgress(data.data.progress);
+      
+      if (data.data.is_enrolled && data.data.progress) {
+        console.log(`Course progress: ${data.data.progress.percentage}%`);
+      }
+    } catch (error) {
+      console.error("Error checking enrollment:", error);
+      setIsEnrolled(false);
+    } finally {
+      setCheckingEnrollment(false);
+    }
+  };
+
   useEffect(() => {
     if (courseId) {
       fetchCourse();
+      checkEnrollmentStatus();
     }
   }, [courseId]);
 
@@ -99,6 +141,17 @@ export default function DashboardCourseView({ backFunction, courseId }: Props) {
     setShowVideo(false);
     setPicRemove(true);
     setHeaderBtn(true);
+  };
+
+  // Tab click handlers with enrollment check
+  const handleTabClick = (tab: string, action: () => void) => {
+    if (!isEnrolled) {
+      setShowTooltip(tab);
+      setTimeout(() => setShowTooltip(null), 2000);
+      return;
+    }
+    setActiveTab(tab);
+    action();
   };
 
   const overview = () => {
@@ -158,16 +211,57 @@ export default function DashboardCourseView({ backFunction, courseId }: Props) {
     setShowQuizContainer(false);
   };
 
-  // Calculate total lessons from modules
   const totalLessons =
     courseDetails?.module?.reduce((total, mod) => {
-      return total + (mod._count.lesson || 0);
+      return total + (mod._count?.lesson || mod.lesson?.length || 0);
     }, 0) || 0;
 
+  // Tooltip component
+  const Tooltip = ({ message, show, children }: { message: string; show: boolean; children: React.ReactNode }) => (
+    <div className="relative inline-block">
+      {children}
+      {show && (
+        <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg py-1.5 px-3 whitespace-nowrap z-50 shadow-lg">
+          {message}
+          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Slide animation variants
+  const slideInFromRight = {
+    hidden: { x: "100%", opacity: 0 },
+    visible: { 
+      x: 0, 
+      opacity: 1,
+      transition: {
+        type: "spring",
+        damping: 20,
+        stiffness: 100,
+        duration: 0.5
+      }
+    },
+    exit: { 
+      x: "100%", 
+      opacity: 0,
+      transition: {
+        duration: 0.3,
+        ease: "easeInOut"
+      }
+    }
+  };
+
   return (
-    <>
+    <AnimatePresence mode="wait">
       {videoShow && (
-        <div>
+        <motion.div
+          key="video-list"
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          variants={slideInFromRight as any}
+        >
           <DashboardStudentCourseList
             courseId={courseId}
             course_title={courseDetails?.course_title as any}
@@ -175,11 +269,18 @@ export default function DashboardCourseView({ backFunction, courseId }: Props) {
               showCourseContainer();
             }}
           />
-        </div>
+        </motion.div>
       )}
+      
       {courseContainer && (
-        <div>
-          {isLoading ? (
+        <motion.div
+          key="course-container"
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          variants={slideInFromRight as any}
+        >
+          {isLoading || checkingEnrollment ? (
             <div className="flex justify-center items-center h-64">
               <Loader
                 height={30}
@@ -190,14 +291,55 @@ export default function DashboardCourseView({ backFunction, courseId }: Props) {
               />
             </div>
           ) : (
-            <div>
+            <div className="overflow-x-hidden scrollbar2">
               {showQuizContainer && courseDetails && (
                 <div>
                   <SubHeader
                     backFunction={backFunction}
                     header={courseDetails.course_title}
                   />
-                  <div className="flex items-center gap-5 text-nearTextColors-0">
+                  
+                  {/* Enrollment Banner */}
+                  {!isEnrolled && (
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 p-4 my-4 rounded-r-lg">
+                      <div className="flex items-center gap-3">
+                        <BiLock className="text-amber-500 text-xl" />
+                        <div>
+                          <p className="text-amber-700 dark:text-amber-400 font-medium">
+                            Course not enrolled
+                          </p>
+                          <p className="text-amber-600 dark:text-amber-500 text-sm">
+                            Please start the course to access quizzes, materials, and forums
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Course Info Banner */}
+                  {isEnrolled && enrollmentProgress && (
+                    <div className="bg-green-50 dark:bg-green-950/20 border-l-4 border-green-500 p-4 my-4 rounded-r-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                            <span className="text-green-600 dark:text-green-400 font-bold">
+                              {Math.round(enrollmentProgress.percentage)}%
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-green-700 dark:text-green-400 font-medium">
+                              Course Progress
+                            </p>
+                            <p className="text-green-600 dark:text-green-500 text-sm">
+                              {enrollmentProgress.completed_lessons} of {enrollmentProgress.total_lessons} lessons completed
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-5 text-nearTextColors-0 my-3">
                     <span className="flex items-center gap-1">
                       <HiChevronDoubleUp />
                       <p className="text-[14px]">
@@ -208,120 +350,211 @@ export default function DashboardCourseView({ backFunction, courseId }: Props) {
                       <FaVideo /> {totalLessons} Video Lessons
                     </span>
                   </div>
+                  
                   <div>
                     <div className="w-full my-5">
                       {picRemove && (
-                        <img
-                          src={
-                            (courseDetails.course_image as any) || overviewPic
-                          }
+                        <motion.img
+                          src={(courseDetails.course_image as any) || overviewPic}
                           alt="course image"
                           className="object-cover h-[300px] w-full"
                           width={800}
                           height={300}
+                          initial={{ scale: 0.95, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: 0.2, duration: 0.4 }}
                         />
                       )}
                     </div>
 
                     {headerBtn && (
-                      <div className="w-full flex items-start gap-3">
-                        <button
-                          className={`${
-                            showOverView
-                              ? "bg-[#49151B1A] text-primaryColors-0"
-                              : "bg-[#EFEFF1]"
-                          } dashboard_course_btns`}
-                          onClick={overview}
+                      <div className="w-full flex items-start gap-3 relative">
+                        {/* Overview Tab */}
+                        <Tooltip 
+                          message="Enroll to access course overview" 
+                          show={showTooltip === "overview" && !isEnrolled}
                         >
-                          Overview
-                        </button>
-                        <button
-                          className={`${
-                            showQuizzes
-                              ? "bg-[#49151B1A] text-primaryColors-0"
-                              : "bg-[#EFEFF1]"
-                          } dashboard_course_btns`}
-                          onClick={quizzes}
+                          <button
+                            className={`${
+                              showOverView
+                                ? "bg-primaryColors-0 text-white"
+                                : "bg-white text-primaryColors-0 dark:bg-secondaryColors-0 dark:text-white"
+                            } dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            onClick={() => handleTabClick("overview", overview)}
+                            disabled={!isEnrolled}
+                          >
+                            {!isEnrolled && <BiLock className="inline mr-1" />}
+                            Overview
+                          </button>
+                        </Tooltip>
+
+                        {/* Quizzes Tab */}
+                        <Tooltip 
+                          message="Enroll to access quizzes" 
+                          show={showTooltip === "quizzes" && !isEnrolled}
                         >
-                          Quizzes
-                        </button>
-                        <button
-                          className={`${
-                            showMaterials
-                              ? "bg-[#49151B1A] text-primaryColors-0"
-                              : "bg-[#EFEFF1]"
-                          } dashboard_course_btns`}
-                          onClick={materials}
+                          <button
+                            className={`${
+                              showQuizzes
+                                ? "bg-primaryColors-0 text-white"
+                                : "bg-white text-primaryColors-0 dark:bg-secondaryColors-0 dark:text-white"
+                            } dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            onClick={() => handleTabClick("quizzes", quizzes)}
+                            disabled={!isEnrolled}
+                          >
+                            {!isEnrolled && <BiLock className="inline mr-1" />}
+                            Quizzes
+                          </button>
+                        </Tooltip>
+
+                        {/* Materials Tab */}
+                        <Tooltip 
+                          message="Enroll to access course materials" 
+                          show={showTooltip === "materials" && !isEnrolled}
                         >
-                          Materials
-                        </button>
-                        <button
-                          className={`${
-                            showForums
-                              ? "bg-[#49151B1A] text-primaryColors-0"
-                              : "bg-[#EFEFF1]"
-                          } dashboard_course_btns`}
-                          onClick={forums}
+                          <button
+                            className={`${
+                              showMaterials
+                                ? "bg-primaryColors-0 text-white"
+                                : "bg-white text-primaryColors-0 dark:bg-secondaryColors-0 dark:text-white"
+                            } dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            onClick={() => handleTabClick("materials", materials)}
+                            disabled={!isEnrolled}
+                          >
+                            {!isEnrolled && <BiLock className="inline mr-1" />}
+                            Materials
+                          </button>
+                        </Tooltip>
+
+                        {/* Forums Tab */}
+                        <Tooltip 
+                          message="Enroll to participate in forums" 
+                          show={showTooltip === "forums" && !isEnrolled}
                         >
-                          Forums
-                        </button>
+                          <button
+                            className={`${
+                              showForums
+                                ? "bg-primaryColors-0 text-white"
+                                : "bg-white text-primaryColors-0 dark:bg-secondaryColors-0 dark:text-white"
+                            } dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            onClick={() => handleTabClick("forums", forums)}
+                            disabled={!isEnrolled}
+                          >
+                            {!isEnrolled && <BiLock className="inline mr-1" />}
+                            Forums
+                          </button>
+                        </Tooltip>
                       </div>
                     )}
 
-                    <div>
+                    <AnimatePresence mode="wait">
                       {showOverView && (
-                        <DashboardCourseOverView
-                          courseId={courseId}
-                          removeFunc={removeFunc}
-                        />
+                        <motion.div
+                          key="overview"
+                          initial={{ x: 20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          exit={{ x: -20, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <DashboardCourseOverView
+                            courseId={courseId}
+                            removeFunc={removeFunc}
+                            setCheckIfEnrolled={setIsEnrolled}
+                          />
+                        </motion.div>
                       )}
+                      
                       {showQuizzes && (
-                        <DashboardCourseQuizzes
-                          courseId={courseId}
-                          openQuiz={openQuiz as any}
-                          openViewQuiz={openReviewQuiz as any}
-                        />
+                        <motion.div
+                          key="quizzes"
+                          initial={{ x: 20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          exit={{ x: -20, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <DashboardCourseQuizzes
+                            courseId={courseId}
+                            openQuiz={openQuiz as any}
+                            openViewQuiz={openReviewQuiz as any}
+                          />
+                        </motion.div>
                       )}
+                      
                       {showMaterials && (
-                        <DashboardCourseMaterials courseId={courseId} />
+                        <motion.div
+                          key="materials"
+                          initial={{ x: 20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          exit={{ x: -20, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <DashboardCourseMaterials courseId={courseId} />
+                        </motion.div>
                       )}
+                      
                       {showForums && (
-                        <DashboardCourseForums
-                          openPost={openPosts}
-                          courseId={courseId}
-                        />
+                        <motion.div
+                          key="forums"
+                          initial={{ x: 20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          exit={{ x: -20, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <DashboardCourseForums
+                            openPost={openPosts}
+                            courseId={courseId}
+                          />
+                        </motion.div>
                       )}
-                    </div>
+                    </AnimatePresence>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {showQuiz && (
-            <DashboardCourseQuizzesAnswred
-              backFunction={closeQuiz}
-              courseId={courseId}
-              reviewCourse={reviewCourse}
-              backToCourse={closeQuiz}
-              checkIfViewQuizIsActive={reviewQuiz}
-            />
-          )}
+          <AnimatePresence mode="wait">
+            {showQuiz && (
+              <motion.div
+                key="quiz"
+                initial={{ x: "100%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "100%", opacity: 0 }}
+                transition={{ type: "spring", damping: 20, stiffness: 100 }}
+              >
+                <DashboardCourseQuizzesAnswred
+                  backFunction={closeQuiz}
+                  courseId={courseId}
+                  reviewCourse={reviewCourse}
+                  backToCourse={closeQuiz}
+                  checkIfViewQuizIsActive={reviewQuiz}
+                />
+              </motion.div>
+            )}
 
-          {showPost && (
-            <DashboardPostView
-              backToForum={() => {
-                setShowPost(false);
-                setShowForums(true);
-                setShowMaterials(false);
-                setShowOverView(false);
-                setShowQuizzes(false);
-                setShowQuizContainer(true);
-              }}
-            />
-          )}
-        </div>
+            {showPost && (
+              <motion.div
+                key="post"
+                initial={{ x: "100%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "100%", opacity: 0 }}
+                transition={{ type: "spring", damping: 20, stiffness: 100 }}
+              >
+                <DashboardPostView
+                  backToForum={() => {
+                    setShowPost(false);
+                    setShowForums(true);
+                    setShowMaterials(false);
+                    setShowOverView(false);
+                    setShowQuizzes(false);
+                    setShowQuizContainer(true);
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       )}
-    </>
+    </AnimatePresence>
   );
 }

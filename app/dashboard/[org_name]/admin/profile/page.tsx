@@ -231,7 +231,7 @@ export default function OrgAdminProfile() {
       {showProfile && (
         <>
           <h1 className="dashboard_h1 ">Profile</h1>
-          <div className="bg-[#ffffff] p-[24px] w-full my-5">
+          <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] w-full my-5">
             <div className="flex justify-center items-center flex-col">
               <label className="relative cursor-pointer">
                 <input
@@ -247,7 +247,7 @@ export default function OrgAdminProfile() {
                     className="h-[130px] w-[130px] object-cover rounded-full"
                   />
                 ) : (
-                  <HiUserCircle size={130} color="#D5D5DD" />
+                  <HiUserCircle size={130} color="#ccc" />
                 )}
                 <span className="absolute top-3 right-8">
                   <IoIosAddCircle color="#30A46F" />
@@ -255,10 +255,10 @@ export default function OrgAdminProfile() {
               </label>
             </div>
 
-            <div className="bg-[#FAF8F8] p-[16px] flex flex-col gap-3">
+            <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px] flex flex-col gap-3">
               <div className="flex justify-between items-center">
-                <p className="text-[#41415A] text-[14px]">Email</p>
-                <span className="text-[#41415A] font-[600] text-[14px]">
+                <p className="dark:text-white text-lightBoldText-0 text-[14px]">Email</p>
+                <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
@@ -268,8 +268,8 @@ export default function OrgAdminProfile() {
               </div>
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
-                <p className="text-[#41415A] text-[14px]">Phone Number</p>
-                <span className="text-[#41415A] font-[600] text-[14px]">
+                <p className="dark:text-white text-lightBoldText-0 text-[14px]">Phone Number</p>
+                <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
@@ -279,8 +279,8 @@ export default function OrgAdminProfile() {
               </div>
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
-                <p className="text-[#41415A] text-[14px]">Location</p>
-                <span className="text-[#41415A] font-[600] text-[14px]">
+                <p className="dark:text-white text-lightBoldText-0 text-[14px]">Location</p>
+                <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
@@ -295,15 +295,15 @@ export default function OrgAdminProfile() {
 
             <div className="flex flex-col gap-2 my-5">
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1]"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20"
                 onClick={() => handleClickPage("edit")}
               >
                 <div className="flex gap-2 items-center">
-                  <div className="bg-[#FAF8F8] h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
+                  <div className="dark:bg-shadyColor-0 bg-lightWhite-0 h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
                     <LuSquareUserRound />
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
-                    <h1 className="text-textSlightDark-0 font-[600] text-[14px]">
+                    <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
                       Profile
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
@@ -316,15 +316,15 @@ export default function OrgAdminProfile() {
                 </span>
               </div>
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1]"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20"
                 onClick={() => handleClickPage("password")}
               >
                 <div className="flex gap-2 items-center">
-                  <div className="bg-[#FAF8F8] h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
+                  <div className="dark:bg-shadyColor-0 bg-lightWhite-0 h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
                     <MdSecurity />
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
-                    <h1 className="text-textSlightDark-0 font-[600] text-[14px]">
+                    <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
                       Password
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
@@ -337,15 +337,15 @@ export default function OrgAdminProfile() {
                 </span>
               </div>
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1]"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20"
                 onClick={() => handleClickPage("notification")}
               >
                 <div className="flex gap-2 items-center">
-                  <div className="bg-[#FAF8F8] h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
+                  <div className="dark:bg-shadyColor-0 bg-lightWhite-0 h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
                     <MdNotifications />
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
-                    <h1 className="text-textSlightDark-0 font-[600] text-[14px]">
+                    <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
                       Notifications
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
@@ -358,15 +358,15 @@ export default function OrgAdminProfile() {
                 </span>
               </div>
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#F1F1F1]"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20"
                 onClick={() => handleClickPage("language")}
               >
                 <div className="flex gap-2 items-center">
-                  <div className="bg-[#FAF8F8] h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
+                  <div className="dark:bg-shadyColor-0 bg-lightWhite-0 h-[40px] w-[40px] flex justify-center items-center text-primaryColors-0">
                     <IoMdGlobe />
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
-                    <h1 className="text-textSlightDark-0 font-[600] text-[14px]">
+                    <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
                       Language
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
@@ -378,7 +378,7 @@ export default function OrgAdminProfile() {
                   <MdChevronRight size={29} />
                 </span>
               </div>
-              <button className="text-[#DA0E29] border border-[#D9D9D9] h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px]" onClick={logout}>
+              <button className="text-[#DA0E29] border border-[#ccc]/20 h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px]" onClick={logout}>
                 <MdLogout /> Logout
               </button>
             </div>

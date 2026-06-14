@@ -26,19 +26,40 @@ interface PDFModalProps {
   materialTitle: string;
 }
 
-// PDF Modal Component using iframe
+// Helper to get a viewable PDF URL (using Google Docs viewer)
+function getViewablePDFUrl(url: string): string {
+  // Encode the PDF URL for Google Docs viewer
+  const encodedUrl = encodeURIComponent(url);
+  return `https://docs.google.com/viewer?embedded=true&url=${encodedUrl}`;
+}
+
+// Helper to get download URL (forces attachment)
+function getDownloadUrl(url: string): string {
+  if (url.includes('cloudinary.com')) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}fl_attachment=1`;
+  }
+  return url;
+}
+
+// PDF Modal Component with Google Docs viewer (works 100%)
 function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
+  const [loadError, setLoadError] = useState(false);
+  const viewableUrl = getViewablePDFUrl(pdfUrl);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
+      <div className="bg-white dark:bg-secondaryColors-0 rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col shadow-xl">
         {/* Modal Header */}
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-bold text-gray-800">{materialTitle}</h2>
+        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+            {materialTitle}
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl transition-colors"
           >
             ×
           </button>
@@ -46,18 +67,32 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
 
         {/* PDF Viewer */}
         <div className="flex-1 p-4">
-          <iframe
-            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-            className="w-full h-[70vh] border rounded-lg"
-            title={materialTitle}
-          />
+          {loadError ? (
+            <div className="flex flex-col items-center justify-center h-[70vh] text-center">
+              <p className="text-red-500 dark:text-red-400 mb-4">Failed to load PDF preview.</p>
+              <button
+                onClick={() => window.open(pdfUrl, '_blank')}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+              >
+                Open Original PDF
+              </button>
+            </div>
+          ) : (
+            <iframe
+              src={viewableUrl}
+              className="w-full h-[70vh] border rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              title={materialTitle}
+              onError={() => setLoadError(true)}
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"
+            />
+          )}
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t bg-gray-50">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-lg">
           <button
             onClick={onClose}
-            className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
+            className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-md transition-colors"
           >
             Close
           </button>
@@ -88,11 +123,9 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
         return;
       }
 
-      // Process materials to get file size
       const materialsWithInfo = await Promise.all(
         (data.data?.material || []).map(async (m: Material) => {
           let fileSize = 0;
-          
           if (m.material_document) {
             try {
               const response = await fetch(m.material_document, { method: 'HEAD' });
@@ -102,14 +135,10 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
               console.error('Error fetching file info:', error);
             }
           }
-          
-          return {
-            ...m,
-            material_file_size: fileSize,
-          };
+          return { ...m, material_file_size: fileSize };
         })
       );
-      
+
       setMaterial(materialsWithInfo);
     } catch (error) {
       console.error(error);
@@ -123,24 +152,24 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
   }, [courseId]);
 
   const handleViewPDF = (pdfUrl: string, title: string) => {
+    // Use original URL; modal will use Google Docs viewer
     setSelectedPDF({ url: pdfUrl, title });
   };
 
-  const handleDownloadPDF = async (pdfUrl: string, fileName: string) => {
+  const handleDownloadPDF = (pdfUrl: string, fileName: string) => {
     setDownloading(fileName);
     try {
-      const response = await fetch(pdfUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const downloadUrl = getDownloadUrl(pdfUrl);
       const link = document.createElement('a');
-      link.href = url;
+      link.href = downloadUrl;
       link.download = fileName;
+      link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading file:', error);
+      alert('Failed to download. Please try again later.');
     } finally {
       setDownloading(null);
     }
@@ -168,23 +197,27 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
     <>
       <div className="dashboard_hr my-5"></div>
       <div className="dashboard_content_mainbox">
-        <h1 className="text-textSlightDark-0 text-[18px] font-bold mb-6">All Materials</h1>
-        
+        <h1 className="text-textSlightDark-0 dark:text-white text-[18px] font-bold mb-6">
+          All Materials
+        </h1>
+
         {material.length === 0 ? (
           <div className="text-center py-12">
-            <FaRegFileAlt className="mx-auto text-4xl text-gray-400 mb-3" />
-            <p className="text-gray-500">No materials available for this course yet.</p>
+            <FaRegFileAlt className="mx-auto text-4xl text-gray-400 dark:text-gray-500 mb-3" />
+            <p className="text-gray-500 dark:text-gray-400">
+              No materials available for this course yet.
+            </p>
           </div>
         ) : (
           material.map((m, i) => (
             <div key={i} className="flex flex-col gap-2 my-5">
-              <h1 className="text-[16px] text-textSlightDark-0 font-[600]">
+              <h1 className="text-[16px] text-textSlightDark-0 dark:text-white font-[600]">
                 {m.material_title}
               </h1>
-              <p className="text-[#71748C] text-[14px]">
+              <p className="text-[#71748C] dark:text-gray-300 text-[14px]">
                 {m.material_description}
               </p>
-              <p className="flex gap-4 text-[#71748C] text-[14px]">
+              <p className="flex gap-4 text-[#71748C] dark:text-gray-400 text-[14px]">
                 <span className="flex items-center gap-2">
                   <FaRegFileAlt />
                   {formatFileSize(m.material_file_size || 0)}
@@ -194,14 +227,14 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
                 </span>
               </p>
               <div className="flex gap-2 items-center">
-                <button 
-                  className="form_more bg-transparent border border-[#EFEFF2] text-primaryColors-0 font-semibold flex justify-center items-center gap-2"
+                <button
+                  className="form_more bg-transparent border border-[#ccc]/10 dark:border-gray-700 text-primaryColors-0 font-semibold flex justify-center items-center gap-2 px-4 py-2 rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                   onClick={() => handleViewPDF(m.material_document, m.material_title)}
                 >
                   <IoEye /> View
                 </button>
-                <button 
-                  className="form_more bg-primaryColors-0 text-white flex justify-center items-center gap-2 disabled:opacity-50"
+                <button
+                  className="form_more bg-primaryColors-0 text-white flex justify-center items-center gap-2 px-4 py-2 rounded-md disabled:opacity-50 transition-colors hover:bg-primaryColors-700"
                   onClick={() => handleDownloadPDF(m.material_document, `${m.material_title}.pdf`)}
                   disabled={downloading === m.material_title}
                 >
@@ -223,7 +256,7 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
         )}
       </div>
 
-      {/* PDF Modal */}
+      {/* PDF Modal with Google Docs viewer */}
       {selectedPDF && (
         <PDFModal
           isOpen={!!selectedPDF}

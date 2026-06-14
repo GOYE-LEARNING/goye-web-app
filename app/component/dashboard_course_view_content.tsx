@@ -153,10 +153,10 @@ export default function DashboardCourseViewContent({
         paragraph={
           <div className="flex items-center gap-5">
             <span className="flex items-center gap-2 text-[14px]">
-              <FaAngleDoubleUp />
-              <span>{courseDetails?.course_level}</span>
+              <FaAngleDoubleUp color="#22c55e"/>
+              <span className='text-green-500'>{courseDetails?.course_level}</span>
             </span>
-            <span className="flex items-center gap-2 text-[14px]">
+            <span className="flex items-center gap-2 text-[14px] dark:text-lightWhite-0 text-lightBoldText-0/80">
               <FaVideo />
               <span>You have a lot of time to finish this course.</span>
             </span>
@@ -165,7 +165,7 @@ export default function DashboardCourseViewContent({
       />
 
       <div className="dashboard_content_mainbox">
-        <h1 className="font-bold text-textSlightDark-0 text-[16px]">
+        <h1 className="font-bold dark:text-textSlightDark-0 text-lightBoldText-0 text-[16px]">
           Learning Objectives
         </h1>
         <ul className="px-[17px] my-3">
@@ -183,7 +183,7 @@ export default function DashboardCourseViewContent({
 
       <div className="dashboard_content_mainbox">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="font-bold text-textSlightDark-0 text-[16px]">Modules</h1>
+          <h1 className="font-bold dark:text-textSlightDark-0 text-lightBoldText-0 text-[16px]">Modules</h1>
           {courseDetails?.module && courseDetails.module.length > 0 && (
             <button
               onClick={toggleAllModules}
@@ -206,16 +206,16 @@ export default function DashboardCourseViewContent({
               return (
                 <div
                   key={module.id}
-                  className="border-b border-[#EFEFF2] mb-3 overflow-hidden"
+                  className="border-b border-[#ccc]/20 mb-3 overflow-hidden"
                 >
                   {/* Module Header - Clickable Area */}
                   <div
-                    className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="flex justify-between items-center p-4 cursor-pointer dark:hover:bg-shadyColor-0 hover:bg-lightWhite-0 transition-colors"
                     onClick={() => toggleModule(module.id)}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <div className="font-semibold text-textSlightDark-0 text-[14px]">
+                        <div className="font-semibold dark:text-textSlightDark-0 text-lightBoldText-0/80 text-[14px]">
                           {module.module_title}
                         </div>
                       </div>

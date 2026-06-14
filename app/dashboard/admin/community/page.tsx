@@ -11,6 +11,7 @@ import Loader from "@/app/component/loader";
 import Image from "next/image";
 import pic2 from "@/public/images/notfound.png";
 import { IoMdRefresh } from "react-icons/io";
+import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
 
 interface User {
   first_name: string;
@@ -69,7 +70,16 @@ export default function AdminCommunity() {
       const data = await res.json();
 
       if (!res.ok) {
-        console.log("An error occurred");
+        if (res.status === 429) {
+          dispatchAPIError({
+            status: 429,
+            message: "Too many requests, please slow down and try again later.",
+            retryAfter: 5,
+            endpoint: "/api/socials/get-groups-created-by-tutor"
+          });
+        } else {
+          console.error(`HTTP Error: ${res.status}`);
+        }
         setIsLoading(false);
         return;
       }

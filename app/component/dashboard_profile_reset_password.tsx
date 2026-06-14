@@ -11,25 +11,6 @@ interface Props {
   backFunction?: () => void;
 }
 
-const getRoleRedirectPath = (): string => {
-  const role = localStorage.getItem("role");
-  const org_name = localStorage.getItem("org_name");
-  
-  console.log("getRoleRedirectPath - role:", role);
-  console.log("getRoleRedirectPath - org_name:", org_name);
-
-  if (role === "student") {
-    return "/dashboard/student/profile";
-  } else if (role === "tutor") {
-    return "/dashboard/tutor/profile";
-  } else if (role === "invited_user") {
-    return `/dashboard/${org_name}/organization/profile`;
-  } else if (role === "org_admin") {
-    return `/dashboard/${org_name}/admin/profile`;
-  }
-  return "/dashboard/student/profile";
-};
-
 export default function DashboardProfileResetPassword({ backFunction }: Props) {
   const [formData, setFormData] = useState<{ password: string }>({
     password: "",
@@ -72,10 +53,6 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
     if (backFunction) {
       console.log("Calling backFunction");
       backFunction();
-    } else {
-      const redirectPath = getRoleRedirectPath();
-      console.log("Redirecting to:", redirectPath);
-      router.push(redirectPath);
     }
   };
 

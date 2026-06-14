@@ -12,7 +12,7 @@ export default function ChurchInfo({
   hideButton?: boolean;
 }) {
   const { formData, setFormData, isChurchComplete } = OrgSignUp();
-  const [file, setFile] = useState<File | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -27,25 +27,36 @@ export default function ChurchInfo({
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
+    // Clean up old blob URL if it exists
+    if (logoUrl && logoUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(logoUrl);
+    }
+
     const previewUrl = URL.createObjectURL(selectedFile);
-    setFile(selectedFile);
-    setFormData({ ...formData, church_logo: selectedFile }); // Store the actual File object
+    setLogoUrl(previewUrl);
+    setFormData({ ...formData, church_logo: selectedFile, church_logo_url: previewUrl });
   };
 
   const removeLogo = () => {
-    if (
-      typeof formData.church_logo === "string" &&
-      formData.church_logo?.startsWith("blob:")
-    ) {
-      URL.revokeObjectURL(formData.church_logo);
+    if (logoUrl && logoUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(logoUrl);
     }
-    setFile(null);
-    setFormData({ ...formData, church_logo: "" });
+    setLogoUrl("");
+    setFormData({ ...formData, church_logo: "", church_logo_url: "" });
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   };
+
+  // Clean up blob URL on component unmount
+  useEffect(() => {
+    return () => {
+      if (logoUrl && logoUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(logoUrl);
+      }
+    };
+  }, [logoUrl]);
 
   const form = [
     {
@@ -146,7 +157,7 @@ export default function ChurchInfo({
                       overflow-hidden
                     "
                   >
-                    {!formData.church_logo ? (
+                    {!logoUrl ? (
                       <>
                         <label
                           htmlFor="church-logo"
@@ -170,7 +181,7 @@ export default function ChurchInfo({
                     ) : (
                       <div className="relative w-full h-full">
                         <img
-                          src={formData.church_logo}
+                          src={logoUrl}
                           alt="Church logo"
                           className="w-full h-full object-cover"
                         />

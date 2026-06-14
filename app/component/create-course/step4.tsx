@@ -223,7 +223,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
           <div key="quiz">
             {/* Header */}
             <div className="flex justify-between items-center">
-              <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
+              <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
                 Course Quizzes
               </h1>
               <span
@@ -285,7 +285,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                           {quizForm.map((form, i) => (
                             <div
                               key={i}
-                              className="flex flex-col border border-[#D2D5DA] justify-between w-full py-[8px] px-[12px]"
+                              className="flex flex-col border border-[#ccc]/20 justify-between w-full py-[8px] px-[12px]"
                             >
                               <label className="text-textGrey-0 text-[12px]">
                                 {form.label}
@@ -295,7 +295,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                                   name={form.name}
                                   value={qz.quiz_description}
                                   onChange={(e) => handleChangeQuiz(e, qz.id)}
-                                  className="resize-none h-[154px] outline-none border-none"
+                                  className="resize-none h-[154px] outline-none border-none bg-transparent"
                                 />
                               ) : (
                                 <input
@@ -304,7 +304,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                                   value={qz[form.name as keyof Quiz] as string}
                                   onChange={(e) => handleChangeQuiz(e, qz.id)}
                                   placeholder={`${form.name == 'quiz_duration' ? '(e.g 40)' : ''}`}
-                                  className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px]"
+                                  className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px] bg-transparent"
                                 />
                               )}
                             </div>
@@ -317,10 +317,10 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                         {qz.quiz_questions.map((q) => (
                           <div
                             key={q.id}
-                            className="p-[12px] bg-shadyColor-0 my-3 flex flex-col gap-2"
+                            className="p-[12px] dark:bg-shadyColor-0 bg-lightWhite-0 my-3 flex flex-col gap-2"
                           >
                             {/* Question Text */}
-                            <div className="flex flex-col border border-[#D2D5DA] justify-between w-full py-[8px] px-[12px] bg-white">
+                            <div className="flex flex-col border border-[#ccc]/20 justify-between w-full py-[8px] px-[12px] bg-white dark:bg-shadyColor-0">
                               <label className="text-textGrey-0 text-[12px]">
                                 Question
                               </label>{" "}
@@ -330,7 +330,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                                 onChange={(e) =>
                                   handleChangeQuestion(e, qz.id, q.id)
                                 }
-                                className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px]"
+                                className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px] bg-transparent"
                               />
                             </div>
 
@@ -340,7 +340,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                                 key={idx}
                                 className="flex justify-between gap-2 items-start"
                               >
-                                <div className="flex flex-col border border-[#D2D5DA] justify-between w-full py-[8px] px-[12px] bg-white">
+                                <div className="flex flex-col border border-[#ccc]/20 justify-between w-full py-[8px] px-[12px] bg-white dark:bg-shadyColor-0">
                                   <label className="text-textGrey-0 text-[12px]">
                                     {`Option ${idx + 1}`}
                                   </label>
@@ -350,7 +350,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                                     onChange={(e) =>
                                       handleChangeOption(e, qz.id, q.id, idx)
                                     }
-                                    className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px]"
+                                    className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px] bg-transparent"
                                   />
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -363,20 +363,20 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                                       onChange={() =>
                                         handleCorrectAnswer(qz.id, q.id, opt)
                                       }
-                                      className="hidden"
+                                      className="hidden bg-transparent"
                                     />
 
                                     {/* Visual Indicator */}
-                                    <div className="h-[59px] w-[20px] border border-[#D2D5DA] flex flex-col">
+                                    <div className="h-[59px] w-[20px] border border-[#ccc]/20 flex flex-col">
                                       {/* Top Green Check */}
                                       <div
                                         onClick={() =>
                                           handleCorrectAnswer(qz.id, q.id, opt)
                                         }
-                                        className={`flex-1 flex justify-center items-center border-b border-[#D5D5DD] transition-colors ${
+                                        className={`flex-1 flex justify-center items-center border-b border-[#ccc]/20 transition-colors ${
                                           q.correctAnswer === opt
                                             ? "bg-[#30A46F]"
-                                            : "bg-white"
+                                            : "bg-white dark:bg-secondaryColors-0"
                                         }`}
                                       >
                                         {q.correctAnswer === opt && (
@@ -427,7 +427,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                         {/* Add Question Button */}
                         <span
                           onClick={() => createQuestion(qz.id)}
-                          className="h-[48px] bg-boldShadyColor-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full mt-2"
+                          className="h-[48px] dark:bg-boldShadyColor-0 bg-lightWhite-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full mt-2"
                         >
                           <BsPlus /> Add Question
                         </span>

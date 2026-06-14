@@ -123,7 +123,7 @@ export default function HeroPricingSection() {
   const pricing_grid =
     "flex flex-wrap md:gap-6 gap-3 mt-5 justify-center items-center relative z-20";
   const pricing_content =
-    "dark:bg-secondaryColors-0/80 bg-white/40 backdrop-blur-md border border-[#ccc]/10 drop-shadow-2xl rounded-[15px] md:w-[340px] h-[420px] w-full py-6 px-5 hover: transition-all duration-300 dark:hover:bg-white/10 hover:bg-white/30 hover:backdrop-blur-lg hover:border-[#ccc]/20 cursor-pointer flex items-start justify-start gap-1 flex-col pricing_card";
+    "dark:bg-secondaryColors-0/80 bg-white/40 backdrop-blur-md border border-[#ccc]/10 drop-shadow-2xl rounded-[15px] md:w-[340px] h-[580px] w-full py-6 px-5 hover: transition-all duration-300 dark:hover:bg-white/10 hover:bg-white/30 hover:backdrop-blur-lg hover:border-[#ccc]/20 cursor-pointer flex items-start justify-start gap-1 flex-col pricing_card";
 
   // Get current data based on selected role
   const getCurrentData = () => {
@@ -223,7 +223,9 @@ export default function HeroPricingSection() {
                   whileTap={{ scale: 0.98 }}
                   className={pricing_content}
                 >
-                  <h1 className="dark:text-white/80 text-lightBoldText-0/80">{d.pricing_title}</h1>
+                  <h1 className="dark:text-white/80 text-lightBoldText-0/80">
+                    {d.pricing_title}
+                  </h1>
                   <div className="flex items-center justify-start gap-3">
                     <h2 className="text-[2.1rem] dark:text-white text-lightBoldText-0/80 font-bold">
                       {d.section_roles == "organization" ? (

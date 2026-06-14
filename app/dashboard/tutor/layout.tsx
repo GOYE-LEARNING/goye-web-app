@@ -244,6 +244,9 @@ export default function DashboardLayout({
                   style={isChatPage && !isMobile ? { height: "100%" } : {}}
                 >
                   {children}
+                  <br />
+                  <br/>
+                  <br/>
                 </div>
               </div>
             </div>

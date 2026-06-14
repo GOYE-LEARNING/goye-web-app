@@ -139,7 +139,7 @@ export default function CourseStep1({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
+      <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
         Course Information
       </h1>
       {form.map((data, i) => {

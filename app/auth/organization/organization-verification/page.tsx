@@ -39,10 +39,29 @@ export default function PreviewVerification() {
   
   // Add this to track client-side hydration
   const [isClient, setIsClient] = useState(false);
+  // Add state for logo preview URL
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string>("");
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Create preview URL when formData.church_logo is a File object
+  useEffect(() => {
+    if (formData.church_logo && formData.church_logo instanceof File) {
+      const url = URL.createObjectURL(formData.church_logo);
+      setLogoPreviewUrl(url);
+      
+      // Cleanup function
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else if (typeof formData.church_logo === 'string' && formData.church_logo) {
+      setLogoPreviewUrl(formData.church_logo);
+    } else {
+      setLogoPreviewUrl("");
+    }
+  }, [formData.church_logo]);
 
   const closeModal = (e?: MouseEvent) => {
     if (modalRef.current && !modalRef.current.contains(e?.target as Node)) {
@@ -197,7 +216,7 @@ export default function PreviewVerification() {
 
       // Upload all files sequentially
       const updates: any = {};
-      if (formData.church_logo) {
+      if (formData.church_logo && formData.church_logo instanceof File) {
         updates.church = {
           church_logo: await uploadFile(
             formData.church_logo as File,
@@ -205,7 +224,7 @@ export default function PreviewVerification() {
           ),
         };
       }
-      if (formData.school_document) {
+      if (formData.school_document && formData.school_document instanceof File) {
         updates.school = {
           school_document: await uploadFile(
             formData.school_document as File,
@@ -213,7 +232,7 @@ export default function PreviewVerification() {
           ),
         };
       }
-      if (formData.club_document) {
+      if (formData.club_document && formData.club_document instanceof File) {
         updates.club = {
           club_document: await uploadFile(
             formData.club_document as File,
@@ -344,7 +363,7 @@ export default function PreviewVerification() {
               ))}
               <div className="col-span-2 flex flex-col gap-1">
                 <span className="md:text-[0.8rem] text-[0.95rem]">Description</span>
-                <div className="glass_input">{renderValue(formData.org_description)}</div>
+                <div className="glass_input overflow-y-auto">{renderValue(formData.org_description)}</div>
               </div>
             </div>
           )}
@@ -394,8 +413,8 @@ export default function PreviewVerification() {
                 <div className="col-span-2 flex flex-col gap-1">
                   <span className="md:text-[0.8rem] text-[0.95rem]">Church Logo</span>
                   <div className="border bg-secondaryColors-0 p-3 flex justify-center">
-                    {isClient && formData.church_logo ? (
-                      <img src={formData.church_logo as string} alt="Church Logo" className="h-[100px] object-contain" />
+                    {isClient && logoPreviewUrl ? (
+                      <img src={logoPreviewUrl} alt="Church Logo" className="h-[100px] object-contain" />
                     ) : (
                       <span className="text-gray-400">No logo uploaded</span>
                     )}
@@ -451,10 +470,12 @@ export default function PreviewVerification() {
                 <div className="col-span-2 flex flex-col gap-1">
                   <span className="md:text-[0.8rem] text-[0.95rem]">Official Document</span>
                   <div className="border bg-secondaryColors-0 p-3">
-                    {isClient && formData.school_document ? (
+                    {isClient && formData.school_document && typeof formData.school_document === 'string' ? (
                       <a href={formData.school_document as string} target="_blank" className="text-primaryColors-0 underline">
                         View uploaded document
                       </a>
+                    ) : formData.school_document instanceof File ? (
+                      <span className="text-gray-400">Document ready for upload</span>
                     ) : (
                       <span className="text-gray-400">No document uploaded</span>
                     )}
@@ -510,10 +531,12 @@ export default function PreviewVerification() {
                 <div className="col-span-2 flex flex-col gap-1">
                   <span className="md:text-[0.8rem] text-[0.95rem]">Club Document</span>
                   <div className="border bg-secondaryColors-0 p-3">
-                    {isClient && formData.club_document ? (
+                    {isClient && formData.club_document && typeof formData.club_document === 'string' ? (
                       <a href={formData.club_document as string} target="_blank" className="text-primaryColors-0 underline">
                         View uploaded document
                       </a>
+                    ) : formData.club_document instanceof File ? (
+                      <span className="text-gray-400">Document ready for upload</span>
                     ) : (
                       <span className="text-gray-400">No document uploaded</span>
                     )}
@@ -525,8 +548,9 @@ export default function PreviewVerification() {
         )}
 
         <button
-          className="float-right w-[200px] bg-black text-white h-[44px]"
+          className="float-right w-[200px] bg-black text-white h-[44px] rounded-xl hover:bg-black/80 transition-all"
           onClick={loading ? undefined : verifyFunc}
+          disabled={loading}
         >
           {loading ? "Verifying..." : "Verify & Submit"}
         </button>

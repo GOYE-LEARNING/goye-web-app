@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FaCheck, FaChevronDown, FaReply } from "react-icons/fa";
+import { FaCheck, FaChevronDown } from "react-icons/fa";
 import { MdOutlineCancel } from "react-icons/md";
 import DropDowns from "./drop_downs";
 import Loader from "./loader";
@@ -59,7 +59,7 @@ export default function DashboardTutorCreateEvent({
     event_type: "",
   });
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedValue, setSelectedValue] = useState<string[]>([]);
   const [formData, setFormData] = useState<Form>({
     event_title: "",
@@ -82,13 +82,10 @@ export default function DashboardTutorCreateEvent({
     console.log("🔄 Fetching event data for editing, eventId:", eventId);
     
     try {
-      const res = await fetch(
-        `${API_URL}/api/socials/get-event/${eventId}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${API_URL}/api/socials/get-event/${eventId}`, {
+        method: "GET",
+        credentials: "include",
+      });
 
       const data = await res.json();
       
@@ -98,8 +95,6 @@ export default function DashboardTutorCreateEvent({
         return;
       }
 
-      
-      // Populate form with existing event data
       if (data.data) {
         setUpdateEventValues(data.data);
         setFormData({
@@ -126,7 +121,7 @@ export default function DashboardTutorCreateEvent({
   // FIXED: Fetch event data when eventId changes
   useEffect(() => {
     fetchEventData();
-  }, [eventId]); // ✅ Only depend on eventId
+  }, [eventId]);
 
   const handleChangeType = (type: string) => {
     setFormData({ ...formData, event_type: type });
@@ -145,39 +140,34 @@ export default function DashboardTutorCreateEvent({
     e.preventDefault();
     
     if (isEditMode && eventId) {
-      // Handle UPDATE
       await handleUpdateEvent();
     } else {
-      // Handle CREATE
       await handleCreateEvent();
     }
   };
 
   const handleCreateEvent = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const res = await fetch(
-        `${API_URL}/api/socials/create-event/${groupId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            event_name: formData.event_title,
-            event_description: formData.event_description,
-            event_time: formData.event_time,
-            event_date: formData.event_date,
-            event_type: formData.event_type,
-            event_link: formData.event_link,
-          }),
-        }
-      );
+      const res = await fetch(`${API_URL}/api/socials/create-event/${groupId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          event_name: formData.event_title,
+          event_description: formData.event_description,
+          event_time: formData.event_time,
+          event_date: formData.event_date,
+          event_type: formData.event_type,
+          event_link: formData.event_link,
+        }),
+      });
 
       const data = await res.json();
 
-      setIsLoading(false)
       if (!res.ok) {
         console.log("An error occurred");
+        setIsLoading(false);
         return;
       }
 
@@ -190,40 +180,35 @@ export default function DashboardTutorCreateEvent({
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 
   const handleUpdateEvent = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const res = await fetch(
-        `${API_URL}/api/socials/update-event/${eventId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            event_name: formData.event_title,
-            event_description: formData.event_description,
-            event_time: formData.event_time,
-            event_date: formData.event_date,
-            event_type: formData.event_type,
-            event_link: formData.event_link,
-          }),
-        }
-      );
+      const res = await fetch(`${API_URL}/api/socials/update-event/${eventId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          event_name: formData.event_title,
+          event_description: formData.event_description,
+          event_time: formData.event_time,
+          event_date: formData.event_date,
+          event_type: formData.event_type,
+          event_link: formData.event_link,
+        }),
+      });
 
       const data = await res.json();
 
-      setIsLoading(false)
       if (!res.ok) {
         console.log("An error occurred while updating event");
+        setIsLoading(false);
         return;
       }
 
-      
-      // Call the edit callback if provided
       if (onEditEvent) {
         onEditEvent(data.data);
       }
@@ -233,7 +218,7 @@ export default function DashboardTutorCreateEvent({
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 
@@ -298,39 +283,39 @@ export default function DashboardTutorCreateEvent({
   const type = ["Meetings", "Prayer", "Fellowship"];
 
   return (
-    <>
-      <div className="w-[390px] fixed top-0 right-0 h-full bg-white drop-shadow-2xl p-[32px] border border-[#E3E3E833] transition-all duration-300 ease-in-out scrollbar2 overflow-y-auto">
+    <div
+      className={`h-full w-full bg-secondaryColors-0/40 backdrop-blur-md fixed top-0 left-0 z-[60] overflow-hidden transition-all duration-300`}
+    >
+      <div className="w-[390px] fixed top-0 right-0 h-full bg-white dark:bg-secondaryColors-0 drop-shadow-2xl p-[32px] border-l border-[#E3E3E833] dark:border-[#ccc]/20 transition-all duration-300 ease-in-out scrollbar2 overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h1 className="text-textSlightDark-0 font-bold text-[24px]">
+          <h1 className="text-textSlightDark-0 dark:text-white font-bold text-[24px]">
             {isEditMode ? "Edit Event" : "Create Event"}
           </h1>
-          <span onClick={cancel} className="cursor-pointer">
-            <MdOutlineCancel size={20} className="text-[18px]" />
-          </span>
+          <button onClick={cancel} className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+            <MdOutlineCancel size={20} className="text-[18px] text-gray-500 dark:text-gray-400" />
+          </button>
         </div>
 
         <div className="dashboard_hr my-5"></div>
 
         {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-3"
-          noValidate
-        >
-          {/* Content Input */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
           {form.map((data, i) => {
             return (
               <div
                 key={i}
-                className={`border border-[#D2D5DA] flex justify-between items-center w-full py-[8px] px-[12px]`}
+                className={`border border-[#D2D5DA]/20 dark:border-gray-700 rounded-lg flex justify-between items-center w-full py-[8px] px-[12px] hover:border-primaryColors-0 transition-colors ${
+                  data.name === "event_type" ? "cursor-pointer" : ""
+                }`}
+                onClick={() => {
+                  if (data.name === "event_type") {
+                    setShowDropdown(!showDropdown);
+                  }
+                }}
               >
-                <div
-                  className={`flex flex-col w-full ${
-                    data.name == "event_type" ? "h-[48px]" : ""
-                  }`}
-                >
-                  <label className="text-textGrey-0 text-[12px]">
+                <div className={`flex flex-col w-full ${data.name === "event_type" ? "h-[48px]" : ""}`}>
+                  <label className="text-textGrey-0 dark:text-gray-400 text-[12px] font-medium">
                     {data.label}
                   </label>
 
@@ -340,24 +325,28 @@ export default function DashboardTutorCreateEvent({
                       name={data.name}
                       value={data.value}
                       onChange={data.onchange}
-                      className="border-none outline-none text-textSlightDark-0 h-[74px] font-[500] resize-none"
+                      rows={3}
+                      className="border-none outline-none text-textSlightDark-0 dark:text-white font-[500] resize-none bg-transparent w-full"
+                      placeholder="Describe your event..."
                     />
-                  ) : data.name == "event_type" ? (
+                  ) : data.name === "event_type" ? (
                     <div className="relative w-full">
                       {showDropdown && (
-                        <div>
+                        <div className="absolute top-full left-0 right-0 z-20 mt-1">
                           <DropDowns
                             value={eventType}
                             onChange={() => {}}
-                            countries={type.map((type, i) => {
+                            countries={type.map((typeItem, idx) => {
                               return (
                                 <div
-                                  key={i}
-                                  onClick={() => handleChangeType(type)}
-                                  className="flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 cursor-pointer"
+                                  key={idx}
+                                  onClick={() => handleChangeType(typeItem)}
+                                  className="flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 dark:hover:bg-gray-800 cursor-pointer rounded-lg"
                                 >
-                                  <div>{type}</div>
-                                  {eventType === type && (
+                                  <div className="text-textSlightDark-0 dark:text-white">
+                                    {typeItem}
+                                  </div>
+                                  {eventType === typeItem && (
                                     <span className="text-primaryColors-0">
                                       <FaCheck size={12} />
                                     </span>
@@ -368,54 +357,59 @@ export default function DashboardTutorCreateEvent({
                           />
                         </div>
                       )}
-                      {selectedValue}
+                      <span className="text-textSlightDark-0 dark:text-white capitalize">
+                        {selectedValue[0] || "Select event type"}
+                      </span>
                     </div>
-                  ) : data.name == "event_type" ? (
-                    selectedValue
                   ) : (
-                    /* TEXT INPUT FIELDS */
                     <input
                       type={data.type}
                       name={data.name}
                       value={data.value}
                       onChange={data.onchange}
-                      placeholder={`${
-                        data.name == "event_time" ? "6:00 AM - 12:00 PM" : ""
-                      }`}
-                      className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px]"
+                      placeholder={
+                        data.name === "event_time"
+                          ? "e.g., 6:00 AM - 12:00 PM"
+                          : data.name === "event_link"
+                          ? "https://..."
+                          : ""
+                      }
+                      className="border-none outline-none w-full text-textSlightDark-0 dark:text-white font-[500] text-[16px] bg-transparent placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     />
                   )}
                 </div>
-                {data.name == "event_type" ? (
-                  <div className="">
-                    <FaChevronDown onClick={() => setShowDropdown(true)} />
+                {data.name === "event_type" && (
+                  <div className="ml-2">
+                    <FaChevronDown 
+                      className={`text-gray-400 transition-transform duration-200 ${showDropdown ? "rotate-180" : ""}`}
+                    />
                   </div>
-                ) : (
-                  ""
                 )}
               </div>
             );
           })}
+          
           {/* Buttons */}
-          <div className="flex flex-col gap-2 mt-[25%]">
+          <div className="flex flex-col gap-3 mt-6">
             <button
               type="submit"
-              className="form_more bg-primaryColors-0 text-white flex items-center gap-2"
+              disabled={isLoading}
+              className="form_more bg-primaryColors-0 text-white flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primaryColors-0/90 transition-colors py-3 rounded-lg font-semibold"
             >
-              <div>{isLoading ? <Loader height={20} width={20} full_border_color="white" small_border_color="transparent" border_width={2}/> : ''}</div>
+              {isLoading && <Loader height={20} width={20} full_border_color="white" small_border_color="transparent" border_width={2} />}
               {isEditMode ? "Update Event" : "Create Event"}
             </button>
 
             <button
               type="button"
               onClick={cancel}
-              className="form_more bg-[#F5F5F5] text-primaryColors-0 flex items-center gap-2"
+              className="form_more bg-[#F5F5F5] dark:bg-gray-800 text-primaryColors-0 dark:text-primaryColors-0 flex items-center gap-2 justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors py-3 rounded-lg font-semibold"
             >
               Cancel
             </button>
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 }

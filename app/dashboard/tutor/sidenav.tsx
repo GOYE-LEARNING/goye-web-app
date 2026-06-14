@@ -67,7 +67,7 @@ export default function TutorSidenav() {
               }
             />
           </div>
-          <div className="md:w-full hidden md:block">
+          <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/tutor/student"
               label="Student"

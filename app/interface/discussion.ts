@@ -37,6 +37,9 @@ export interface Discussion {
   };
   liked?: boolean; // Add this field
   replies?: Reply[];
+  category?: string; // Add this line - for post category
+  categoryIcon?: string; // Optional: for storing category icon
+  categoryColor?: string;
 }
 
 export interface Reply {

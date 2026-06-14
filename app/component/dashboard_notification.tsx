@@ -253,7 +253,7 @@ export default function DashboardNotification({
     <div
       ref={panelRef}
       onClick={(e) => e.stopPropagation()}
-      className="h-[700px] w-[390px] dark:bg-secondaryColors-0 bg-white backdrop-blur-md border border-[#ccc]/10 drop-shadow-2xl md:h-[509px] md:w-[400px] z-[99999] right-0 absolute p-[20px] rounded-xl overflow-hidden"
+      className="h-[700px] w-[390px] scrollbar2 dark:bg-secondaryColors-0 bg-white backdrop-blur-md border border-[#ccc]/10 drop-shadow-2xl md:h-[509px] md:w-[400px] z-[99999] right-0 absolute p-[20px] rounded-xl overflow-hidden"
     >
       <div className="dashboard_triangle absolute -top-[0.8rem] right-4"></div>
 
@@ -361,7 +361,7 @@ export default function DashboardNotification({
           </p>
         </div>
       ) : (
-        <div className="my-5 overflow-y-auto h-[calc(100%-80px)] pr-1">
+        <div className="my-5 overflow-y-auto scrollbar2 h-[calc(100%-80px)] pr-1">
           <div className="flex flex-col">
             {!isLoading &&
               displayedNotifications.map(

@@ -102,6 +102,7 @@ export default function StudentLeaderBoardPage() {
 
   return (
     <div>
+      <br/>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-[1.5rem] font-bold"> Leaderboard </h1>
@@ -109,7 +110,7 @@ export default function StudentLeaderBoardPage() {
             <MdLeaderboard />{" "}
           </div>
         </div>
-        <div className="w-[auto] bg-white py-2 px-3 rounded-[10px] flex items-center justify-between gap-1">
+        <div className="w-[auto] bg-white dark:bg-secondaryColors-0 py-2 px-3 rounded-[10px] flex items-center justify-between gap-1">
           <div className="h-[30px] w-[30px] rounded-full overflow-hidden">
             <img src={personalData?.user.avatar} alt="user_pic" className="h-full w-full object-cover z-10" />
           </div>
@@ -126,11 +127,11 @@ export default function StudentLeaderBoardPage() {
       <div className="dashboard_content_mainbox min-h-screen rounded-[30px] overflow-hidden">
         <div className="flex justify-between md:items-center  md:flex-row flex-col w-full ">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-textSlightDark-0 flex items-center gap-2">
+            <h2 className="text-2xl font-bold dark:text-textSlightDark-0 text-lightBoldText-0/80 flex items-center gap-2">
               <MdEmojiEvents size={28} className="text-primaryColors-0" />
               {title}
             </h2>
-            <p className="text-textGrey-0 text-sm mt-1">
+            <p className="dark:text-textSlightDark-0 text-lightBoldText-0/80 text-sm mt-1">
               Top {leaderboardData.length} learners ranked by total experience
               points
             </p>
@@ -139,14 +140,14 @@ export default function StudentLeaderBoardPage() {
             <div className="relative h-full md:w-auto w-full">
               <div className="absolute top-[20%] left-1">
                 {" "}
-                <CiSearch size={20} color="#EFEFF2" />
+                <CiSearch size={20} color="#ccc" />
               </div>
               <input
                 type="text"
                 placeholder="Search for friends..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="border border-[#EFEFF2] outline-none h-[35px] md:w-[200px] w-full pl-6 pr-3 text-[12px] rounded-[10px]"
+                className="border border-[#ccc]/10 outline-none h-[35px] md:w-[200px] w-full pl-6 pr-3 text-[12px] rounded-[10px] bg-lightWhite-0 dark:bg-shadyColor-0"
               />
             </div>
           </div>

@@ -88,7 +88,7 @@ export default function HeroSection1() {
             variants={itemVariants as any}
             className="flex items-center gap-3 md:mb-0 mb-5"
           >
-            <button className="nav_btn transition-all duration-200 hover:opacity-30 text-primaryColors-0 bg-boldShadyColor-0 md:w-[171px] w-[130px] md:text-[14px] text-[18px]">
+            <button className="nav_btn transition-all duration-200 hover:opacity-30 text-primaryColors-0 dark:bg-secondaryColors-0 bg-white md:w-[171px] w-[130px] md:text-[14px] text-[18px]">
               Start Teaching
             </button>
             <button className="nav_btn transition-all duration-200 hover:opacity-30 md:w-[171px] w-[130px] bg-primaryColors-0 text-white md:text-[14px] text-[18px]">

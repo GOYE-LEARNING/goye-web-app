@@ -17,7 +17,7 @@ export default function DashboardOrgAdminQuickActions({
 }: Props) {
   return (
     <div className="dashboard_content_box">
-      <h1 className="font-semibold text-textSlightDark-0 text-[14px]">
+      <h1 className="font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">
         Quick Actions
       </h1>
       <div className="mt-2 grid grid-cols-2 gap-[8px]">

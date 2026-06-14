@@ -9,26 +9,56 @@ import { FaArrowRight } from "react-icons/fa6";
 import { useTheme } from "../context/theme_provider";
 
 interface Props {
-  openCourse: () => void;
+  openCourse: (courseId: string) => void;
 }
 
-interface Data {
+interface Enrollment {
+  enrollment_id: string;
+  enrollment_status: string;
+  enrollment_date: string;
+  started_at: string | null;
+  completed_at: string | null;
+  course_score: number;
+  course_progress: {
+    percentage: number;
+    completed_lessons: number;
+    total_lessons: number;
+  };
+  course: {
+    id: string;
+    course_title: string;
+    course_description: string;
+    course_short_description: string;
+    course_image: string | null;
+    course_level: string;
+    point: number;
+    createdBy?: string;
+  };
+}
+
+interface CourseData {
   total_courses: number;
-  courses: Course[];
+  completed_courses: number;
+  in_progress_courses: number;
+  courses: Enrollment[];
+  user_stats: {
+    total_xp: number;
+    current_level: string;
+    level_number: number;
+    next_level_xp: number;
+    progress_to_next_level: number;
+  };
 }
-interface Course {
-  course_title: string;
-  course_short_description: string;
-  course_description: string;
-}
+
 export default function DashboardStudentCourse({ openCourse }: Props) {
   const navigate = useRouter();
   const { darkMode, setDarkMode } = useTheme();
   const params = useParams<{ org_name: string }>();
   const type = localStorage.getItem("type");
-  const [course, setCourse] = useState<Data | null>(null);
+  const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const fetchCourses = async () => {
     try {
       setIsLoading(true);
@@ -41,13 +71,14 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
       );
 
       const data = await res.json();
-      setIsLoading(false);
+      
       if (!res.ok) {
+        console.log("Error fetching courses:", data);
         return;
       }
 
-      setCourse(data.data);
-      console.log(data);
+      setCourseData(data.data);
+      console.log("Page Courses", data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -58,18 +89,33 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
   useEffect(() => {
     fetchCourses();
   }, []);
+
+  const getProgressColor = (percentage: number) => {
+    if (percentage >= 80) return "bg-green-500";
+    if (percentage >= 50) return "bg-yellow-500";
+    return "bg-primaryColors-0";
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+        return "Completed";
+      case "IN_PROGRESS":
+        return "In Progress";
+      default:
+        return "Enrolled";
+    }
+  };
+
   return (
     <>
       <div className="dashboard_content_box">
         <div className="dashboard_content_header">
           <h1>My Courses</h1>
-          {course?.courses.length == 0 ? (
-            <div></div>
-          ) : (
+          {courseData?.courses && courseData.courses.length > 0 ? (
             <div>
-              {" "}
               <span
-                className="cursor-pointer"
+                className="cursor-pointer text-primaryColors-0 hover:underline"
                 onClick={() =>
                   navigate.push(
                     type !== "invited_user"
@@ -78,22 +124,24 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                   )
                 }
               >
-                View All
+                View All ({courseData.total_courses})
               </span>
             </div>
+          ) : (
+            <div></div>
           )}
         </div>
 
         {isLoading && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primaryColors-0"></div>
-            <p className="ml-2">Loading courses...</p>
+            <p className="ml-2 text-gray-600 dark:text-gray-400">Loading courses...</p>
           </div>
         )}
 
-        {!isLoading && course?.courses.length === 0 ? (
+        {!isLoading && (!courseData?.courses || courseData.courses.length === 0) ? (
           <div>
-            <div className="flex justify-center items-center flex-col gap-2">
+            <div className="flex justify-center items-center flex-col gap-2 py-8">
               <span>
                 <MdMenuBook
                   size={60}
@@ -101,8 +149,9 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                 />
               </span>
               <h1 className="text-textSlightDark-0 font-semibold text-[18px] mt-4">
-                No courses applied for.
+                No courses enrolled yet.
               </h1>
+              <p className="text-gray-500 text-sm">Start your learning journey by joining a course</p>
               <button
                 onClick={() =>
                   navigate.push(
@@ -111,7 +160,7 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                       : `/dashboard/${params.org_name}/organization/course`,
                   )
                 }
-                className="game_button flex items-center gap-2"
+                className="game_button flex items-center gap-2 mt-2"
               >
                 Join a course
                 <FaArrowRight />
@@ -120,24 +169,60 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
           </div>
         ) : (
           <div>
-            {!isLoading && (
+            {!isLoading && courseData?.courses && (
               <div>
-                {course?.courses.slice(0, 1).map((c, i) => (
-                  <div key={i} className="dashboard_content_subbox">
-                    <h1>{c.course_title}</h1>
-                    <h2>{c.course_short_description}</h2>
-                    <p>{c.course_description}</p>
-                    <div className="dashboard_content_progress">
-                      <h3>Your Progress</h3>
-                      <div className="w-full h-[8px] bg-[#E8E1E2] relative">
-                        <div className="h-[8px] w-[15%] bg-[#30A46F]"></div>
+                {courseData.courses.slice(0, 1).map((enrollment, i) => (
+                  <div key={enrollment.enrollment_id || i} className="dashboard_content_subbox">
+                    {/* Course Title */}
+                    <h1 className=" text-gray-800 dark:text-white">
+                      {enrollment.course.course_title}
+                    </h1>
+                    
+                    {/* Course Description */}
+                    <h2 className=" text-gray-600 dark:text-gray-300 mt-1">
+                      {enrollment.course.course_short_description}
+                    </h2>
+                    <p className=" text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
+                      {enrollment.course.course_description}
+                    </p>
+                    
+                    {/* Progress Section */}
+                    <div className="dashboard_content_progress mt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Your Progress
+                        </h3>
+                        <span className="text-xs font-semibold" style={{
+                          color: getProgressColor(enrollment.course_progress.percentage).includes("green") 
+                            ? "#10B981" 
+                            : getProgressColor(enrollment.course_progress.percentage).includes("yellow")
+                            ? "#F59E0B"
+                            : "#FFA500"
+                        }}>
+                          {Math.round(enrollment.course_progress.percentage)}%
+                        </span>
+                      </div>
+                      <div className="w-full h-[8px] bg-[#E8E1E2] dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-[8px] ${getProgressColor(enrollment.course_progress.percentage)} rounded-full transition-all duration-300`}
+                          style={{ width: `${enrollment.course_progress.percentage}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {enrollment.course_progress.completed_lessons} of {enrollment.course_progress.total_lessons} lessons
+                        </p>
+
                       </div>
                     </div>
+                  
+                    
+                    {/* Continue Button */}
                     <button
-                      className="h-[36px] py-[17px] bg-primaryColors-0 flex justify-center items-center w-full text-[#ffffff]"
-                      onClick={openCourse}
+                      className="h-[36px] py-[17px] bg-primaryColors-0 hover:bg-primaryColors-0/90 transition-colors flex justify-center items-center w-full text-[#ffffff] rounded-md mt-4"
+                      onClick={() => openCourse(enrollment.course.id)}
                     >
-                      Continue Course
+                      {enrollment.enrollment_status === "COMPLETED" ? "Review Course" : "Continue Course"}
                     </button>
                   </div>
                 ))}

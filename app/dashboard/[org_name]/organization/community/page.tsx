@@ -13,6 +13,7 @@ import pic2 from "@/public/images/notfound.png";
 import { IoMdRefresh } from "react-icons/io";
 import StudentCommunityGroup from "@/app/component/dashboard_student_community_group";
 import { useRouter } from "next/navigation";
+import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
 
 interface User {
   first_name: string;
@@ -67,7 +68,16 @@ export default function StudentCommunity() {
       const data = await res.json();
 
       if (!res.ok) {
-        console.log("An error occurred");
+        if (res.status === 429) {
+          dispatchAPIError({
+            status: 429,
+            message: "Too many requests, please slow down and try again later.",
+            retryAfter: 5,
+            endpoint: "/api/socials/get-groups"
+          });
+        } else {
+          console.error(`HTTP Error: ${res.status}`);
+        }
         setIsLoading(false);
         return;
       }

@@ -13,6 +13,10 @@ import { ThemeProvider } from "@/app/context/theme_provider";
 import Cursor from "./component/cursor";
 import AuthProvider from "./context/AuthContext";
 import { SignupProvider } from "./context/SignupContext";
+import { ModalProvider } from "./context/SimpleModalContext";
+import { BuiltInTabProvider } from "./context/BuiltinTabContext";
+import { GlobalAPIErrorHandler } from "./component/GlobalApiErrorHandler";
+import { GlobalNotFoundHandler } from "./component/GlobalNotFoundHandler";
 export default function RootLayout({
   children,
 }: {
@@ -27,19 +31,29 @@ export default function RootLayout({
       <body
         className={`min-h-full dark:bg-secondaryColors-0 bg-white dark:text-textSlightDark-0 text-lightBoldText-0 antialiased font-['Fustat',_'sans-erif'] scrollbar2 ${checkAll ? "overflow-hidden" : ""}`}
       >
-        <SignupProvider>
-          <AuthProvider>
-            <ThemeProvider>
-              <OrganizationProvider>
-                <div className="min-h-[100dvh] w-full max-w-[100vw] min-w-0  overflow-x-hidden">
-                  <Cursor />
+        <GlobalNotFoundHandler>
+          <GlobalAPIErrorHandler>
+            <SignupProvider>
+              <AuthProvider>
+                <ThemeProvider>
+                  <OrganizationProvider>
+                    <ModalProvider>
+                      <BuiltInTabProvider>
+                        <div className="min-h-[100dvh] w-full max-w-[100vw] min-w-0  overflow-x-hidden">
+                          <Cursor />
 
-                  {children}
-                </div>
-              </OrganizationProvider>
-            </ThemeProvider>
-          </AuthProvider>
-        </SignupProvider>
+                          {children}
+                          <div id="modal-root" />
+                          <div id="slideshow-modal-root" />
+                        </div>
+                      </BuiltInTabProvider>
+                    </ModalProvider>
+                  </OrganizationProvider>
+                </ThemeProvider>
+              </AuthProvider>
+            </SignupProvider>
+          </GlobalAPIErrorHandler>
+        </GlobalNotFoundHandler>
       </body>
     </html>
   );

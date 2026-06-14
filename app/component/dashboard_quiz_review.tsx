@@ -159,10 +159,10 @@ export default function DashboardQuizReview({
         <SubHeader header="Quiz Review" backFunction={backFunction} />
         <div className="dashboard_content_mainbox">
           {/* Score Summary Card */}
-          <div className="bg-[#ffffff] border border-[#F1F1F4] py-[24px] px-[16px] flex flex-col items-center">
+          <div className="bg-[#ffffff] dark:bg-secondaryColors-0 border border-[#ccc]/20 py-[24px] px-[16px] flex flex-col items-center">
             <CiCircleCheck color="#30A46F" size={30} />
             <div className="flex flex-col justify-center items-center gap-1 mt-5">
-              <h1 className="font-[700] text-[24px] text-textSlightDark-0">
+              <h1 className="font-[700] text-[24px] dark:text-textSlightDark-0 text-lightBoldText-0">
                 {score}%
               </h1>
               <p className="text-[#71748C] text-[14px]">
@@ -201,7 +201,7 @@ export default function DashboardQuizReview({
             </span>
 
             {/* Performance Bar */}
-            <div className="relative h-[8px] bg-[#E8E1E2]">
+            <div className="relative h-[8px] bg-[#E8E1E2] dark:bg-shadyColor-0">
               <div
                 className="h-full bg-[#30A46F] transition-all duration-500"
                 style={{ width: `${score}%` }}
@@ -209,7 +209,7 @@ export default function DashboardQuizReview({
             </div>
 
             {/* Overall Score */}
-            <div className="flex justify-between items-center text-[14px] font-[600] text-[#41415A]">
+            <div className="flex justify-between items-center text-[14px] font-[600] dark:text-[#41415A] text-lightBoldText-0">
               <h1>Overall score</h1>
               <p>{score}%</p>
             </div>
@@ -223,7 +223,7 @@ export default function DashboardQuizReview({
                 </p>
               </div>
             ) : (
-              <div className="border border-[#F1F1F4] h-[41px] flex items-center p-[12px] text-[#DA0E29]">
+              <div className="border border-[#ccc]/20 h-[41px] flex items-center p-[12px] text-[#DA0E29]">
                 <p className="flex gap-5 items-center text-[14px]">
                   <MdClose />
                   Keep learning! Review the material and try again.

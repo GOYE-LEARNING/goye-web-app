@@ -87,7 +87,7 @@ export default function DashboardCourseQuizzes({
           />
         ) : (
           <div>
-            <div className="bg-[#FAF8F8] p-[16px]">
+            <div className="bg-[#FAF8F8] dark:bg-shadyColor-0 p-[16px]">
               <div className="flex justify-between items-center ">
                 <h1 className="text-[#41415A] text-[12px] font-[600]">
                   Quiz Progress
@@ -96,7 +96,7 @@ export default function DashboardCourseQuizzes({
                   {quizAttempted}/{quiz.length} completed
                 </span>
               </div>
-              <div className="relative bg-[#E8E1E2] h-[8px] my-2 w-full">
+              <div className="relative bg-[#E8E1E2] dark:bg-secondaryColors-0 h-[8px] my-2 w-full">
                 <div
                   className={`bg-[#30A46F] h-full  transition-all duration-200`}
                   style={{width: `${quizPercentage}%`}}

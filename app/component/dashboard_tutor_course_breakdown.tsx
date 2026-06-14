@@ -3,7 +3,7 @@
 import { FaAngleDoubleUp, FaVideo } from "react-icons/fa";
 import DashboardSubHeaderMore from "./dashboard_subheaderMore";
 import pic from "@/public/images/overview.png";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DashboardTutorTabOverview from "./dashboard_tutor_tab_overview";
 import DashboardTutorTabMaterial from "./dashboard_tutor_tab_material";
 import DashboardTutorTabQuiz from "./dashboard_tutor_tab_quiz";
@@ -14,6 +14,8 @@ import DashboardTutorCreateModule from "./dashboard_tutor_createmodule";
 import Loader from "./loader";
 import DashboardTutorCreateCourse from "./dashboard_tutor_create-course";
 import DashboardCourseViewContent from "./dashboard_course_view_content";
+import DashboardTutorActivities from "./dashboard_tutor_activities";
+import DashboardTutorMoreCourseActivities from "./dashboard_tutor_more_course_activites";
 
 interface Props {
   backFunc: () => void;
@@ -41,15 +43,17 @@ interface Course {
 export default function DashboardTutorCourseBreakdown({
   backFunc,
   courseId,
-  onDelete, 
+  onDelete,
 }: Props) {
   const [hideQuiz, setHideQuiz] = useState<boolean>(true);
+  const [openActivities, setOpenActivities] = useState<boolean>(false);
   const [showQuizReview, setShowReviewQuiz] = useState<boolean>(false);
   const [showAddQuiz, setShowAddQuiz] = useState<boolean>(false);
   const [showModule, setShowModule] = useState<boolean>(false);
   const [showPost, setShowPost] = useState<boolean>(false);
   const [viewCourse, setviewCourse] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showBackArrowFromActivity, setShowBackArrowFromActivity] = useState<boolean>(false);
   const [courseDetails, setCourseDetails] = useState<Course[]>([]);
   const [showCreateCourse, setShowCreateCourse] = useState<boolean>(false);
   const [coursesId, setCourseId] = useState<string>("");
@@ -74,8 +78,22 @@ export default function DashboardTutorCourseBreakdown({
   };
   const handleStyle = (tab: string) =>
     `${
-      activeTab == tab ? "bg-boldShadyColor-0 text-primaryColors-0" : "bg-shadyColor-0 text-white"
+      activeTab == tab
+        ? "bg-primaryColors-0 text-white"
+        : "dark:bg-secondaryColors-0 bg-white text-primaryColors-0 dark:text-primaryColors-0"
     }`;
+
+  const openActivitiesFunc = useCallback(() => {
+    setOpenActivities(true);
+    setHideQuiz(false);
+    setShowBackArrowFromActivity(true);
+  }, []);
+
+  const closeActivitiesFunc = useCallback(() => {
+    setOpenActivities(false);
+    setHideQuiz(true);
+    setShowBackArrowFromActivity(false);
+  }, []);
 
   const fetchActivities = async () => {
     try {
@@ -249,6 +267,7 @@ export default function DashboardTutorCourseBreakdown({
                     <div className="dashboard_hr my-5"></div>
                     {activeTab == "overview" ? (
                       <DashboardTutorTabOverview
+                        openActivities={openActivitiesFunc}
                         openViewContent={viewCourseFunc}
                         courseId={courseId}
                         course_description={c.course_description}
@@ -338,6 +357,9 @@ export default function DashboardTutorCourseBreakdown({
           editCourse={editCourse}
           onDelete={() => deleteCourse(courseId as string)}
         />
+      )}
+      {openActivities && (
+        <DashboardTutorMoreCourseActivities courseId={courseId} backFunc={closeActivitiesFunc} isAlone={showBackArrowFromActivity}/>
       )}
     </>
   );

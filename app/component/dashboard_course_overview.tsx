@@ -9,12 +9,12 @@ import { motion } from "framer-motion";
 import { SlBadge } from "react-icons/sl";
 import Loader from "./loader";
 import { BiLogOut } from "react-icons/bi";
-import DashboardStudentCourseList from "./dashboard_student_course_list";
-import Image from "next/image";
+import { useModal } from "../context/SimpleModalContext";
 
 interface Props {
   removeFunc: () => void;
   courseId: string;
+  setCheckIfEnrolled: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 interface Course {
@@ -54,23 +54,12 @@ interface Lesson {
   lesson_video?: string;
 }
 
-interface AccordionItem1 {
-  header: string;
-  body: {
-    header1: string;
-    paragraph: string;
-    mainIcon: React.ReactNode;
-    icon1: React.ReactNode;
-    icons2: React.ReactNode;
-    icon_sub1: string;
-    icons_sub2: string;
-  };
-}
-
 export default function DashboardCourseOverView({
   removeFunc,
   courseId,
+  setCheckIfEnrolled
 }: Props) {
+  const { showModal } = useModal(); // Add this line
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [course, setCourse] = useState<boolean>(true);
   const [coursesPlace, setCoursesPlace] = useState<boolean>(true);
@@ -79,8 +68,10 @@ export default function DashboardCourseOverView({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoading2, setIsLoading2] = useState<boolean>(false);
   const [startIsLoading, setIsStartLoading] = useState<boolean>(false);
+  const [exitIsLoading, setExitIsLoading] = useState<boolean>(false);
   const [courseDetails, setCourseDetails] = useState<Course | null>(null);
   const [checkEnroll, setCheckEnroll] = useState<boolean | null>(null);
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const checkIfEnrolled = async () => {
@@ -100,8 +91,8 @@ export default function DashboardCourseOverView({
         return;
       }
 
-      console.log(data);
-      setCheckEnroll(data.data);
+      console.log("Check if enrolled from overview tabs", data);
+      setCheckEnroll(data.data.is_enrolled);
     } catch (error) {
       console.error(error);
     }
@@ -122,20 +113,40 @@ export default function DashboardCourseOverView({
 
       if (!res.ok) {
         console.log(data);
+        // Replace alert with modal
+        showModal(
+          "Enrollment Failed",
+          data.message || "Unable to enroll in this course. Please try again.",
+          "error",
+        );
         return;
       }
 
-      setCourse(false);
-      setCourseList(true);
-      setCoursesPlace(false);
-      setIsStartLoading(false);
-      removeFunc();
+      // Show success modal
+      showModal(
+        "Enrollment Successful! 🎉",
+        "You have successfully enrolled in this course. Start your learning journey now!",
+        "success",
+        () => {
+          setCourse(false);
+          setCourseList(true);
+          setCoursesPlace(false);
+          removeFunc();
+        },
+      );
+
+      setCheckIfEnrolled(true)
 
       console.log(data);
     } catch (error) {
       console.error(error);
+      showModal(
+        "Enrollment Failed",
+        "Failed to start course. Please check your connection and try again.",
+        "error",
+      );
     } finally {
-      setIsLoading(false);
+      setIsStartLoading(false);
     }
   };
 
@@ -151,7 +162,65 @@ export default function DashboardCourseOverView({
     removeFunc();
   };
 
-  const exitCourse = () => {};
+  const exitCourse = async () => {
+    setExitIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/enroll/exit-course/${courseId}`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log(data);
+        showModal(
+          "Exit Failed",
+          data.message || "Failed to exit course. Please try again.",
+          "error",
+        );
+        return;
+      }
+
+      console.log("Exit course response:", data);
+
+      // Update enrollment status
+      setCheckEnroll(false);
+
+      // Show success modal
+      showModal(
+        "Course Exited Successfully",
+        data.message ||
+          "You have successfully exited the course. Your progress has been saved.",
+        "success",
+        () => {
+          // Refresh the page after modal closes
+          setCheckIfEnrolled(false)
+        },
+      );
+    } catch (error) {
+      console.error("Error exiting course:", error);
+      showModal(
+        "Exit Failed",
+        "An error occurred while exiting the course. Please try again.",
+        "error",
+      );
+    } finally {
+      setExitIsLoading(false);
+    }
+  };
+
+  const handleExitClick = () => {
+    showModal(
+      "Exit Course?",
+      "Are you sure you want to exit this course? Your progress will be saved, and you can re-enroll later to continue from where you left off.",
+      "confirm",
+      exitCourse,
+    );
+  };
 
   const fetchCourse = async () => {
     if (!courseId) {
@@ -175,16 +244,20 @@ export default function DashboardCourseOverView({
       setCourseDetails(data.data);
     } catch (error) {
       console.error("Error fetching course:", error);
+      showModal(
+        "Error",
+        "Failed to load course details. Please refresh the page.",
+        "error",
+      );
     } finally {
       setIsLoading(false);
-      setIsLoading2(false);
     }
   };
 
   useEffect(() => {
     checkIfEnrolled();
     fetchCourse();
-  }, []);
+  }, [courseId]);
 
   const toggleAccordion = (i: number) => {
     if (activeIndex === i) {
@@ -212,11 +285,11 @@ export default function DashboardCourseOverView({
               </span>
               <span className="flex items-center justify-center gap-2">
                 <GoPeople />
-                {courseDetails?.enrollment.length}
+                {courseDetails?.enrollment?.length || 0}
               </span>
             </p>
 
-            <div className="h-[1px] w-full bg-[#EFEFF2]"></div>
+            <div className="h-[1px] w-full bg-[#ccc]/10"></div>
 
             <ol className="my-5 flex flex-col gap-1">
               <h1 className="text-primaryColors-0 font-[700]">
@@ -242,11 +315,11 @@ export default function DashboardCourseOverView({
               <div className="w-full">
                 {checkEnroll == false ? (
                   <button
-                    className="h-[48px] bg-primaryColors-0 w-full text-center text-white"
+                    className="h-[48px] bg-primaryColors-0 w-full text-center text-white rounded-md hover:bg-primaryColors-0/90 transition-colors"
                     onClick={openCourse}
-                    disabled={isLoading2 == false ? false : true}
+                    disabled={startIsLoading}
                   >
-                    {isLoading2 == false ? (
+                    {!startIsLoading ? (
                       "Start Course"
                     ) : (
                       <Loader
@@ -260,13 +333,12 @@ export default function DashboardCourseOverView({
                   </button>
                 ) : (
                   <button
-                    className="h-[48px] bg-white w-full text-center text-nearTextColors-0  border border-nearTextColors-0/20"
-                    onClick={exitCourse}
-                    disabled={isLoading2 == false ? false : true}
+                    className="h-[48px] bg-white dark:bg-shadyColor-0 w-full text-center text-red-500 border border-nearTextColors-0/20 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    onClick={handleExitClick}
+                    disabled={exitIsLoading}
                   >
-                    {isLoading2 == false ? (
+                    {!exitIsLoading ? (
                       <div className="flex items-center justify-center gap-2">
-                        {" "}
                         <BiLogOut />
                         Exit Course
                       </div>
@@ -276,7 +348,7 @@ export default function DashboardCourseOverView({
                         width={25}
                         border_width={2}
                         full_border_color="transparent"
-                        small_border_color="white"
+                        small_border_color="red"
                       />
                     )}
                   </button>
@@ -287,10 +359,10 @@ export default function DashboardCourseOverView({
                 ""
               ) : (
                 <button
-                  className="h-[48px] bg-primaryColors-0 w-full text-center text-white"
+                  className="h-[48px] bg-primaryColors-0 w-full text-center text-white rounded-md hover:bg-primaryColors-0/90 transition-colors"
                   onClick={showVideoLessonsCourse}
                 >
-                  Let Begin
+                  Let's Begin
                 </button>
               )}
             </div>
@@ -299,14 +371,14 @@ export default function DashboardCourseOverView({
           <div className="cr_box flex items-start gap-3 flex-col">
             {coursesPlace && (
               <>
-                <h1 className="text-textSlightDark-0 text-[16px] font-[700]">
+                <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[16px] font-[700]">
                   Modules
                 </h1>
                 {courseDetails?.module?.map((data, i) => {
                   return (
                     <div className="w-full cursor-pointer" key={i}>
                       <h2
-                        className="text-[14px] text-textSlightDark-0 flex justify-between items-center"
+                        className="text-[14px] dark:text-textSlightDark-0 text-lightBoldText-0 flex justify-between items-center"
                         onClick={() => {
                           toggleAccordion(i);
                         }}
@@ -314,7 +386,7 @@ export default function DashboardCourseOverView({
                         <p className="font-[600]">{data.module_title}</p>
                         <span className="text-[1.3rem]">
                           <div
-                            className={`${activeIndex === i ? "rotate-90" : ""}`}
+                            className={`${activeIndex === i ? "rotate-90" : ""} transition-transform duration-200`}
                           >
                             <MdChevronRight />{" "}
                           </div>
@@ -349,7 +421,7 @@ export default function DashboardCourseOverView({
                         </motion.div>
                       )}
 
-                      <div className="h-[1px] w-full bg-[#EFEFF2] my-3"></div>
+                      <div className="h-[1px] w-full bg-[#ccc]/10 my-3"></div>
                     </div>
                   );
                 })}
@@ -365,9 +437,12 @@ export default function DashboardCourseOverView({
                 <div className="flex gap-2 items-center my-4">
                   <span className="h-[40px] w-[40px] rounded-full bg-secondaryColors-0 overflow-hidden">
                     <img
-                      src={courseDetails?.createdByDetails.user_pic}
+                      src={
+                        courseDetails?.createdByDetails?.user_pic ||
+                        "/default-avatar.png"
+                      }
                       alt="profile-pic"
-                      className="h-full w-full covver"
+                      className="h-full w-full object-cover"
                     />
                   </span>
                   <span className="flex items-start flex-col gap-1">
@@ -395,11 +470,11 @@ export default function DashboardCourseOverView({
           )}
         </div>
       ) : (
-        <div className="mt-10">
+        <div className="mt-10 flex justify-center">
           <Loader
-            height={25}
-            width={25}
-            border_width={2}
+            height={40}
+            width={40}
+            border_width={3}
             full_border_color="#FFA500"
             small_border_color="transparent"
           />

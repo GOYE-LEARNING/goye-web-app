@@ -25,16 +25,16 @@ export default function DashboardGrowthSubHeader({
     setTouchedCertificate(true);
   };
   return (
-    <div className="bg-[#F1F1F4CC] grid grid-cols-2 h-[32px] p-[4px] text-[12px]">
+    <div className="bg-lightWhite-0 dark:bg-shadyColor-0 grid grid-cols-2 h-[40px] p-[4px] text-[12px]">
       <button
         onClick={achieveBtn}
-        className={`${touchedAchieve ? "bg-[#ffffff] drop-shadow-sm" : ""}`}
+        className={`${touchedAchieve ? "bg-[#ffffff] dark:bg-secondaryColors-0 drop-shadow-sm border border-[#ccc]/15" : ""}`}
       >
         Acheivement
       </button>
       <button
         onClick={certifyBtn}
-        className={`${touchedCertificate ? "bg-[#ffffff] drop-shadow-sm" : ""}`}
+        className={`${touchedCertificate ? "bg-[#ffffff] dark:bg-secondaryColors-0 drop-shadow-sm" : ""}`}
       >
         Certificate
       </button>

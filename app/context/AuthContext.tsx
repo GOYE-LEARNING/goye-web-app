@@ -1,6 +1,8 @@
 // src/context/AuthContext.tsx
+"use client";
 import React from "react";
 import { useRouter } from "next/navigation";
+import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
 
 interface Props {
   children: React.ReactNode;
@@ -62,6 +64,17 @@ export default function AuthProvider({ children }: Props) {
       });
       
       console.log("Refresh token response status:", response.status);
+      
+      if (response.status === 429) {
+        console.warn("⚠️ Rate limited on token refresh");
+        dispatchAPIError({
+          status: 429,
+          message: "Too many requests, please slow down and try again later.",
+          retryAfter: 5,
+          endpoint: "/api/verify/refresh-token"
+        });
+        return false;
+      }
       
       if (response.ok) {
         const data = await response.json();
@@ -130,7 +143,16 @@ export default function AuthProvider({ children }: Props) {
           
           console.log("📡 Profile response status:", response.status);
           
-          if (response.ok) {
+          if (response.status === 429) {
+            console.warn("⚠️ Rate limited on auth check");
+            dispatchAPIError({
+              status: 429,
+              message: "Too many requests, please slow down and try again later.",
+              retryAfter: 5,
+              endpoint: "/api/user/profile"
+            });
+            // Don't fail auth check on rate limit, fall back to localStorage
+          } else if (response.ok) {
             const data = await response.json();
             console.log("✅ Backend verification successful:", data.user?.email);
             setAuthStatus({

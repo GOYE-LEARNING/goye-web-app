@@ -65,20 +65,18 @@ body.chat-page-desktop {
 .dark .dashboard_content_mainbox,
 .dark .dashboard_content_box,
 .dark .cr_box {
-  @apply bg-secondaryColors-0/50 backdrop-blur-md border-[#1f2937] ;
+  @apply dark:bg-secondaryColors-0/50 bg-lightWhite-0 backdrop-blur-md border-[#1f2937] ;
 }
 
 .dashboard_content_mainbox, .dashboard_content_box, .cr_box {
-  @apply bg-white/50 backdrop-blur-md border border-[#ccc]/10
+  @apply bg-white backdrop-blur-md border border-[#ccc]/10
 } 
 
 .dark .dashboard_h1 {
   @apply text-[#E6E7EB];
 }
 
-.dark .dashboard_hr {
-  @apply bg-[#1f2937];
-}
+
 
 .dark .dashboard_content_subbox,
 .dark .admin_dashboard_data,
@@ -321,7 +319,7 @@ body.chat-page-desktop {
 
 /*Sidenav component*/
 .sidenav {
-  @apply dark:bg-secondaryColors-0 bg-white md:w-[20%] w-full min-w-0 md:h-full h-[auto] fixed left-0 md:top-0 bottom-0 md:px-[32px] md:py-[40px] py-[20px] px-[20px] overflow-hidden md:drop-shadow-none drop-shadow-lg z-10 md:z-10 border-r dark:border-boldShadyColor-0/80 border-r-[#ccc]/20;
+  @apply dark:bg-secondaryColors-0 bg-white md:w-[20%] w-full min-w-0 md:h-full h-[auto] fixed left-0 md:top-0 bottom-0 md:px-[32px] md:py-[40px] py-[20px] px-[20px] overflow-hidden md:drop-shadow-none drop-shadow-lg z-[60] border-r dark:border-boldShadyColor-0/80 border-r-[#ccc]/20;
 }
 
 .side_link {
@@ -362,7 +360,7 @@ body.chat-page-desktop {
 }
 
 .dashboard_hr {
-  @apply h-[1px] w-full bg-[#ccc]/10;
+  @apply h-[1px] w-full dark:bg-white/10 bg-[#ccc]/20;
 }
 
 .dashboard_content_mainbox {
@@ -370,7 +368,7 @@ body.chat-page-desktop {
 }
 
 .dashboard_content_box {
-  @apply dark:bg-secondaryColors-0 bg-white/70 backdrop-blur-md w-full max-w-full my-5 py-[20px] px-[clamp(12px,3vw,16px)] border dark:border-boldShadyColor-0/80 border-[#ccc]/30 rounded-xl dark:drop-shadow-2xl drop-shadow-none;
+  @apply dark:bg-secondaryColors-0 bg-white backdrop-blur-md w-full max-w-full my-5 py-[20px] px-[clamp(12px,3vw,16px)] border dark:border-boldShadyColor-0/80 border-[#ccc]/30 rounded-xl dark:drop-shadow-2xl drop-shadow-none;
 }
 
 .dashboard_content_header {
@@ -386,7 +384,7 @@ body.chat-page-desktop {
 }
 
 .dashboard_content_subbox {
-  @apply dark:bg-boldShadyColor-0 bg-white my-2 p-[16px] flex justify-start items-start flex-col gap-2 w-full rounded-lg border dark:border-boldShadyColor-0/50 border-[#ccc]/20;
+  @apply dark:bg-boldShadyColor-0 bg-white my-2 p-[16px] flex justify-start items-start flex-col  w-full rounded-lg border dark:border-boldShadyColor-0/50 border-[#ccc]/20;
 }
 
 .dashboard_content_subbox h1 {
@@ -446,7 +444,7 @@ body.chat-page-desktop {
 }
 
 .cr_box {
-  @apply bg-shadyColor-0 w-full max-w-full p-[clamp(16px,3vw,24px)] my-5 border border-boldShadyColor-0/80 rounded-xl;
+  @apply dark:bg-secondaryColors-0 bg-white w-full max-w-full p-[clamp(16px,3vw,24px)] my-5 border dark:border-boldShadyColor-0/80 border-[#ccc]/10 rounded-xl;
 }
 
 .course_video:nth-child(odd) {
@@ -457,12 +455,12 @@ body.chat-page-desktop {
 }
 
 .dashboard_quiz_options {
-  @apply bg-boldShadyColor-0 h-[36px] w-full font-[500] text-[13px] px-[clamp(12px,4vw,40px)] flex items-center text-textSlightDark-0 rounded-md border border-boldShadyColor-0;
+  @apply dark:bg-secondaryColors-0 bg-lightWhite-0 h-[36px] w-full font-[500] text-[13px] px-[clamp(12px,4vw,40px)] flex items-center dark:text-textSlightDark-0 text-lightBoldText-0 rounded-md border dark:border-boldShadyColor-0 border-[#ccc]/10;
 }
 
 .dashboard_thick_hr {
   @apply bg-boldShadyColor-0 border-t border-b border-boldShadyColor-0 h-[16px] w-full;
-}
+} 
 
 .reply_hook::after {
   content: "";
@@ -478,15 +476,15 @@ body.chat-page-desktop {
 }
 
 .admin_dashboard_data {
-  @apply bg-boldShadyColor-0 p-[16px] flex justify-between items-center rounded-lg border border-boldShadyColor-0;
+  @apply dark:bg-boldShadyColor-0 bg-lightWhite-0 p-[16px] flex justify-between items-center rounded-lg border border-[#ccc]/20;
 }
 
 .admin_dashboard_data2 {
-  @apply bg-boldShadyColor-0 p-[12px] flex justify-between rounded-lg border border-boldShadyColor-0;
+  @apply dark:bg-boldShadyColor-0 bg-lightWhite-0 p-[12px] flex justify-between rounded-lg border border-[#ccc]/20;
 }
 
 .admin_dashboard_data3 {
-  @apply bg-boldShadyColor-0 h-[72px] text-primaryColors-0 flex justify-center items-center flex-col gap-1 cursor-pointer rounded-lg border border-boldShadyColor-0;
+  @apply dark:bg-boldShadyColor-0 bg-lightWhite-0 h-[72px] text-primaryColors-0 flex justify-center items-center flex-col gap-1 cursor-pointer rounded-lg border border-[#ccc]/20;
 }
 
 .chat_tabs {
@@ -602,3 +600,5 @@ body.chat-page-desktop {
 .leader_icon {
   @apply h-[30px] w-[30px] rounded-full hover:bg-nearTextColors-0/5 flex justify-center items-center text-nearTextColors-0 text-[12px] transition-all duration-200;
 }
+
+/* Optional: Add animation for tooltip */

@@ -7,11 +7,16 @@ import { useEffect, useState } from "react";
 import StudentGrowth from "../../component/dashboard_students__growth";
 import UpcomingEvents from "../../component/dashboard_student_upcoming_event";
 import { AnimatePresence, motion } from "framer-motion";
+import DashboardCourseView from "@/app/component/dashboard_student_courseview";
 export default function Dashboard() {
   const [showGrowth, setShowGrowth] = useState<boolean>(false);
+  const [courseId, setCourseId] = useState<string>("")
   const [showDashboard, setShowDashboard] = useState<boolean>(true);
+  const [showCourseDetails, setShowCourseDetails] = useState<boolean>(false);
   const [showEvents, setShowEvent] = useState<boolean>(false);
   const [showAnnounement, setShowAnnouncement] = useState<boolean>(true);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const openGrowth = () => {
     setShowGrowth(true);
     setShowDashboard(false);
@@ -22,6 +27,7 @@ export default function Dashboard() {
     setShowGrowth(false);
     setShowDashboard(true);
     setShowEvent(false);
+    setShowCourseDetails(false)
   };
 
   const openEvents = () => {
@@ -59,12 +65,27 @@ export default function Dashboard() {
     },
   };
 
-  const openCourse = () => {};
+  const openCourse = (id: string) => {
+    setCourseId(id)
+    setShowCourseDetails(true);
+    setShowDashboard(false)
+  };
+  useEffect(() => {
+    const progress = async () => {
+      const res = await fetch(`${API_URL}/api/user/debug-progress`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+      console.log("Progress", data);
+    };
 
+    progress();
+  }, []);
   return (
     <>
       <div className="w-full">
-        <br/>
+        <br />
         <AnimatePresence mode="wait">
           {showDashboard && (
             <motion.div
@@ -100,6 +121,7 @@ export default function Dashboard() {
         </AnimatePresence>
         {showGrowth && <StudentGrowth backFunc={openDashboard} />}
         {showEvents && <UpcomingEvents backFunc={openDashboard} />}
+        {showCourseDetails && <DashboardCourseView backFunction={openDashboard} courseId={courseId}/>}
       </div>
     </>
   );

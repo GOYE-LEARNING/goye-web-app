@@ -44,14 +44,14 @@ export default function DashboardSubHeaderMore({
     <div className="my-3">
       <button
         onClick={backFunc}
-        className="h-[28px] w-[28px] rounded-full dark:bg-shadyColor-0 bg-boldShadyColor-0 flex justify-center items-center text-[12px]"
+        className="h-[28px] w-[28px] rounded-full dark:bg-shadyColor-0 bg-white flex justify-center items-center text-[12px] dark:text-white text-primaryColors-0"
       >
         <FaArrowLeft />
       </button>
 
       <div className="flex justify-between items-center">
         <div className="flex flex-col gap-1">
-          <h1 className="font-bold text-[24px] text-textSlightDark-0">{header}</h1>
+          <h1 className="font-bold text-[24px] dark:text-textSlightDark-0 text-primaryColors-0">{header}</h1>
           <h2 className="text-textGrey-0">{paragraph}</h2>
         </div>
 

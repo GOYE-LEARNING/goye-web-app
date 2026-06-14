@@ -50,6 +50,7 @@ interface QuizSubmissionDTO {
   completed: boolean;
   timeFinished: number;
   answers: AnswerSubmission[];
+  passingScore: number; // Added this field
 }
 
 interface QuizAttempt {
@@ -207,6 +208,7 @@ export default function DashboardCourseQuizzesAnswered({
       completed: allQuestionsAnswered,
       timeFinished: totalTime - timeLeft,
       answers: answers,
+      passingScore: quizzes?.passingScore || 70, // Added passingScore
     };
 
     await submitQuizToAPI(quizDTO, currentQuizId);
@@ -237,6 +239,11 @@ export default function DashboardCourseQuizzesAnswered({
 
       if (!res.ok) {
         console.error("Quiz submission error:", data);
+        // Improved error message to show missing fields
+        if (data.fields) {
+          const missingFields = Object.keys(data.fields).join(', ');
+          throw new Error(`Validation failed: Missing ${missingFields}`);
+        }
         throw new Error(data.message || "Failed to submit quiz");
       }
 
@@ -278,6 +285,7 @@ export default function DashboardCourseQuizzesAnswered({
         completed: true,
         timeFinished: totalTime - timeLeft,
         answers: answers,
+        passingScore: quizzes?.passingScore || 70, // Added passingScore
       };
 
       console.log("Submitting quiz DTO:", JSON.stringify(quizDTO, null, 2));
@@ -435,7 +443,7 @@ export default function DashboardCourseQuizzesAnswered({
                   {/* Progress bar - only show in quiz mode */}
                   {!isReviewMode && (
                     <>
-                      <div className="relative h-[8px] bg-[#E8E1E2]">
+                      <div className="relative h-[8px] bg-[#E8E1E2] dark:bg-shadyColor-0">
                         <div
                           className="h-full bg-primaryColors-0 transition-all duration-500"
                           style={{ width: `${progress}%` }}
@@ -457,10 +465,10 @@ export default function DashboardCourseQuizzesAnswered({
 
                   {/* Review Mode Header */}
                   {isReviewMode && activeAttempt && (
-                    <div className="bg-[#F9F9FC] border border-[#F1F1F4] p-4 rounded-lg mb-6">
+                    <div className="bg-[#F9F9FC] dark:bg-secondaryColors-0 border border-[#ccc]/10 p-4 rounded-lg mb-6">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h2 className="font-[700] text-[16px]">
+                          <h2 className="font-[700] text-[16px] dark:text-white text-lightBoldText-0">
                             Your Results
                           </h2>
                           <p className="text-[14px] text-[#71748C]">
@@ -474,7 +482,7 @@ export default function DashboardCourseQuizzesAnswered({
                               : "bg-[#DA0E291A] text-[#DA0E29]"
                           }`}
                         >
-                          {(activeAttempt.score || 0) >= (activeQuiz?.passingScore || 70) ? "PASSED" : "FAILED"}
+                          {(activeAttempt.score || 0) >= (activeQuiz?.passingScore || 70) ? "PASSED" : "YOU CAN DO BETTER NEXT TIME. NEVER GIVE UP"}
                         </div>
                       </div>
                     </div>
@@ -505,7 +513,7 @@ export default function DashboardCourseQuizzesAnswered({
                             >
                               {questionIndex + 1}
                             </span>
-                            <h1 className="text-textSlightDark-0 text-[14px] font-[600]">
+                            <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">
                               {quizItem.question}
                             </h1>
                             <span className="text-[12px] text-gray-500 ml-auto">

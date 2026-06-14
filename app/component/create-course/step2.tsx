@@ -290,7 +290,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
       <AnimatePresence mode="wait">
         <div key="module">
           <div className="flex justify-between items-center">
-            <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
+            <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0font-semibold text-[18px]">
               Course Structure
             </h1>
             <span
@@ -392,7 +392,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                           return (
                             <div
                               key={lesson.id}
-                              className="p-[12px] bg-shadyColor-0 flex flex-col gap-2 relative w-full my-5"
+                              className="p-[12px] dark:bg-shadyColor-0 bg-lightWhite-0 flex flex-col gap-2 relative w-full my-5"
                             >
                               {lessonForm.map((form, i) => (
                                 <div
@@ -408,7 +408,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                                       {!lesson.video_preview && !videoSource ? (
                                         <label
                                           htmlFor={`video-${lesson.id}`}
-                                          className="border-dashed border border-[#D2D5DA]/20 bg-white py-[8px] px-[12px] h-[88px] flex flex-col items-center justify-center gap-[3px] cursor-pointer"
+                                          className="border-dashed border border-[#D2D5DA]/20 bg-white dark:bg-secondaryColors-0 py-[8px] px-[12px] h-[88px] flex flex-col items-center justify-center gap-[3px] cursor-pointer"
                                         >
                                           <h1 className="font-[500] text-[14px] text-textSlightDark-0">
                                             Upload Lesson Video
@@ -507,7 +507,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
 
                       <span
                         onClick={() => createLesson(mod.id)}
-                        className="h-[48px] bg-boldShadyColor-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
+                        className="h-[48px] dark:bg-shadyColor-0 bg-lightWhite-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
                       >
                         <BsPlus /> Add Lesson
                       </span>

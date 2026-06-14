@@ -131,7 +131,7 @@ export default function DashboardOrgAdminOverview() {
   return (
     <div className="dashboard_content_box">
       <div className="flex justify-between items-center">
-        <h1 className="font-semibold text-textSlightDark-0 text-[14px]">Overview</h1>
+        <h1 className="font-semibold dark:dark:text-textSlightDark-0 text-lightBoldText-0 text-lightBoldText-0 text-[14px]">Overview</h1>
         <div className="relative">
           <button
             className="flex items-center gap-1 text-primaryColors-0 text-[12px]"
@@ -141,7 +141,7 @@ export default function DashboardOrgAdminOverview() {
           </button>
           {showBox && (
             <div
-              className="bg-boldShadyColor-0 border border-boldShadyColor-0 absolute w-[min(180px,85vw)] right-0 z-10 rounded-lg shadow-lg"
+              className="dark:dark:bg-shadyColor-0 bg-white bg-white border border-[#ccc]/20 absolute w-[min(180px,85vw)] right-0 z-10 rounded-lg shadow-lg"
               ref={boxRef}
             >
               <ul className="flex flex-col gap-2">
@@ -196,49 +196,49 @@ export default function DashboardOrgAdminOverview() {
       <div className="grid grid-cols-2 gap-[8px] mt-2">
         <div className="admin_dashboard_data">
           <div className="flex gap-1 flex-col">
-            <h1 className="text-textSlightDark-0 font-bold text-[18px]">
+            <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
               {loading ? "..." : stats.total_members}
             </h1>
-            <span className="text-textGrey-0 text-[12px]">Active Members</span>
+            <span className="dark:text-white text-lightBoldText-0 text-[12px]">Active Members</span>
           </div>
 
-          <div className="flex items-center justify-center h-[32px] w-[32px] bg-shadyColor-0 text-primaryColors-0 rounded-md border border-boldShadyColor-0">
+          <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-[#ccc]/20">
             <MdOutlineShowChart />
           </div>
         </div>
         <div className="admin_dashboard_data">
           <div className="flex gap-1 flex-col">
-            <h1 className="text-textSlightDark-0 font-bold text-[18px]">
+            <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
               {loading ? "..." : stats.new_members_today}
             </h1>
-            <span className="text-textGrey-0 text-[12px]">New Members</span>
+            <span className="dark:text-white text-lightBoldText-0 text-[12px]">New Members</span>
           </div>
 
-          <div className="flex items-center justify-center h-[32px] w-[32px] bg-shadyColor-0 text-primaryColors-0 rounded-md border border-boldShadyColor-0">
+          <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-[#ccc]/20">
             <MdPeople />
           </div>
         </div>
         <div className="admin_dashboard_data">
           <div className="flex gap-1 flex-col">
-            <h1 className="text-textSlightDark-0 font-bold text-[18px]">
+            <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
               {loading ? "..." : stats.total_courses_completed}
             </h1>
-            <span className="text-textGrey-0 text-[12px]">Courses Completed</span>
+            <span className="dark:text-white text-lightBoldText-0 text-[12px]">Courses Completed</span>
           </div>
 
-          <div className="flex items-center justify-center h-[32px] w-[32px] bg-shadyColor-0 text-primaryColors-0 rounded-md border border-boldShadyColor-0">
+          <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-[#ccc]/20">
             <LuChartLine />
           </div>
         </div>
         <div className="admin_dashboard_data">
           <div className="flex gap-1 flex-col">
-            <h1 className="text-textSlightDark-0 font-bold text-[18px]">
+            <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
               {loading ? "..." : `${stats.avg_completion}%`}
             </h1>
-            <span className="text-textGrey-0 text-[12px]"> Avg. Completion</span>
+            <span className="dark:text-white text-lightBoldText-0 text-[12px]"> Avg. Completion</span>
           </div>
 
-          <div className="flex items-center justify-center h-[32px] w-[32px] bg-shadyColor-0 text-primaryColors-0 rounded-md border border-boldShadyColor-0">
+          <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-[#ccc]/20">
             <HiOutlineChartBar />
           </div>
         </div>

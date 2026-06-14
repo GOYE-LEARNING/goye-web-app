@@ -14,8 +14,6 @@ import { CiUser } from "react-icons/ci";
 import { FaAngleDoubleUp } from "react-icons/fa";
 import { GoVideo } from "react-icons/go";
 import { useRouter } from "next/navigation";
-import HeroPricingSection from "./component/hero_section_pricing";
-import Cursor from "./component/cursor";
 interface Course {
   course_title: string;
   course_level: string;
@@ -62,7 +60,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="bg-shadyColor-0 overflow-x-hidden overflow-y-hidden">
+      <div className="dark:bg-shadyColor-0 bg-white overflow-x-hidden overflow-y-hidden">
         <LandingPageNavBar
           search={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -73,7 +71,6 @@ export default function Home() {
             <HeroSection2 />
             <HeroSection3 />
             <HeroSection4 />
-            <HeroPricingSection />
             <MidSection4 />
           </div>
         ) : (

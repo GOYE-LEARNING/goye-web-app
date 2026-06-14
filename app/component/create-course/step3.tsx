@@ -201,7 +201,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
       <AnimatePresence mode="wait">
         <div key="module">
           <div className="flex justify-between items-center">
-            <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
+            <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
               Material
             </h1>
             <span
@@ -258,7 +258,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                       <div className="my-3 flex flex-col gap-3">
                         {materialForm.map((form, index) => (
                           <div
-                            className="flex flex-col border border-[#D2D5DA] justify-between w-full py-[8px] px-[12px]"
+                            className="flex flex-col border border-[#ccc]/20 justify-between w-full py-[8px] px-[12px]"
                             key={index}
                           >
                             <label className="text-textGrey-0 text-[12px]">
@@ -292,7 +292,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                           return (
                             <div
                             key={doc.id}
-                            className="p-[12px] bg-shadyColor-0 flex flex-col gap-2 relative w-full my-5"
+                            className="p-[12px] dark:bg-shadyColor-0 bg-lightWhite-0 flex flex-col gap-2 relative w-full my-5"
                           >
                             {!doc.document_preview && !documentUrl ? (
                               <label
@@ -362,7 +362,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
 
                       <span
                         onClick={() => createDocument(mat.id)}
-                        className="h-[48px] bg-boldShadyColor-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
+                        className="h-[48px] dark:bg-shadyColor-0 bg-lightWhite-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
                       >
                         <BsPlus /> Add Document
                       </span>

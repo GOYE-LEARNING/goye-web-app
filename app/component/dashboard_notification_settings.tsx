@@ -37,10 +37,10 @@ export default function DashboardNotificationSettings({ backFunction }: Props) {
           {settings.map((settings, i) => (
             <div
               key={i}
-              className="flex items-center justify-between h-[63px] p-[16px] border border-[#F1F1F1]"
+              className="flex items-center justify-between h-[63px] p-[16px] border border-[#F1F1F1] dark:border-[#ccc]/10"
             >
               <div>
-                <h1 className="text-[14px] font-[600] text-textSlightDark-0">
+                <h1 className="text-[14px] font-[600] dark:text-textSlightDark-0 text-lightBoldText-0">
                   {settings.header}
                 </h1>
                 <p className="text-[#71748C] text-[12px]">{settings.p}</p>

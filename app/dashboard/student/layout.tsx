@@ -177,7 +177,7 @@ export default function DashboardLayout({
                 className={`
                   w-full flex md:items-center flex-col 
                   md:px-0 md:py-0 md:rounded-none rounded-tr-xl rounded-tl-xl 
-                  md:bg-lightSecondaryColor-0 mb-0 md:mb-5 overflow-auto px-4
+                  md:bg-lightSecondaryColor-0 mb-0 md:mb-5 overflow-auto px-7
                   ${
                     isChatPage
                       ? "dark:bg-shadyColor-0 bg-lightSecondaryColor-0 min-h-screen md:min-h-0 overflow-y-auto mt-[14%] md:mt-0"
@@ -204,6 +204,9 @@ export default function DashboardLayout({
                   style={isChatPage && !isMobile ? { height: "100%" } : {}}
                 >
                   {children}
+                  <br/>
+                  <br/>
+                  <br/>
                 </div>
               </div>
             </div>

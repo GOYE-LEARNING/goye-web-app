@@ -58,7 +58,7 @@ export default function DashboardTutorTabQuiz({
     <div className="dashboard_content_mainbox">
       <div className="w-full gap-3">
         <div className="flex justify-between items-center">
-          <h1 className="text-textSlightDark-0 font-[700] text-[18px] my-5">
+          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[700] text-[18px] my-5">
             All Quizzes
           </h1>
           <button
@@ -73,10 +73,10 @@ export default function DashboardTutorTabQuiz({
             {quizDetails.map((q, i) => (
               <div className="flex flex-col w-full gap-3" key={i}>
                 <div className="flex flex-col gap-3">
-                  <h1 className="text-textSlightDark-0 text-[14px] font-[600]">
+                  <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">
                     {q.title}
                   </h1>
-                  <p className="text-[#71748C] text-[14px]">{q.description} </p>
+                  <p className="dark:text-[#71748C] text-lightBoldText-0 text-[14px]">{q.description} </p>
                   <p className="flex gap-4">
                     <span className="flex items-center text-[14px] text-[#71748C] gap-2">
                       <CiCircleQuestion size={15} /> {q.questions.length}{" "}
@@ -87,7 +87,7 @@ export default function DashboardTutorTabQuiz({
                     </span>
                   </p>
                   <button
-                    className="form_more font-semibold bg-white border border-[#D9D9D9] text-primaryColors-0"
+                    className="form_more font-semibold bg-lightWhite-0 dark:bg-shadyColor-0 border border-[#ccc]/10 text-primaryColors-0"
                     onClick={viewQuiz}
                   >
                     View Quiz

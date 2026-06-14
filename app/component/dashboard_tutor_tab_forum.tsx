@@ -93,7 +93,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
         {
           method: "GET",
           credentials: "include",
-        }
+        },
       );
 
       if (!res.ok) {
@@ -139,8 +139,8 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
           prev.map((p) =>
             p.id === id
               ? { ...p, _count: { ...p._count, likes: p._count.likes + 1 } }
-              : p
-          )
+              : p,
+          ),
         );
       } else if (type === "reply") {
         updateReplyLikes(id, 1);
@@ -178,10 +178,13 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
             p.id === id
               ? {
                   ...p,
-                  _count: { ...p._count, likes: Math.max(0, p._count.likes - 1) },
+                  _count: {
+                    ...p._count,
+                    likes: Math.max(0, p._count.likes - 1),
+                  },
                 }
-              : p
-          )
+              : p,
+          ),
         );
       } else if (type === "reply") {
         updateReplyLikes(id, -1);
@@ -199,7 +202,10 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
         if (reply.id === replyId) {
           return {
             ...reply,
-            _count: { ...reply._count, likes: Math.max(0, reply._count.likes + change) },
+            _count: {
+              ...reply._count,
+              likes: Math.max(0, reply._count.likes + change),
+            },
           };
         }
         if (reply.children && reply.children.length > 0) {
@@ -233,7 +239,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
           {
             method: "GET",
             credentials: "include",
-          }
+          },
         );
         const data = await res.json();
         if (res.ok) {
@@ -262,7 +268,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
           {
             method: "GET",
             credentials: "include",
-          }
+          },
         );
         const data = await res.json();
         if (res.ok && data.data) {
@@ -285,7 +291,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
     setExpandedPosts((prev) =>
       prev.includes(postId)
         ? prev.filter((id) => id !== postId)
-        : [...prev, postId]
+        : [...prev, postId],
     );
   };
 
@@ -295,7 +301,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
       setExpandedReplies((prev) =>
         prev.includes(replyId)
           ? prev.filter((id) => id !== replyId)
-          : [...prev, replyId]
+          : [...prev, replyId],
       );
       return;
     }
@@ -308,7 +314,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
         {
           method: "GET",
           credentials: "include",
-        }
+        },
       );
       const data = await res.json();
       if (res.ok && data.data) {
@@ -318,7 +324,10 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
               return { ...reply, children: data.data };
             }
             if (reply.children && reply.children.length > 0) {
-              return { ...reply, children: updateReplyWithChildren(reply.children) };
+              return {
+                ...reply,
+                children: updateReplyWithChildren(reply.children),
+              };
             }
             return reply;
           });
@@ -349,8 +358,12 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
 
   // FIXED: Handle reply update with proper postId tracking
   const handleReplyUpdate = (newReply: Reply, parentReplyId?: string) => {
-    console.log("Handling reply update:", { newReply, parentReplyId, selectedPostId });
-    
+    console.log("Handling reply update:", {
+      newReply,
+      parentReplyId,
+      selectedPostId,
+    });
+
     if (parentReplyId) {
       // This is a nested reply - add it to the parent's children
       const addNestedReply = (replies: Reply[]): Reply[] => {
@@ -359,7 +372,10 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
             return {
               ...reply,
               children: [newReply, ...(reply.children || [])],
-              _count: { ...reply._count, children: (reply._count.children || 0) + 1 },
+              _count: {
+                ...reply._count,
+                children: (reply._count.children || 0) + 1,
+              },
             };
           }
           if (reply.children && reply.children.length > 0) {
@@ -382,13 +398,13 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
         ...prev,
         [selectedPostId]: [newReply, ...(prev[selectedPostId] || [])],
       }));
-      
+
       setPosts((prev) =>
         prev.map((p) =>
           p.id === selectedPostId
             ? { ...p, _count: { ...p._count, replies: p._count.replies + 1 } }
-            : p
-        )
+            : p,
+        ),
       );
     }
   };
@@ -427,7 +443,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
                 }}
               />
             )}
-            
+
             {/* Horizontal connector line */}
             {depth > 0 && (
               <div
@@ -459,7 +475,9 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
                 </div>
               </div>
 
-              <p className="text-[#71748C] text-sm mt-2 ml-10">{reply.content}</p>
+              <p className="text-[#71748C] text-sm mt-2 ml-10">
+                {reply.content}
+              </p>
 
               <div className="flex items-center gap-4 text-[#71748C] text-sm mt-2 ml-10">
                 <span
@@ -516,7 +534,9 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
       <div className="dashboard_hr my-5"></div>
       <div className="dashboard_content_mainbox">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-textSlightDark-0 font-bold text-[18px]">Course Forum</h1>
+          <h1 className="text-textSlightDark-0 font-bold text-[18px]">
+            Course Forum
+          </h1>
           <button
             className="flex items-center gap-2 text-primaryColors-0 text-[13px] font-[600] cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => setShowPost(true)}
@@ -537,7 +557,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
               />
             </div>
           ) : posts.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <div className="text-center py-12 dark:bg-shadyColor-0 bg-lightWhite-0 rounded-lg">
               <p className="text-gray-500 mb-2">No posts yet</p>
               <p className="text-gray-400 text-sm">
                 Be the first to start a discussion!
@@ -576,11 +596,13 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
                   <p className="text-[#71748C] text-[14px] leading-relaxed mb-3">
                     {post.content}
                   </p>
-                  
+
                   <div className="flex items-center gap-5 text-[#71748C] text-[14px]">
                     <span
                       className="flex items-center gap-1.5 cursor-pointer hover:text-primaryColors-0 transition-colors"
-                      onClick={() => checkAndToggleLike("post", post.id as string)}
+                      onClick={() =>
+                        checkAndToggleLike("post", post.id as string)
+                      }
                     >
                       <MdOutlineThumbUp className="text-base" />
                       {post._count.likes}
@@ -636,9 +658,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
 
       {/* New Post Modal */}
       <div
-        className={`fixed top-0 right-0 h-full bg-white w-[400px] transform transition-transform duration-300 ease-in-out z-50 shadow-2xl ${
-          showPost ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`${showPost ? "translate-x-0" : "translate-x-full"} transition-all duration-300 h-full w-full bg-secondaryColors-0/40 backdrop-blur-md fixed top-0 left-0 z-[60] overflow-hidden`}
       >
         <DashboardTutorNewPost
           courseId={courseId}

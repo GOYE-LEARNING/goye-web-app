@@ -146,7 +146,7 @@ export default function GeneralLeaderboard({ search }: Props) {
       {/* Leaderboard Table */}
       <div className="overflow-x-auto mt-6">
         <table className="w-full">
-          <thead className="bg-[#FAFAFA] h-[40px] rounded">
+          <thead className="bg-lightWhite-0 dark:bg-shadyColor-0 h-[40px] rounded">
             <tr>
               <th className="leader_board_table_header rounded-tl-lg rounded-bl-lg  w-[60px] text-left pl-3">
                 #
@@ -170,7 +170,7 @@ export default function GeneralLeaderboard({ search }: Props) {
             {filterStudent.map((user, i) => (
               <tr
                 key={user.id}
-                className="h-[65px] border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                className="h-[65px] border-b border-[#ccc]/20 hover:bg-lightWhite-0 dark:hover:bg-shadyColor-0 transition-colors"
               >
                 {/* Rank with medal */}
                 <td className="pl-3">

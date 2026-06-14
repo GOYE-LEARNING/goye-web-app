@@ -153,6 +153,7 @@ export default function TutorCourse() {
 
   return (
     <>
+    <br />
       {showCourse && (
         <div>
           <div className="flex justify-between items-center">
@@ -201,12 +202,35 @@ export default function TutorCourse() {
           {!isLoading ? (
             <div>
               {filterCourse.length === 0 ? (
-                <div className="flex justify-center items-center flex-col gap-1 md:mt-10 mt-[8rem]">
-                  <Image src={pic2} alt="pic" height={100} width={100} />
-                  <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
-                    No Course Found
-                  </h1>
-                  <p className="text-textGrey-0">Create a Course</p>
+                <div className="flex justify-center items-center flex-col gap-6 md:mt-20 mt-[8rem]">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-primaryColors-0/20 to-green-400/20 rounded-full blur-3xl -z-10"></div>
+                    <Image 
+                      src={pic2} 
+                      alt="No courses found" 
+                      height={120} 
+                      width={120} 
+                      className="opacity-80"
+                    />
+                  </div>
+                  <div className="text-center space-y-3">
+                    <h1 className="text-textSlightDark-0 dark:text-white font-bold text-2xl">
+                      No Courses Yet
+                    </h1>
+                    <p className="text-textGrey-0 dark:text-gray-400 max-w-md">
+                      You haven&apos;t created any courses yet. Start your teaching journey by creating your first course.
+                    </p>
+                  </div>
+                  <button
+                    onClick={showCreateCourseFunc}
+                    className="flex items-center gap-3 bg-primaryColors-0 hover:bg-primaryColors-0/90 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  >
+                    <MdAdd size={24} />
+                    Create Your First Course
+                  </button>
+                  <p className="text-xs text-textGrey-0 dark:text-gray-500 mt-4">
+                    It takes less than 5 minutes to get started
+                  </p>
                 </div>
               ) : (
                 <div className="">
@@ -220,7 +244,7 @@ export default function TutorCourse() {
                           <img
                             src={course.course_image || pic}
                             alt="pic"
-                            className="h-[89.16px] w-[130px] object-cover"
+                            className="h-[89.16px] w-[130px] object-cover rounded-lg"
                           />
                         </div>
                         <div className="w-full flex flex-col gap-2">
@@ -228,7 +252,7 @@ export default function TutorCourse() {
                             <h1 className="text-[14px] font-[700] line-clamp-1">
                               {course.course_title}
                             </h1>
-                            <span className="text-[10px] text-white bg-shadyColor-0 px-[4px]">
+                            <span className="text-[10px] text-white bg-shadyColor-0 px-[4px] rounded">
                               {course.enrollment.length == 0
                                 ? "NOT ENROLLED"
                                 : "ENROLLED"}
@@ -249,7 +273,7 @@ export default function TutorCourse() {
                         </div>
                       </div>
                       <button
-                        className="rounded-[5px] h-[40px] text-[14px] bg-secondaryColors-0 text-primaryColors-0 my-3 w-full cursor-pointer"
+                        className="rounded-[5px] h-[40px] text-[14px] bg-secondaryColors-0 text-primaryColors-0 my-3 w-full cursor-pointer hover:bg-secondaryColors-0/80 transition-colors"
                         onClick={() =>
                           showCourseDetailsFunc(course.id || i.toString())
                         }
@@ -295,7 +319,7 @@ export default function TutorCourse() {
       )}
       {showCourseDetails && (
         <DashboardTutorCourseBreakdown
-          onDelete={handleDelete} // ✅ FIXED: Pass function directly
+          onDelete={handleDelete}
           refreshCourse={refreshCourse}
           courseId={courseId}
           backFunc={showCourseFunc}

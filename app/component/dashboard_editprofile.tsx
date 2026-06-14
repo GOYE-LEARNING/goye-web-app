@@ -787,10 +787,10 @@ export default function DashboardEditProfile({
               {forms.map((form, i) => (
                 <div
                   key={i}
-                  className="w-full h-[63px] border border-[#D2D5DA] dark:border-[#ccc]/10 py-[8px] px-[12px] flex items-center relative"
+                  className="w-full h-[63px] border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px] flex items-center relative"
                 >
                   <div className="flex flex-col w-full">
-                    <label className="text-[#71748C] text-[12px]">
+                    <label className="text-lightBoldText-0 dark:text-white text-[12px]">
                       {form.label}
                     </label>
                     <input
@@ -798,9 +798,9 @@ export default function DashboardEditProfile({
                       name={form.name}
                       onChange={form.onchange}
                       value={(formData as any)[form.name] || ""}
-                      className={`bg-transparent text-[#1F2937]  text-[16px] font-[500] outline-none border-none ${
+                      className={`bg-transparent text-lightBoldText-0 dark:text-white/80  text-[16px] font-[500] outline-none border-none ${
                         form.name == "email_address"
-                          ? "text-[#71748C] bg-transparent"
+                          ? "text-lightBoldText-0 dark:text-white bg-transparent"
                           : "dark:text-white"
                       }`}
                       disabled={form.name == "email_address"}
@@ -878,7 +878,7 @@ export default function DashboardEditProfile({
                 <button
                   type="button"
                   onClick={backFunc}
-                  className="form_more bg-[#ffffff] dark:bg-shadyColor-0 text-[#71748C] border border-[#D9D9D9] dark:border-[#ccc]/10"
+                  className="form_more bg-[#ffffff] dark:bg-shadyColor-0 text-lightBoldText-0 dark:text-white border border-[#D9D9D9] dark:border-[#ccc]/10"
                 >
                   Cancel
                 </button>
@@ -904,31 +904,31 @@ export default function DashboardEditProfile({
           ) : (
             <form onSubmit={handleSubmit}>
               <div>
-                <h1 className="text-textSlightDark-0 font-semibold text-[20px] md:mb-4 my-3">
+                <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[20px] md:mb-4 my-3">
                   Organization Information
                 </h1>
                 <div className="md:grid md:grid-cols-2 flex flex-col md:gap-2 gap-3">
                   {orgForms.map((form, i) => (
                     <div
                       key={i}
-                      className={`w-full ${form.name == "organization_description" ? "col-span-2" : "h-[50px]"} border border-[#D2D5DA] py-[8px] px-[12px] flex items-center relative`}
+                      className={`w-full ${form.name == "organization_description" ? "col-span-2" : "h-[50px]"} border border-[#ccc]/20 py-[8px] px-[12px] flex items-center relative`}
                     >
                       {form.name == "organization_description" ? (
                         <div className="flex flex-col w-full">
-                          <label className="text-[#71748C] text-[12px]">
+                          <label className="text-lightBoldText-0 dark:text-white text-[12px]">
                             {form.label}
                           </label>
                           <textarea
                             onChange={handleChange}
                             name="organization_description"
                             value={(formData as any)[form.name] || ""}
-                            className="resize-none border-none outline-none text-[14px]"
+                            className="resize-none border-none outline-none text-[14px] bg-transparent"
                             rows={6}
                           />
                         </div>
                       ) : (
                         <div className="flex flex-col w-full">
-                          <label className="text-[#71748C] text-[12px]">
+                          <label className="text-lightBoldText-0 dark:text-white text-[12px]">
                             {form.label}
                           </label>
                           <input
@@ -936,9 +936,9 @@ export default function DashboardEditProfile({
                             name={form.name}
                             onChange={form.onchange}
                             value={(formData as any)[form.name] || ""}
-                            className={`text-[#1F2937] text-[14px] font-[500] outline-none border-none ${
+                            className={`text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none bg-transparent ${
                               form.name == "organization_email"
-                                ? "text-[#71748C] bg-transparent"
+                                ? "text-lightBoldText-0 dark:text-white bg-transparent"
                                 : ""
                             }`}
                             disabled={form.name == "organization_email"}
@@ -1018,17 +1018,17 @@ export default function DashboardEditProfile({
               </div>
               <div className="dashboard_hr mt-4"></div>
               <div>
-                <div className="text-textSlightDark-0 font-semibold text-[20px] my-3">
+                <div className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[20px] my-3">
                   User Information
                 </div>
                 <div className="md:grid md:grid-cols-2 flex flex-col md:gap-2 gap-3">
                   {forms.map((form, i) => (
                     <div
                       key={i}
-                      className="w-full h-[50px] border border-[#D2D5DA] py-[8px] px-[12px] flex items-center relative"
+                      className="w-full h-[50px] border border-[#ccc]/20 py-[8px] px-[12px] flex items-center relative"
                     >
                       <div className="flex flex-col w-full">
-                        <label className="text-[#71748C] text-[12px]">
+                        <label className="text-lightBoldText-0 dark:text-white text-[12px]">
                           {form.label}
                         </label>
                         <input
@@ -1036,9 +1036,9 @@ export default function DashboardEditProfile({
                           name={form.name}
                           onChange={form.onchange}
                           value={(formData as any)[form.name] || ""}
-                          className={`text-[#1F2937] text-[14px] font-[500] outline-none border-none ${
+                          className={`text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none bg-transparent${
                             form.name == "email_address"
-                              ? "text-[#71748C] bg-transparent"
+                              ? "text-lightBoldText-0 dark:text-white bg-transparent"
                               : ""
                           }`}
                           disabled={form.name == "email_address"}
@@ -1120,17 +1120,17 @@ export default function DashboardEditProfile({
 
               {organization_type == "CHURCH" && (
                 <div>
-                  <div className="text-textSlightDark-0 font-semibold text-[20px] my-3">
+                  <div className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[20px] my-3">
                     Church Information
                   </div>
                   <div className="md:grid md:grid-cols-2 flex flex-col md:gap-2 gap-3">
                     {orgFormChurchType.map((form, i) => (
                       <div
                         key={i}
-                        className={`w-full h-[50px] ${form.name == "church_website" ? "col-span-2" : ""} border border-[#D2D5DA] py-[8px] px-[12px] flex items-center relative`}
+                        className={`w-full h-[50px] ${form.name == "church_website" ? "col-span-2" : ""} border border-[#ccc]/20 py-[8px] px-[12px] flex items-center relative`}
                       >
                         <div className="flex flex-col w-full">
-                          <label className="text-[#71748C] text-[12px]">
+                          <label className="text-lightBoldText-0 dark:text-white text-[12px]">
                             {form.label}
                           </label>
                           <input
@@ -1142,9 +1142,9 @@ export default function DashboardEditProfile({
                                 ? (formData.Church as any)?.[form.name] || ""
                                 : (formData as any)[form.name] || ""
                             }
-                            className={`text-[#1F2937] text-[14px] font-[500] outline-none border-none ${
+                            className={`text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none bg-transparent${
                               form.name == "church_email"
-                                ? "text-[#71748C] bg-transparent"
+                                ? "text-lightBoldText-0 dark:text-white bg-transparent"
                                 : ""
                             }`}
                             disabled={form.name == "church_email"}
@@ -1166,7 +1166,7 @@ export default function DashboardEditProfile({
                     {orgFormTypeSchool.map((form, i) => (
                       <div
                         key={i}
-                        className={`w-full ${form.name == "school_document" ? "col-span-2 h-[190px] border-dashed border" : "h-[50px] border"} border-[#D2D5DA] py-[8px] px-[12px] flex items-center relative`}
+                        className={`w-full ${form.name == "school_document" ? "col-span-2 h-[190px] border-dashed border" : "h-[50px] border"} border-[#ccc]/20 py-[8px] px-[12px] flex items-center relative`}
                       >
                         {form.name == "school_document" ? (
                           <div className="flex flex-col w-full">
@@ -1187,7 +1187,7 @@ export default function DashboardEditProfile({
                                   <span className="text-[16px] text-[#4F46E5] block mt-2">
                                     Document Uploaded
                                   </span>
-                                  <span className="text-[12px] text-[#71748C]">
+                                  <span className="text-[12px] text-lightBoldText-0 dark:text-white">
                                     Click to replace
                                   </span>
                                 </div>
@@ -1206,7 +1206,7 @@ export default function DashboardEditProfile({
                           </div>
                         ) : (
                           <div className="flex flex-col w-full">
-                            <label className="text-[#71748C] text-[12px]">
+                            <label className="text-lightBoldText-0 dark:text-white text-[12px]">
                               {form.label}
                             </label>
                             <input
@@ -1216,9 +1216,9 @@ export default function DashboardEditProfile({
                               value={
                                 (formData.school as any)?.[form.name] || ""
                               }
-                              className={`text-[#1F2937] text-[14px] font-[500] outline-none border-none ${
+                              className={`text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none bg-transparent${
                                 form.name == "school_email"
-                                  ? "text-[#71748C] bg-transparent"
+                                  ? "text-lightBoldText-0 dark:text-white bg-transparent"
                                   : ""
                               }`}
                               disabled={form.name == "school_email"}
@@ -1241,7 +1241,7 @@ export default function DashboardEditProfile({
                     {orgFormTypeClub.map((form, i) => (
                       <div
                         key={i}
-                        className={`w-full ${form.name == "club_document" ? "col-span-2 h-[190px] border-dashed border" : "h-[50px] border"} border-[#D2D5DA] py-[8px] px-[12px] flex items-center relative`}
+                        className={`w-full ${form.name == "club_document" ? "col-span-2 h-[190px] border-dashed border" : "h-[50px] border"} border-[#ccc]/20 py-[8px] px-[12px] flex items-center relative`}
                       >
                         {form.name == "club_document" ? (
                           <div className="flex flex-col w-full">
@@ -1262,7 +1262,7 @@ export default function DashboardEditProfile({
                                   <span className="text-[16px] text-[#4F46E5] block mt-2">
                                     Document Uploaded
                                   </span>
-                                  <span className="text-[12px] text-[#71748C]">
+                                  <span className="text-[12px] text-lightBoldText-0 dark:text-white">
                                     Click to replace
                                   </span>
                                 </div>
@@ -1281,7 +1281,7 @@ export default function DashboardEditProfile({
                           </div>
                         ) : (
                           <div className="flex flex-col w-full">
-                            <label className="text-[#71748C] text-[12px]">
+                            <label className="text-lightBoldText-0 dark:text-white text-[12px]">
                               {form.label}
                             </label>
                             <input
@@ -1289,7 +1289,7 @@ export default function DashboardEditProfile({
                               name={form.name}
                               onChange={form.onchange}
                               value={(formData.Club as any)?.[form.name] || ""}
-                              className="text-[#1F2937] text-[16px] font-[500] outline-none border-none"
+                              className="text-lightBoldText-0 dark:text-white/80 text-[16px] font-[500] outline-none border-none"
                               required
                             />
                           </div>
@@ -1306,7 +1306,7 @@ export default function DashboardEditProfile({
                 <button
                   type="button"
                   onClick={backFunc}
-                  className="form_more bg-[#ffffff] text-[#71748C] border border-[#D9D9D9]"
+                  className="form_more bg-[#ffffff] text-lightBoldText-0 dark:text-white border border-[#D9D9D9]"
                 >
                   Cancel
                 </button>

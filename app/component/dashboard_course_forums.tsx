@@ -426,7 +426,7 @@ export default function DashboardCourseForums({ openPost, courseId }: Props) {
 
             <div className="relative pl-6 py-3">
               <div className="flex gap-2 items-center">
-                <div className="bg-[#EFEFF1] h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
+                <div className="bg-[#EFEFF1] dark:bg-shadyColor-0 h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
                   <img
                     src={reply.user?.user_pic || "/default-avatar.png"}
                     alt="user_pic"
@@ -521,7 +521,7 @@ export default function DashboardCourseForums({ openPost, courseId }: Props) {
               />
             </div>
           ) : posts.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <div className="text-center py-12 bg-lightWhite-0 dark:bg-shadyColor-0 rounded-lg">
               <p className="text-gray-500 mb-2">No posts yet</p>
               <p className="text-gray-400 text-sm">
                 Be the first to start a discussion!
@@ -543,7 +543,7 @@ export default function DashboardCourseForums({ openPost, courseId }: Props) {
                     />
                   </div>
                   <div className="flex flex-col items-start">
-                    <h1 className="text-[#41415A] text-[15px] font-[600]">
+                    <h1 className="text-[#41415A] dark:text-white text-[15px] font-[600]">
                       {post.user?.last_name} {post.user?.first_name}
                     </h1>
                     <p className="flex items-center gap-2 text-[#71748C] text-[12px] font-[500]">
@@ -554,7 +554,7 @@ export default function DashboardCourseForums({ openPost, courseId }: Props) {
 
                 {/* Post Content */}
                 <div className="ml-12">
-                  <h2 className="text-[16px] font-[600] text-textSlightDark-0 mb-2">
+                  <h2 className="text-[16px] font-[600] dark:text-textSlightDark-0 text-lightBoldText-0 mb-2">
                     {post.title}
                   </h2>
                   <p className="text-[#71748C] text-[14px] leading-relaxed mb-3">
@@ -620,16 +620,15 @@ export default function DashboardCourseForums({ openPost, courseId }: Props) {
 
       {/* New Post Modal */}
       <div
-        className={`fixed top-0 right-0 h-full bg-white w-[400px] transform transition-transform duration-300 ease-in-out z-50 shadow-2xl ${
+        className={`fixed top-0 right-0 h-full w-[400px] transform transition-transform duration-300 ease-in-out z-50 shadow-2xl ${
           showPost ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <DashboardNewPost
           courseId={courseId}
           cancel={() => setShowPost(false)}
-          openPosts={openPost}
         />
-      </div>
+      </div>   
 
       {/* Reply Modal */}
       <div

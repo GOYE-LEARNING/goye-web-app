@@ -39,7 +39,7 @@ export default function CourseStep5({ formData, setFormData }: Props) {
     <div>
       <AnimatePresence mode="wait">
         <div key="course_objectives">
-          <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
+          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
             Course Objectives
           </h1>
           <div className="my-5 flex flex-col gap-3">
