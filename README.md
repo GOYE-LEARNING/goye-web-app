@@ -167,3 +167,4 @@ We believe digital tools, when designed thoughtfully, can enhance — not replac
 
 > **Built with ❤️ for spiritual transformation**
 
+# goye-waitlist
