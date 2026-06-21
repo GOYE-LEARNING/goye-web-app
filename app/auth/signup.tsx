@@ -273,7 +273,9 @@ export default function Signin({changeContentLogin} : Props) {
             animate="animate"
             exit="exit"
           >
-            <VerifyEmail openSignup={() => {
+            <VerifyEmail type="signing_up" openCreateNewPassword={() => {
+              
+            }} openSignup={() => {
               router.push("/auth/welcome");
             }} />
           </motion.div>

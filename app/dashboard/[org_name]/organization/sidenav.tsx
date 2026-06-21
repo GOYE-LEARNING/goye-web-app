@@ -2,7 +2,7 @@
 
 import SidenavComponent from "@/app/component/sidenav_component";
 import Image from "next/image";
-import logo from "@/public/images/goye-removebg-preview.png";
+import logo from "@/public/images/goye_final_logo.png";
 import {
   MdGroup,
   MdGroups,
@@ -102,7 +102,7 @@ export default function OrgSidenav() {
             />
           </div>
         </nav>
-        <div className="bg-[#E2E2E2] h-[1px] w-full absolute left-0 my-5 md:block hidden"></div>
+        <div className="bg-[#E2E2E2]/10 h-[1px] w-full absolute left-0 my-5 md:block hidden"></div>
 
         <div className="mt-10 md:block hidden md:w-full" onClick={logout}>
           {" "}

@@ -181,11 +181,15 @@ export default function DashboardEditProfile({
   const [countries, setCountry] = useState<Country[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const params = useParams<{ org_name: string }>();
-  const typeFromLoacalStorage = localStorage.getItem("type");
+  const typeFromLocalStorage = localStorage.getItem("type");
   const [type, setType] = useState<"ORGANIZATION" | "INDIVIDUAL" | null>(null);
 
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Check if user is invited_user
+  const isInvitedUser = typeFromLocalStorage === "invited_user";
+
   const [formData, setFormData] = useState<FormData>({
     first_name: first_name || "",
     last_name: last_name || "",
@@ -259,7 +263,6 @@ export default function DashboardEditProfile({
         onProfileUpdate(formData);
       }
 
-      // Show success message
       alert("Profile updated successfully!");
     } catch (error) {
       console.error(error);
@@ -268,8 +271,6 @@ export default function DashboardEditProfile({
       setIsLoading(false);
     }
   };
-
-
 
   const updateOrganization = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -352,33 +353,51 @@ export default function DashboardEditProfile({
         };
       }
 
+      // For invited users, only update their own data
       const res = await fetch(
-        `${API_URL}/api/organizations/update-organization/${organizationId}`,
+        isInvitedUser
+          ? `${API_URL}/api/user/update-user`
+          : `${API_URL}/api/organizations/update-organization/${organizationId}`,
         {
           method: "PUT",
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(updateData),
+          body: JSON.stringify(
+            isInvitedUser
+              ? {
+                  phone_number: formData.phone_number,
+                  state: formData.state,
+                  country: formData.country,
+                  last_name: formData.last_name,
+                  first_name: formData.first_name,
+                }
+              : updateData,
+          ),
         },
       );
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Failed to update organization");
+        throw new Error(data.message || "Failed to update profile");
       }
 
-      if (onProfileUpdate) {
-        onProfileUpdate({
-          ...formData,
-          organization_type,
-        });
+      if (isInvitedUser) {
+        if (onProfileUpdate) {
+          onProfileUpdate({
+            ...formData,
+            organization_type,
+          });
+        }
+        alert("Profile updated successfully!");
+      } else {
+        alert("Organization updated successfully!");
       }
     } catch (error) {
-      console.error("Error updating organization:", error);
-      alert("Failed to update organization. Please try again.");
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -387,7 +406,8 @@ export default function DashboardEditProfile({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (type === "INDIVIDUAL") {
+    // For invited users, always use updateProfile
+    if (isInvitedUser || type === "INDIVIDUAL") {
       await updateProfile();
     } else {
       await updateOrganization();
@@ -398,6 +418,12 @@ export default function DashboardEditProfile({
     e: React.ChangeEvent<HTMLInputElement>,
     documentType: "school" | "club",
   ) => {
+    // Prevent document upload for invited users
+    if (isInvitedUser) {
+      alert("You don't have permission to upload documents.");
+      return;
+    }
+
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -480,6 +506,12 @@ export default function DashboardEditProfile({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     section: "Church" | "school" | "Club",
   ) => {
+    // Prevent nested changes for invited users
+    if (isInvitedUser) {
+      alert("You don't have permission to edit organization data.");
+      return;
+    }
+
     const { name, value } = e.target;
 
     setFormData((prev: FormData) => ({
@@ -520,12 +552,7 @@ export default function DashboardEditProfile({
       name: "last_name",
       onchange: handleChange,
     },
-    {
-      label: "Email address",
-      type: "email",
-      name: "email_address",
-      onchange: handleChange,
-    },
+
     {
       label: "Phone Number",
       type: "text",
@@ -542,6 +569,12 @@ export default function DashboardEditProfile({
       label: "State",
       type: "text",
       name: "state",
+      onchange: handleChange,
+    },
+    {
+      label: "Email address",
+      type: "email",
+      name: "email_address",
       onchange: handleChange,
     },
   ];
@@ -764,6 +797,434 @@ export default function DashboardEditProfile({
     },
   ];
 
+  // Add these render functions for invited user view (replace the existing ones)
+
+  // Render read-only organization info as disabled form fields (like profile view)
+  const renderOrganizationInfo = () => {
+    return (
+      <div className="w-full mb-6">
+        <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
+          Organization Information
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Organization Name
+            </label>
+            <input
+              type="text"
+              value={formData.organization_name || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Organization Email
+            </label>
+            <input
+              type="text"
+              value={formData.organization_email || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Phone Number
+            </label>
+            <input
+              type="text"
+              value={formData.organization_phone_number || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Role
+            </label>
+            <input
+              type="text"
+              value={formData.organization_role || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Country
+            </label>
+            <input
+              type="text"
+              value={formData.organization_country || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              State
+            </label>
+            <input
+              type="text"
+              value={formData.organization_state || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Year Established
+            </label>
+            <input
+              type="text"
+              value={formData.organization_year || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Organization Type
+            </label>
+            <input
+              type="text"
+              value={formData.organization_type || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full md:col-span-2 border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Description
+            </label>
+            <textarea
+              value={formData.organization_description || "N/A"}
+              disabled
+              rows={3}
+              className="w-full resize-none border-none outline-none text-[14px] bg-transparent disabled:opacity-60"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render read-only church info
+  const renderChurchInfo = () => {
+    if (!formData.Church) return null;
+    return (
+      <div className="w-full mb-6">
+        <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
+          Church Information
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Ministry Name
+            </label>
+            <input
+              type="text"
+              value={formData.Church.church_min_name || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Lead Pastor
+            </label>
+            <input
+              type="text"
+              value={formData.Church.church_ld_pastor || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Email
+            </label>
+            <input
+              type="text"
+              value={formData.Church.church_email || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Address
+            </label>
+            <input
+              type="text"
+              value={formData.Church.church_address || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Weekly Service
+            </label>
+            <input
+              type="text"
+              value={formData.Church.church_weekly_service || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Website
+            </label>
+            <input
+              type="text"
+              value={formData.Church.church_website || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render read-only school info
+  const renderSchoolInfo = () => {
+    if (!formData.school) return null;
+    return (
+      <div className="w-full mb-6">
+        <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
+          School Information
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              School Name
+            </label>
+            <input
+              type="text"
+              value={formData.school.school_name || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              School Type
+            </label>
+            <input
+              type="text"
+              value={formData.school.school_type || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Email
+            </label>
+            <input
+              type="text"
+              value={formData.school.school_email || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Address
+            </label>
+            <input
+              type="text"
+              value={formData.school.school_address || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Admin Name
+            </label>
+            <input
+              type="text"
+              value={formData.school.school_admin_name || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Website
+            </label>
+            <input
+              type="text"
+              value={formData.school.school_website || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Accreditation Number
+            </label>
+            <input
+              type="text"
+              value={formData.school.school_accreditation_number || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Role
+            </label>
+            <input
+              type="text"
+              value={formData.school.school_role || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          {formData.school.school_document && (
+            <div className="w-full md:col-span-2 border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+              <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+                Document
+              </label>
+              <a
+                href={formData.school.school_document}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline text-[14px]"
+              >
+                View Document
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Render read-only club info
+  const renderClubInfo = () => {
+    if (!formData.Club) return null;
+    return (
+      <div className="w-full mb-6">
+        <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
+          Club Information
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Club Name
+            </label>
+            <input
+              type="text"
+              value={formData.Club.club_name || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Club Type
+            </label>
+            <input
+              type="text"
+              value={formData.Club.club_type || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Leader Name
+            </label>
+            <input
+              type="text"
+              value={formData.Club.club_leader_name || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Meeting Frequency
+            </label>
+            <input
+              type="text"
+              value={formData.Club.club_meeting_frequency || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Social Link
+            </label>
+            <input
+              type="text"
+              value={formData.Club.club_social_link || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Parent Organization
+            </label>
+            <input
+              type="text"
+              value={formData.Club.club_parent_org || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Role
+            </label>
+            <input
+              type="text"
+              value={formData.Club.club_role || "N/A"}
+              disabled
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+            />
+          </div>
+          <div className="w-full md:col-span-2 border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+            <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+              Description
+            </label>
+            <textarea
+              value={formData.Club.club_description || "N/A"}
+              disabled
+              rows={3}
+              className="w-full resize-none border-none outline-none text-[14px] bg-transparent disabled:opacity-60"
+            />
+          </div>
+          {formData.Club.club_document && (
+            <div className="w-full md:col-span-2 border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
+              <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
+                Document
+              </label>
+              <a
+                href={formData.Club.club_document}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline text-[14px]"
+              >
+                View Document
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div>
@@ -778,7 +1239,156 @@ export default function DashboardEditProfile({
               />
             </div>
           </div>
-          {type == "INDIVIDUAL" || typeFromLoacalStorage == "user" ? (
+
+          {isInvitedUser && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-lg my-4">
+              <p className="text-blue-700 dark:text-blue-300 text-sm flex items-center gap-2">
+                <span className="font-semibold">👤 Invited User:</span>
+                You can only edit your personal information. Organization data
+                is read-only.
+              </p>
+            </div>
+          )}
+
+          {isInvitedUser ? (
+            // Invited User View - Only personal info editable
+            <form onSubmit={handleSubmit} className="my-5" noValidate>
+              {/* Show organization info as read-only with disabled inputs */}
+
+              <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
+                Your Personal Information
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {forms.map((form, i) => (
+                  <div
+                    key={i}
+                    className={`w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px] 
+                    `}
+                  >
+                    <div className="flex flex-col w-full">
+                      <label className="text-lightBoldText-0 dark:text-white text-[12px]">
+                        {form.label}
+                      </label>
+                      <input
+                        type={form.type}
+                        name={form.name}
+                        onChange={form.onchange}
+                        value={(formData as any)[form.name] || ""}
+                        className={`bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none w-full ${
+                          form.name == "email_address"
+                            ? "text-lightBoldText-0 dark:text-white bg-transparent opacity-60"
+                            : "dark:text-white"
+                        }`}
+                        disabled={form.name == "email_address"}
+                        required
+                      />
+                    </div>
+
+                    {form.label == "Country" && (
+                      <div>
+                        <div
+                          className="absolute right-2 top-[19px] cursor-pointer"
+                          onClick={() => setDropDownCountry(true)}
+                        >
+                          <FaChevronDown size={14} />
+                        </div>
+                        {dropDownCountry && (
+                          <div className="mt-[3.1rem]" ref={boxRef}>
+                            <DropDowns
+                              value={selectedCountry}
+                              onChange={() => {}}
+                              countries={countries.map((c, i) => (
+                                <div
+                                  key={i}
+                                  onClick={() => handleChangeCountry(c.country)}
+                                  className="flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 cursor-pointer"
+                                >
+                                  <div>{c.country}</div>
+                                  {selectedCountry === c.country && (
+                                    <span className="text-primaryColors-0">
+                                      <FaCheck size={12} />
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {form.label == "State" && (
+                      <div>
+                        <FaChevronDown
+                          size={14}
+                          className="absolute right-2 top-[19px] cursor-pointer"
+                          onClick={() => setDropState(true)}
+                        />
+                        {dropDownState && (
+                          <div ref={boxRef} className="mt-[3.1rem]">
+                            <DropDowns
+                              value={selectedCity}
+                              onChange={() => {}}
+                              countries={cities.map((city, i) => (
+                                <div
+                                  key={i}
+                                  onClick={() => handleChangeCity(city)}
+                                  className="flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 cursor-pointer"
+                                >
+                                  <div>{city}</div>
+                                  {selectedCity === city && (
+                                    <span className="text-primaryColors-0">
+                                      <FaCheck size={12} />
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="dashboard_hr my-6"></div>
+
+              {renderOrganizationInfo()}
+              {organization_type === "CHURCH" && renderChurchInfo()}
+              {organization_type === "SCHOOL" && renderSchoolInfo()}
+              {organization_type === "CLUB" && renderClubInfo()}
+
+              <div className="grid grid-cols-2 gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={backFunc}
+                  className="form_more bg-[#ffffff] dark:bg-shadyColor-0 text-lightBoldText-0 dark:text-white border border-[#D9D9D9] dark:border-[#ccc]/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="form_more text-plainColors-0 bg-primaryColors-0"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader
+                      height={30}
+                      width={30}
+                      border_width={2}
+                      full_border_color="white"
+                      small_border_color="#FFA500"
+                    />
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+              </div>
+            </form>
+          ) : type == "INDIVIDUAL" || typeFromLocalStorage == "user" ? (
+            // Regular Individual User View
             <form
               onSubmit={handleSubmit}
               className="my-5 flex flex-col gap-5"
@@ -798,7 +1408,7 @@ export default function DashboardEditProfile({
                       name={form.name}
                       onChange={form.onchange}
                       value={(formData as any)[form.name] || ""}
-                      className={`bg-transparent text-lightBoldText-0 dark:text-white/80  text-[16px] font-[500] outline-none border-none ${
+                      className={`bg-transparent text-lightBoldText-0 dark:text-white/80 text-[16px] font-[500] outline-none border-none ${
                         form.name == "email_address"
                           ? "text-lightBoldText-0 dark:text-white bg-transparent"
                           : "dark:text-white"
@@ -902,6 +1512,7 @@ export default function DashboardEditProfile({
               </div>
             </form>
           ) : (
+            // Organization View (Full edit)
             <form onSubmit={handleSubmit}>
               <div>
                 <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[20px] md:mb-4 my-3">

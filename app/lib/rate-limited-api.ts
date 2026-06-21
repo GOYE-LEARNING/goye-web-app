@@ -49,7 +49,8 @@ class RateLimitedAPI {
       '/socials/join-group',
       '/socials/exit-group',
       '/enroll/student-enroll',
-      '/course/save-course'
+      '/course/save-course',
+      '/api/user/profile',
     ];
     mutationEndpoints.forEach(endpoint => {
       this.rateLimitConfig.set(endpoint, { maxRequests: 3, timeWindow: 60000 });

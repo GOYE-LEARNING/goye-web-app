@@ -13,7 +13,9 @@ export const API_CONFIG = {
         '/socials/get-groups-created-by-tutor',
         '/user/profile',
         '/course/get-all-courses',
-        '/course/get-courses-by-tutor'
+        '/course/get-courses-by-tutor',
+        '/api/user/profile',
+        '/api/organizations/profile'
       ]
     },
     

@@ -19,7 +19,7 @@ export default function OrganizationDashboardLayout({
       <div className="">
         <OrgAdminSidenav />
       </div>
-      <div className="md:w-[80%] w-full min-w-0 max-w-full min-h-screen md:absolute right-0 dark:bg-shadyColor-0 bg-lightWhite-0">
+      <div className="md:w-[80%] w-full min-w-0 max-w-full min-h-screen md:absolute right-0 dark:bg-shadyColor-0 bg-lightWhite-0 radial_gradient2">
         <DashboardHeader />
         <div
           className={`w-full flex md:justify-center md:items-center flex-col md:px-0 md:py-0 md:rounded-none rounded-tr-xl rounded-tl-xl

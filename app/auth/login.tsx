@@ -34,14 +34,19 @@ export default function Login({
   const [showMessage, setShowMessage] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
   const [error, setError] = useState<boolean>(false);
-  const [showForgotPasswordPage, setForgotPassowrdPage] = useState<boolean>(false);
+  const [showForgotPasswordPage, setForgotPassowrdPage] =
+    useState<boolean>(false);
   const [showLoginPage, setShowLoginPage] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loginTimeout, setLoginTimeout] = useState<boolean>(false);
-  
+
   // Get Google sign-in hook
-  const { signInWithGoogle, loading: googleLoading, error: googleError } = useGoogleSignupButton();
-  
+  const {
+    signInWithGoogle,
+    loading: googleLoading,
+    error: googleError,
+  } = useGoogleSignupButton();
+
   // Add a ref to track if we're already processing Google auth
   const isProcessingGoogleRef = useRef(false);
   const loginTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -104,12 +109,14 @@ export default function Login({
     setError(false);
     setShowMessage(false);
     setLoginTimeout(false);
-    
+
     // Set timeout for login (15 seconds)
     loginTimeoutRef.current = setTimeout(() => {
       setLoginTimeout(true);
       setError(true);
-      setMessage("Login is taking too long. Please check your internet connection and try again.");
+      setMessage(
+        "Login is taking too long. Please check your internet connection and try again.",
+      );
       setShowMessage(true);
       setIsLoading(false);
     }, 15000);
@@ -167,6 +174,7 @@ export default function Login({
           localStorage.setItem("type", "user");
         }
       } else if (responseData.organization) {
+        console.log(responseData.organization);
         localStorage.setItem("type", "organization");
         localStorage.setItem("organization_id", responseData.organization.id);
         localStorage.setItem(
@@ -178,7 +186,10 @@ export default function Login({
           responseData.organization.organization_email,
         );
         if (responseData.organization.organization_role) {
-          localStorage.setItem("role", responseData.organization.organization_role);
+          localStorage.setItem(
+            "role",
+            responseData.organization.organization_role,
+          );
         }
         if (responseData.organization.id) {
           setOrganizationId(responseData.organization.id);
@@ -192,9 +203,9 @@ export default function Login({
         clearTimeout(loginTimeoutRef.current);
         loginTimeoutRef.current = null;
       }
-      
+
       // Handle network errors
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
         setMessage("Network error. Please check your internet connection.");
       } else {
         setMessage(error.message || "An error occurred during login");
@@ -212,13 +223,13 @@ export default function Login({
       console.log("Already processing Google auth, ignoring duplicate call");
       return;
     }
-    
+
     isProcessingGoogleRef.current = true;
-    
+
     console.log("Google auth success:", data);
-    
+
     const { userData, status } = data;
-    
+
     // Save user data to localStorage
     if (userData) {
       localStorage.setItem("user_id", userData.id);
@@ -226,34 +237,36 @@ export default function Login({
       localStorage.setItem("last_name", userData.last_name || "");
       localStorage.setItem("role", userData.role || "student");
       localStorage.setItem("type", userData.type || "user");
-      localStorage.setItem("isProfileComplete", String(status?.isProfileComplete || false));
-      
-      
+      localStorage.setItem(
+        "isProfileComplete",
+        String(status?.isProfileComplete || false),
+      );
+
       if (userData.organizationId) {
         localStorage.setItem("organization_id", userData.organizationId);
         setOrganizationId(userData.organizationId);
       }
-      
+
       if (userData.user_pic) {
         localStorage.setItem("user_pic", userData.user_pic);
       }
-      
+
       if (userData.level) {
         localStorage.setItem("level", userData.level);
       }
-      
+
       console.log("✅ Saved user data to localStorage");
     }
-    
+
     // Clear any existing redirect timeout
     if (redirectTimeoutRef.current) {
       clearTimeout(redirectTimeoutRef.current);
     }
-    
+
     // ✅ CRITICAL: Wait for cookies to be fully set before redirecting
     // Give the backend time to set cookies properly
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
     // Determine next step - let the GoogleSignInButton handle the redirect
     // Only handle profile completion here
     if (status && !status.isProfileComplete) {
@@ -264,7 +277,7 @@ export default function Login({
       changeContentSignin();
     }
     // For complete profiles, the GoogleSignInButton will handle the redirect
-    
+
     setTimeout(() => {
       isProcessingGoogleRef.current = false;
     }, 2000);
@@ -343,7 +356,12 @@ export default function Login({
         <div className="form_container z-20">
           <h1 className="form_h1">Login</h1>
           <p className="form-p">Enter your details below to sign in</p>
-          <form method="POST" onSubmit={handleSubmit} noValidate className="form">
+          <form
+            method="POST"
+            onSubmit={handleSubmit}
+            noValidate
+            className="form"
+          >
             {loginComponent.map((form) => (
               <div key={form.id} className="form_label">
                 <input

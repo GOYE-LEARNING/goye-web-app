@@ -34,8 +34,8 @@ export default function DashboardAdminTab({
   const design = (tab: string) =>
     `${
       studentTab === tab
-        ? "bg-boldShadyColor-0 text-primaryColors-0"
-        : "bg-[#EFEFF1] text-SlightDark"
+        ? "dark:bg-secondaryColors-0 bg-primaryColors-0 dark:text-primaryColors-0 text-white"
+        : "dark:bg-shadyColors-0 bg-primaryColors-0/20 text-primaryColors-0"
     }`;
 
   return (

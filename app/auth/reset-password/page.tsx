@@ -52,7 +52,7 @@ export default function CreatePassword() {
   };
 
   return (
-    <>
+    <div className="flex justify-center items-center pt-10">
       <div className="md:hidden block">
         <AuthHeader
           changeTextToLogin={changeContentLogin}
@@ -165,6 +165,6 @@ export default function CreatePassword() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

@@ -5,6 +5,7 @@ import { BiPlus } from "react-icons/bi";
 import { FaEllipsisVertical } from "react-icons/fa6";
 import { v4 as uuidv4 } from "uuid";
 import { BsThreeDots } from "react-icons/bs";
+import { MdRefresh } from "react-icons/md";
 import { AnimatePresence, motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import Loader from "../loader";
@@ -21,12 +22,19 @@ interface MemberData {
   role: Role;
 }
 
-interface Users {
-  userPic?: string;
+interface UserWithAccess {
+  id: string;
   first_name: string;
-  last_name?: string;
-  email_address?: string;
-  role?: string;
+  last_name: string;
+  email_address: string;
+  role: string;
+  user_pic?: string;
+}
+
+interface InvitedUser {
+  id: string;
+  email: string;
+  role: string;
 }
 
 interface FormData {
@@ -49,14 +57,17 @@ export default function DashboardOrgAdminInviteMembers({
   const [showDropDown2, setShowDropDown2] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isMultipleLoading, setIsMultipleLoading] = useState<boolean>(false);
+  const [isResending, setIsResending] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [inviteShowMembersSingle, setInviteShowMemberSingle] =
     useState<boolean>(true);
-  //For smooth animation height
-  const [contentHeight, setContentHeight] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const [invitedUsers, setInvitedUsers] = useState<Users[]>([]);
+  // State for fetched data
+  const [usersWithAccess, setUsersWithAccess] = useState<UserWithAccess[]>([]);
+  const [invitedUsers, setInvitedUsers] = useState<InvitedUser[]>([]);
+  const [isFetching, setIsFetching] = useState<boolean>(true);
+
   const role = ["Members", "Admin"];
   const [formData, setFormData] = useState<FormData>({
     role: "",
@@ -77,45 +88,128 @@ export default function DashboardOrgAdminInviteMembers({
     const id = uuidv4();
     setNotifications((prev) => [...prev, { type, message, id }]);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     }, 5000);
   };
 
-  // Remove notification
   const removeNotification = (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
+  // Fetch invited users and users with access
+  const fetchUsers = async () => {
+    setIsFetching(true);
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+    try {
+      // Fetch users with access (admin and members who accepted)
+      const accessResponse = await fetch(
+        `${API_URL}/api/organizations/fetch-invited-users-with-access/${params.org_name}`,
+        {
+          credentials: "include",
+        }
+      );
+      const accessData = await accessResponse.json();
+      
+      if (accessData.data && Array.isArray(accessData.data)) {
+        // Extract users from the response structure
+        const users: UserWithAccess[] = [];
+        accessData.data.forEach((org: any) => {
+          if (org.user && Array.isArray(org.user)) {
+            users.push(...org.user);
+          }
+        });
+        setUsersWithAccess(users);
+      }
+
+      // Fetch invited users (pending invitations) - using the updated API
+      const invitedResponse = await fetch(
+        `${API_URL}/api/organizations/fetch-invited-users/${params.org_name}`,
+        {
+          credentials: "include",
+        }
+      );
+      const invitedData = await invitedResponse.json();
+      console.log("Invited users data:", invitedData);
+      
+      if (invitedData.data && Array.isArray(invitedData.data)) {
+        // The API now returns array of { email, role }
+        const invited: InvitedUser[] = invitedData.data.map((item: any, index: number) => ({
+          id: item.id, // Generate temporary ID since API doesn't return ID
+          email: item.email,
+          role: item.role,
+        }));
+        setInvitedUsers(invited);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      addNotification("error", "Failed to fetch users");
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  // Resend invitation using generate-new-token API
+  const resendInvitation = async (invitedUserId: string, email: string) => {
+    setIsResending(invitedUserId);
+    console.log(invitedUserId)
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/organizations/generate-new-token/${params.org_name}/${invitedUserId}`,
+        {
+          method: "POST",
+          headers: { "Content-type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        addNotification("success", `New invitation sent to ${email}`);
+        // Refresh the list to show updated invitation
+        fetchUsers();
+      } else {
+        addNotification("error", data.message || "Failed to resend invitation");
+      }
+    } catch (error) {
+      console.error("Error resending invitation:", error);
+      addNotification("error", "Failed to resend invitation");
+    } finally {
+      setIsResending(null);
+    }
+  };
+
+  // Load users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, [params.org_name]);
+
   // For single user invitation
   const inviteSingleUser = async () => {
-    // Prevent multiple submissions
     if (isLoading) return;
     
     setIsLoading(true);
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-    // Validate email
     if (!formData.email || formData.email.trim() === "") {
       addNotification("error", "Please enter an email address");
       setIsLoading(false);
       return;
     }
 
-    // Validate role
     if (!roles || roles === "") {
       addNotification("error", "Please select a role");
       setIsLoading(false);
       return;
     }
 
-    // Store current values for clearing after success
     const currentEmail = formData.email;
     const currentRole = roles;
 
     try {
-      console.log("Sending request...");
       const res = await fetch(
         `${API_URL}/api/organizations/invite-users-to-organization/${params.org_name}`,
         {
@@ -133,9 +227,7 @@ export default function DashboardOrgAdminInviteMembers({
         },
       );
 
-      console.log("Response status:", res.status);
       const data = await res.json();
-      console.log("Response data:", data);
 
       if (!res.ok) {
         addNotification("error", data.message || "Failed to invite user");
@@ -143,51 +235,32 @@ export default function DashboardOrgAdminInviteMembers({
         return;
       }
 
-      // Handle new backend structure (with success field)
       if (data.success !== undefined) {
         if (data.success) {
-          // Clear form first (these updates are batched)
           setFormData({ role: "", email: "" });
           setRoles("Member");
-          
-          // Use Promise.resolve().then() to ensure notification renders after form clear
-          // This breaks out of React's batching and makes notification appear immediately
-          Promise.resolve().then(() => {
-            addNotification("success", data.message || "User invited successfully!");
-          });
+          addNotification("success", data.message || "User invited successfully!");
+          fetchUsers(); // Refresh the list
         } else {
           addNotification("error", data.message || "Failed to invite user");
         }
-        setIsLoading(false);
-        return;
-      }
-
-      // Handle old backend structure
-      if (data.data && data.data.length > 0) {
+      } else if (data.data && data.data.length > 0) {
         const firstResult = data.data[0];
         if (firstResult.status === "success") {
-          // Clear form first
           setFormData({ role: "", email: "" });
           setRoles("Member");
-          
-          // Show success notification in next tick for immediate feedback
-          Promise.resolve().then(() => {
-            addNotification("success", data.message || "User invited successfully!");
-          });
+          addNotification("success", "User invited successfully!");
+          fetchUsers(); // Refresh the list
         } else if (firstResult.status === "already_invited") {
           addNotification("error", firstResult.message || "User already has an active invitation");
         } else {
           addNotification("error", "Failed to invite user");
         }
       } else {
-        // Clear form first
         setFormData({ role: "", email: "" });
         setRoles("Member");
-        
-        // Show success notification in next tick
-        Promise.resolve().then(() => {
-          addNotification("success", data.message || "User invited successfully!");
-        });
+        addNotification("success", "User invited successfully!");
+        fetchUsers(); // Refresh the list
       }
       
     } catch (error) {
@@ -200,13 +273,11 @@ export default function DashboardOrgAdminInviteMembers({
 
   // For multiple users invitation
   const inviteMultipleUsers = async () => {
-    // Prevent multiple submissions
     if (isMultipleLoading) return;
     
     setIsMultipleLoading(true);
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-    // Filter out empty emails
     const validMembers = memberData.filter(
       (member) => member.email.trim() !== "",
     );
@@ -222,11 +293,9 @@ export default function DashboardOrgAdminInviteMembers({
       email: member.email.trim(),
     }));
 
-    // Store current member count for comparison
     const currentMemberCount = memberData.length;
 
     try {
-      console.log("Sending multiple users request...");
       const res = await fetch(
         `${API_URL}/api/organizations/invite-users-to-organization/${params.org_name}`,
         {
@@ -239,9 +308,7 @@ export default function DashboardOrgAdminInviteMembers({
         },
       );
 
-      console.log("Response status:", res.status);
       const data = await res.json();
-      console.log("Response data:", data);
 
       if (!res.ok) {
         addNotification("error", data.message || "Failed to invite users");
@@ -249,13 +316,8 @@ export default function DashboardOrgAdminInviteMembers({
         return;
       }
 
-      // Handle new backend structure (with success field)
       if (data.success !== undefined) {
         if (data.success) {
-          // Track if we need to close the box
-          let shouldCloseBox = false;
-          
-          // Remove successful invites from the list
           const successfulEmails = data.data?.successful?.map((s: any) => s.email) || [];
           
           if (successfulEmails.length > 0) {
@@ -263,18 +325,15 @@ export default function DashboardOrgAdminInviteMembers({
               prev.filter((member) => !successfulEmails.includes(member.email))
             );
             
-            // Check if all members were successful
             if (currentMemberCount === successfulEmails.length) {
-              shouldCloseBox = true;
+              setShowMultipleUsersBox(false);
+              setInviteShowMemberSingle(true);
             }
           }
           
-          // Show success message in next tick
-          Promise.resolve().then(() => {
-            addNotification("success", data.message);
-          });
+          addNotification("success", data.message);
+          fetchUsers(); // Refresh the list
           
-          // Show warnings for already invited users (immediate)
           if (data.data?.alreadyInvited?.length > 0) {
             addNotification(
               "error", 
@@ -282,20 +341,11 @@ export default function DashboardOrgAdminInviteMembers({
             );
           }
           
-          // Show errors for failed invites (immediate)
           if (data.data?.failed?.length > 0) {
             addNotification(
               "error", 
               `${data.data.failed.length} user(s) failed to invite`
             );
-          }
-          
-          // Close box if needed (after notifications)
-          if (shouldCloseBox) {
-            setTimeout(() => {
-              setShowMultipleUsersBox(false);
-              setInviteShowMemberSingle(true);
-            }, 100);
           }
         } else {
           addNotification("error", data.message);
@@ -304,45 +354,21 @@ export default function DashboardOrgAdminInviteMembers({
         return;
       }
 
-      // Handle old backend structure
       const successfulInvites = data.data?.filter((item: any) => item.status === "success") || [];
-      const alreadyInvited = data.data?.filter((item: any) => item.status === "already_invited") || [];
       
-      // Track if we need to close the box
-      let shouldCloseBox = false;
-      
-      // Only clear form if at least one was successful
       if (successfulInvites.length > 0) {
-        // Remove only the successfully invited users from the list
         const successfulEmails = successfulInvites.map((item: any) => item.email);
         setMemberData((prev) => 
           prev.filter((member) => !successfulEmails.includes(member.email))
         );
         
-        // Check if all members were successful
         if (currentMemberCount === successfulInvites.length) {
-          shouldCloseBox = true;
-        }
-      }
-      
-      // Show success message in next tick
-      if (successfulInvites.length > 0) {
-        Promise.resolve().then(() => {
-          addNotification("success", `Successfully invited ${successfulInvites.length} user(s)!`);
-        });
-      }
-      
-      // Show warnings for already invited users (immediate)
-      if (alreadyInvited.length > 0) {
-        addNotification("error", `${alreadyInvited.length} user(s) already have active invitations`);
-      }
-      
-      // Close box if needed
-      if (shouldCloseBox) {
-        setTimeout(() => {
           setShowMultipleUsersBox(false);
           setInviteShowMemberSingle(true);
-        }, 100);
+        }
+        
+        addNotification("success", `Successfully invited ${successfulInvites.length} user(s)!`);
+        fetchUsers(); // Refresh the list
       }
       
     } catch (error) {
@@ -355,14 +381,13 @@ export default function DashboardOrgAdminInviteMembers({
 
   useEffect(() => {
     if (showMultipleUserBox && contentRef.current) {
-      setContentHeight(contentRef.current.scrollHeight);
+      // Trigger re-render for height animation
+      const height = contentRef.current.scrollHeight;
     }
   }, [showMultipleUserBox, memberData]);
 
-  // Track which dropdowns are open using Set of IDs
   const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(new Set());
 
-  //  Correctly update role for specific member
   const setMultipleRoleFunc = (id: string, role: string) => {
     setMemberData((prev) =>
       prev.map((member) =>
@@ -371,7 +396,6 @@ export default function DashboardOrgAdminInviteMembers({
           : member,
       ),
     );
-    // Close dropdown after selection
     setOpenDropdowns((prev) => {
       const newSet = new Set(prev);
       newSet.delete(id);
@@ -379,7 +403,6 @@ export default function DashboardOrgAdminInviteMembers({
     });
   };
 
-  //To get the specific value of the input
   const handleChange = (id: string, value: string) => {
     setMemberData((prev) =>
       prev.map((user) => (user.id == id ? { ...user, email: value } : user)),
@@ -390,7 +413,6 @@ export default function DashboardOrgAdminInviteMembers({
     setFormData({ ...formData, email: e.target.value });
   };
 
-  //Toggle dropdown for specific member
   const toggleDropdown = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setOpenDropdowns((prev) => {
@@ -425,7 +447,6 @@ export default function DashboardOrgAdminInviteMembers({
     return () => document.removeEventListener("mousedown", closeDropDown);
   }, []);
 
-  //To add a Member
   const addMember = () => {
     const newId = uuidv4();
     const newMember: MemberData = {
@@ -443,6 +464,17 @@ export default function DashboardOrgAdminInviteMembers({
       newSet.delete(id);
       return newSet;
     });
+  };
+
+  // Get initials for avatar
+  const getInitials = (firstName: string, lastName?: string) => {
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    if (firstName) {
+      return firstName.charAt(0).toUpperCase();
+    }
+    return "U";
   };
 
   return (
@@ -482,10 +514,10 @@ export default function DashboardOrgAdminInviteMembers({
           below. Once invited, they'll receive an email with a link to join.
         </p>
 
-        <form className="mt-5 bg-white py-4 px-6">
+        <form className="mt-5 bg-white dark:bg-secondaryColors-0 py-4 px-6">
           {inviteShowMembersSingle && (
             <div>
-              <h1 className="text-textSlightDark-0 font-semibold">
+              <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0/80 font-semibold">
                 Upload a member
               </h1>
               <div className="w-full flex justify-between items-center gap-2 my-3 z-20">
@@ -494,7 +526,7 @@ export default function DashboardOrgAdminInviteMembers({
                   name="email"
                   value={formData.email}
                   onChange={handleChangeSingle}
-                  className="w-full h-[40px] px-3 border-none outline-none text-[0.9rem] rounded bg-slate-50"
+                  className="w-full h-[40px] px-3 border-none outline-none text-[0.9rem] rounded dark:bg-shadyColor-0 bg-lightWhite-0"
                   placeholder="Email Address"
                   disabled={isLoading}
                 />
@@ -503,7 +535,7 @@ export default function DashboardOrgAdminInviteMembers({
                   onClick={() => !isLoading && setShowDropDown(true)}
                 >
                   <div
-                    className={`w-full flex items-center gap-2 h-[40px] border border-[#41415a]/20 justify-center rounded cursor-pointer md:text-[1rem] text-[0.9rem] px-2 ${
+                    className={`w-full dark:bg-shadyColor-0 flex items-center gap-2 h-[40px] border border-[#41415a]/20 justify-center rounded cursor-pointer md:text-[1rem] text-[0.9rem] px-2 ${
                       isLoading ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
@@ -520,9 +552,7 @@ export default function DashboardOrgAdminInviteMembers({
                       {role.map((r, i) => (
                         <div
                           key={i}
-                          onClick={() => {
-                            setRoleFunc(r);
-                          }}
+                          onClick={() => setRoleFunc(r)}
                           className="text-textGrey-0 text-[0.9rem] px-3 py-1 hover:bg-primaryColors-0 hover:text-white transition-all duration-200 cursor-pointer"
                         >
                           {r}
@@ -561,7 +591,7 @@ export default function DashboardOrgAdminInviteMembers({
                   {showDropDown2 && (
                     <div
                       ref={dropDownRef}
-                      className="absolute w-[200px] bg-white drop-shadow-xl right-0 top-[43px] z-20 rounded"
+                      className="absolute w-[200px] bg-white dark:bg-secondaryColors-0 drop-shadow-xl right-0 top-[43px] z-20 rounded"
                     >
                       <p
                         className="p-3 transition-all duration-200 cursor-pointer hover:opacity-55"
@@ -589,7 +619,7 @@ export default function DashboardOrgAdminInviteMembers({
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="w-full bg-white p-4 top-[50px] drop-shadow-xl rounded left-0 overflow-hidden"
+                  className="w-full bg-white dark:bg-secondaryColors-0 p-4 top-[50px] drop-shadow-xl rounded left-0 overflow-hidden"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <h1>Invite Multiple Members</h1>
@@ -663,13 +693,13 @@ export default function DashboardOrgAdminInviteMembers({
                                   handleChange(m.id, e.target.value)
                                 }
                                 placeholder="Enter member email"
-                                className="h-[40px] w-full bg-slate-50 border-none outline-none text-[0.8rem] px-3"
+                                className="h-[40px] w-full bg-lightWhite-0 dark:bg-shadyColor-0 border-none outline-none text-[0.8rem] px-3"
                                 disabled={isMultipleLoading}
                               />
 
                               <div className="relative">
                                 <div
-                                  className={`w-[150px] flex items-center gap-2 h-[40px] border border-[#41415a]/20 justify-center rounded cursor-pointer ${
+                                  className={`w-[150px] flex items-center gap-2 h-[40px] border border-[#41415a]/20 justify-center rounded cursor-pointer bg-white dark:bg-shadyColor-0 ${
                                     isMultipleLoading
                                       ? "opacity-50 cursor-not-allowed"
                                       : ""
@@ -729,61 +759,107 @@ export default function DashboardOrgAdminInviteMembers({
           </div>
         </form>
 
-        {/* Rest of your component */}
-        <div className="bg-white py-4 px-6 my-5">
-          <h1 className="text-textSlightDark-0 font-semibold">
-            People with access
+        {/* People with Access Section */}
+        <div className="bg-white dark:bg-secondaryColors-0 py-4 px-6 my-5">
+          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0/80 font-semibold">
+            People with Access ({usersWithAccess.length})
           </h1>
-          <div className="flex flex-col items-start justify-start gap-4 w-full">
-            <div className="flex justify-between items-center w-full mt-5">
-              <div className="flex gap-2 items-center">
-                <div className="h-[50px] w-[50px] rounded-full bg-slate-100"></div>
-                <div>
-                  <h1 className="font-bold text-textSlightDark-0 text-[1.1rem]">
-                    Matthew Peter
-                  </h1>
-                  <p className="text-textGrey-0 text-[0.9rem]">
-                    matthew@gmail.com
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="px-3 py-1 text-[0.9rem] border border-nearTextColors-0/20 rounded-full text-textSlightDark-0">
-                  Admin
-                </div>
-                <BsThreeDots />
-              </div>
+          {isFetching ? (
+            <div className="flex justify-center py-8">
+              <Loader height={30} width={30} border_width={1} full_border_color="transparent" small_border_color="orange"/>
             </div>
-          </div>
+          ) : usersWithAccess.length === 0 ? (
+            <p className="text-textGrey-0 text-center py-4">No users with access yet</p>
+          ) : (
+            <div className="flex flex-col items-start justify-start gap-4 w-full">
+              {usersWithAccess.map((user) => (
+                <div key={user.id} className="flex justify-between items-center w-full mt-5">
+                  <div className="flex gap-2 items-center">
+                    {user.user_pic ? (
+                      <img
+                        src={user.user_pic}
+                        alt={`${user.first_name}`}
+                        className="h-[50px] w-[50px] rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-[50px] w-[50px] rounded-full bg-primaryColors-0/20 flex items-center justify-center">
+                        <h1 className="font-bold text-primaryColors-0">
+                          {getInitials(user.first_name, user.last_name)}
+                        </h1>
+                      </div>
+                    )}
+                    <div>
+                      <h1 className="font-bold dark:text-textSlightDark-0 text-lightBoldText-0/80 text-[1.1rem]">
+                        {user.first_name} {user.last_name || ""}
+                      </h1>
+                      <p className="text-textGrey-0 text-[0.9rem]">
+                        {user.email_address}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="px-3 py-1 text-[0.9rem] border border-nearTextColors-0/20 rounded-full dark:text-textSlightDark-0 text-lightBoldText-0/80 capitalize">
+                      {user.role}
+                    </div>
+                    <BsThreeDots className="cursor-pointer" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="bg-white py-4 px-6">
-          <h1 className="text-textSlightDark-0 font-semibold">
-            Invited People
+        {/* Invited People Section */}
+        <div className="bg-white dark:bg-secondaryColors-0 py-4 px-6">
+          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0/80 font-semibold">
+            Invited People ({invitedUsers.length})
           </h1>
-          <div className="flex flex-col items-start justify-start gap-4 w-full">
-            <div className="flex justify-between items-center w-full mt-5">
-              <div className="flex gap-2 items-center">
-                <div className="h-[50px] w-[50px] rounded-full bg-transparent border-2 border-dashed flex justify-center items-center">
-                  <h1 className="font-bold">MP</h1>
-                </div>
-                <div>
-                  <h1 className="font-bold text-textSlightDark-0 text-[1.1rem]">
-                    Matthew Peter
-                  </h1>
-                  <p className="text-textGrey-0 text-[0.9rem]">
-                    matthew@gmail.com
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="px-3 py-1 text-[0.9rem] border border-nearTextColors-0/20 rounded-full text-textSlightDark-0">
-                  Admin
-                </div>
-                <BsThreeDots />
-              </div>
+          {isFetching ? (
+            <div className="flex justify-center py-8">
+              <Loader height={30} width={30} border_width={1} full_border_color="transparent" small_border_color="orange"/>
             </div>
-          </div>
+          ) : invitedUsers.length === 0 ? (
+            <p className="text-textGrey-0 text-center py-4">No pending invitations</p>
+          ) : (
+            <div className="flex flex-col items-start justify-start gap-4 w-full">
+              {invitedUsers.map((user) => (
+                <div key={user.id} className="flex justify-between items-center w-full mt-5">
+                  <div className="flex gap-2 items-center">
+                    <div className="h-[50px] w-[50px] rounded-full bg-transparent border-2 border-dashed flex justify-center items-center">
+                      <h1 className="font-bold">
+                        {getInitials(user.email.charAt(0), "")}
+                      </h1>
+                    </div>
+                    <div>
+                      <h1 className="font-bold dark:text-textSlightDark-0 text-lightBoldText-0/80 text-[1.1rem]">
+                        {user.email.split('@')[0]}
+                      </h1>
+                      <p className="text-textGrey-0 text-[0.9rem]">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="px-3 py-1 text-[0.9rem] border border-nearTextColors-0/20 rounded-full dark:text-textSlightDark-0 text-lightBoldText-0/80 capitalize">
+                      {user.role}
+                    </div>
+                    <button
+                      onClick={() => resendInvitation(user.id, user.email)}
+                      disabled={isResending === user.id}
+                      className="flex items-center gap-1 px-3 py-1 text-[0.8rem] bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors disabled:opacity-50"
+                    >
+                      {isResending === user.id ? (
+                        <Loader height={16} width={16} full_border_color="#ffffff" border_width={2} small_border_color="transparent" />
+                      ) : (
+                        <MdRefresh className="text-sm" />
+                      )}
+                      Resend
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

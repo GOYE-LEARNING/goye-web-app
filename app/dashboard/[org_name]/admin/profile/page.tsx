@@ -1,12 +1,10 @@
 "use client";
+
 import DashboardAdminNotificationSettings from "@/app/component/admin_component/dashboard_admin_notification_settings";
 import DashboardChangeLanguage from "@/app/component/dashboard_change_language";
-import DashboardProfilePassword from "@/app/component/dashboard_profile_password";
 import DashboardEditProfile from "@/app/component/dashboard_editprofile";
-import DashboardNotificationSettings from "@/app/component/dashboard_notification_settings";
-import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
-import { useParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import React, { useEffect, useState, useCallback } from "react";
 import { HiUserCircle } from "react-icons/hi";
 import { IoIosAddCircle, IoMdGlobe } from "react-icons/io";
 import { LuSquareUserRound } from "react-icons/lu";
@@ -16,7 +14,10 @@ import {
   MdNotifications,
   MdSecurity,
 } from "react-icons/md";
-import { useRouter } from "next/navigation";
+import { useAPIErrorHandler, } from "@/app/hook/useAPIErrorHandler";
+import api from "@/app/lib/api-client";
+import { APIErrorDisplay } from "@/app/component/APIErrorDisplay";
+import DashboardChangePassword from "@/app/auth/dashboard_change_password";
 
 interface Church {
   church_min_name?: string;
@@ -63,7 +64,7 @@ interface Details {
   organization_description?: string;
   organization_role?: string;
   organization_year?: string;
-  organization_type?: string
+  organization_type?: string;
   isOnline?: boolean;
   user?: User;
   Church?: Church;
@@ -87,7 +88,9 @@ export default function OrgAdminProfile() {
   const [file, setFile] = useState<File | null>(null);
   const [profilePic, setProfilePic] = useState<string>("");
   const params = useParams<{ org_name: string }>();
+  const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  
   const [details, setDetails] = useState<Details>({
     organization_name: "",
     organization_email: "",
@@ -109,14 +112,22 @@ export default function OrgAdminProfile() {
       level: "",
     },
   });
+  
   const [loading, setLoading] = useState<boolean>(false);
   const [activePages, setActivePages] = useState<
     "edit" | "password" | "notification" | "language"
   >();
   const [showActivePages, setShowActivePages] = useState<boolean>(false);
+  
+  // Use the error handler
+  const { 
+    errorState, 
+    clearError, 
+    handleError,
+    isError 
+  } = useAPIErrorHandler();
+
   const logout = async () => {
-    const router = useRouter()
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
     try {
       const res = await fetch(`${API_URL}/api/user/logout`, {
         method: "POST",
@@ -128,12 +139,14 @@ export default function OrgAdminProfile() {
       }
 
       const data = await res.json();
-      router.push("/")
-      console.log(data)
+      router.push("/");
+      console.log(data);
     } catch (error) {
       console.error(error);
+      handleError(error);
     }
   };
+
   const handleClickPage = (
     tab: "edit" | "password" | "notification" | "language",
   ) => {
@@ -145,43 +158,53 @@ export default function OrgAdminProfile() {
   const formatPhone = (phone: string) =>
     phone.replace(/(\d{4})(\d{3})(\d{4})/, "$1 $2 $3");
 
-  useEffect(() => {
-    const fetchSomeDetails = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_URL}/api/organizations/profile`, {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          console.error("Profile error", res.status, err);
-          return;
-        }
-
-        const data = await res.json();
-        console.log(data);
+  // Fetch profile data using the API client with automatic token refresh
+  const fetchProfile = useCallback(async () => {
+    setLoading(true);
+    clearError();
+    
+    try {
+      const data = await api.get('/api/organizations/profile');
+      console.log("Profile data:", data);
+      
+      if (data.organization) {
         setDetails(data.organization);
-        if (data.organization.organization_image)
+        if (data.organization.organization_image) {
           setProfilePic(data.organization.organization_image);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
+        }
+      } else {
+        // Handle case where organization data might be nested differently
+        setDetails(data);
+        if (data.organization_image) {
+          setProfilePic(data.organization_image);
+        }
       }
-    };
+    } catch (error: any) {
+      console.error("Profile fetch error:", error);
+      handleError(error);
+      
+      // If unauthorized, the API client will handle the redirect
+      if (error.status === 401) {
+        // Optional: Add a toast notification here
+        console.log("Session expired, redirecting to login...");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [clearError, handleError]);
 
-    fetchSomeDetails();
-  }, [API_URL]);
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
-  // Handle file selection
-  // Upload the image
+  // Upload the image with error handling
   const handleUpload = async (selectedFile?: File) => {
     const uploadFile = selectedFile || file;
     if (!uploadFile) return;
 
     setLoading(true);
+    clearError();
+    
     try {
       const arrayBuffer = await uploadFile.arrayBuffer();
       const base64String = btoa(
@@ -202,16 +225,19 @@ export default function OrgAdminProfile() {
           body: JSON.stringify(payload),
         },
       );
+      
       const data = await res.json();
+      
       if (!res.ok) {
-        console.error("Upload failed", data);
-      } else {
-        console.log(data);
-        setProfilePic(data.url); // Update the profile picture preview
-        setDetails((prev) => ({ ...prev, organization_image: data.url }));
+        throw new Error(data.message || "Upload failed");
       }
-    } catch (error) {
-      console.error(error);
+      
+      console.log("Upload success:", data);
+      setProfilePic(data.url);
+      setDetails((prev) => ({ ...prev, organization_image: data.url }));
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      handleError(error);
     } finally {
       setLoading(false);
     }
@@ -222,15 +248,26 @@ export default function OrgAdminProfile() {
   ) => {
     if (event.target.files && event.target.files[0]) {
       setFile(event.target.files[0]);
-      await handleUpload(event.target.files[0]); // Upload immediately after selecting
+      await handleUpload(event.target.files[0]);
     }
   };
 
   return (
     <>
+      {/* Show error display if there's an error */}
+      {errorState.error && (
+        <div className="mb-4">
+          <APIErrorDisplay 
+            error={errorState.error}
+            onDismiss={clearError}
+            onRetry={fetchProfile}
+          />
+        </div>
+      )}
+
       {showProfile && (
         <>
-          <h1 className="dashboard_h1 ">Profile</h1>
+          <h1 className="dashboard_h1">Profile</h1>
           <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] w-full my-5">
             <div className="flex justify-center items-center flex-col">
               <label className="relative cursor-pointer">
@@ -239,6 +276,7 @@ export default function OrgAdminProfile() {
                   accept="image/*"
                   className="hidden"
                   onChange={handleFileChange}
+                  disabled={loading}
                 />
                 {profilePic ? (
                   <img
@@ -252,6 +290,11 @@ export default function OrgAdminProfile() {
                 <span className="absolute top-3 right-8">
                   <IoIosAddCircle color="#30A46F" />
                 </span>
+                {loading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                    <div className="animate-spin h-8 w-8 border-4 border-white border-t-transparent rounded-full"></div>
+                  </div>
+                )}
               </label>
             </div>
 
@@ -262,7 +305,7 @@ export default function OrgAdminProfile() {
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
-                    details.organization_email
+                    details.organization_email || "N/A"
                   )}
                 </span>
               </div>
@@ -273,8 +316,8 @@ export default function OrgAdminProfile() {
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
-                    formatPhone(details.organization_phone_number)
-                  )}{" "}
+                    formatPhone(details.organization_phone_number || "")
+                  )}
                 </span>
               </div>
               <div className="dashboard_hr"></div>
@@ -285,17 +328,17 @@ export default function OrgAdminProfile() {
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
                     <div>
-                      {details.organization_state},{" "}
-                      {details.organization_country}
+                      {details.organization_state || "N/A"},{" "}
+                      {details.organization_country || "N/A"}
                     </div>
-                  )}{" "}
+                  )}
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col gap-2 my-5">
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20 cursor-pointer hover:bg-gray-50 dark:hover:bg-shadyColor-0 transition-colors"
                 onClick={() => handleClickPage("edit")}
               >
                 <div className="flex gap-2 items-center">
@@ -316,7 +359,7 @@ export default function OrgAdminProfile() {
                 </span>
               </div>
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20 cursor-pointer hover:bg-gray-50 dark:hover:bg-shadyColor-0 transition-colors"
                 onClick={() => handleClickPage("password")}
               >
                 <div className="flex gap-2 items-center">
@@ -337,7 +380,7 @@ export default function OrgAdminProfile() {
                 </span>
               </div>
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20 cursor-pointer hover:bg-gray-50 dark:hover:bg-shadyColor-0 transition-colors"
                 onClick={() => handleClickPage("notification")}
               >
                 <div className="flex gap-2 items-center">
@@ -358,7 +401,7 @@ export default function OrgAdminProfile() {
                 </span>
               </div>
               <div
-                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20"
+                className="flex gap-2 items-center justify-between border py-[24px] px-[16px] border-[#ccc]/20 cursor-pointer hover:bg-gray-50 dark:hover:bg-shadyColor-0 transition-colors"
                 onClick={() => handleClickPage("language")}
               >
                 <div className="flex gap-2 items-center">
@@ -378,7 +421,10 @@ export default function OrgAdminProfile() {
                   <MdChevronRight size={29} />
                 </span>
               </div>
-              <button className="text-[#DA0E29] border border-[#ccc]/20 h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px]" onClick={logout}>
+              <button 
+                className="text-[#DA0E29] border border-[#ccc]/20 h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px] hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" 
+                onClick={logout}
+              >
                 <MdLogout /> Logout
               </button>
             </div>
@@ -421,8 +467,8 @@ export default function OrgAdminProfile() {
                     setDetails((prev) => ({ ...prev, ...updatedData }));
                   }}
                 />
-              ) : activePages == "password" ? (
-                <DashboardProfilePassword
+              ) : activePages === "password" ? (
+                <DashboardChangePassword
                   backFunction={() => {
                     setShowProfile(true);
                     setShowActivePages(false);

@@ -17,6 +17,7 @@ interface Details {
   last_name?: string;
   email?: string;
   user_pic?: string;
+  profile_pic?: string;
   organization_name?: string;
   organization_email?: string;
   organization_image?: string;
@@ -55,7 +56,7 @@ export default function DashboardHeader() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -97,9 +98,10 @@ export default function DashboardHeader() {
           if (res.status === 429) {
             dispatchAPIError({
               status: 429,
-              message: "Too many requests, please slow down and try again later.",
+              message:
+                "Too many requests, please slow down and try again later.",
               retryAfter: 5,
-              endpoint: endpoint.split("/api")[1] || "unknown"
+              endpoint: endpoint.split("/api")[1] || "unknown",
             });
           } else {
             console.error(`API Error: ${res.status}`);
@@ -117,6 +119,14 @@ export default function DashboardHeader() {
             last_name: data.user?.last_name,
             email: data.user?.email_address,
             user_pic: data.user?.user_pic,
+            profile_pic: data.user?.profile_pic,
+          });
+        } else if (type == "invited_user") {
+          setDetails({
+            first_name: data.user?.first_name,
+            last_name: data.user?.last_name,
+            email: data.user?.email_address,
+            profile_pic: data.user?.profile_pic,
           });
         } else {
           setDetails({
@@ -135,7 +145,7 @@ export default function DashboardHeader() {
             status: 429,
             message: "Too many requests, please slow down and try again later.",
             retryAfter: 5,
-            endpoint: endpoint.split("/api")[1] || "unknown"
+            endpoint: endpoint.split("/api")[1] || "unknown",
           });
         } else {
           console.error("Error fetching profile:", error);
@@ -215,12 +225,14 @@ export default function DashboardHeader() {
     <>
       {/* Spacer to prevent content from going under the fixed header */}
       <div className="h-[73px] md:h-[73px]" />
-      
-      <header className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
-        isScrolled 
-          ? "shadow-lg backdrop-blur-xl bg-white/80 dark:bg-secondaryColors-0/80" 
-          : "backdrop-blur-md bg-white/30 dark:bg-gray-900/30"
-      } border-b border-white/20`}>
+
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
+          isScrolled
+            ? "shadow-lg backdrop-blur-xl bg-white/80 dark:bg-secondaryColors-0/80"
+            : "backdrop-blur-md bg-white/30 dark:bg-gray-900/30"
+        } border-b border-white/20`}
+      >
         {/* ================= DESKTOP ================= */}
         <div className="hidden md:flex justify-end items-center gap-5 px-8 py-3 relative">
           <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
@@ -247,7 +259,7 @@ export default function DashboardHeader() {
             )}
           </div>
 
-          <button 
+          <button
             onClick={() => router.push("/dashboard/student/chat")}
             className="text-gray-700 dark:text-gray-200 hover:text-primaryColors-0 transition-colors"
           >
@@ -261,9 +273,15 @@ export default function DashboardHeader() {
               onClick={() => setShowProfileBox((p) => !p)}
             >
               <div className="w-[45px] h-[45px] rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 ring-2 ring-transparent group-hover:ring-primaryColors-0 transition-all">
-                {details.user_pic || details.organization_image ? (
+                {details.user_pic ||
+                details.organization_image ||
+                details.profile_pic ? (
                   <img
-                    src={details.user_pic || details.organization_image}
+                    src={
+                      details.user_pic ||
+                      details.organization_image ||
+                      details.profile_pic
+                    }
                     className="w-full h-full object-cover"
                     alt="Profile"
                   />
@@ -280,7 +298,8 @@ export default function DashboardHeader() {
                 <p className="font-semibold text-gray-800 dark:text-white">
                   {details.first_name
                     ? `${details.first_name} ${details.last_name}`
-                    : details.organization_name || details.organization_administrator_firstname}
+                    : details.organization_name ||
+                      details.organization_administrator_firstname}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-words">
                   {details.email || details.organization_email}
@@ -305,9 +324,15 @@ export default function DashboardHeader() {
         <div className="md:hidden flex justify-between items-center px-[16px] py-[12px]">
           <div className="flex items-center gap-2">
             <div className="w-[45px] h-[45px] rounded-full overflow-hidden bg-gray-200 ring-2 ring-white/30">
-              {details.user_pic || details.organization_image ? (
+              {details.user_pic ||
+              details.organization_image ||
+              details.profile_pic ? (
                 <img
-                  src={details.user_pic || details.organization_image}
+                  src={
+                    details.user_pic ||
+                    details.organization_image ||
+                    details.profile_pic
+                  }
                   className="w-full h-full object-cover"
                   alt="Profile"
                 />
@@ -324,9 +349,7 @@ export default function DashboardHeader() {
           </div>
 
           <div className="flex items-center gap-4">
-
-
-            <button 
+            <button
               onClick={() => setDarkMode(!darkMode)}
               className="text-white hover:text-gray-200 transition-colors"
             >
@@ -334,8 +357,8 @@ export default function DashboardHeader() {
             </button>
 
             <div className="relative">
-              <button 
-                ref={mobileNotificationBtnRef} 
+              <button
+                ref={mobileNotificationBtnRef}
                 onClick={toggleNotification}
                 className="text-white hover:text-gray-200 transition-colors"
               >
@@ -354,7 +377,7 @@ export default function DashboardHeader() {
               )}
             </div>
 
-            <button 
+            <button
               onClick={() => router.push("/dashboard/student/chat")}
               className="text-white hover:text-gray-200 transition-colors"
             >
