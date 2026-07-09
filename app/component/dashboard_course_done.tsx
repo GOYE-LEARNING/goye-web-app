@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import pic2 from "@/public/images/notfound.png";
 import logo from "@/public/images/logo.png";
 import Loader from "./loader";
@@ -43,27 +44,73 @@ export default function DashboardCourseDone({ openCourse, search, isRefreshing }
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [completedCourses, setCompletedCourses] = useState<CompletedCourse[]>([]);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const pathname = usePathname();
+
+  // ✅ Check if we're in an organization route
+  const isOrganizationRoute = pathname?.includes('/organization/');
 
   const fetchCompletedCourses = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${API_URL}/api/enroll/get-courses-enrolled-by-student`, {
+      
+      // ✅ Use different endpoint based on route
+      const endpoint = isOrganizationRoute
+        ? `${API_URL}/api/organizations/get-courses-by-organization`
+        : `${API_URL}/api/enroll/get-courses-enrolled-by-student`;
+      
+      console.log(`📡 Fetching completed courses from: ${endpoint}`);
+      
+      const res = await fetch(endpoint, {
         method: "GET",
         credentials: "include",
       });
       const data = await res.json();
 
       if (!res.ok) {
-        console.log("Error fetching enrolled courses", data);
+        console.log("Error fetching courses", data);
         return;
       }
 
-      const courses = data.data?.courses || [];
-      // Filter only COMPLETED courses
-      const completed = courses.filter(
-        (item: CompletedCourse) => item.enrollment_status === "COMPLETED"
-      );
-      setCompletedCourses(completed);
+      let courses = [];
+      if (isOrganizationRoute) {
+        // ✅ Organization endpoint - we need to check if user is enrolled/completed
+        const orgCourses = data.data?.courses || [];
+        // For organization courses, we mark them as completed if they have enrollment status
+        // This is a placeholder - you may need to adjust based on your actual data
+        courses = orgCourses
+          .filter((course: any) => course.enrollmentStatus === "COMPLETED")
+          .map((course: any) => ({
+            enrollment_id: course.id,
+            enrollment_status: course.enrollmentStatus || "COMPLETED",
+            enrollment_date: course.createdAt || new Date().toISOString(),
+            started_at: null,
+            completed_at: null,
+            course_score: 0,
+            course_progress: {
+              percentage: 100,
+              completed_lessons: 0,
+              total_lessons: 0,
+            },
+            course: {
+              id: course.id,
+              course_title: course.course_title,
+              course_description: course.course_description,
+              course_short_description: course.course_short_description,
+              course_image: course.course_image,
+              course_level: course.course_level,
+              point: 0,
+              createdBy: course.organizationName || "GOYE Instructor",
+            }
+          }));
+      } else {
+        // ✅ Regular endpoint - filter only COMPLETED courses
+        const allCourses = data.data?.courses || [];
+        courses = allCourses.filter(
+          (item: CompletedCourse) => item.enrollment_status === "COMPLETED"
+        );
+      }
+      
+      setCompletedCourses(courses);
     } catch (error) {
       console.error(error);
     } finally {
@@ -73,12 +120,19 @@ export default function DashboardCourseDone({ openCourse, search, isRefreshing }
 
   useEffect(() => {
     fetchCompletedCourses();
-  }, []);
+  }, [isOrganizationRoute]); // ✅ Re-fetch when route changes
+
+  // ✅ Refresh when isRefreshing changes
+  useEffect(() => {
+    if (isRefreshing) {
+      fetchCompletedCourses();
+    }
+  }, [isRefreshing]);
 
   const filterCourse = completedCourses.filter(
     (item: any) =>
-      item.course.course_title.toLowerCase().includes(search.toLowerCase()) ||
-      item.course.course_description.toLowerCase().includes(search.toLowerCase())
+      item.course.course_title?.toLowerCase().includes(search.toLowerCase()) ||
+      item.course.course_description?.toLowerCase().includes(search.toLowerCase())
   );
 
   if (isRefreshing || isLoading) {
@@ -100,9 +154,11 @@ export default function DashboardCourseDone({ openCourse, search, isRefreshing }
       <div className="flex justify-center items-center flex-col gap-1 md:mt-10 mt-[8rem]">
         <Image src={pic2} alt="No completed courses" height={100} width={100} />
         <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
-          No Completed Courses Yet
+          {isOrganizationRoute ? "No Completed Organization Courses" : "No Completed Courses Yet"}
         </h1>
-        <p className="text-textGrey-0">Finish a course to see it here</p>
+        <p className="text-textGrey-0">
+          {isOrganizationRoute ? "Complete courses in this organization" : "Finish a course to see it here"}
+        </p>
       </div>
     );
   }

@@ -1,68 +1,160 @@
 "use client";
 
-import {  useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState, useEffect } from "react";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { MdCancel, MdCheckCircle } from "react-icons/md";
-import { useSignup } from "../../context/SignupContext";
 import { AnimatePresence, motion } from "framer-motion";
-import Signin from "../signup";
-import Login from "../login";
-import AuthHeader from "@/app/component/auth_header";
+import Loader from "@/app/component/loader";
 
-export default function CreatePassword() {
-  const { formData, setFormData } = useSignup();
+export default function ResetPassword() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [formData, setFormData] = useState<{ password: string }>({
+    password: "",
+  });
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [touched, setTouched] = useState<boolean>(false);
-  const router = useRouter();
-  const [showLogin, setShowLogin] = useState<boolean>(false);
-  const [showSignin, setShowSignin] = useState<boolean>(false);
-  const [showResetPassword, setShowResetPassword] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  const changeContentLogin = () => {
-    setShowLogin(false);
-    setShowSignin(true);
-    setShowResetPassword(false);
-  };
+  // Get token from URL
+  useEffect(() => {
+    const tokenParam = searchParams.get("token");
+    if (tokenParam) {
+      setToken(tokenParam);
+    } else {
+      setMessage({
+        text: "No reset token found. Please request a new password reset.",
+        type: "error",
+      });
+    }
+  }, [searchParams]);
 
-  const changeContentSignin = () => {
-    setShowLogin(true);
-    setShowSignin(false);
-    setShowResetPassword(false);
-  };
-
-  // ✅ Fixed: Correct regex (not strings)
   const rules = [
     { text: "At least 8 characters", test: /.{8,}/ },
     { text: "At least one number", test: /\d/ },
     { text: "At least one symbol", test: /[@$!%*?&]/ },
   ];
 
-  // ✅ Fixed: handleChange now receives event properly
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, password: e.target.value });
     if (!touched) setTouched(true);
+    if (message) setMessage(null);
   };
 
-  // ✅ Fixed: e.preventDefault() called correctly
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const validatePassword = (): boolean => {
+    const allPassed = rules.every((rule) => rule.test.test(formData.password));
+    if (!allPassed) {
+      setMessage({
+        text: "Please meet all password requirements",
+        type: "error",
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    router.push("./auth/welcome");
-    //const allPassed = rules.every((rule) => rule.test.test(password))
+
+    if (!token) {
+      setMessage({
+        text: "No reset token found. Please request a new password reset.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (!validatePassword()) {
+      return;
+    }
+
+    setIsLoading(true);
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+    try {
+      // ✅ Use the no-auth reset password endpoint
+      const res = await fetch(`${API_URL}/api/user/reset-password-no-auth`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: token,
+          newPassword: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+      console.log(data);
+      
+      if (!res.ok) {
+        throw new Error(
+          data.message || data.error || "Failed to reset password",
+        );
+      }
+
+      setMessage({ text: "Password reset successfully!", type: "success" });
+      setFormData({ password: "" });
+      setTouched(false);
+      
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 3000);
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      setMessage({
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to reset password. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="flex justify-center items-center pt-10">
-      <div className="md:hidden block">
-        <AuthHeader
-          changeTextToLogin={changeContentLogin}
-          changeTextToSignin={changeContentSignin}
-        />
-      </div>
+    <div className="flex justify-center items-center flex-col min-h-screen overflow-hidden">
+      <div className="md:hidden block"></div>
+
       <AnimatePresence mode="wait">
-        {showResetPassword && (
-          <div className="form_container">
-            <h1 className="form_h1">Create a Password</h1>
+        {message && (
+          <motion.div
+            key="message"
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ duration: 0.3, ease: "easeIn" }}
+            className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg ${
+              message.type === "success"
+                ? "bg-green-500 text-white"
+                : "bg-red-500 text-white"
+            }`}
+          >
+            <p>{message.text}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
+        {true && (
+          <motion.div
+            key="reset-password"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3, ease: "easeIn" }}
+            className="form_container"
+          >
+            <h1 className="form_h1">Reset Password</h1>
             <p className="form-p">
               Your password must be at least 8 characters long, and include 1
               symbol and 1 number.
@@ -72,11 +164,12 @@ export default function CreatePassword() {
                 <input
                   type={!showPassword ? "password" : "text"}
                   name="password"
-                  value={formData.password as any}
+                  value={formData.password}
                   onChange={handleChange}
                   onBlur={() => setTouched(true)}
                   placeholder=" "
-                  className={`form_input peer focus:outline-none`}
+                  disabled={isLoading}
+                  className={`form_input peer focus:outline-none ${isLoading ? "opacity-50" : ""}`}
                 />
 
                 <label
@@ -93,75 +186,64 @@ export default function CreatePassword() {
                 <div
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    setShowPassword(!showPassword);
+                    if (!isLoading) setShowPassword(!showPassword);
                   }}
                   className="cursor-pointer absolute right-[17px] top-[22px] flex justify-center items-center"
                 >
                   {!showPassword ? <IoMdEye /> : <IoMdEyeOff />}
                 </div>
 
-                {/* ✅ Password rule validation below input */}
                 {touched && (
-                  <div className="flex flex-col items-start justify-start gap-2 mt-3 text-[14px] w-full ">
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-start justify-start gap-2 mt-3 text-[14px] w-full"
+                  >
                     {rules.map((rule, index) => {
-                      const passed = rule.test.test(formData.password as any);
+                      const passed = rule.test.test(formData.password);
                       return (
                         <div key={index} className="flex items-center gap-2">
                           {passed ? (
-                            <MdCheckCircle className="text-green-500" />
+                            <MdCheckCircle
+                              className="text-green-500"
+                              size={16}
+                            />
                           ) : (
-                            <MdCancel className="text-red-500" />
+                            <MdCancel className="text-red-500" size={16} />
                           )}
-                          <span className="text-lightBoldText-0 dark:text-white/50">
+                          <span
+                            className={`text-sm ${passed ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}
+                          >
                             {rule.text}
                           </span>
                         </div>
                       );
                     })}
-                  </div>
+                  </motion.div>
                 )}
               </div>
 
-              <input
+              <button
                 type="submit"
-                value="Submit"
-                className="form_btn md:mt-0 mt-[8rem]"
-              />
+                disabled={isLoading || !token}
+                className="form_btn md:mt-0 mt-[8rem] flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2 justify-center">
+                    <Loader
+                      height={20}
+                      width={20}
+                      border_width={2}
+                      full_border_color="white"
+                      small_border_color="#FFA500"
+                    />
+                    <span>Resetting...</span>
+                  </div>
+                ) : (
+                  "Reset Password"
+                )}
+              </button>
             </form>
-          </div>
-        )}
-        {showLogin && (
-          <motion.div
-            key="login"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3, ease: "easeIn" }}
-            className="w-[360px] md:w-auto"
-          >
-            <Login
-              changeContentSignin={() => {
-                setShowSignin(true);
-                setShowLogin(false);
-              }}
-            />
-          </motion.div>
-        )}
-        {showSignin && (
-          <motion.div
-            key="signin"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3, ease: "easeIn" }}
-            className="w-[360px] md:w-auto"
-          >
-            <Signin
-              changeContentLogin={() => {
-                setShowSignin(false);
-                setShowLogin(true);
-              }}
-            />
           </motion.div>
         )}
       </AnimatePresence>

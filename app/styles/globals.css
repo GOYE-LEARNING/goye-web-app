@@ -317,9 +317,20 @@ body.chat-page-desktop {
   @apply rounded-full bg-[#ccc];
 }
 
+
+.scrollbar_x::-webkit-scrollbar {
+  @apply h-[3px] bg-boldShadyColor-0;
+
+}
 /*Sidenav component*/
+/* Sidenav component */
 .sidenav {
-  @apply dark:bg-secondaryColors-0 bg-white md:w-[20%] w-full min-w-0 md:h-full h-[auto] fixed left-0 md:top-0 bottom-0 md:px-[32px] md:py-[40px] py-[20px] px-[20px] overflow-hidden md:drop-shadow-none drop-shadow-lg z-[60] border-r dark:border-boldShadyColor-0/80 border-r-[#ccc]/20;
+  @apply dark:bg-secondaryColors-0 bg-white  w-full min-w-0 md:h-full h-[auto] fixed left-0 md:top-0 bottom-0 md:px-[32px] md:py-[40px] py-[20px] px-[20px] overflow-hidden md:drop-shadow-none drop-shadow-lg z-[60] border-r dark:border-boldShadyColor-0/80 border-r-[#ccc]/20;
+  transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+}
+
+.sidenav.collapsed {
+  @apply md:w-[80px] md:px-[16px];
 }
 
 .side_link {
@@ -332,6 +343,15 @@ body.chat-page-desktop {
 
 .side_link:hover .icon {
   @apply text-primaryColors-0;
+}
+
+/* Center icons when collapsed */
+.sidenav.collapsed .side_link {
+  @apply justify-center px-0;
+}
+
+.sidenav.collapsed .side_link span:first-child {
+  @apply mx-0;
 }
 
 .chat_scroll2::-webkit-scrollbar {
@@ -484,7 +504,7 @@ body.chat-page-desktop {
 }
 
 .admin_dashboard_data3 {
-  @apply dark:bg-boldShadyColor-0 bg-lightWhite-0 h-[72px] text-primaryColors-0 flex justify-center items-center flex-col gap-1 cursor-pointer rounded-lg border border-[#ccc]/20;
+  @apply dark:bg-boldShadyColor-0 bg-lightWhite-0 h-[72px] text-primaryColors-0 flex justify-center items-center flex-col gap-1 cursor-pointer rounded-lg border border-[#ccc]/20 dark:hover:bg-primaryColors-0 hover:bg-primaryColors-0 hover:text-white dark:hover:text-white transition-all duration-200;
 }
 
 .chat_tabs {

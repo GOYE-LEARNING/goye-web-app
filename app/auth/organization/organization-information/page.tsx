@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import DropDowns from "@/app/component/drop_downs";
 import { useRouter } from "next/navigation";
 import { useSignup } from "@/app/context/SignupContext";
+import { useLanguage } from "@/app/utils/checkLanguages";
 
 interface CountryType {
   name: string;
@@ -21,6 +22,7 @@ interface StateType {
 
 export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }) {
   const { formData, setFormData, isOrgInfoComplete } = OrgSignUp();
+  const { translate } = useLanguage();
   const dropDownCountryRef = useRef<HTMLDivElement | null>(null);
   const dropDownStateRef = useRef<HTMLDivElement | null>(null);
   const dropDownOrgType = useRef<HTMLDivElement | null>(null);
@@ -38,11 +40,65 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
 
   const orgTypes = ["church", "school", "club", "other"];
 
+  // Translation states
+  const [translatedTitle, setTranslatedTitle] = useState("Organization Information");
+  const [translatedContinue, setTranslatedContinue] = useState("Continue");
+  const [translatedPlaceholder, setTranslatedPlaceholder] = useState("Enter phone number (numbers only)");
+  const [translatedFieldLabels, setTranslatedFieldLabels] = useState<Record<string, string>>({});
+  const [translationsLoaded, setTranslationsLoaded] = useState(false);
+
+  // Load translations
+  useEffect(() => {
+    const loadTranslations = async () => {
+      try {
+        // Main title
+        const title = await translate("Organization Information");
+        setTranslatedTitle(title);
+
+        // Buttons
+        const continueText = await translate("Continue");
+        setTranslatedContinue(continueText);
+
+        // Placeholder
+        const placeholder = await translate("Enter phone number (numbers only)");
+        setTranslatedPlaceholder(placeholder);
+
+        // Field labels
+        const fieldLabels: Record<string, string> = {};
+        const fields = [
+          "Organization Name",
+          "Organization Type",
+          "Official Email Address",
+          "Phone Number",
+          "Country",
+          "State/City",
+          "Year Established",
+          "Your Role",
+          "Organization Description"
+        ];
+
+        await Promise.all(
+          fields.map(async (field) => {
+            const translated = await translate(field);
+            fieldLabels[field] = translated;
+          })
+        );
+
+        setTranslatedFieldLabels(fieldLabels);
+        setTranslationsLoaded(true);
+      } catch (error) {
+        console.error("Failed to load translations:", error);
+        setTranslationsLoaded(true);
+      }
+    };
+
+    loadTranslations();
+  }, [translate]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
-    // Only allow numbers for phone number field
     if (name === "org_phone_number") {
       const numbersOnly = value.replace(/\D/g, "");
       setFormData({ ...formData, [name]: numbersOnly });
@@ -82,7 +138,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
     if (formData.main_type == "organization") {
       setFormData((prev) => ({...prev, org_email: ""}))
     }
-  }, [formData.main_type])
+  }, [formData.main_type]);
 
   const filterCountry = countries.filter((c) =>
     c.name.toLowerCase().includes(formData.org_country?.toLowerCase() || ""),
@@ -120,13 +176,12 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
 
   const continueFunc = () => {
     if (hideButton) return;
-    if (formData.org_type === "church")
-      router.push("/auth/organization/organization-church");
-    else if (formData.org_type === "school")
-      router.push("/auth/organization/organization-school");
-    else if (formData.org_type === "club")
-      router.push("/auth/organization/organization-club");
-    else router.push("/auth/organization/organization-verification");
+    router.push("/auth/organization/user-information")
+  };
+
+  // Helper function to get translated label
+  const getTranslatedLabel = (originalLabel: string): string => {
+    return translationsLoaded ? translatedFieldLabels[originalLabel] || originalLabel : originalLabel;
   };
 
   const form = [
@@ -137,9 +192,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
     { type: "text", name: "org_country", label: "Country" },
     { type: "text", name: "org_state", label: "State/City" },
     { type: "year", name: "org_year", label: "Year Established" },
-
     { type: "text", name: "org_role", label: "Your Role" },
-
     {
       type: "text",
       name: "org_description",
@@ -165,7 +218,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
     "
     >
       <h1 className="md:text-[24px] text-[20px] font-semibold pb-5">
-        Organization Information
+        {translatedTitle}
       </h1>
 
       <form onSubmit={handleSubmit} className="py-3" noValidate>
@@ -176,7 +229,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
               className={`flex flex-col gap-1 ${data.name == "org_description" ? "col-span-2" : ""}`}
             >
               <label className="md:text-[0.8rem] text-[0.95rem]">
-                {data.label}
+                {getTranslatedLabel(data.label)}
               </label>
 
               {data.name === "org_description" ? (
@@ -198,6 +251,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
                     name={data.name}
                     onClick={() => setCountryDropdown(true)}
                     className="bg-transparent border-none outline-none w-full py-2"
+                    placeholder={getTranslatedLabel("Search country...")}
                   />
                   <span
                     className="absolute right-3 top-[28%] h-full"
@@ -243,6 +297,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
                     name={data.name}
                     onClick={() => selectedCountryISO && setStateDropdown(true)}
                     className="bg-transparent border-none outline-none w-full py-2"
+                    placeholder={getTranslatedLabel("Search state...")}
                   />
                   <span
                     className="absolute right-3 top-[28%] h-full"
@@ -288,6 +343,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
                     name={data.name}
                     onClick={() => setOrgTypeDropdown(true)}
                     className="bg-transparent border-none outline-none w-full py-2"
+                    placeholder={getTranslatedLabel("Select organization type...")}
                   />
                   <span
                     className="absolute right-3 top-[28%] h-full"
@@ -322,16 +378,6 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
                     )}
                   </div>
                 </div>
-              ) : data.name === "org_role" ? (
-                <input
-                  type={data.type}
-                  value="admin"
-                  onChange={handleChange}
-                  name={data.name}
-                  disabled
-                  className="glass_input opacity-60 cursor-not-allowed"
-                  placeholder="Default: Admin"
-                />
               ) : (
                 <input
                   type={data.type}
@@ -341,9 +387,9 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
                   maxLength={data.type === "tel" ? 15 : undefined}
                   inputMode={data.type === "tel" ? "numeric" : "text"}
                   className="glass_input focus:ring-2 focus:ring-primaryColors-0 focus:ring-offset-0 focus:bg-white/40"
-                  placeholder={`${
-                    data.type === "tel" ? "Enter phone number (numbers only)" : ""
-                  }`}
+                  placeholder={
+                    data.type === "tel" ? translatedPlaceholder : ""
+                  }
                 />
               )}
             </div>
@@ -372,7 +418,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
               }
             `}
           >
-            Continue <FaArrowRight />
+            {translatedContinue} <FaArrowRight />
           </button>
         )}
       </form>

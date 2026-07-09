@@ -1,15 +1,18 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 interface SidenavProps {
   label: string;
   icon: React.ReactNode;
   path: string;
+  isCollapsed?: boolean;
 }
 
-export default function SidenavComponent({ label, path, icon }: SidenavProps) {
+export default function SidenavComponent({ label, path, icon, isCollapsed = false }: SidenavProps) {
   const pathname = usePathname();
   const isActive = pathname === path;
+  
   return (
     <>
       <Link
@@ -18,10 +21,10 @@ export default function SidenavComponent({ label, path, icon }: SidenavProps) {
           isActive
             ? "md:bg-primaryColors-0/15 text-primaryColors-0 font-semibold"
             : "text-textGrey-0"
-        }`}
+        } ${isCollapsed ? 'justify-center' : ''}`}
       >
         <span className="text-[14px]">{icon}</span>
-        <div className={`text-[13px] truncate ${isActive ? "font-semibold" : ""}`}>
+        <div className={`text-[13px] truncate ${isActive ? "font-semibold" : ""} ${isCollapsed ? 'md:hidden' : ''}`}>
           {label}
         </div>
       </Link>

@@ -15,11 +15,11 @@ export default function DashboardSearch({
   return (
     <>
       <div className="h-[40px] border-b dark:border-[#D2D5DA]/10 border-[#ccc]/20 flex items-center gap-3 w-full my-5">
-        <CiSearch size={25} />
+        <CiSearch size={25} color="orange"/>
         <input
           type="text"
           placeholder={placeholder}
-          className="w-full bg-transparent border-none outline-none"
+          className="w-full text-primaryColors-0 bg-transparent border-none outline-none placeholder:text-primaryColors-0"
           value={value}
           onChange={onChange}
         />

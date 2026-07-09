@@ -5,6 +5,7 @@ import Image from "next/image";
 import googleIcon from "@/public/images/google_logo2.png";
 import { useRouter } from "next/navigation";
 import { useAuthContext } from "../context/AuthContext";
+import TranslatedText from "../hook/translateText";
 
 const GoogleSignInButton = ({
   onSuccess,
@@ -149,13 +150,13 @@ const GoogleSignInButton = ({
           {loading ? (
             <>
               <div className="animate-spin h-[20px] w-[20px] border-[2px] border-white border-t-transparent rounded-full"></div>
-              <span>Signing in...</span>
+              <span><TranslatedText text="Signing in..."/></span>
             </>
           ) : (
             <>
               <Image src={googleIcon} alt="google_icon" height={30} width={30} />
               <span className="dark:text-white text-lightBoldText-0">
-                Sign in with Google
+                <TranslatedText text="Sign in with Google"/>
               </span>
             </>
           )}

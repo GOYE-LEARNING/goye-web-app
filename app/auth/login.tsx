@@ -11,6 +11,8 @@ import { FaCheck } from "react-icons/fa6";
 import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
 import GoogleSignInButton from "../component/google_btn";
 import useGoogleSignupButton from "../hook/useGoogleSignupButton";
+import { useTranslation } from "../hook/useTranslation";
+import TranslatedText from "../hook/translateText";
 
 interface formData {
   email: string;
@@ -137,7 +139,7 @@ export default function Login({
 
       const data = await res.json();
       const responseData = data.data || data;
-
+      console.log("Real data", data)
       if (!res.ok) {
         // Handle specific error codes
         if (res.status === 401) {
@@ -217,8 +219,8 @@ export default function Login({
     }
   };
 
+  // Handle Google auth
   const handleGoogleSuccess = async (data: any) => {
-    // Prevent duplicate calls
     if (isProcessingGoogleRef.current) {
       console.log("Already processing Google auth, ignoring duplicate call");
       return;
@@ -230,9 +232,7 @@ export default function Login({
 
     const { userData, status } = data;
 
-    // Save user data to localStorage
     if (userData) {
-      localStorage.setItem("user_id", userData.id);
       localStorage.setItem("first_name", userData.first_name || "");
       localStorage.setItem("last_name", userData.last_name || "");
       localStorage.setItem("role", userData.role || "student");
@@ -258,17 +258,12 @@ export default function Login({
       console.log("✅ Saved user data to localStorage");
     }
 
-    // Clear any existing redirect timeout
     if (redirectTimeoutRef.current) {
       clearTimeout(redirectTimeoutRef.current);
     }
 
-    // ✅ CRITICAL: Wait for cookies to be fully set before redirecting
-    // Give the backend time to set cookies properly
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    // Determine next step - let the GoogleSignInButton handle the redirect
-    // Only handle profile completion here
     if (status && !status.isProfileComplete) {
       console.log("Profile incomplete, showing signup form");
       if (setRequireProfileCompletion) {
@@ -276,7 +271,6 @@ export default function Login({
       }
       changeContentSignin();
     }
-    // For complete profiles, the GoogleSignInButton will handle the redirect
 
     setTimeout(() => {
       isProcessingGoogleRef.current = false;
@@ -293,8 +287,6 @@ export default function Login({
 
   const handleGoogleExistingUser = (data: any) => {
     console.log("Existing Google user");
-    // The GoogleSignInButton will handle redirect
-    // Just clear any processing flag if needed
     setTimeout(() => {
       isProcessingGoogleRef.current = false;
     }, 500);
@@ -354,8 +346,15 @@ export default function Login({
       )}
       {showLoginPage && (
         <div className="form_container z-20">
-          <h1 className="form_h1">Login</h1>
-          <p className="form-p">Enter your details below to sign in</p>
+          <h1>
+            <TranslatedText text="Log in" className="form_h1" />
+          </h1>
+          <p>
+            <TranslatedText
+              text="Enter your details below to sign in"
+              className="form-p"
+            />
+          </p>
           <form
             method="POST"
             onSubmit={handleSubmit}
@@ -381,7 +380,7 @@ export default function Login({
                       : "top-[15px] text-[16px]"
                   }`}
                 >
-                  {form.label}
+                  <TranslatedText text={form.label} />
                 </label>
 
                 <div
@@ -396,10 +395,10 @@ export default function Login({
               </div>
             ))}
             <span className="form_link" onClick={showForgotPage}>
-              Forgot Password ?
+              <TranslatedText text="Forgot Password ?" />
             </span>
             <button type="submit" className="form_btn mt-[2rem] md:mt-0">
-              Login <FaArrowRight size={13} />
+              <TranslatedText text="Login"/> <FaArrowRight size={13} />
             </button>
             <GoogleSignInButton
               onSuccess={handleGoogleSuccess}
@@ -410,21 +409,29 @@ export default function Login({
             />
 
             <div className="flex items-center gap-2 md:hidden">
-              <p className="text-textGrey-0">Don't have an account?</p>
+              <p className="text-textGrey-0"><TranslatedText text="Don't have an account?"/></p>
               <span
                 className="text-primaryColors-0 font-semibold cursor-pointer"
                 onClick={() => {
                   changeContentSignin();
                 }}
               >
-                Sign up
+                <TranslatedText text="Sign Up"/>
               </span>
             </div>
           </form>
         </div>
       )}
       {showForgotPasswordPage && (
-        <ForgotPassword showLoginPage={showLoginFunc} />
+        <ForgotPassword 
+          showLoginPage={showLoginFunc} 
+          onForgotPasswordSuccess={(email: any) => {
+            // This will be called when forgot password is successful
+            setMessage(`Password reset link sent to ${email}`);
+            setError(false);
+            setShowMessage(true);
+          }}
+        />
       )}
     </div>
   );

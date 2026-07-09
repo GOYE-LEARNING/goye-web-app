@@ -1,128 +1,95 @@
+// app/dashboard/[org_name]/admin/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
-import { PiHandWavingDuotone } from "react-icons/pi";
+import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
 import DashboardOrgAdminOverview from "@/app/component/organization_component/dashboard_org_admin_overview";
 import DashboardAdminOrgBreakdown from "@/app/component/organization_component/dashboard_org_admin_breakdown";
 import DashboardOrgAdminQuickActions from "@/app/component/organization_component/dashboard_org_quickactions";
 import DashboardOrgAdminActivities from "@/app/component/organization_component/dashboard_org_admin_activities";
-import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
+import ManageMembers from "@/app/component/organization_component/ManageMembers";
+import ReviewCourses from "@/app/component/organization_component/ReviewCourses";
+import ManageEvents from "@/app/component/organization_component/ManageEvents";
+import MakeAnnouncementModal from "@/app/component/organization_component/MakeAnnoucementModal";
+
+
+type SubPage = "m-members" | "r-courses" | "m-event" | null;
+
+const pageTransitionVariants = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.4, ease: "easeInOut" } },
+  exit: { opacity: 0, x: -20, transition: { duration: 0.3, ease: "easeOut" } },
+};
+
 export default function OrgAdminDashboard() {
   const [showDashboard, setShowDashboard] = useState<boolean>(true);
+  const [subPage, setSubPage] = useState<SubPage>(null);
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState<boolean>(false);
+  const [organizationName, setOrganizationName] = useState<string>("");
+  
   const { organizationId, setOrganizationId } = useOrganizationContext();
   const router = useRouter();
-  const [organizationName, setOrganizationName] = useState<string>("");
-  const [annoucementModal, setAnnouncementModal] = useState<boolean>(false);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
-  const [subPages, setSubPages] = useState<
-    "m-members" | "r-courses" | "m-event" | null
-  >(null);
-
   const params = useParams<{ org_name: string }>();
-  const { org_name } = params;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
-    if (
-      organizationId == "" ||
-      organizationId == null ||
-      organizationId == undefined
-    ) {
+    if (!organizationId) {
       router.push("../../../auth");
+      return;
     }
+
     const fetchOrganization = async () => {
-      const res = await fetch(
-        `${API_URL}/api/organizations/fetch-specific-organization/${org_name}`,
-        {
-          method: "GET",
-        },
-      );
-
-      const data = await res.json();
-
-      if (data.status === 404) {
-        router.push("../../../notfoundPage");
-        return false;
+      try {
+        const res = await fetch(
+          `${API_URL}/api/organizations/fetch-specific-organization/${params.org_name}`,
+          { method: "GET" }
+        );
+        const data = await res.json();
+        if (data.status === 404) {
+          router.push("../../../notfoundPage");
+          return;
+        }
+        setOrganizationId(data.data.id);
+        setOrganizationName(data.data.organization_name);
+      } catch (error) {
+        console.error("Error fetching organization:", error);
       }
-      console.log(data);
-      setOrganizationId(data.data.id);
-      setOrganizationName(data.data.organization_name);
     };
 
     fetchOrganization();
-  }, [organizationId]);
-  const subPagesFunc = (pages: "m-members" | "r-courses" | "m-event") => {
-    if (pages == "m-members") {
-      setShowDashboard(false);
-      setSubPages("m-members");
-    } else if (pages == "r-courses") {
-      setShowDashboard(false);
-      setSubPages("r-courses");
-    } else if (pages == "m-event") {
-      setShowDashboard(false);
-      setSubPages("m-event");
-    }
+  }, [organizationId, params.org_name]);
+
+  const handleSubPage = (page: SubPage) => {
+    setShowDashboard(false);
+    setSubPage(page);
   };
 
-  const backFunc = () => {
-    setSubPages(null);
+  const handleBack = () => {
+    setSubPage(null);
     setShowDashboard(true);
   };
 
-  const closeAnnoucementPage = () => {
-    setAnnouncementModal(false);
-  };
-  // Animation variants for better organization
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.3,
-        duration: 0.6,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for smoother motion
-      },
-    },
-  };
-
-  const pageTransitionVariants = {
-    initial: { opacity: 0, x: 20 },
-    animate: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        duration: 0.4,
-        ease: "easeInOut",
-      },
-    },
-    exit: {
-      opacity: 0,
-      x: -20,
-      transition: {
-        duration: 0.3,
-        ease: "easeOut",
-      },
-    },
+  const renderSubPage = () => {
+    switch (subPage) {
+      case "m-members":
+        return <ManageMembers onBack={handleBack} />;
+      case "r-courses":
+        return <ReviewCourses onBack={handleBack} />;
+      case "m-event":
+        return <ManageEvents onBack={handleBack} />;
+      default:
+        return null;
+    }
   };
 
   return (
     <div className="min-h-screen">
       <AnimatePresence mode="wait">
-        {showDashboard && (
+        {showDashboard ? (
           <motion.div
-            key="admin-dashboard"
+            key="dashboard"
             variants={pageTransitionVariants as any}
             initial="initial"
             animate="animate"
@@ -130,79 +97,59 @@ export default function OrgAdminDashboard() {
             className="w-full"
           >
             <h1 className="dashboard_h1 line-clamp-1">
-              Welcome Back &#128075;{" "}
-              <span className="capitalize">{organizationName}.</span>
+              Welcome Back <span className="capitalize">{organizationName}</span>
             </h1>
+
             <motion.div
-              variants={containerVariants}
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+              }}
               initial="hidden"
               animate="visible"
               className="space-y-6"
             >
-              <motion.div variants={itemVariants as any}>
+              <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                 <DashboardOrgAdminOverview />
               </motion.div>
-              <motion.div variants={itemVariants as any}>
+
+              <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                 <DashboardAdminOrgBreakdown />
               </motion.div>
 
-              <motion.div variants={itemVariants as any}>
+              <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                 <DashboardOrgAdminQuickActions
-                  manageEvents={() => {
-                    subPagesFunc("m-event");
-                  }}
-                  reviewCourses={() => {
-                    subPagesFunc("r-courses");
-                  }}
-                  manageMembers={() => {
-                    subPagesFunc("m-members");
-                  }}
-                  makeAnnoucement={() => {}}
+                  manageMembers={() => handleSubPage("m-members")}
+                  reviewCourses={() => handleSubPage("r-courses")}
+                  manageEvents={() => handleSubPage("m-event")}
+                  makeAnnoucement={() => setShowAnnouncementModal(true)}
                 />
               </motion.div>
-              <motion.div variants={itemVariants as any}>
+
+              <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                 <DashboardOrgAdminActivities />
               </motion.div>
             </motion.div>
           </motion.div>
-        )}
-        {subPages == "m-members" ? (
-          <motion.div
-            key="users"
-            variants={pageTransitionVariants as any}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            className="w-full"
-          ></motion.div>
-        ) : subPages == "r-courses" ? (
-          <motion.div
-            key="courses"
-            variants={pageTransitionVariants as any}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            className="w-full"
-          ></motion.div>
-        ) : subPages == "m-event" ? (
-          <motion.div
-            key="event"
-            variants={pageTransitionVariants as any}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            className="w-full"
-          ></motion.div>
         ) : (
-          ""
+          <motion.div
+            key="subpage"
+            variants={pageTransitionVariants as any}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="w-full"
+          >
+            {renderSubPage()}
+          </motion.div>
         )}
-
-        <div
-          className={`w-full transition-all duration-250 fixed top-0 right-0 ${
-            !annoucementModal == false ? "translate-x-0" : "translate-x-full"
-          }`}
-        ></div>
       </AnimatePresence>
+
+      <MakeAnnouncementModal
+        isOpen={showAnnouncementModal}
+        onClose={() => setShowAnnouncementModal(false)}
+        organizationName={organizationName}
+      />
     </div>
   );
 }

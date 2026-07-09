@@ -1,7 +1,7 @@
-// components/DashboardCourseAllProvider.tsx
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useModal } from "../context/SimpleModalContext";
 import CourseList from "./dashboard_courselist_component";
 
@@ -20,23 +20,50 @@ export default function DashboardCourseAllProvider({
   const [courseDetails, setCourseDetails] = useState<any[]>([]);
   const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [isToggling, setIsToggling] = useState<string | null>(null); // Track which course is being toggled
+  const [isToggling, setIsToggling] = useState<string | null>(null);
   const { showModal } = useModal();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const pathname = usePathname();
 
-  // Fetch all courses
+  // ✅ Check if we're in an organization route
+  const isOrganizationRoute = pathname?.includes('/organization/');
+
+  // Fetch all courses - uses different endpoint based on route
   const fetchCourses = async () => {
     try {
       setInitialLoading(true);
-      const res = await fetch(`${API_URL}/api/course/get-all-courses-level`, {
+      
+      // ✅ Use organization-specific endpoint if in organization route
+      const endpoint = isOrganizationRoute
+        ? `${API_URL}/api/organizations/get-courses-by-organization`
+        : `${API_URL}/api/course/get-all-courses-level`;
+      
+      console.log(`📡 Fetching courses from: ${endpoint}`);
+      
+      const res = await fetch(endpoint, {
         method: "GET",
         credentials: "include",
       });
+      
       const data = await res.json();
-      if (!res.ok) throw new Error("Failed to fetch courses");
-      setCourseDetails(data.data.getAllCourses || []);
+      
+      if (!res.ok) throw new Error(data.message || "Failed to fetch courses");
+      
+      // ✅ Handle different response structures
+      let courses = [];
+      if (isOrganizationRoute) {
+        // Organization endpoint returns { data: { courses: [...] } }
+        courses = data.data?.courses || [];
+        console.log(`🏢 Organization courses found: ${courses.length}`);
+      } else {
+        // Global endpoint returns { data: { getAllCourses: [...] } }
+        courses = data.data?.getAllCourses || [];
+        console.log(`🌐 Global courses found: ${courses.length}`);
+      }
+      
+      setCourseDetails(courses);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching courses:", error);
       showModal("Error", "Could not load courses", "error");
     } finally {
       setInitialLoading(false);
@@ -53,7 +80,6 @@ export default function DashboardCourseAllProvider({
       const data = await res.json();
       if (!res.ok) throw new Error("Failed to fetch saved courses");
       
-      // ✅ Safely extract saved IDs with null check
       const savedItems = data.data || [];
       const savedIds = savedItems
         .filter((item: any) => item.courses !== null)
@@ -71,7 +97,7 @@ export default function DashboardCourseAllProvider({
       await fetchSavedCourseIds();
     };
     load();
-  }, []);
+  }, [isOrganizationRoute]); // ✅ Re-fetch when route changes
 
   // Refresh when isRefreshing changes
   useEffect(() => {
@@ -81,14 +107,10 @@ export default function DashboardCourseAllProvider({
     }
   }, [isRefreshing]);
 
-  // ✅ FIX: Toggle bookmark with proper check first
   const toggleBookmark = async (id: string) => {
-    // Prevent multiple clicks on the same course
     if (isToggling === id) return;
     
     setIsToggling(id);
-    
-    // Check current saved status from state (which should be synced with backend)
     const isCurrentlySaved = bookmarkedIds.includes(id);
     
     try {
@@ -107,7 +129,6 @@ export default function DashboardCourseAllProvider({
         throw new Error(errorData.message || `Failed to ${isCurrentlySaved ? "unsave" : "save"} course`);
       }
 
-      // Update local state after successful API call
       setBookmarkedIds((prev) =>
         isCurrentlySaved ? prev.filter((i) => i !== id) : [...prev, id]
       );
@@ -116,7 +137,6 @@ export default function DashboardCourseAllProvider({
     } catch (error) {
       console.error(error);
       showModal("Error", `Could not ${isCurrentlySaved ? "unsave" : "save"} course`, "error");
-      // Refresh saved IDs to ensure consistency
       await fetchSavedCourseIds();
     } finally {
       setIsToggling(null);
@@ -147,8 +167,8 @@ export default function DashboardCourseAllProvider({
       onViewCourse={handleViewCourse}
       loadingCourseId={loadingCourseId}
       isLoading={initialLoading || isRefreshing}
-      emptyMessage="No Course Found"
-      isToggling={isToggling} // Pass down to disable bookmark button while toggling
+      emptyMessage={isOrganizationRoute ? "No courses found in this organization" : "No Course Found"}
+      isToggling={isToggling}
     />
   );
 }

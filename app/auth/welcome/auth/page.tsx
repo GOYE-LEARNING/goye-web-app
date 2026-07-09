@@ -12,6 +12,7 @@ import { useAuthContext } from "@/app/context/AuthContext";
 
 export default function WelcomeMoreAuth() {
   const [step, setStep] = useState<number>(0);
+
   const [showPopup, setShowPopup] = useState<boolean>(false);
   const [showMoreAuth, setShowMoreAuth] = useState<boolean>(true);
   const totalSteps = 3;
@@ -26,35 +27,43 @@ export default function WelcomeMoreAuth() {
       const res = await fetch(
         `${API_URL}${authStatus.requiresProfileCompletion ? "/api/user/complete-profile" : "/api/user/signup"}`,
         {
-          method: 'POST',
+          method: "POST",
           headers: { "Content-type": "application/json" },
-          body: JSON.stringify(authStatus.requiresProfileCompletion == true ? {
-            first_name: authStatus.user?.first_name,
-            last_name: authStatus.user?.last_name,
-            password: formData.password,
-            country: formData.country,
-            state: formData.city,
-            phone_number: formData.phone,
-            role: formData.role,
-            level: formData.level,
-          } : {
-            first_name: formData.firstname,
-            last_name: formData?.lastname,
-            email_address: formData.email,
-            password: formData.password,
-            country: formData.country,
-            state: formData.city,
-            phone_number: formData.phone,
-            role: formData.role,
-            level: formData.level,
-          }),
+          body: JSON.stringify(
+            authStatus.requiresProfileCompletion == true
+              ? {
+                  first_name: authStatus.user?.first_name,
+                  last_name: authStatus.user?.last_name,
+                  password: formData.password,
+                  country: formData.country,
+                  state: formData.city,
+                  language: formData.language,
+                  languageCode: formData.languageCode,
+                  phone_number: formData.phone,
+                  role: formData.role,
+                  level: formData.level,
+                }
+              : {
+                  first_name: formData.firstname,
+                  last_name: formData?.lastname,
+                  email_address: formData.email,
+                  password: formData.password,
+                  country: formData.country,
+                  state: formData.city,
+                  language: formData.language,
+                  languageCode: formData.languageCode,
+                  phone_number: formData.phone,
+                  role: formData.role,
+                  level: formData.level,
+                },
+          ),
           credentials: "include",
         },
       );
 
       const data = await res.json();
       if (!res.ok) {
-        console.log(data)
+        console.log(data);
       }
       localStorage.removeItem("token");
       localStorage.setItem("first_name", authStatus.user?.first_name as any);

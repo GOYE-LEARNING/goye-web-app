@@ -41,12 +41,12 @@ export default function OrgAdminCourse() {
   const filterCourse = courseDetails.filter(
     (course) =>
       course.course_title.toLowerCase().includes(search.toLowerCase()) ||
-      course.course_description.toLowerCase().includes(search.toLowerCase())
+      course.course_description.toLowerCase().includes(search.toLowerCase()),
   );
 
   const toggleBookMark = (id: string) => {
     setFill((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -106,7 +106,7 @@ export default function OrgAdminCourse() {
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       await response.json();
@@ -155,7 +155,7 @@ export default function OrgAdminCourse() {
             <h1 className="dashboard_h1">Course</h1>
             <div className="flex items-center gap-3">
               <span
-                className="text-primaryColors-0 font-semibold flex items-center gap-2 md:hidden cursor-pointer"
+                className="text-primaryColors-0 dark:bg-secondaryColors-0 bg-white rounded font-semibold flex items-center gap-2 md:hidden cursor-pointer"
                 onClick={showCreateCourseFunc}
               >
                 <MdAdd /> New Course
@@ -175,12 +175,12 @@ export default function OrgAdminCourse() {
                 onChange={(e) => {
                   setSearch(e.target.value);
                 }}
-                placeholder="Search courses..."
+                placeholder="Search for your great courses..."
               />
             </div>
             <div className="flex items-center gap-2">
               <button
-                className="md:flex items-center justify-center gap-2 border border-[#D9D9D9] bg-white h-[36px] md:w-[131px] hidden text-primaryColors-0 cursor-pointer"
+                className="md:flex items-center justify-center gap-2 border border-[#ccc]/20 bg-white dark:bg-secondaryColors-0 h-[36px] md:w-[131px] hidden text-primaryColors-0 cursor-pointer"
                 onClick={showCreateCourseFunc}
               >
                 <MdAdd /> New course
@@ -216,25 +216,27 @@ export default function OrgAdminCourse() {
                           <img
                             src={course.course_image || pic}
                             alt="pic"
-                            className="h-[89.16px] w-[130px] object-cover"
+                            className="h-[89.16px] w-[130px] object-cover rounded-[15px]"
                           />
                         </div>
                         <div className="w-full flex flex-col gap-2">
                           <div className="flex justify-between items-center w-full">
-                            <h1 className="text-[14px] font-[700] text-[#41415A] line-clamp-1">
+                            <h1 className="text-[14px] font-[700] text-[#41415A] dark:text-white line-clamp-1">
                               {course.course_title}
                             </h1>
-                            <span className="text-[10px] text-[#41415A] bg-[#F1F1F4] px-[4px]">
+                            <span className="text-[10px] text-white bg-primaryColors-0 px-2 py-2 border-2 border-dashed border-white font-bold rounded-full">
                               {course.enrollment.length == 0
-                                ? "NOT ENROLLED"
-                                : course.enrollment.map((e) => e.status)}
+                                ? "NO STUDENT HAS ENROLLED"
+                                : course.enrollment.length == 1
+                                  ? "GREAT! A STUDENT JUST ENROLLED IN YOUR COURSE"
+                                  : "AMEN! YOU HAVE ENROLLED STUDENT"}
                             </span>
                           </div>
-                          <p className="text-[#71748C] text-[13px] font-[600] line-clamp-2 md:line-clamp-3">
+                          <p className="text-[#71748C] dark:text-white/80 text-[13px] font-[600] line-clamp-2 md:line-clamp-3">
                             {course.course_description}
                           </p>
                           <p className="flex items-center gap-6">
-                            <span className="flex items-center gap-3 text-[#71748C] md:text-[13px] text-[12px]">
+                            <span className="flex items-center gap-3 text-primaryColors-0 md:text-[13px] text-[12px]">
                               <LuUser /> {course.createdBy}
                             </span>
                             <span className="flex items-center gap-3 text-[#30A46F] text-[13px]">
@@ -245,14 +247,14 @@ export default function OrgAdminCourse() {
                         </div>
                       </div>
                       <button
-                        className="h-[36px] text-[14px] bg-shadyColor-0 text-primaryColors-0 my-3 w-full cursor-pointer"
+                        className="h-[40px] text-[14px] dark:bg-secondaryColors-0 bg-lightWhite-0 text-primaryColors-0 my-3 w-full cursor-pointer"
                         onClick={() =>
                           showCourseDetailsFunc(course.id || i.toString())
                         }
                       >
                         View Course
                       </button>
-                      <div className="h-[1px] w-full bg-[#EFEFF2]"></div>
+                      <div className="h-[1px] w-full bg-[#ccc]/20"></div>
                     </div>
                   ))}
                 </div>

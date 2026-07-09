@@ -15,6 +15,8 @@ import OrgTooltip from "@/app/component/organization_form_component/org_tooltip"
 import { form } from "framer-motion/client";
 import ErrorComponent from "@/app/component/organization_component/dashboard_error_component";
 import { AnimatePresence, motion } from "framer-motion";
+import { useLanguage } from "@/app/utils/checkLanguages";
+
 //for background slide
 const bgImages = [
   "/images/img7.jpg",
@@ -106,14 +108,14 @@ export const INITIAL_FORM_DATA: FormData = {
   org_state: "",
   org_description: "",
   org_year: "",
-  org_role: "admin",
+  org_role: "",
   user_first_name: "",
   user_last_name: "",
   user_email_address: "",
   user_country: "",
   user_state: "",
   user_phone_number: "",
-  user_role: "admin",
+  user_role: "organization_admin",
   user_form_type: "organization",
   church_min_name: "",
   church_ld_pastor: "",
@@ -150,16 +152,18 @@ export default function BodyProvider({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { translate } = useLanguage();
   const [index, setIndex] = useState<number>(0);
   const toolTipRef = useRef<HTMLDivElement | null>(null);
   const [toggleIndex, setToogleIndex] = useState<number[]>([]);
   const [showError, setError] = useState<boolean>(false);
-  const [isClient, setIsClient] = useState<boolean>(false); // Add this for hydration fix
+  const [isClient, setIsClient] = useState<boolean>(false);
+  const [translatedSteps, setTranslatedSteps] = useState<{ name: string; path: string }[]>([]);
+  const [translationsLoaded, setTranslationsLoaded] = useState<boolean>(false);
 
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [isVerifyComplete, setIsVerifyingComplete] = useState<boolean>(false);
   const [formData, setFormData] = useState<FormData>(() => {
-    // Load from localStorage on initial render
     try {
       if (typeof window !== "undefined") {
         const savedFormData = localStorage.getItem("orgFormData");
@@ -214,6 +218,28 @@ export default function BodyProvider({
       path: "/auth/organization/organization-verification",
     },
   ];
+
+  // Load translations for steps
+  useEffect(() => {
+    const loadTranslations = async () => {
+      try {
+        const translated = await Promise.all(
+          steps.map(async (step) => ({
+            ...step,
+            name: await translate(step.name),
+          }))
+        );
+        setTranslatedSteps(translated);
+        setTranslationsLoaded(true);
+      } catch (error) {
+        console.error("Failed to load step translations:", error);
+        setTranslatedSteps(steps);
+        setTranslationsLoaded(true);
+      }
+    };
+
+    loadTranslations();
+  }, [translate]);
 
   const isOrgInfoComplete =
     !!formData.org_name &&
@@ -276,7 +302,7 @@ export default function BodyProvider({
     if (index === 2) return isUserComplete;
     if (index === 3)
       return isChurchComplete || isSchoolComplete || isClubComplete;
-    if (index === 4) return false; // verification logic later
+    if (index === 4) return false;
     return false;
   };
 
@@ -305,7 +331,6 @@ export default function BodyProvider({
     }, 3000);
   };
 
-  // Clear saved form data
   const clearFormData = () => {
     localStorage.removeItem("orgFormData");
     setFormData(INITIAL_FORM_DATA);
@@ -358,6 +383,9 @@ export default function BodyProvider({
     }
   };
 
+  // Use translated steps or fallback to original
+  const displaySteps = translationsLoaded ? translatedSteps : steps;
+
   return (
     <OrganizationContext.Provider
       value={{
@@ -408,7 +436,6 @@ export default function BodyProvider({
               backgroundPosition: "center",
             }}
           >
-            {/* Dark overlay */}
             <div className="absolute inset-0 bg-black/55"></div>
           </div>
         ))}
@@ -433,16 +460,15 @@ glass_effect
             className="lg:absolute fixed h-full lg:w-[90%] w-[84%]
 lg:glass_effect top-0 right-0 grid lg:grid-cols-[70%,_30%] gap-4 lg:p-[30px]   lg:drop-shadow-none rounded-[30px]"
           >
-            <div className="lg:h-full h-full w-full grid lg:block grid-rows-[10%_90%] lg:grid-rows-none lg:overflow-hidden overflow-y-auto overflow-x-hidden bg-transparent ">
-              {/* MOBILE PROGRESS - Only render fully on client */}
-              <div className="glass_effect rounded-full my-2 w-full flex items-center sticky top-0 z-20 lg:hidden py-[1rem]">
-                {steps.map((step, i) => {
+            <div className="lg:h-full h-full w-full grid lg:block grid-rows-[10%_90%] lg:grid-rows-none lg:overflow-hidden overflow-y-auto overflow-x-hidden bg-transparent scrollbar2">
+              {/* MOBILE PROGRESS */}
+              <div className="glass_effect rounded-full my-2 w-full flex items-center sticky top-0 z-20 lg:hidden py-[1rem] scrollbar2">
+                {displaySteps.map((step, i) => {
                   const isStepTwoActive =
                     i === 3 && orgPaths.includes(pathname);
                   const isActive = step.path === pathname || isStepTwoActive;
                   const completed = isStepComplete(i);
                   
-                  // For server render or initial hydration, show simple version
                   if (!isClient) {
                     return (
                       <div key={i} className="flex items-center justify-center gap-3 relative w-full">
@@ -453,7 +479,6 @@ lg:glass_effect top-0 right-0 grid lg:grid-cols-[70%,_30%] gap-4 lg:p-[30px]   l
                     );
                   }
                   
-                  // Client render with full functionality
                   return (
                     <div
                       onClick={() => {
@@ -504,16 +529,15 @@ lg:glass_effect top-0 right-0 grid lg:grid-cols-[70%,_30%] gap-4 lg:p-[30px]   l
               <div className="h-full">{children}</div>
             </div>
 
-            {/* DESKTOP PROGRESS PANEL - Only render fully on client */}
-            <div className="glass_effect rounded-[30px] lg:h-[65%] px-[20px] lg:flex flex-col justify-center hidden">
+            {/* DESKTOP PROGRESS PANEL */}
+            <div className="overflow-x-hidden scrollbar2 glass_effect rounded-[30px] lg:h-[65%] px-[20px] lg:flex flex-col justify-center hidden">
               <div className="flex flex-col gap-3">
-                {steps.map((step, i) => {
+                {displaySteps.map((step, i) => {
                   const isStepTwoActive =
                     i === 3 && orgPaths.includes(pathname);
                   const isActive = step.path === pathname || isStepTwoActive;
                   const completed = isStepComplete(i);
                   
-                  // For server render or initial hydration, show simple version
                   if (!isClient) {
                     return (
                       <div key={i} className="flex items-center gap-3">
@@ -525,7 +549,6 @@ lg:glass_effect top-0 right-0 grid lg:grid-cols-[70%,_30%] gap-4 lg:p-[30px]   l
                     );
                   }
                   
-                  // Client render with full functionality
                   return (
                     <div
                       key={i}

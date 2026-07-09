@@ -42,7 +42,7 @@ export default function LoadingPage() {
       if (authCheckedRef.current) return;
       authCheckedRef.current = true;
 
-      // Get user data from localStorage (ONLY user data, NO tokens)
+      // Get user data from localStorage
       const userId = localStorage.getItem("user_id");
       const role = localStorage.getItem("role");
       const userType = localStorage.getItem("type");
@@ -64,7 +64,6 @@ export default function LoadingPage() {
         userLevel,
       });
 
-      // ✅ ONLY check if we have user data (NO token checks)
       if (userId && role) {
         // Update auth context with the data from localStorage
         updateAuthStatus({
@@ -84,21 +83,16 @@ export default function LoadingPage() {
         });
         console.log("✅ Updated auth context from localStorage");
 
-        // Verify with backend (cookies will be sent automatically)
+        // Verify with backend
         try {
           const isValid = await checkAuth();
           console.log("Backend auth check result:", isValid);
 
           if (!isValid) {
-            console.warn(
-              "⚠️ Backend check failed, but continuing with user data",
-            );
+            console.warn("⚠️ Backend check failed, but continuing with user data");
           }
         } catch (err) {
-          console.warn(
-            "⚠️ Backend check error, continuing with user data:",
-            err,
-          );
+          console.warn("⚠️ Backend check error, continuing with user data:", err);
         }
       } else {
         console.error("❌ No user data found - redirecting to login");
@@ -133,46 +127,64 @@ export default function LoadingPage() {
 
       const role = localStorage.getItem("role")?.toLowerCase();
       const userType = localStorage.getItem("type")?.toLowerCase();
+      const formType = localStorage.getItem("form_type")?.toLowerCase();
       const organizationId_local = localStorage.getItem("organization_id");
       const finalOrgId = organizationId || organizationId_local;
 
-      console.log("Redirecting with role:", role, "userType:", userType);
+      console.log("Redirecting with:", { role, userType, formType, finalOrgId });
 
       // Small delay for smooth transition
       const timeout = setTimeout(() => {
         try {
           let redirectPath = "/dashboard";
 
-          // SIMPLIFIED ROLE CHECK - Order matters!
-          // Check for instructor/tutor first
-          if (role === "instructor" || role === "tutor") {
+          // ✅ FIXED: Check for invited user FIRST (before admin checks)
+          // Invited users should go to organization page
+          if (role === "invited") {
+            if (finalOrgId) {
+              redirectPath = `/dashboard/${finalOrgId}/organization`;
+            } else {
+              redirectPath = "/dashboard/student";
+            }
+            console.log("Redirecting as invited user to:", redirectPath);
+          }
+          // Check for instructor/tutor
+          else if (role === "instructor" || role === "tutor") {
             redirectPath = "/dashboard/tutor";
             console.log("Redirecting as instructor/tutor to:", redirectPath);
           }
-          // Check for admin roles
+          // Check for platform admin (goye_admin)
           else if (role === "goye_admin") {
             redirectPath = "/dashboard/admin";
             console.log("Redirecting as goye_admin to:", redirectPath);
-          } else if (
-            role === "admin" ||
-            role === "administrator" ||
-            role === "org_admin"
-          ) {
+          }
+          // Check for organization admin (org_admin or admin)
+          else if (role === "org_admin" || role === "admin" || role === "administrator") {
             if (finalOrgId) {
               redirectPath = `/dashboard/${finalOrgId}/admin`;
+            } else {
+              redirectPath = "/dashboard/admin";
             }
-            console.log("Redirecting as admin to:", redirectPath);
+            console.log("Redirecting as org admin to:", redirectPath);
           }
-          // Check for organization/member
-          else if (role === "member") {
+          // Check for organization member
+          else if (role === "invited_user" || role === "organization_member") {
             if (finalOrgId) {
               redirectPath = `/dashboard/${finalOrgId}/organization`;
+            } else {
+              redirectPath = "/dashboard/student";
             }
-            console.log("Redirecting as organization/member to:", redirectPath);
+            console.log("Redirecting as organization member to:", redirectPath);
           }
           // Default to student (includes "student" role and "user" type)
           else if (role === "student") {
             redirectPath = "/dashboard/student";
+            console.log("Redirecting as student to:", redirectPath);
+          }
+          // Fallback for any other role
+          else {
+            redirectPath = "/dashboard/student";
+            console.log("Redirecting as default student to:", redirectPath);
           }
 
           console.log("Final redirect path:", redirectPath);

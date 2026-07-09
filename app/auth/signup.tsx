@@ -9,11 +9,13 @@ import Intro from "./intro";
 import { useAuthContext } from "../context/AuthContext";
 import AuthLoader from "./auth_loader";
 import { useRouter } from "next/navigation";
-import AuthHeader from "../component/auth_header";
-import AuthWelcomeHeader from "../component/auth_welcome_header";
+import TranslatedText from "../hook/translateText";
+import { useModal } from "@/app/context/SimpleModalContext";
+
 interface Props {
   changeContentLogin: () => void
 }
+
 export default function Signin({changeContentLogin} : Props) {
   const [showEmail, setShowEmail] = useState<boolean>(false);
   const [showSignup, setShowSignup] = useState<boolean>(false);
@@ -22,6 +24,8 @@ export default function Signin({changeContentLogin} : Props) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const { authStatus } = useAuthContext();
   const router = useRouter();
+  const { showModal } = useModal();
+  
   const showEmailFunc = () => {
     setShowEmail(true);
     setShowSignup(false);
@@ -59,6 +63,21 @@ export default function Signin({changeContentLogin} : Props) {
       });
 
       const data = await res.json();
+
+      // ✅ Handle errors from backend
+      if (!res.ok) {
+        // Display error using modal
+        showModal(
+          "Error",
+          data.message || "Failed to send OTP. Please try again.",
+          "error"
+        );
+        // Show signup form again to allow user to correct email
+        setShowSignup(true);
+        setIsLoading(false);
+        return;
+      }
+
       localStorage.setItem("otp-token", data.sessionToken);
       localStorage.setItem("otp-email", data.email);
 
@@ -67,6 +86,12 @@ export default function Signin({changeContentLogin} : Props) {
       showEmailFunc();
     } catch (error) {
       console.error(error);
+      showModal(
+        "Network Error",
+        "Please check your internet connection and try again.",
+        "error"
+      );
+      setShowSignup(true);
       setIsLoading(false);
     }
   };
@@ -78,6 +103,11 @@ export default function Signin({changeContentLogin} : Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // ✅ Basic validation
+    if (!formData.email) {
+      showModal("Validation Error", "Email address is required", "error");
+      return;
+    }
     sendOTP();
   };
 
@@ -108,7 +138,7 @@ export default function Signin({changeContentLogin} : Props) {
     },
   ];
 
-  // Animation variants
+  // Animation variants (unchanged)
   const fadeInUp = {
     initial: { opacity: 0, y: 30 },
     animate: { opacity: 1, y: 0 },
@@ -178,7 +208,7 @@ export default function Signin({changeContentLogin} : Props) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
           >
-            Signin
+            <TranslatedText text="Signin" />
           </motion.h1>
           
           <motion.p 
@@ -187,7 +217,7 @@ export default function Signin({changeContentLogin} : Props) {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.4 }}
           >
-            Let's get you started on your discipleship journey
+            <TranslatedText text="Let's get you started on your discipleship journey" />
           </motion.p>
           
           <motion.form
@@ -225,7 +255,7 @@ export default function Signin({changeContentLogin} : Props) {
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {form.label}
+                  <TranslatedText text={form.label} />
                 </motion.label>
               </motion.div>
             ))}
@@ -239,12 +269,20 @@ export default function Signin({changeContentLogin} : Props) {
               animate="animate"
               whileHover="hover"
               whileTap="tap"
+              disabled={isLoading}
             >
-              Next <FaArrowRight size={13} />
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+                  <TranslatedText text="Sending..." />
+                </span>
+              ) : (
+                <>
+                  <TranslatedText text="Next" /> <FaArrowRight size={13} />
+                </>
+              )}
             </motion.button>
           </motion.form>
-
-         
         </motion.div>
       )}
 
@@ -273,11 +311,13 @@ export default function Signin({changeContentLogin} : Props) {
             animate="animate"
             exit="exit"
           >
-            <VerifyEmail type="signing_up" openCreateNewPassword={() => {
-              
-            }} openSignup={() => {
-              router.push("/auth/welcome");
-            }} />
+            <VerifyEmail 
+              type="signing_up" 
+              openCreateNewPassword={() => {}} 
+              openSignup={() => {
+                router.push("/auth/welcome");
+              }} 
+            />
           </motion.div>
         )}
       </AnimatePresence>

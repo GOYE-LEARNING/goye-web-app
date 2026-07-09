@@ -5,14 +5,84 @@ import { MdDelete } from "react-icons/md";
 import { IoIosRefresh } from "react-icons/io";
 import { OrgSignUp } from "../BodyProvider";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "@/app/utils/checkLanguages";
 
 export default function ChurchInfo({
   hideButton = false,
 }: {
   hideButton?: boolean;
 }) {
+  const router = useRouter();
   const { formData, setFormData, isChurchComplete } = OrgSignUp();
+  const { translate } = useLanguage();
   const [logoUrl, setLogoUrl] = useState<string>("");
+
+  // Translation states
+  const [translatedTitle, setTranslatedTitle] = useState("Church Information");
+  const [translatedContinue, setTranslatedContinue] = useState("Continue");
+  const [translatedUploadLogo, setTranslatedUploadLogo] = useState("Upload church logo");
+  const [translatedFileTypes, setTranslatedFileTypes] = useState("PNG or JPG");
+  const [translatedRemove, setTranslatedRemove] = useState("Remove");
+  const [translatedReplace, setTranslatedReplace] = useState("Replace");
+  const [translatedFieldLabels, setTranslatedFieldLabels] = useState<Record<string, string>>({});
+  const [translationsLoaded, setTranslationsLoaded] = useState(false);
+
+  // Load translations
+  useEffect(() => {
+    const loadTranslations = async () => {
+      try {
+        // Main title
+        const title = await translate("Church Information");
+        setTranslatedTitle(title);
+
+        // Buttons
+        const continueText = await translate("Continue");
+        setTranslatedContinue(continueText);
+
+        // File upload
+        const uploadLogo = await translate("Upload church logo");
+        setTranslatedUploadLogo(uploadLogo);
+
+        const fileTypes = await translate("PNG or JPG");
+        setTranslatedFileTypes(fileTypes);
+
+        const remove = await translate("Remove");
+        setTranslatedRemove(remove);
+
+        const replace = await translate("Replace");
+        setTranslatedReplace(replace);
+
+        // Field labels
+        const fieldLabels: Record<string, string> = {};
+        const fields = [
+          "Church / Ministry Name",
+          "Church Lead Pastor",
+          "Church Address",
+          "Church Role",
+          "Church Weekly Service",
+          "Church Email",
+          "Church Website/social media",
+          "Church Logo"
+        ];
+
+        await Promise.all(
+          fields.map(async (field) => {
+            const translated = await translate(field);
+            fieldLabels[field] = translated;
+          })
+        );
+
+        setTranslatedFieldLabels(fieldLabels);
+        setTranslationsLoaded(true);
+      } catch (error) {
+        console.error("Failed to load translations:", error);
+        setTranslationsLoaded(true);
+      }
+    };
+
+    loadTranslations();
+  }, [translate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -27,14 +97,17 @@ export default function ChurchInfo({
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    // Clean up old blob URL if it exists
     if (logoUrl && logoUrl.startsWith("blob:")) {
       URL.revokeObjectURL(logoUrl);
     }
 
     const previewUrl = URL.createObjectURL(selectedFile);
     setLogoUrl(previewUrl);
-    setFormData({ ...formData, church_logo: selectedFile, church_logo_url: previewUrl });
+    setFormData({
+      ...formData,
+      church_logo: selectedFile,
+      church_logo_url: previewUrl,
+    });
   };
 
   const removeLogo = () => {
@@ -49,7 +122,6 @@ export default function ChurchInfo({
     e.preventDefault();
   };
 
-  // Clean up blob URL on component unmount
   useEffect(() => {
     return () => {
       if (logoUrl && logoUrl.startsWith("blob:")) {
@@ -57,6 +129,11 @@ export default function ChurchInfo({
       }
     };
   }, [logoUrl]);
+
+  // Helper function to get translated label
+  const getTranslatedLabel = (originalLabel: string): string => {
+    return translationsLoaded ? translatedFieldLabels[originalLabel] || originalLabel : originalLabel;
+  };
 
   const form = [
     {
@@ -98,10 +175,9 @@ export default function ChurchInfo({
     {
       type: "text",
       name: "church_website",
-      label: "Church Website",
+      label: "Church Website/social media",
       value: formData.church_website,
     },
-
     {
       type: "file",
       name: "church_logo",
@@ -119,14 +195,9 @@ export default function ChurchInfo({
           rounded-[30px]
           w-full h-full p-6 overflow-y-auto chat_scroll3"
     >
-      {/* GLASS CONTAINER */}
-      <div
-        className="
-         
-        "
-      >
+      <div>
         <h1 className="text-[22px] font-semibold text-white mb-6">
-          Church Information
+          {translatedTitle}
         </h1>
 
         <form onSubmit={handleSubmit} noValidate>
@@ -141,7 +212,7 @@ export default function ChurchInfo({
                 }`}
               >
                 <label className="md:text-[0.8rem] text-[0.95rem] text-white">
-                  {data.label}
+                  {getTranslatedLabel(data.label)}
                 </label>
 
                 {/* LOGO UPLOAD */}
@@ -164,10 +235,10 @@ export default function ChurchInfo({
                           className="absolute inset-0 flex flex-col justify-center items-center cursor-pointer text-white/80"
                         >
                           <span className="font-medium">
-                            Upload church logo
+                            {translatedUploadLogo}
                           </span>
                           <span className="text-[12px] opacity-70">
-                            PNG or JPG
+                            {translatedFileTypes}
                           </span>
                         </label>
                         <input
@@ -201,7 +272,7 @@ export default function ChurchInfo({
                               hover:bg-white/35
                             "
                           >
-                            <MdDelete /> Remove
+                            <MdDelete /> {translatedRemove}
                           </button>
 
                           <label
@@ -218,7 +289,7 @@ export default function ChurchInfo({
                               hover:bg-white/35
                             "
                           >
-                            <IoIosRefresh /> Replace
+                            <IoIosRefresh /> {translatedReplace}
                           </label>
 
                           <input
@@ -233,7 +304,6 @@ export default function ChurchInfo({
                     )}
                   </div>
                 ) : (
-                  /* GLASS INPUT */
                   <input
                     type={data.type}
                     value={typeof data.value === "string" ? data.value : ""}
@@ -248,6 +318,9 @@ export default function ChurchInfo({
 
           {!hideButton && (
             <button
+              onClick={() =>
+                router.push("/auth/organization/organization-verification")
+              }
               disabled={!isChurchComplete}
               className={`
                   float-right
@@ -267,7 +340,7 @@ export default function ChurchInfo({
                   }
                 `}
             >
-              Continue <FaArrowRight />
+              {translatedContinue} <FaArrowRight />
             </button>
           )}
         </form>

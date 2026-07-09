@@ -9,6 +9,7 @@ import { MdRefresh } from "react-icons/md";
 import { AnimatePresence, motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import Loader from "../loader";
+import { useModal } from "@/app/context/SimpleModalContext";
 
 interface Props {
   backFunction: () => void;
@@ -35,6 +36,8 @@ interface InvitedUser {
   id: string;
   email: string;
   role: string;
+  expiresIn?: string;
+  createdAt?: string;
 }
 
 interface FormData {
@@ -42,15 +45,10 @@ interface FormData {
   email: string;
 }
 
-interface Notification {
-  type: "success" | "error";
-  message: string;
-  id: string;
-}
-
 export default function DashboardOrgAdminInviteMembers({
   backFunction,
 }: Props) {
+  const { showModal } = useModal();
   const dropDownRef = useRef<HTMLDivElement | null>(null);
   const [memberData, setMemberData] = useState<MemberData[]>([]);
   const [showDropDown, setShowDropDown] = useState<boolean>(false);
@@ -58,7 +56,6 @@ export default function DashboardOrgAdminInviteMembers({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isMultipleLoading, setIsMultipleLoading] = useState<boolean>(false);
   const [isResending, setIsResending] = useState<string | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [inviteShowMembersSingle, setInviteShowMemberSingle] =
     useState<boolean>(true);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -83,20 +80,6 @@ export default function DashboardOrgAdminInviteMembers({
     { id: 2, role: "Admin" },
   ];
 
-  // Add notification
-  const addNotification = (type: "success" | "error", message: string) => {
-    const id = uuidv4();
-    setNotifications((prev) => [...prev, { type, message, id }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5000);
-  };
-
-  const removeNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
-
   // Fetch invited users and users with access
   const fetchUsers = async () => {
     setIsFetching(true);
@@ -111,9 +94,16 @@ export default function DashboardOrgAdminInviteMembers({
         }
       );
       const accessData = await accessResponse.json();
+      console.log("Access users data:", accessData);
       
-      if (accessData.data && Array.isArray(accessData.data)) {
-        // Extract users from the response structure
+      if (accessData.success && accessData.data) {
+        if (accessData.data.users && Array.isArray(accessData.data.users)) {
+          setUsersWithAccess(accessData.data.users);
+        }
+        if (accessData.data.stats) {
+          console.log("Organization stats:", accessData.data.stats);
+        }
+      } else if (accessData.data && Array.isArray(accessData.data)) {
         const users: UserWithAccess[] = [];
         accessData.data.forEach((org: any) => {
           if (org.user && Array.isArray(org.user)) {
@@ -123,9 +113,9 @@ export default function DashboardOrgAdminInviteMembers({
         setUsersWithAccess(users);
       }
 
-      // Fetch invited users (pending invitations) - using the updated API
+      // Fetch invited users (pending invitations)
       const invitedResponse = await fetch(
-        `${API_URL}/api/organizations/fetch-invited-users/${params.org_name}`,
+        `${API_URL}/api/organizations/fetch-invited-users-enhanced/${params.org_name}`,
         {
           credentials: "include",
         }
@@ -133,18 +123,22 @@ export default function DashboardOrgAdminInviteMembers({
       const invitedData = await invitedResponse.json();
       console.log("Invited users data:", invitedData);
       
-      if (invitedData.data && Array.isArray(invitedData.data)) {
-        // The API now returns array of { email, role }
-        const invited: InvitedUser[] = invitedData.data.map((item: any, index: number) => ({
-          id: item.id, // Generate temporary ID since API doesn't return ID
+      if (invitedData.success && invitedData.data) {
+        setInvitedUsers(invitedData.data);
+      } else if (invitedData.data && Array.isArray(invitedData.data)) {
+        const invited: InvitedUser[] = invitedData.data.map((item: any) => ({
+          id: item.id,
           email: item.email,
           role: item.role,
+          expiresIn: item.expiresIn,
+          createdAt: item.createdAt,
         }));
         setInvitedUsers(invited);
       }
+      
     } catch (error) {
       console.error("Error fetching users:", error);
-      addNotification("error", "Failed to fetch users");
+      showModal("Error", "Failed to fetch users", "error");
     } finally {
       setIsFetching(false);
     }
@@ -153,7 +147,6 @@ export default function DashboardOrgAdminInviteMembers({
   // Resend invitation using generate-new-token API
   const resendInvitation = async (invitedUserId: string, email: string) => {
     setIsResending(invitedUserId);
-    console.log(invitedUserId)
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     try {
@@ -168,15 +161,14 @@ export default function DashboardOrgAdminInviteMembers({
 
       const data = await response.json();
       if (response.ok && data.success) {
-        addNotification("success", `New invitation sent to ${email}`);
-        // Refresh the list to show updated invitation
+        showModal("Success", `New invitation sent to ${email}`, "success");
         fetchUsers();
       } else {
-        addNotification("error", data.message || "Failed to resend invitation");
+        showModal("Error", data.message || "Failed to resend invitation", "error");
       }
     } catch (error) {
       console.error("Error resending invitation:", error);
-      addNotification("error", "Failed to resend invitation");
+      showModal("Error", "Failed to resend invitation", "error");
     } finally {
       setIsResending(null);
     }
@@ -195,13 +187,13 @@ export default function DashboardOrgAdminInviteMembers({
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     if (!formData.email || formData.email.trim() === "") {
-      addNotification("error", "Please enter an email address");
+      showModal("Error", "Please enter an email address", "error");
       setIsLoading(false);
       return;
     }
 
     if (!roles || roles === "") {
-      addNotification("error", "Please select a role");
+      showModal("Error", "Please select a role", "error");
       setIsLoading(false);
       return;
     }
@@ -230,42 +222,52 @@ export default function DashboardOrgAdminInviteMembers({
       const data = await res.json();
 
       if (!res.ok) {
-        addNotification("error", data.message || "Failed to invite user");
+        showModal("Error", data.message || "Failed to invite user", "error");
         setIsLoading(false);
         return;
       }
 
-      if (data.success !== undefined) {
-        if (data.success) {
+      if (data.success) {
+        // Check for different response scenarios
+        if (data.data?.alreadyMembers && data.data.alreadyMembers.length > 0) {
+          const memberEmails = data.data.alreadyMembers.map((m: any) => m.email).join(", ");
+          showModal(
+            "Already Members",
+            `The following users are already members: ${memberEmails}`,
+            "info"
+          );
+        } else if (data.data?.alreadyInvited && data.data.alreadyInvited.length > 0) {
+          const invitedEmails = data.data.alreadyInvited.map((m: any) => m.email).join(", ");
+          showModal(
+            "Already Invited",
+            `The following users already have active invitations: ${invitedEmails}`,
+            "info"
+          );
+        } else if (data.data?.failed && data.data.failed.length > 0) {
+          const failedEmails = data.data.failed.map((m: any) => m.email).join(", ");
+          showModal(
+            "Invitation Failed",
+            `Failed to send invitations to: ${failedEmails}`,
+            "error"
+          );
+        } else {
+          const successCount = data.data?.successful?.length || 0;
           setFormData({ role: "", email: "" });
           setRoles("Member");
-          addNotification("success", data.message || "User invited successfully!");
-          fetchUsers(); // Refresh the list
-        } else {
-          addNotification("error", data.message || "Failed to invite user");
-        }
-      } else if (data.data && data.data.length > 0) {
-        const firstResult = data.data[0];
-        if (firstResult.status === "success") {
-          setFormData({ role: "", email: "" });
-          setRoles("Member");
-          addNotification("success", "User invited successfully!");
-          fetchUsers(); // Refresh the list
-        } else if (firstResult.status === "already_invited") {
-          addNotification("error", firstResult.message || "User already has an active invitation");
-        } else {
-          addNotification("error", "Failed to invite user");
+          showModal(
+            "Invitation Sent! 🎉",
+            `Successfully invited ${successCount} user(s) to the organization.`,
+            "success"
+          );
+          fetchUsers();
         }
       } else {
-        setFormData({ role: "", email: "" });
-        setRoles("Member");
-        addNotification("success", "User invited successfully!");
-        fetchUsers(); // Refresh the list
+        showModal("Error", data.message || "Failed to invite user", "error");
       }
       
     } catch (error) {
       console.error("Error details:", error);
-      addNotification("error", "An error occurred while inviting user");
+      showModal("Error", "An error occurred while inviting user", "error");
     } finally {
       setIsLoading(false);
     }
@@ -283,7 +285,7 @@ export default function DashboardOrgAdminInviteMembers({
     );
 
     if (validMembers.length === 0) {
-      addNotification("error", "Please add at least one valid email");
+      showModal("Error", "Please add at least one valid email", "error");
       setIsMultipleLoading(false);
       return;
     }
@@ -311,69 +313,66 @@ export default function DashboardOrgAdminInviteMembers({
       const data = await res.json();
 
       if (!res.ok) {
-        addNotification("error", data.message || "Failed to invite users");
+        showModal("Error", data.message || "Failed to invite users", "error");
         setIsMultipleLoading(false);
         return;
       }
 
-      if (data.success !== undefined) {
-        if (data.success) {
-          const successfulEmails = data.data?.successful?.map((s: any) => s.email) || [];
-          
-          if (successfulEmails.length > 0) {
-            setMemberData((prev) => 
-              prev.filter((member) => !successfulEmails.includes(member.email))
-            );
-            
-            if (currentMemberCount === successfulEmails.length) {
-              setShowMultipleUsersBox(false);
-              setInviteShowMemberSingle(true);
-            }
-          }
-          
-          addNotification("success", data.message);
-          fetchUsers(); // Refresh the list
-          
-          if (data.data?.alreadyInvited?.length > 0) {
-            addNotification(
-              "error", 
-              `${data.data.alreadyInvited.length} user(s) already have active invitations`
-            );
-          }
-          
-          if (data.data?.failed?.length > 0) {
-            addNotification(
-              "error", 
-              `${data.data.failed.length} user(s) failed to invite`
-            );
-          }
-        } else {
-          addNotification("error", data.message);
+      if (data.success) {
+        // Check for different response scenarios
+        if (data.data?.alreadyMembers && data.data.alreadyMembers.length > 0) {
+          const memberEmails = data.data.alreadyMembers.map((m: any) => m.email).join(", ");
+          showModal(
+            "Already Members",
+            `The following users are already members: ${memberEmails}`,
+            "info"
+          );
         }
-        setIsMultipleLoading(false);
-        return;
-      }
 
-      const successfulInvites = data.data?.filter((item: any) => item.status === "success") || [];
-      
-      if (successfulInvites.length > 0) {
-        const successfulEmails = successfulInvites.map((item: any) => item.email);
-        setMemberData((prev) => 
-          prev.filter((member) => !successfulEmails.includes(member.email))
-        );
-        
-        if (currentMemberCount === successfulInvites.length) {
-          setShowMultipleUsersBox(false);
-          setInviteShowMemberSingle(true);
+        if (data.data?.alreadyInvited && data.data.alreadyInvited.length > 0) {
+          const invitedEmails = data.data.alreadyInvited.map((m: any) => m.email).join(", ");
+          showModal(
+            "Already Invited",
+            `The following users already have active invitations: ${invitedEmails}`,
+            "info"
+          );
         }
-        
-        addNotification("success", `Successfully invited ${successfulInvites.length} user(s)!`);
-        fetchUsers(); // Refresh the list
+
+        if (data.data?.failed && data.data.failed.length > 0) {
+          const failedEmails = data.data.failed.map((m: any) => m.email).join(", ");
+          showModal(
+            "Invitation Failed",
+            `Failed to send invitations to: ${failedEmails}`,
+            "error"
+          );
+        }
+
+        const successCount = data.data?.successful?.length || 0;
+        if (successCount > 0) {
+          const successfulEmails = data.data.successful.map((s: any) => s.email);
+          setMemberData((prev) => 
+            prev.filter((member) => !successfulEmails.includes(member.email))
+          );
+          
+          if (currentMemberCount === successCount) {
+            setShowMultipleUsersBox(false);
+            setInviteShowMemberSingle(true);
+          }
+          
+          showModal(
+            "Invitation Sent! 🎉",
+            `Successfully invited ${successCount} user(s) to the organization.`,
+            "success"
+          );
+          fetchUsers();
+        }
+      } else {
+        showModal("Error", data.message || "Failed to invite users", "error");
       }
       
     } catch (error) {
       console.error("Error details:", error);
-      addNotification("error", "An error occurred while inviting users");
+      showModal("Error", "An error occurred while inviting users", "error");
     } finally {
       setIsMultipleLoading(false);
     }
@@ -381,7 +380,6 @@ export default function DashboardOrgAdminInviteMembers({
 
   useEffect(() => {
     if (showMultipleUserBox && contentRef.current) {
-      // Trigger re-render for height animation
       const height = contentRef.current.scrollHeight;
     }
   }, [showMultipleUserBox, memberData]);
@@ -479,34 +477,6 @@ export default function DashboardOrgAdminInviteMembers({
 
   return (
     <div className="relative">
-      {/* Notifications Container */}
-      <div className="fixed top-4 right-4 z-[9999] space-y-2">
-        <AnimatePresence>
-          {notifications.map((notification) => (
-            <motion.div
-              key={notification.id}
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 100 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className={`p-4 rounded-lg shadow-lg flex items-center justify-between min-w-[300px] ${
-                notification.type === "success"
-                  ? "bg-green-500 text-white"
-                  : "bg-red-500 text-white"
-              }`}
-            >
-              <span>{notification.message}</span>
-              <button
-                onClick={() => removeNotification(notification.id)}
-                className="ml-4 text-white hover:text-gray-200 text-xl font-bold"
-              >
-                &times;
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
       <SubHeader header="Invite Members" backFunction={backFunction} />
       <div>
         <p className="text-textGrey-0">
@@ -837,6 +807,11 @@ export default function DashboardOrgAdminInviteMembers({
                       <p className="text-textGrey-0 text-[0.9rem]">
                         {user.email}
                       </p>
+                      {user.expiresIn && (
+                        <p className="text-xs text-gray-400">
+                          Expires: {new Date(user.expiresIn).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

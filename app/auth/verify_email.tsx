@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useTimer } from "use-timer";
 import OtpLength from "../component/auth_otp_input";
-import CreatePassword from "./reset-password/page";
+import CreatePassword from "./create-password/page";
 import MessageComponent from "../component/message_component";
 
 interface Props {

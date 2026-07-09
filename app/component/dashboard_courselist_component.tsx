@@ -5,14 +5,32 @@ import Loader from "./loader";
 import CourseCard from "./dashboard_course_card_component";
 import { FiBookOpen, FiSearch, FiCompass } from "react-icons/fi";
 
+// ✅ Updated Course interface to match CourseCard expectations
 interface Course {
   id: string;
   course_image: string | null;
   course_title: string;
   course_description: string;
-  createdBy: string;
+  course_short_description?: string;
   course_level: string;
-  enrolled: string;
+  createdBy?: string;
+  organizationName?: string;
+  enrollmentStatus: string;
+  isEnrolled: boolean;
+  totalEnrollments: number;
+  progress: {
+    percentage: number;
+    completedLessons: number;
+    totalLessons: number;
+    totalDurationMinutes: number;
+    watchedDurationMinutes: number;
+    isCompleted: boolean;
+  };
+  totalDuration: number;
+  lessonCount: number;
+  moduleCount: number;
+  lastAccessed?: string | null;
+  completedAt?: string | null;
 }
 
 interface CourseListProps {
@@ -24,7 +42,7 @@ interface CourseListProps {
   isLoading?: boolean;
   emptyMessage?: string;
   emptySubMessage?: string;
-  isToggling?: string | null; // ✅ Add this
+  isToggling?: string | null;
 }
 
 export default function CourseList({
@@ -36,7 +54,7 @@ export default function CourseList({
   isLoading = false,
   emptyMessage = "No courses available",
   emptySubMessage = "Check back later for new courses or explore other categories",
-  isToggling = null, // ✅ Add this
+  isToggling = null,
 }: CourseListProps) {
   if (isLoading) {
     return (
@@ -49,11 +67,9 @@ export default function CourseList({
   if (courses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-16">
-        {/* Animated gradient background */}
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primaryColors-0/10 to-green-500/10 rounded-full blur-3xl -z-10 animate-pulse"></div>
           
-          {/* Floating icons animation */}
           <div className="relative">
             <div className="w-28 h-28 mx-auto bg-gradient-to-br from-primaryColors-0/20 to-green-500/20 rounded-3xl flex items-center justify-center">
               <FiCompass className="w-14 h-14 text-primaryColors-0 animate-pulse" />
@@ -67,7 +83,6 @@ export default function CourseList({
           </div>
         </div>
 
-        {/* Text content */}
         <div className="text-center mt-8 space-y-3">
           <h3 className="text-2xl font-bold bg-gradient-to-r from-primaryColors-0 to-green-500 bg-clip-text text-transparent">
             {emptyMessage}
@@ -77,7 +92,6 @@ export default function CourseList({
           </p>
         </div>
 
-        {/* Suggestions */}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <span className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm text-gray-600 dark:text-gray-400">
             🔍 Try different keywords
@@ -90,7 +104,6 @@ export default function CourseList({
           </span>
         </div>
 
-        {/* Decorative dots */}
         <div className="mt-12 flex gap-2">
           {[...Array(5)].map((_, i) => (
             <div
@@ -114,7 +127,7 @@ export default function CourseList({
           onBookmarkToggle={onBookmarkToggle}
           onViewCourse={onViewCourse}
           isViewLoading={loadingCourseId === course.id}
-          isToggling={isToggling === course.id} // ✅ Pass toggling state
+          isToggling={isToggling === course.id}
         />
       ))}
     </div>

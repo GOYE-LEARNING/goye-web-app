@@ -9,6 +9,8 @@ interface SignupData {
   city?: string;
   phone?: string;
   role?: string;
+  languageCode?: string;
+  language?: string;
   level?: string;
   password?: string;
 }

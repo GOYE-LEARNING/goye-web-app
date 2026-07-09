@@ -5,16 +5,100 @@ import { MdDelete } from "react-icons/md";
 import { IoIosRefresh } from "react-icons/io";
 import { OrgSignUp } from "../BodyProvider";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "@/app/utils/checkLanguages";
 
-export default function SchoolInfo({ hideButton = false }: { hideButton?: boolean }) {
+export default function SchoolInfo({
+  hideButton = false,
+}: {
+  hideButton?: boolean;
+}) {
+  const router = useRouter();
   const { formData, setFormData, isSchoolComplete } = OrgSignUp();
+  const { translate } = useLanguage();
   const [docFile, setDocFile] = useState<File | null>(null);
+
+  // Translation states
+  const [translatedTitle, setTranslatedTitle] = useState("School Information");
+  const [translatedContinue, setTranslatedContinue] = useState("Continue");
+  const [translatedUploadDoc, setTranslatedUploadDoc] = useState("Upload school document");
+  const [translatedFileTypes, setTranslatedFileTypes] = useState("PDF, PNG, JPG");
+  const [translatedDocSelected, setTranslatedDocSelected] = useState("Document selected");
+  const [translatedRemove, setTranslatedRemove] = useState("Remove");
+  const [translatedReplace, setTranslatedReplace] = useState("Replace");
+  const [translatedPlaceholder, setTranslatedPlaceholder] = useState("What your role here ?");
+  const [translatedFieldLabels, setTranslatedFieldLabels] = useState<Record<string, string>>({});
+  const [translationsLoaded, setTranslationsLoaded] = useState(false);
+
+  // Load translations
+  useEffect(() => {
+    const loadTranslations = async () => {
+      try {
+        // Main title
+        const title = await translate("School Information");
+        setTranslatedTitle(title);
+
+        // Buttons
+        const continueText = await translate("Continue");
+        setTranslatedContinue(continueText);
+
+        // File upload
+        const uploadDoc = await translate("Upload school document");
+        setTranslatedUploadDoc(uploadDoc);
+
+        const fileTypes = await translate("PDF, PNG, JPG");
+        setTranslatedFileTypes(fileTypes);
+
+        const docSelected = await translate("Document selected");
+        setTranslatedDocSelected(docSelected);
+
+        const remove = await translate("Remove");
+        setTranslatedRemove(remove);
+
+        const replace = await translate("Replace");
+        setTranslatedReplace(replace);
+
+        const placeholder = await translate("What your role here ?");
+        setTranslatedPlaceholder(placeholder);
+
+        // Field labels
+        const fieldLabels: Record<string, string> = {};
+        const fields = [
+          "School Name",
+          "Type of School",
+          "School Address",
+          "Administrator Name",
+          "School Role",
+          "Official School Email Domain",
+          "School Website/Social media",
+          "Accreditation / Registration Number",
+          "Upload Official Document / ID (blurred)"
+        ];
+
+        await Promise.all(
+          fields.map(async (field) => {
+            const translated = await translate(field);
+            fieldLabels[field] = translated;
+          })
+        );
+
+        setTranslatedFieldLabels(fieldLabels);
+        setTranslationsLoaded(true);
+      } catch (error) {
+        console.error("Failed to load translations:", error);
+        setTranslationsLoaded(true);
+      }
+    };
+
+    loadTranslations();
+  }, [translate]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // ✅ Handle document upload (PDF / image)
+  // Handle document upload
   const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -24,13 +108,16 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
     setDocFile(file);
     setFormData({
       ...formData,
-      school_document: file, // Store the actual File object, not just the preview URL
+      school_document: file,
     });
   };
 
-  // ✅ Remove document
+  // Remove document
   const removeDoc = () => {
-    if (typeof formData.school_document === "string" && formData.school_document?.startsWith("blob:")) {
+    if (
+      typeof formData.school_document === "string" &&
+      formData.school_document?.startsWith("blob:")
+    ) {
       URL.revokeObjectURL(formData.school_document);
     }
 
@@ -41,12 +128,17 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
     });
   };
 
-    useEffect(() => {
-      setFormData({ ...formData, school_email: formData.org_email });
-    }, [formData.org_email]);
+  useEffect(() => {
+    setFormData({ ...formData, school_email: formData.org_email });
+  }, [formData.org_email]);
 
   const handleSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
+  };
+
+  // Helper function to get translated label
+  const getTranslatedLabel = (originalLabel: string): string => {
+    return translationsLoaded ? translatedFieldLabels[originalLabel] || originalLabel : originalLabel;
   };
 
   const form = [
@@ -87,13 +179,13 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
       value: formData.school_email,
     },
     {
-      label: "School Website",
+      label: "School Website/Social media",
       name: "school_website",
       type: "text",
       value: formData.school_website,
     },
     {
-      label: "Accreditation / Registration Number ",
+      label: "Accreditation / Registration Number",
       name: "school_accreditation_number",
       type: "text",
       value: formData.school_accreditation_number,
@@ -105,7 +197,6 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
       value: formData.school_document,
     },
   ];
-
 
   return (
     <div
@@ -122,11 +213,11 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
     "
     >
       <h1 className="md:text-[24px] text-[20px] text-white font-semibold pb-[20px]">
-        School Information
+        {translatedTitle}
       </h1>
 
       <form onSubmit={handleSubmit} noValidate>
-        <div className="md:grid md:grid-cols-2 flex flex-col  gap-5 w-full mt-3">
+        <div className="md:grid md:grid-cols-2 flex flex-col gap-5 w-full mt-3">
           {form.map((data, i) => (
             <div
               key={i}
@@ -135,10 +226,10 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
               }`}
             >
               <label className="md:text-[0.8rem] text-[0.95rem]">
-                {data.label}
+                {getTranslatedLabel(data.label)}
               </label>
 
-              {/* ✅ DOCUMENT UPLOAD */}
+              {/* Document Upload */}
               {data.type === "file" ? (
                 <div
                   className="
@@ -160,10 +251,10 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
                         className="absolute inset-0 flex flex-col justify-center items-center cursor-pointer"
                       >
                         <span className="text-[14px] font-medium">
-                          Upload school document
+                          {translatedUploadDoc}
                         </span>
                         <span className="text-[12px] text-white">
-                          PDF, PNG, JPG
+                          {translatedFileTypes}
                         </span>
                       </label>
 
@@ -178,33 +269,33 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
                   ) : (
                     <div className="relative w-full h-full flex justify-center items-center bg-[#eaeaea]">
                       <span className="text-[14px] text-textGrey-0">
-                        Document selected
+                        {translatedDocSelected}
                       </span>
 
                       <div className="absolute inset-0 bg-black/40 flex justify-center items-center gap-3">
                         <button
                           type="button"
                           onClick={removeDoc}
-                          className="  px-4 py-1
+                          className="px-4 py-1
                             rounded-xl
                             bg-white/70
                             backdrop-blur-md
                             hover:bg-white
                             flex items-center gap-2"
                         >
-                          <MdDelete /> Remove
+                          <MdDelete /> {translatedRemove}
                         </button>
 
                         <label
                           htmlFor="school-doc-replace"
-                          className="  px-4 py-1
+                          className="px-4 py-1
                             rounded-xl
                             bg-white/70
                             backdrop-blur-md
                             hover:bg-white
                             flex items-center gap-2 cursor-pointer"
                         >
-                          <IoIosRefresh /> Replace
+                          <IoIosRefresh /> {translatedReplace}
                         </label>
 
                         <input
@@ -222,12 +313,12 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
                 <input
                   type={data.type}
                   name={data.name}
-                  value={data.value as any || ""}
+                  value={(data.value as any) || ""}
                   onChange={handleChange}
-                    className="glass_input"
-                  placeholder={`${
-                    data.name == "school_role" ? "What your role here ?" : ""
-                  }`}
+                  className="glass_input"
+                  placeholder={
+                    data.name == "school_role" ? translatedPlaceholder : ""
+                  }
                 />
               )}
             </div>
@@ -236,6 +327,9 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
 
         {!hideButton && (
           <button
+            onClick={() =>
+              router.push("/auth/organization/organization-verification")
+            }
             disabled={!isSchoolComplete}
             className={`
                      float-right
@@ -255,7 +349,7 @@ export default function SchoolInfo({ hideButton = false }: { hideButton?: boolea
                      }
                    `}
           >
-            Continue <FaArrowRight />
+            {translatedContinue} <FaArrowRight />
           </button>
         )}
       </form>

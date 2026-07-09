@@ -17,6 +17,7 @@ import { ModalProvider } from "./context/SimpleModalContext";
 import { BuiltInTabProvider } from "./context/BuiltinTabContext";
 import { GlobalAPIErrorHandler } from "./component/GlobalApiErrorHandler";
 import { GlobalNotFoundHandler } from "./component/GlobalNotFoundHandler";
+import { LanguageProvider } from "./context/LanguageContext";
 export default function RootLayout({
   children,
 }: {
@@ -39,13 +40,15 @@ export default function RootLayout({
                   <OrganizationProvider>
                     <ModalProvider>
                       <BuiltInTabProvider>
-                        <div className="min-h-[100dvh] w-full max-w-[100vw] min-w-0  overflow-x-hidden">
-                          <Cursor />
+                        <LanguageProvider>
+                          <div className="min-h-[100dvh] w-full max-w-[100vw] min-w-0  overflow-x-hidden">
+                            <Cursor />
 
-                          {children}
-                          <div id="modal-root" />
-                          <div id="slideshow-modal-root" />
-                        </div>
+                            {children}
+                            <div id="modal-root" />
+                            <div id="slideshow-modal-root" />
+                          </div>
+                        </LanguageProvider>
                       </BuiltInTabProvider>
                     </ModalProvider>
                   </OrganizationProvider>

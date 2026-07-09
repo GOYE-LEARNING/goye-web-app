@@ -7,6 +7,7 @@ import { Country, State } from "country-state-city";
 import { useEffect, useRef, useState } from "react";
 import DropDowns from "@/app/component/drop_downs";
 import { usePathname, useRouter } from "next/navigation";
+import { useLanguage } from "@/app/utils/checkLanguages";
 
 interface CountryType {
   name: string;
@@ -18,8 +19,20 @@ interface StateType {
   isoCode: string;
 }
 
-export default function UserInfo() {
+interface Props {
+  hideButton: boolean;
+}
+
+interface FormField {
+  type: string;
+  name: string;
+  label: string;
+  value?: string;
+}
+
+export default function UserInfo({ hideButton }: Props) {
   const { formData, setFormData, isUserComplete } = OrgSignUp();
+  const { translate } = useLanguage();
   const dropDownCountryRef = useRef<HTMLDivElement | null>(null);
   const dropDownStateRef = useRef<HTMLDivElement | null>(null);
 
@@ -31,6 +44,13 @@ export default function UserInfo() {
   const [selectedCountryISO, setSelectedCountryISO] = useState<string>("");
 
   const [showBtn, setShowBtn] = useState(true);
+  const [translatedLabels, setTranslatedLabels] = useState<Record<string, string>>({});
+  const [translationsLoaded, setTranslationsLoaded] = useState<boolean>(false);
+  const [translatedPlaceholder, setTranslatedPlaceholder] = useState<string>("Enter phone number (numbers only)");
+  const [translatedNoState, setTranslatedNoState] = useState<string>("No state or city is in this country.");
+  const [translatedTitle, setTranslatedTitle] = useState<string>("User Information");
+  const [translatedContinue, setTranslatedContinue] = useState<string>("Continue");
+
   const pathname = usePathname();
   const path = "/auth/organization/organization-verification";
   const router = useRouter();
@@ -39,9 +59,59 @@ export default function UserInfo() {
     if (pathname === path) setShowBtn(false);
   }, [pathname]);
 
+  // Load translations
+  useEffect(() => {
+    const loadTranslations = async () => {
+      try {
+        // Translate title
+        const titleTranslation = await translate("User Information");
+        setTranslatedTitle(titleTranslation);
+
+        // Translate continue button
+        const continueTranslation = await translate("Continue");
+        setTranslatedContinue(continueTranslation);
+
+        // Translate placeholder
+        const placeholderTranslation = await translate("Enter phone number (numbers only)");
+        setTranslatedPlaceholder(placeholderTranslation);
+
+        // Translate no state message
+        const noStateTranslation = await translate("No state or city is in this country.");
+        setTranslatedNoState(noStateTranslation);
+
+        // Translate form labels
+        const labelTranslations: Record<string, string> = {};
+        const labels = [
+          "First Name",
+          "Last Name",
+          "Email Address",
+          "Phone Number",
+          "Country",
+          "State/City",
+          "Default Role(Cannot be changed)",
+          "Form Type (Cannot be changed)",
+        ];
+
+        await Promise.all(
+          labels.map(async (label) => {
+            const translated = await translate(label);
+            labelTranslations[label] = translated;
+          })
+        );
+
+        setTranslatedLabels(labelTranslations);
+        setTranslationsLoaded(true);
+      } catch (error) {
+        console.error("Failed to load translations:", error);
+        setTranslationsLoaded(true);
+      }
+    };
+
+    loadTranslations();
+  }, [translate]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Only allow numbers for phone number field
     if (name === "user_phone_number") {
       const numbersOnly = value.replace(/\D/g, "");
       setFormData({ ...formData, [name]: numbersOnly });
@@ -76,11 +146,11 @@ export default function UserInfo() {
   }, [selectedCountryISO]);
 
   const filterCountry = countries.filter((c) =>
-    c.name.toLowerCase().includes(formData.user_country?.toLowerCase() || "")
+    c.name.toLowerCase().includes(formData.user_country?.toLowerCase() || ""),
   );
 
   const filterState = states.filter((s) =>
-    s.name.toLowerCase().includes(formData.user_state?.toLowerCase() || "")
+    s.name.toLowerCase().includes(formData.user_state?.toLowerCase() || ""),
   );
 
   const handleCountrySelect = (country: CountryType) => {
@@ -99,18 +169,27 @@ export default function UserInfo() {
   const handleSubmit = (e: React.ChangeEvent<HTMLFormElement>) =>
     e.preventDefault();
 
-  const form = [
+  // Helper function to get translated label
+  const getTranslatedLabel = (originalLabel: string): string => {
+    return translationsLoaded ? translatedLabels[originalLabel] || originalLabel : originalLabel;
+  };
+
+  const form: FormField[] = [
     { type: "text", name: "user_first_name", label: "First Name" },
     { type: "text", name: "user_last_name", label: "Last Name" },
     { type: "email", name: "user_email_address", label: "Email Address" },
     { type: "tel", name: "user_phone_number", label: "Phone Number" },
     { type: "text", name: "user_country", label: "Country" },
     { type: "text", name: "user_state", label: "State/City" },
-    { type: "text", name: "user_role", label: "Role", value: "admin" },
+    {
+      type: "text",
+      name: "user_role",
+      label: "Default Role(Cannot be changed)",
+    },
     {
       type: "text",
       name: "user_form_type",
-      label: "Form Type",
+      label: "Form Type (Cannot be changed)",
       value: "organization",
     },
   ];
@@ -133,7 +212,7 @@ export default function UserInfo() {
     "
     >
       <h1 className="md:text-[24px] text-[20px] font-semibold pb-5">
-        User Information
+        {translatedTitle}
       </h1>
 
       <form onSubmit={handleSubmit} className="py-3" noValidate>
@@ -141,15 +220,15 @@ export default function UserInfo() {
           {form.map((data, i) => (
             <div key={i} className="flex flex-col gap-1">
               <label className="md:text-[0.8rem] text-[0.95rem]">
-                {data.label}
+                {getTranslatedLabel(data.label)}
               </label>
 
-              {data.name === "user_role" ? (
+              {data.name == "user_role" ? (
                 <input
                   value={formData[data.name]}
                   name={data.name}
                   onChange={handleChange}
-                  className={`${glassTextArea} opacity-70`}
+                  className={`${glassTextArea} opacity-70 cursor-not-allowed`}
                   disabled
                 />
               ) : data.name === "user_form_type" ? (
@@ -173,6 +252,7 @@ export default function UserInfo() {
                     name={data.name}
                     onClick={() => setCountryDropdown(true)}
                     className="bg-transparent border-none outline-none w-full py-2"
+                    placeholder={getTranslatedLabel("Search country...")}
                   />
                   <span
                     className="absolute right-3 top-[28%] h-full"
@@ -218,6 +298,7 @@ export default function UserInfo() {
                     name={data.name}
                     onClick={() => selectedCountryISO && setStateDropdown(true)}
                     className="bg-transparent border-none outline-none w-full py-2"
+                    placeholder={getTranslatedLabel("Search state...")}
                   />
                   <span
                     className="absolute right-3 top-[28%] h-full"
@@ -233,7 +314,7 @@ export default function UserInfo() {
                         countries={
                           filterState.length == 0 ? (
                             <div className="text-center my-[2rem] text-white text-[15px]">
-                              No state or city is in this country.
+                              {translatedNoState}
                             </div>
                           ) : (
                             <div>
@@ -269,19 +350,37 @@ export default function UserInfo() {
                   onChange={handleChange}
                   name={data.name}
                   maxLength={data.type === "tel" ? 15 : undefined}
-                  inputMode={data.type === "tel" ? "numeric" : "text"}
                   className="glass_input focus:ring-2 focus:ring-primaryColors-0 focus:ring-offset-0 focus:bg-white/40"
-                  placeholder={data.type === "tel" ? "Enter phone number (numbers only)" : ""}
+                  placeholder={
+                    data.type === "tel" ? translatedPlaceholder : ""
+                  }
                 />
               )}
             </div>
           ))}
         </div>
 
-        {showBtn && (
-          <button
-            disabled={!isUserComplete}
-            className={`
+        {hideButton ? (
+          ""
+        ) : (
+          <div>
+            {showBtn && (
+              <button
+                onClick={() => {
+                  if (formData.org_type == "church") {
+                    router.push("/auth/organization/organization-church");
+                  } else if (formData.org_type == "school") {
+                    router.push("/auth/organization/organization-school");
+                  } else if (formData.org_type == "club") {
+                    router.push("/auth/organization/organization-club");
+                  } else {
+                    router.push(
+                      "/auth/organization/organization/organization-verification",
+                    );
+                  }
+                }}
+                disabled={!isUserComplete}
+                className={`
               float-right
               mt-8
               w-[200px]
@@ -298,9 +397,11 @@ export default function UserInfo() {
                   : "hover:bg-black"
               }
             `}
-          >
-            Continue <FaArrowRight />
-          </button>
+              >
+                {translatedContinue} <FaArrowRight />
+              </button>
+            )}
+          </div>
         )}
       </form>
     </div>

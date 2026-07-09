@@ -49,6 +49,12 @@ export default function DashboardStudentCourseList({
   const [videoDurations, setVideoDurations] = useState<Map<string, number>>(new Map());
   const [initialSeekTime, setInitialSeekTime] = useState<number | undefined>(undefined);
 
+  // ─── Race-condition guard ──────────────────────────────────────────────────
+  // Prevents concurrent POST /track-video calls for the same lesson,
+  // which caused the P2002 unique constraint violation on (lessonId, progressId).
+  const trackingInFlight = useRef<Set<string>>(new Set());
+  // ──────────────────────────────────────────────────────────────────────────
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   // Helper: get tracker ID for a lesson
@@ -68,28 +74,45 @@ export default function DashboardStudentCourseList({
   };
 
   // Core tracking function (create or update)
-  const trackVideoProgress = async (lessonId: string, currentTime: number, videoFinished: boolean) => {
+  const trackVideoProgress = async (
+    lessonId: string,
+    currentTime: number,
+    videoFinished: boolean
+  ) => {
     try {
-      if (!lessonId || typeof currentTime !== 'number' || isNaN(currentTime)) return;
+      if (!lessonId || typeof currentTime !== "number" || isNaN(currentTime)) return;
+
+      // ─── In-flight guard ───────────────────────────────────────────────────
+      // If a request for this lesson is already in-flight, skip to prevent the
+      // race condition that caused the P2002 unique constraint violation.
+      if (trackingInFlight.current.has(lessonId)) return;
+      trackingInFlight.current.add(lessonId);
+      // ──────────────────────────────────────────────────────────────────────
 
       const trackerId = videoTrackerIds.get(lessonId);
-      if (finishedLessons.has(lessonId) && !videoFinished) return;
+      if (finishedLessons.has(lessonId) && !videoFinished) {
+        trackingInFlight.current.delete(lessonId);
+        return;
+      }
 
       const roundedTime = Math.round(currentTime * 100) / 100;
-      setLessonProgress(prev => new Map(prev).set(lessonId, roundedTime));
+      setLessonProgress((prev) => new Map(prev).set(lessonId, roundedTime));
 
       if (trackerId) {
-        const response = await fetch(`${API_URL}/api/video/update-track-video/${trackerId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ videoTrackTime: roundedTime, videoFinished }),
-        });
+        const response = await fetch(
+          `${API_URL}/api/video/update-track-video/${trackerId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ videoTrackTime: roundedTime, videoFinished }),
+          }
+        );
         if (!response.ok) throw new Error("Failed to update tracking");
         const data = await response.json();
         if (data.data?.videoFinished && !finishedLessons.has(lessonId)) {
-          setFinishedLessons(prev => new Set(prev).add(lessonId));
-          setCompletedLessons(prev => new Set(prev).add(lessonId));
+          setFinishedLessons((prev) => new Set(prev).add(lessonId));
+          setCompletedLessons((prev) => new Set(prev).add(lessonId));
         }
       } else {
         const response = await fetch(`${API_URL}/api/video/track-video`, {
@@ -106,16 +129,21 @@ export default function DashboardStudentCourseList({
         if (!response.ok) throw new Error("Failed to create tracking");
         const data = await response.json();
         if (data.data?.id) {
-          setVideoTrackerIds(prev => new Map(prev).set(lessonId, data.data.id));
+          setVideoTrackerIds((prev) => new Map(prev).set(lessonId, data.data.id));
         }
         if (data.data?.videoFinished) {
-          setFinishedLessons(prev => new Set(prev).add(lessonId));
-          setCompletedLessons(prev => new Set(prev).add(lessonId));
+          setFinishedLessons((prev) => new Set(prev).add(lessonId));
+          setCompletedLessons((prev) => new Set(prev).add(lessonId));
         }
       }
-      setLastSavedTime(prev => new Map(prev).set(lessonId, roundedTime));
+
+      setLastSavedTime((prev) => new Map(prev).set(lessonId, roundedTime));
     } catch (error) {
       console.error("Error in trackVideoProgress:", error);
+    } finally {
+      // ─── Always release the lock ─────────────────────────────────────────
+      trackingInFlight.current.delete(lessonId);
+      // ─────────────────────────────────────────────────────────────────────
     }
   };
 
@@ -134,9 +162,12 @@ export default function DashboardStudentCourseList({
     const lessonId = selectedLessonId || expandedLesson;
     if (!lessonId || finishedLessons.has(lessonId)) return;
 
-    setLessonProgress(prev => new Map(prev).set(lessonId, currentTime));
+    setLessonProgress((prev) => new Map(prev).set(lessonId, currentTime));
     const lastSaved = lastSavedTime.get(lessonId) || 0;
-    if (Math.floor(currentTime) % 30 === 0 && Math.abs(currentTime - lastSaved) >= 30) {
+    if (
+      Math.floor(currentTime) % 30 === 0 &&
+      Math.abs(currentTime - lastSaved) >= 30
+    ) {
       trackVideoProgress(lessonId, currentTime, false);
     }
   };
@@ -145,7 +176,8 @@ export default function DashboardStudentCourseList({
   const handleVideoPause = (currentTime: number, duration: number) => {
     const lessonId = selectedLessonId || expandedLesson;
     if (lessonId) {
-      const finished = currentTime >= duration * 0.95 || currentTime === duration;
+      const finished =
+        currentTime >= duration * 0.95 || currentTime === duration;
       trackVideoProgress(lessonId, currentTime, finished);
     }
   };
@@ -163,20 +195,26 @@ export default function DashboardStudentCourseList({
       if (!videoTrackerIds.has(lessonId)) {
         const trackerData = await getTrackerId(lessonId);
         if (trackerData) {
-          setVideoTrackerIds(prev => new Map(prev).set(lessonId, trackerData.id));
-          setLessonProgress(prev => new Map(prev).set(lessonId, trackerData.videoTrackTime));
+          setVideoTrackerIds((prev) => new Map(prev).set(lessonId, trackerData.id));
+          setLessonProgress((prev) =>
+            new Map(prev).set(lessonId, trackerData.videoTrackTime)
+          );
           if (trackerData.videoFinished) {
-            setFinishedLessons(prev => new Set(prev).add(lessonId));
-            setCompletedLessons(prev => new Set(prev).add(lessonId));
+            setFinishedLessons((prev) => new Set(prev).add(lessonId));
+            setCompletedLessons((prev) => new Set(prev).add(lessonId));
           } else if (trackerData.videoTrackTime > 0) {
             setInitialSeekTime(trackerData.videoTrackTime);
           }
         } else {
-          setLessonProgress(prev => new Map(prev).set(lessonId, 0));
+          setLessonProgress((prev) => new Map(prev).set(lessonId, 0));
         }
       } else {
         const existingProgress = lessonProgress.get(lessonId);
-        if (existingProgress && existingProgress > 0 && !finishedLessons.has(lessonId)) {
+        if (
+          existingProgress &&
+          existingProgress > 0 &&
+          !finishedLessons.has(lessonId)
+        ) {
           setInitialSeekTime(existingProgress);
         }
       }
@@ -195,9 +233,10 @@ export default function DashboardStudentCourseList({
       setSelectedLessonId(null);
     } else {
       setExpandedModule(moduleId);
-      const module = modules.find(m => m.id === moduleId);
+      const module = modules.find((m) => m.id === moduleId);
       const firstLesson = module?.lesson?.[0];
-      if (firstLesson) handleLessonSelect(firstLesson.id, firstLesson.lesson_video);
+      if (firstLesson)
+        handleLessonSelect(firstLesson.id, firstLesson.lesson_video);
     }
   };
 
@@ -211,7 +250,11 @@ export default function DashboardStudentCourseList({
     }
   };
 
-  const handleRadioChange = (lessonId: string, videoUrl: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRadioChange = (
+    lessonId: string,
+    videoUrl: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     e.stopPropagation();
     if (e.target.checked) handleLessonSelect(lessonId, videoUrl);
     else if (selectedLessonId === lessonId) {
@@ -226,10 +269,13 @@ export default function DashboardStudentCourseList({
     const fetchCourseModules = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/api/course/get-course/${courseId}`, {
-          method: "GET",
-          credentials: "include",
-        });
+        const res = await fetch(
+          `${API_URL}/api/course/get-course/${courseId}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
         if (!res.ok) throw new Error(`Failed to fetch course: ${res.status}`);
         const data = await res.json();
         setModules(data.data.module || []);
@@ -245,13 +291,20 @@ export default function DashboardStudentCourseList({
   // Store video duration when metadata loads
   const handleLoadedMetadata = (duration: number) => {
     const lessonId = selectedLessonId || expandedLesson;
-    if (lessonId) setVideoDurations(prev => new Map(prev).set(lessonId, duration));
+    if (lessonId)
+      setVideoDurations((prev) => new Map(prev).set(lessonId, duration));
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader height={40} width={40} border_width={3} full_border_color="transparent" small_border_color="#FFA500" />
+        <Loader
+          height={40}
+          width={40}
+          border_width={3}
+          full_border_color="transparent"
+          small_border_color="#FFA500"
+        />
       </div>
     );
   }
@@ -279,7 +332,13 @@ export default function DashboardStudentCourseList({
                 {loadingLesson && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
                     <div className="bg-white rounded-lg p-4 flex items-center gap-3">
-                      <Loader height={24} width={24} border_width={2} full_border_color="transparent" small_border_color="#FFA500" />
+                      <Loader
+                        height={24}
+                        width={24}
+                        border_width={2}
+                        full_border_color="transparent"
+                        small_border_color="#FFA500"
+                      />
                       <span className="text-gray-700">Loading lesson...</span>
                     </div>
                   </div>
@@ -305,18 +364,28 @@ export default function DashboardStudentCourseList({
               <div className="p-4">No modules found for this course.</div>
             ) : (
               modules.map((module) => (
-                <div key={module.id} className="mb-4 border-b border-gray-200/20">
+                <div
+                  key={module.id}
+                  className="mb-4 border-b border-gray-200/20"
+                >
                   <div
                     className="flex justify-between items-center p-3 cursor-pointer hover:bg-lightWhite-0 dark:hover:bg-shadyColor-0 duration-200 transition-all mb-4"
                     onClick={() => toggleModule(module.id)}
                   >
                     <div>
-                      <h3 className="font-medium capitalize">{module.module_title}</h3>
+                      <h3 className="font-medium capitalize">
+                        {module.module_title}
+                      </h3>
                       <p className="text-sm text-gray-500">
-                        {module.lesson?.length || 0} lessons • {module.module_duration}
+                        {module.lesson?.length || 0} lessons •{" "}
+                        {module.module_duration}
                       </p>
                     </div>
-                    <MdChevronRight className={`transform transition-transform ${expandedModule === module.id ? "rotate-90" : ""}`} />
+                    <MdChevronRight
+                      className={`transform transition-transform ${
+                        expandedModule === module.id ? "rotate-90" : ""
+                      }`}
+                    />
                   </div>
 
                   {expandedModule === module.id && (
@@ -326,52 +395,106 @@ export default function DashboardStudentCourseList({
                       exit={{ height: 0, opacity: 0 }}
                       className="ml-4"
                     >
-                      <p className="text-[14px] text-nearTextColors-0 pb-3">{module.module_description}</p>
+                      <p className="text-[14px] text-nearTextColors-0 pb-3">
+                        {module.module_description}
+                      </p>
                       {module.lesson?.map((lesson) => {
                         const isFinished = finishedLessons.has(lesson.id);
                         const progress = lessonProgress.get(lesson.id) || 0;
-                        const duration = videoDurations.get(lesson.id) || (lesson.duration ? lesson.duration * 60 : 300);
-                        const progressPercentage = duration > 0 ? (progress / duration) * 100 : 0;
+                        const duration =
+                          videoDurations.get(lesson.id) ||
+                          (lesson.duration ? lesson.duration * 60 : 300);
+                        const progressPercentage =
+                          duration > 0 ? (progress / duration) * 100 : 0;
 
                         return (
-                          <div key={lesson.id} className="border-t border-[#ccc]/20">
+                          <div
+                            key={lesson.id}
+                            className="border-t border-[#ccc]/20"
+                          >
                             <div
                               className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-lightWhite-0 dark:hover:bg-shadyColor-0 ${
-                                selectedLessonId === lesson.id ? 'dark:bg-shadyColor-0 bg-lightWhite-0' : ''
-                              } ${isFinished ? 'bg-green-50 dark:bg-green-900/20' : ''}`}
-                              onClick={() => toggleLesson(lesson.id, lesson.lesson_video)}
+                                selectedLessonId === lesson.id
+                                  ? "dark:bg-shadyColor-0 bg-lightWhite-0"
+                                  : ""
+                              } ${
+                                isFinished
+                                  ? "bg-green-50 dark:bg-green-900/20"
+                                  : ""
+                              }`}
+                              onClick={() =>
+                                toggleLesson(lesson.id, lesson.lesson_video)
+                              }
                             >
                               <input
                                 type="radio"
                                 name="selectedLesson"
                                 checked={selectedLessonId === lesson.id}
-                                onChange={(e) => handleRadioChange(lesson.id, lesson.lesson_video, e)}
+                                onChange={(e) =>
+                                  handleRadioChange(
+                                    lesson.id,
+                                    lesson.lesson_video,
+                                    e
+                                  )
+                                }
                                 onClick={(e) => e.stopPropagation()}
                                 className="w-4 h-4 text-blue-600"
                                 disabled={isFinished}
                               />
-                              <MdChevronRight className={`transform transition-transform ${expandedLesson === lesson.id ? "rotate-90" : ""}`} />
+                              <MdChevronRight
+                                className={`transform transition-transform ${
+                                  expandedLesson === lesson.id
+                                    ? "rotate-90"
+                                    : ""
+                                }`}
+                              />
                               <div className="flex-1">
                                 <div className="flex items-center">
-                                  <span className={`font-medium uppercase ${isFinished ? 'text-green-600 line-through' : ''}`}>
+                                  <span
+                                    className={`font-medium uppercase ${
+                                      isFinished
+                                        ? "text-green-600 line-through"
+                                        : ""
+                                    }`}
+                                  >
                                     {lesson.lesson_title}
                                   </span>
-                                  {isFinished && <span className="ml-2 text-xs text-green-600 font-normal">✓ Completed</span>}
+                                  {isFinished && (
+                                    <span className="ml-2 text-xs text-green-600 font-normal">
+                                      ✓ Completed
+                                    </span>
+                                  )}
                                 </div>
                                 {!isFinished && progress > 0 && (
                                   <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1 overflow-hidden">
-                                    <div className="bg-primaryColors-0 h-1.5 rounded-full transition-all duration-300" style={{ width: `${Math.min(progressPercentage, 100)}%` }} />
+                                    <div
+                                      className="bg-primaryColors-0 h-1.5 rounded-full transition-all duration-300"
+                                      style={{
+                                        width: `${Math.min(
+                                          progressPercentage,
+                                          100
+                                        )}%`,
+                                      }}
+                                    />
                                   </div>
                                 )}
-                                {process.env.NODE_ENV === 'development' && !isFinished && progress > 0 && (
-                                  <div className="text-xs text-gray-400 mt-1">
-                                    {Math.round(progress)}s / {Math.round(duration)}s ({Math.round(progressPercentage)}%)
-                                  </div>
-                                )}
+                                {process.env.NODE_ENV === "development" &&
+                                  !isFinished &&
+                                  progress > 0 && (
+                                    <div className="text-xs text-gray-400 mt-1">
+                                      {Math.round(progress)}s /{" "}
+                                      {Math.round(duration)}s (
+                                      {Math.round(progressPercentage)}%)
+                                    </div>
+                                  )}
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-500">
                                 <GoVideo />
-                                <span>{lesson.duration ? `${lesson.duration}min` : "5min"}</span>
+                                <span>
+                                  {lesson.duration
+                                    ? `${lesson.duration}min`
+                                    : "5min"}
+                                </span>
                               </div>
                             </div>
                           </div>

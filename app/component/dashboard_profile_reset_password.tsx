@@ -79,9 +79,11 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
       });
 
       const data = await res.json();
-
+      console.log(data);
       if (!res.ok) {
-        throw new Error(data.message || data.error || "Failed to update password");
+        throw new Error(
+          data.message || data.error || "Failed to update password",
+        );
       }
 
       setMessage({ text: "Password updated successfully!", type: "success" });
@@ -92,11 +94,13 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
       setTimeout(() => {
         handleRedirect();
       }, 1500);
-      
     } catch (error) {
       console.error("Error updating password:", error);
       setMessage({
-        text: error instanceof Error ? error.message : "Failed to update password. Please try again.",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to update password. Please try again.",
         type: "error",
       });
     } finally {
@@ -187,7 +191,10 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
                       return (
                         <div key={index} className="flex items-center gap-2">
                           {passed ? (
-                            <MdCheckCircle className="text-green-500" size={16} />
+                            <MdCheckCircle
+                              className="text-green-500"
+                              size={16}
+                            />
                           ) : (
                             <MdCancel className="text-red-500" size={16} />
                           )}

@@ -648,274 +648,353 @@ export default function DashboardTutorCreateCourse({
   };
 
   const handleUpdateCourse = async (e?: React.FormEvent<HTMLFormElement>) => {
-    e?.preventDefault();
-    if (!courseId) return;
+  e?.preventDefault();
+  if (!courseId) return;
 
-    setIsUploading(true);
-    setUploadProgress(0);
-    setUploadStatus("Starting course update...");
+  setIsUploading(true);
+  setUploadProgress(0);
+  setUploadStatus("Starting course update...");
 
-    try {
-      let updatedImageUrl = formData.course_image;
-      if (
-        formData.courseImageFile &&
-        validateFileObject(formData.courseImageFile)
-      ) {
-        try {
-          setUploadStatus("Uploading new course image...");
-          updatedImageUrl = await uploadCourseImage(
-            formData.courseImageFile,
-            courseId,
-          );
-        } catch (error) {
-          console.error("Failed to upload course image:", error);
-        }
-      }
-
-      const videoUpdates: {
-        lessonId: string;
-        videoUrl: string;
-        duration: number;
-      }[] = [];
-      for (const module of formData.module || []) {
-        for (const lesson of module.lessons) {
-          if (lesson.videoFile && validateFileObject(lesson.videoFile)) {
-            try {
-              setUploadStatus(`Uploading video: ${lesson.lesson_title}...`);
-              let duration = lesson.duration;
-              if (!duration) {
-                try {
-                  duration = await getVideoDuration(lesson.videoFile);
-                } catch (error) {
-                  duration = 300;
-                }
-              }
-              const uploadResult = await uploadLessonVideo(
-                lesson.videoFile,
-                courseId,
-                module.id.toString(),
-              );
-              videoUpdates.push({
-                lessonId: lesson.id.toString(),
-                videoUrl: uploadResult.url,
-                duration: duration,
-              });
-            } catch (error) {
-              console.error(`Failed to upload video:`, error);
-            }
-          }
-        }
-      }
-
-      const materialUpdates: { materialId: string; documentUrl: string }[] = [];
-      for (const material of formData.material || []) {
-        const doc = material.material_document[0];
-        if (doc?.documentFile && validateFileObject(doc.documentFile)) {
-          try {
-            setUploadStatus(
-              `Uploading document: ${material.material_title}...`,
-            );
-            const documentUrl = await uploadCourseMaterial(
-              doc.documentFile,
-              courseId,
-              material.id.toString(),
-            );
-            materialUpdates.push({
-              materialId: material.id.toString(),
-              documentUrl,
-            });
-          } catch (error) {
-            console.error(`Failed to upload document:`, error);
-          }
-        }
-      }
-
-      setUploadProgress(30);
-      setUploadStatus("Updating course structure...");
-
-      const videoUrlMap = new Map(
-        videoUpdates.map((v) => [v.lessonId, v.videoUrl]),
-      );
-      const videoDurationMap = new Map(
-        videoUpdates.map((v) => [v.lessonId, v.duration]),
-      );
-      const materialUrlMap = new Map(
-        materialUpdates.map((m) => [m.materialId, m.documentUrl]),
-      );
-
-      const isRealDbId = (id: any): boolean => {
-        if (!id) return false;
-        return (
-          typeof id === "string" &&
-          (id.startsWith("cm") || id.startsWith("cml") || id.length > 20)
+  try {
+    let updatedImageUrl = formData.course_image;
+    if (
+      formData.courseImageFile &&
+      validateFileObject(formData.courseImageFile)
+    ) {
+      try {
+        setUploadStatus("Uploading new course image...");
+        updatedImageUrl = await uploadCourseImage(
+          formData.courseImageFile,
+          courseId,
         );
-      };
+      } catch (error) {
+        console.error("Failed to upload course image:", error);
+      }
+    }
 
-      const modulesPayload = (formData.module || []).map((mod, index) => ({
-        ...(isRealDbId(mod.id) && { id: mod.id.toString() }),
+    // Helper to check if an ID is a real database ID
+    const isRealDbId = (id: any): boolean => {
+      if (!id) return false;
+      return (
+        typeof id === "string" &&
+        (id.startsWith("cm") || id.startsWith("cml") || id.length > 20)
+      );
+    };
+
+    // Separate existing modules from new modules
+    const existingModules = (formData.module || []).filter(mod => isRealDbId(mod.id));
+    const newModules = (formData.module || []).filter(mod => !isRealDbId(mod.id));
+
+    // Prepare payload with ALL modules (existing + new)
+    const modulesPayload = (formData.module || []).map((mod, index) => {
+      const isExisting = isRealDbId(mod.id);
+      
+      // For new modules, we need to include their lessons but with empty video URLs
+      // The videos will be uploaded after the modules are created
+      const lessonsPayload = (mod.lessons || []).map((lesson, lessonIndex) => {
+        const lessonPayload: any = {
+          lesson_title: lesson.lesson_title || "",
+          // For existing lessons, keep the video URL
+          // For new lessons, use empty string - we'll upload videos after
+          lesson_video: isExisting ? (lesson.lesson_video || "") : "",
+          order: lessonIndex + 1,
+          duration: lesson.duration || 300,
+        };
+        if (isExisting && isRealDbId(lesson.id)) {
+          lessonPayload.id = lesson.id.toString();
+        }
+        return lessonPayload;
+      });
+
+      const modulePayload: any = {
         module_title: mod.module_title || "",
         module_description: mod.module_description || "",
         module_duration: mod.module_time || "0",
         order: index + 1,
-        lessons: (mod.lessons || []).map((lesson, lessonIndex) => {
-          const duration =
-            videoDurationMap.get(lesson.id.toString()) || lesson.duration || 0;
-          const lessonPayload: any = {
-            lesson_title: lesson.lesson_title || "",
-            lesson_video:
-              videoUrlMap.get(lesson.id.toString()) ||
-              lesson.lesson_video ||
-              "",
-            order: lessonIndex + 1,
-            duration: duration,
-          };
-          if (isRealDbId(lesson.id)) {
-            lessonPayload.id = lesson.id.toString();
-          }
-          return lessonPayload;
-        }),
-      }));
-
-      const materialsPayload = (formData.material || []).map((mat) => {
-        const materialPayload: any = {
-          material_title: mat.material_title || "",
-          material_description: mat.material_description || "",
-          material_pages: mat.material_page || 0,
-          material_document:
-            materialUrlMap.get(mat.id.toString()) ||
-            mat.material_document[0]?.material_document ||
-            "",
-        };
-        if (isRealDbId(mat.id)) {
-          materialPayload.id = mat.id.toString();
-        }
-        return materialPayload;
-      });
-
-      const objectivesPayload =
-        formData.objective.length > 0
-          ? [
-              {
-                ...(isRealDbId(formData.objective[0]?.id) && {
-                  id: formData.objective[0]?.id?.toString(),
-                }),
-                objective_title1: formData.objective[0]?.obj1 || "",
-                objective_title2: formData.objective[0]?.obj2 || "",
-                objective_title3: formData.objective[0]?.obj3 || "",
-                objective_title4: formData.objective[0]?.obj4 || "",
-                objective_title5: formData.objective[0]?.obj5 || "",
-              },
-            ]
-          : [];
-
-      const quizPayload = (formData.quiz || []).map((qz) => {
-        const quizPayload: any = {
-          quiz_title: qz.quiz_title || "",
-          quiz_description: qz.quiz_description || "",
-          quiz_duration: parseInt(qz.quiz_duration) || 30,
-          quiz_score: parseInt(qz.quiz_passing_score) || 70,
-          questions: (qz.quiz_questions || []).map((q) => {
-            const questionPayload: any = {
-              question_name: q.quiz_question || "",
-              options: q.quiz_options || [],
-              correctAnswer: q.correctAnswer || "",
-            };
-            if (isRealDbId(q.id)) {
-              questionPayload.id = q.id.toString();
-            }
-            return questionPayload;
-          }),
-        };
-        if (isRealDbId(qz.id)) {
-          quizPayload.id = qz.id.toString();
-        }
-        return quizPayload;
-      });
-
-      const updatePayload = {
-        course_title: formData.course_title || "",
-        course_short_description: formData.course_short_description || "",
-        course_description: formData.course_description || "",
-        course_level: formData.course_level || "",
-        course_image: updatedImageUrl || formData.course_image || "",
-        modules: modulesPayload,
-        materials: materialsPayload,
-        objectives: objectivesPayload,
-        quiz: quizPayload,
+        lessons: lessonsPayload,
       };
 
-      setUploadProgress(50);
-      setUploadStatus("Sending update to server...");
-
-      const updateResponse = await fetch(
-        `${API_URL}/api/course/update-course/${courseId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(updatePayload),
-        },
-      );
-
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text();
-        throw new Error(
-          `Update failed: ${updateResponse.status} - ${errorText}`,
-        );
+      if (isExisting) {
+        modulePayload.id = mod.id.toString();
       }
 
-      for (const update of videoUpdates) {
-        if (update.lessonId && update.videoUrl) {
+      return modulePayload;
+    });
+
+    const materialsPayload = (formData.material || []).map((mat) => {
+      const materialPayload: any = {
+        material_title: mat.material_title || "",
+        material_description: mat.material_description || "",
+        material_pages: mat.material_page || 0,
+        material_document: isRealDbId(mat.id) 
+          ? (mat.material_document[0]?.material_document || "")
+          : "",
+      };
+      if (isRealDbId(mat.id)) {
+        materialPayload.id = mat.id.toString();
+      }
+      return materialPayload;
+    });
+
+    const objectivesPayload =
+      formData.objective.length > 0
+        ? [
+            {
+              ...(isRealDbId(formData.objective[0]?.id) && {
+                id: formData.objective[0]?.id?.toString(),
+              }),
+              objective_title1: formData.objective[0]?.obj1 || "",
+              objective_title2: formData.objective[0]?.obj2 || "",
+              objective_title3: formData.objective[0]?.obj3 || "",
+              objective_title4: formData.objective[0]?.obj4 || "",
+              objective_title5: formData.objective[0]?.obj5 || "",
+            },
+          ]
+        : [];
+
+    const quizPayload = (formData.quiz || []).map((qz) => {
+      const quizPayload: any = {
+        quiz_title: qz.quiz_title || "",
+        quiz_description: qz.quiz_description || "",
+        quiz_duration: parseInt(qz.quiz_duration) || 30,
+        quiz_score: parseInt(qz.quiz_passing_score) || 70,
+        questions: (qz.quiz_questions || []).map((q) => {
+          const questionPayload: any = {
+            question_name: q.quiz_question || "",
+            options: q.quiz_options || [],
+            correctAnswer: q.correctAnswer || "",
+          };
+          if (isRealDbId(q.id)) {
+            questionPayload.id = q.id.toString();
+          }
+          return questionPayload;
+        }),
+      };
+      if (isRealDbId(qz.id)) {
+        quizPayload.id = qz.id.toString();
+      }
+      return quizPayload;
+    });
+
+    const updatePayload = {
+      course_title: formData.course_title || "",
+      course_short_description: formData.course_short_description || "",
+      course_description: formData.course_description || "",
+      course_level: formData.course_level || "",
+      course_image: updatedImageUrl || formData.course_image || "",
+      modules: modulesPayload,
+      materials: materialsPayload,
+      objectives: objectivesPayload,
+      quiz: quizPayload,
+    };
+
+    setUploadProgress(20);
+    setUploadStatus("Updating course structure...");
+
+    // Step 1: Update the course (this creates new modules in the database)
+    const updateResponse = await fetch(
+      `${API_URL}/api/course/update-course/${courseId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(updatePayload),
+      },
+    );
+
+    if (!updateResponse.ok) {
+      const errorText = await updateResponse.text();
+      throw new Error(
+        `Update failed: ${updateResponse.status} - ${errorText}`,
+      );
+    }
+
+    setUploadProgress(50);
+    setUploadStatus("Fetching updated course data...");
+
+    // Step 2: Fetch the updated course to get the new module/lesson IDs
+    const updatedCourseResponse = await fetch(
+      `${API_URL}/api/course/get-course/${courseId}`,
+      {
+        method: "GET",
+        credentials: "include",
+      },
+    );
+
+    if (!updatedCourseResponse.ok) {
+      throw new Error("Failed to fetch updated course");
+    }
+
+    const updatedCourseData = await updatedCourseResponse.json();
+    const updatedModules = updatedCourseData.data?.module || [];
+
+    setUploadProgress(60);
+    setUploadStatus("Uploading videos for new modules...");
+
+    // Step 3: Now upload videos for NEW modules only
+    // Map new modules by their temporary index to their database IDs
+    let newModuleIndex = 0;
+    const moduleIdMap = new Map();
+
+    updatedModules.forEach((dbModule: any, index: number) => {
+      // Check if this module corresponds to a new module
+      const tempModule = formData.module?.[index];
+      if (tempModule && !isRealDbId(tempModule.id)) {
+        moduleIdMap.set(index, dbModule.id);
+        newModuleIndex++;
+      }
+    });
+
+    // Upload videos for modules that were newly created
+    for (let moduleIndex = 0; moduleIndex < (formData.module || []).length; moduleIndex++) {
+      const tempModule = (formData.module || [])[moduleIndex];
+      
+      // Skip existing modules
+      if (isRealDbId(tempModule.id)) continue;
+      
+      const dbModuleId = moduleIdMap.get(moduleIndex);
+      
+      if (!dbModuleId) {
+        console.warn(`No DB module found for new module at index ${moduleIndex}`);
+        continue;
+      }
+
+      // Get the corresponding database module
+      const dbModule = updatedModules[moduleIndex];
+      const dbLessons = dbModule?.lesson || [];
+
+      for (let lessonIndex = 0; lessonIndex < tempModule.lessons.length; lessonIndex++) {
+        const lesson = tempModule.lessons[lessonIndex];
+        const dbLesson = dbLessons[lessonIndex];
+
+        if (
+          lesson.videoFile && 
+          validateFileObject(lesson.videoFile) &&
+          dbLesson?.id
+        ) {
           try {
+            setUploadStatus(`Uploading video: ${lesson.lesson_title}...`);
+
+            // Get duration
+            let duration = lesson.duration;
+            if (!duration) {
+              try {
+                duration = await getVideoDuration(lesson.videoFile);
+              } catch (error) {
+                duration = 300;
+              }
+            }
+
+            // Upload the video using the database module ID
+            const uploadResult = await uploadLessonVideo(
+              lesson.videoFile,
+              courseId,
+              dbModuleId, // Use the database module ID
+            );
+
+            // Update the lesson with the video URL
             await fetch(
-              `${API_URL}/api/course/update-lesson/${update.lessonId}`,
+              `${API_URL}/api/course/update-lesson/${dbLesson.id}`,
               {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({
-                  lesson_video: update.videoUrl,
-                  duration: update.duration,
+                  lesson_video: uploadResult.url,
+                  lesson_title: lesson.lesson_title,
+                  duration: duration,
                 }),
               },
             );
+
+            // Calculate progress
+            const totalNewVideos = (formData.module || [])
+              .filter(m => !isRealDbId(m.id))
+              .reduce((acc, m) => acc + m.lessons.filter(l => l.videoFile).length, 0);
+            
+            const uploadedVideos = (formData.module || [])
+              .filter(m => !isRealDbId(m.id))
+              .reduce((acc, m) => acc + m.lessons.filter(l => l.videoFile && l.lesson_video).length, 0);
+            
+            setUploadProgress(60 + Math.round((uploadedVideos / totalNewVideos) * 30));
           } catch (error) {
-            console.error(`Failed to update lesson ${update.lessonId}:`, error);
+            console.error(
+              `Failed to upload video for ${lesson.lesson_title}:`,
+              error,
+            );
           }
         }
       }
+    }
 
-      setUploadProgress(80);
-      setUploadStatus("Fetching updated course data...");
+    setUploadProgress(90);
+    setUploadStatus("Uploading documents for new materials...");
 
-      const finalResponse = await fetch(
-        `${API_URL}/api/course/get-course/${courseId}`,
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
+    // Step 4: Upload documents for new materials
+    const updatedMaterials = updatedCourseData.data?.material || [];
+    const materialIdMap = new Map();
 
-      if (finalResponse.ok) {
-        const finalCourseData = await finalResponse.json();
-        if (onCourseUpdate && finalCourseData.data) {
-          onCourseUpdate(finalCourseData.data);
+    updatedMaterials.forEach((dbMaterial: any, index: number) => {
+      const tempMaterial = formData.material?.[index];
+      if (tempMaterial && !isRealDbId(tempMaterial.id)) {
+        materialIdMap.set(index, dbMaterial.id);
+      }
+    });
+
+    for (let materialIndex = 0; materialIndex < (formData.material || []).length; materialIndex++) {
+      const tempMaterial = (formData.material || [])[materialIndex];
+      
+      // Skip existing materials
+      if (isRealDbId(tempMaterial.id)) continue;
+      
+      const dbMaterialId = materialIdMap.get(materialIndex);
+      
+      const doc = tempMaterial.material_document?.[0];
+      if (
+        doc?.documentFile && 
+        validateFileObject(doc.documentFile) &&
+        dbMaterialId
+      ) {
+        try {
+          setUploadStatus(`Uploading document: ${tempMaterial.material_title}...`);
+          
+          const documentUrl = await uploadCourseMaterial(
+            doc.documentFile,
+            courseId,
+            dbMaterialId,
+          );
+
+          // Update progress
+          const totalNewMaterials = (formData.material || [])
+            .filter(m => !isRealDbId(m.id)).length;
+          
+          const uploadedMaterials = (formData.material || [])
+            .filter(m => !isRealDbId(m.id) && m.material_document[0]?.material_document)
+            .length;
+          
+          setUploadProgress(90 + Math.round((uploadedMaterials / totalNewMaterials) * 10));
+        } catch (error) {
+          console.error(
+            `Failed to upload document for ${tempMaterial.material_title}:`,
+            error,
+          );
         }
       }
-
-      setUploadProgress(100);
-      setUploadStatus("Course update completed!");
-      setShowPop(true);
-      refreshCourse();
-    } catch (error: any) {
-      console.error("❌ Course update failed:", error);
-      setUploadStatus("Course update failed!");
-      setShowError(true);
-    } finally {
-      setIsUploading(false);
     }
-  };
 
+    setUploadProgress(100);
+    setUploadStatus("Course updated successfully!");
+    setShowPop(true);
+    refreshCourse();
+
+  } catch (error: any) {
+    console.error("❌ Course update failed:", error);
+    setUploadStatus("Course update failed!");
+    setShowError(true);
+  } finally {
+    setIsUploading(false);
+  }
+};
   const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
     if (isEditMode && courseId) {

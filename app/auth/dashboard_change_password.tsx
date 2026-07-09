@@ -31,25 +31,25 @@ export default function DashboardChangePassword({ backFunction }: Props) {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/user/profile`, {
+        const res = await fetch(`${API_URL}/api/organizations/profile`, {
           method: "GET",
           credentials: "include",
         });
 
         const data = await res.json();
-
+        console.log(data);
         setFormData((prev) => ({
           ...prev,
-          emailAddress: data.user.email_address,
+          emailAddress: data.organization.organization_email,
         }));
 
-        setIsLoading(false)
+        setIsLoading(false);
       } catch (error) {
         console.error(error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     };
 
@@ -139,7 +139,6 @@ export default function DashboardChangePassword({ backFunction }: Props) {
     setMainContainer(false);
     setResetPassword(true);
   }, []);
-  
 
   return (
     <>
@@ -186,7 +185,7 @@ export default function DashboardChangePassword({ backFunction }: Props) {
                       type="email"
                       name={form.name}
                       onChange={handleChange}
-                      value={isLoading ? 'Loading...' : formData.emailAddress}
+                      value={isLoading ? "Loading..." : formData.emailAddress}
                       disabled={true}
                       className={`text-[#1F2937]/20 dark:text-white/50 text-[16px] font-[500] outline-none border-none bg-transparent`}
                       required
@@ -222,7 +221,9 @@ export default function DashboardChangePassword({ backFunction }: Props) {
           type="fg_password"
         />
       )}
-      {resetPassword && <DashboardProfileResetPassword backFunction={backFunction}/>}
+      {resetPassword && (
+        <DashboardProfileResetPassword backFunction={backFunction} />
+      )}
     </>
   );
 }
