@@ -4,11 +4,20 @@ import { useEffect, useState } from "react";
 import { FaMedal } from "react-icons/fa";
 
 interface StudentRanking {
-  rank: number;
-  name: string;
-  xp: number;
-  level: number;
-  courseCount: number;
+  rank?: number;
+  name?: string;
+  xp?: number;
+  level?: number;
+  courseCount?: number;
+  // Alternative field names from API
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  user_name?: string;
+  points?: number;
+  total_xp?: number;
+  user_level?: number;
+  profile_picture?: string;
 }
 
 interface Props {
@@ -68,7 +77,15 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
         }
 
         if (leaderboardData && leaderboardData.length > 0) {
-          setStudents(leaderboardData.slice(0, 5));
+          // Map API response to our interface, handling different field names
+          const mappedStudents = leaderboardData.slice(0, 5).map((student: any, idx: number) => ({
+            rank: student.rank || idx + 1,
+            name: student.name || student.user_name || `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Unknown',
+            xp: student.xp || student.total_xp || student.points || 0,
+            level: student.level || student.user_level || 1,
+            courseCount: student.courseCount || 0,
+          }));
+          setStudents(mappedStudents);
         } else {
           setError("No leaderboard data found");
         }
@@ -155,7 +172,7 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
             </div>
             <div className="text-right">
               <p className="text-[12px] font-bold dark:text-textSlightDark-0 text-lightBoldText-0">
-                {student.xp.toLocaleString()} XP
+                {(student.xp || 0).toLocaleString()} XP
               </p>
             </div>
           </div>
