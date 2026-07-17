@@ -44,9 +44,9 @@ export default function TutorStudent() {
               openStudent={openStudentDetails}
             />
           ) : activeTab == "active" ? (
-            <DashboardTutorActive />
+            <DashboardTutorActive openStudent={openStudentDetails} />
           ) : activeTab == "inactive" ? (
-            <DashboardTutorInActive />
+            <DashboardTutorInActive openStudent={openStudentDetails} />
           ) : (
             ""
           )}
