@@ -86,7 +86,11 @@ const cardVariants = {
 };
 
 export default function HeroPricingSection() {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  if (!API_URL) {
+    console.error('NEXT_PUBLIC_API_URL is not defined');
+    return;
+  }
   const [princingData, setPricingData] = useState<PricingData[]>([]);
   const [roles, setRoles] = useState<"student" | "tutor" | "organization">(
     "student",

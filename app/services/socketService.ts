@@ -109,7 +109,11 @@ class SocketService {
   // ✅ Fetch token from backend since accessToken cookie is httpOnly
   private async fetchSocketToken(): Promise<string | null> {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error("❌ NEXT_PUBLIC_API_URL is not defined");
+        return null;
+      }
 
       console.log("🔑 Fetching socket token...");
       const res = await fetch(`${API_URL}/api/user/socket-token`, {
@@ -143,7 +147,12 @@ class SocketService {
       return;
     }
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!API_URL) {
+      console.error("❌ NEXT_PUBLIC_API_URL is not defined");
+      this._isConnected = false;
+      return;
+    }
 
     console.log("🔌 Attempting to connect to socket server...");
 

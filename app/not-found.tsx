@@ -40,7 +40,11 @@ export default function NotFound() {
   useEffect(() => {
     const checkTokenWithAPI = async (token: string) => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiUrl) {
+          console.error('NEXT_PUBLIC_API_URL is not defined');
+          return;
+        }
         console.log(`🔍 Checking token with API: ${apiUrl}/organizations/invitations/check`);
         
         const response = await fetch(`${apiUrl}/organizations/invitations/check`, {

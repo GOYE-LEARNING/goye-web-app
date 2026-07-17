@@ -91,7 +91,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Fetch initial notifications from API
   const fetchAllNotifications = useCallback(async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/fetch-all-notification`, {
         method: 'GET',
         credentials: 'include',
@@ -120,7 +124,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
   const fetchUnreadNotifications = useCallback(async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/unread`, {
         method: 'GET',
         credentials: 'include',
@@ -389,7 +397,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Mark a single notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/${notificationId}/read`, {
         method: 'PUT',
         credentials: 'include',
@@ -422,7 +434,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/read-all`, {
         method: 'PUT',
         credentials: 'include',
@@ -453,7 +469,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Clear all notifications (delete)
   const clearAll = useCallback(async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/clear-all`, {
         method: 'DELETE',
         credentials: 'include',
@@ -480,7 +500,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Delete a single notification
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/${notificationId}`, {
         method: 'DELETE',
         credentials: 'include',
@@ -509,7 +533,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Archive a notification
   const archiveNotification = useCallback(async (notificationId: string) => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/${notificationId}/archive`, {
         method: 'PUT',
         credentials: 'include',
@@ -547,7 +575,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Get notification stats
   const getStats = useCallback(async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/stats`, {
         method: 'GET',
         credentials: 'include',
@@ -569,7 +601,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Get unread count
   const getUnreadCount = useCallback(async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/unread-count`, {
         method: 'GET',
         credentials: 'include',

@@ -160,7 +160,7 @@ export function SocketProvider({
   const fetchNotifications = async () => {
     try {
       const API_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+        process.env.NEXT_PUBLIC_API_URL;
 
       const endpoint = `${API_URL}/api/notifications/fetch-all-notification`;
 

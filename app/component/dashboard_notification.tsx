@@ -123,7 +123,11 @@ export default function DashboardNotification({
   const deleteAllNotifications = async () => {
     if (!confirm("Are you sure you want to delete all notifications?")) return;
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
       const res = await fetch(`${API_URL}/api/notifications/clear-all`, {
         method: 'DELETE',
         credentials: 'include',
