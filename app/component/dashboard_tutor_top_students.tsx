@@ -23,6 +23,13 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
 
   useEffect(() => {
     const fetchTopStudents = async () => {
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        setError("API URL not configured");
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         const endpoint = courseId
@@ -38,18 +45,36 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
         });
 
         const data = await response.json();
+        console.log("Leaderboard response:", data);
 
         if (!response.ok) {
           throw new Error(data.message || "Failed to fetch rankings");
         }
 
-        if (data.success && data.data) {
-          setStudents(data.data.slice(0, 5));
+        // Handle different response formats
+        let leaderboardData = [];
+        if (Array.isArray(data.data)) {
+          // If data.data is already an array
+          leaderboardData = data.data;
+        } else if (data.data && Array.isArray(data.data.leaderboard)) {
+          // If data.data has a leaderboard property
+          leaderboardData = data.data.leaderboard;
+        } else if (data.data && Array.isArray(data.data.students)) {
+          // If data.data has a students property
+          leaderboardData = data.data.students;
+        } else if (Array.isArray(data)) {
+          // If data itself is an array
+          leaderboardData = data;
         }
-        setError(null);
+
+        if (leaderboardData && leaderboardData.length > 0) {
+          setStudents(leaderboardData.slice(0, 5));
+        } else {
+          setError("No leaderboard data found");
+        }
       } catch (err: any) {
         console.error("Error fetching top students:", err);
-        setError(err.message);
+        setError(err.message || "Failed to load rankings");
       } finally {
         setIsLoading(false);
       }
