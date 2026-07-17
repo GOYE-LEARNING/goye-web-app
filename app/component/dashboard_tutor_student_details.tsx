@@ -18,10 +18,21 @@ interface StudentDetails {
   profile_pic: string;
 }
 
+interface StudentEnrollment {
+  course_title: string;
+  course_level: string;
+  progress: string;
+}
 
-interface StudentEnrollmentForGroupDetails {
+interface StudentGroup {
   group_title: string;
   joined_at: string;
+}
+
+interface StudentData {
+  student: StudentDetails;
+  enrollments: StudentEnrollment[];
+  groups: StudentGroup[];
 }
 
 export default function DashboardTutorStudentDetails({
@@ -30,11 +41,8 @@ export default function DashboardTutorStudentDetails({
 }: Props) {
   const [showCourse, setShowCourse] = useState<boolean>(true);
   const [showGroups, setShowGroups] = useState<boolean>(false);
-  const [studentDetails, setStudentDetails] = useState<StudentDetails | null>(
-    null
-  );
+  const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
 
   const fetchStudentDetails = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -56,13 +64,18 @@ export default function DashboardTutorStudentDetails({
 
       const data = await res.json();
       if (!res.ok) {
-        console.log("An error occured while fetching student details");
+        console.log("An error occurred while fetching student details");
         setIsLoading(false);
         return;
       }
 
-      console.log("Student details:", data);
-      setStudentDetails(data.data.student);
+      console.log("Student details (complete):", data.data);
+      // Store all data at once - student, enrollments, and groups
+      setStudentData({
+        student: data.data.student,
+        enrollments: data.data.enrollments || [],
+        groups: data.data.groups || [],
+      });
     } catch (error) {
       console.error("Error fetching student details:", error);
     } finally {
@@ -91,25 +104,25 @@ export default function DashboardTutorStudentDetails({
 
           <div className="dashboard_hr mt-[32px]"></div>
           <div className="flex justify-center items-center flex-col gap-2 my-5">
-            <div className="h-[64px] w-[64px] rounded-full overflow-hidden flex justify-center items-center">
-              {studentDetails?.profile_pic ? (
+            <div className="h-[64px] w-[64px] rounded-full overflow-hidden flex justify-center items-center bg-gray-200 dark:bg-gray-700">
+              {studentData?.student?.profile_pic ? (
                 <img
-                  src={studentDetails?.profile_pic}
+                  src={studentData?.student?.profile_pic}
                   alt="pic"
-                  className="h-full w-full"
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <FaCircleUser size={40}/>
+                <FaCircleUser size={40} className="text-gray-400"/>
               )}
             </div>
             <h1 className="font-semibold text-[22px] text-textSlightDark-0 dark:text-white">
-              {studentDetails?.full_name || "Loading..."}
+              {studentData?.student?.full_name || "—"}
             </h1>
             <p className="text-[14px] text-textGrey-0 dark:text-gray-400">
-              {studentDetails?.email || ""}
+              {studentData?.student?.email || ""}
             </p>
             <span className="text-[13px] flex items-center gap-2 text-boldGreen-0">
-              <FaAngleDoubleUp /> {studentDetails?.level}
+              <FaAngleDoubleUp /> {studentData?.student?.level || "—"}
             </span>
           </div>
 
@@ -143,7 +156,7 @@ export default function DashboardTutorStudentDetails({
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3, ease: "easeIn" }}
               >
-                <DashboardTutorStudentDetailsCourse studentId={studentId}/>
+                <DashboardTutorStudentDetailsCourse enrollments={studentData?.enrollments || []} isLoading={false}/>
               </motion.div>
             )}
             {showGroups && (
@@ -154,7 +167,7 @@ export default function DashboardTutorStudentDetails({
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3, ease: "easeIn" }}
               >
-                <DashboardTutorStudentDetailsGroup />
+                <DashboardTutorStudentDetailsGroup groups={studentData?.groups || []} isLoading={false}/>
               </motion.div>
             )}
           </AnimatePresence>
