@@ -18,11 +18,12 @@ export default function AIContainerComponent() {
       <div></div>
 
       {/*Input content */}
-      <div>
+      <div className="h-[100px] flex justify-center items-center w-full bg-red-500 absolute bottom-0 dark:bg-secondaryColors-0">
         <div>
             <div>
                 <span>
                     <GiPeaceDove />
+                    Prompt
                 </span>
                 <input type="text" placeholder="Call an action"/>
                 <BsFillSendFill />

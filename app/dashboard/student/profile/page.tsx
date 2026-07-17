@@ -91,6 +91,7 @@ export default function Profile() {
         }
 
         const data = await res.json();
+        console.log(data)
         setDetails(data.user);
         if (data.user.user_pic) setProfilePic(data.user.user_pic);
       } catch (error) {

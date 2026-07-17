@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BsPlus } from "react-icons/bs";
 import Image from "next/image";
@@ -8,27 +8,7 @@ import Pic from "@/public/images/notfound.png";
 import { FaCheck, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { IoTrashOutline } from "react-icons/io5";
 import { MdCancel } from "react-icons/md";
-
-function usePersistentState<T>(
-  key: string,
-  defaultValue: T
-): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const [state, setState] = useState<T>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(key);
-      if (saved) return JSON.parse(saved);
-    }
-    return defaultValue;
-  });
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(key, JSON.stringify(state));
-    }
-  }, [key, state]);
-
-  return [state, setState];
-}
+import usePersistentState from "@/app/hook/usePersistentState";
 
 interface Props {
   formData: any;

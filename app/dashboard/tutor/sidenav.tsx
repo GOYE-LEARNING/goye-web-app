@@ -3,7 +3,7 @@
 import SidenavComponent from "@/app/component/sidenav_component";
 import Image from "next/image";
 import logo from "@/public/images/goye-removebg-preview.png";
-import lightLogo from "@/public/images/goye_final_logo.png"
+import lightLogo from "@/public/images/goye_final_logo.png";
 import { MdHomeFilled, MdLogout } from "react-icons/md";
 import { GoHome } from "react-icons/go";
 import { IoSchoolOutline, IoSchoolSharp } from "react-icons/io5";
@@ -11,7 +11,16 @@ import { RiCompass3Line, RiCompassFill } from "react-icons/ri";
 import { FaRegUser, FaUser } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { BsPeople, BsPeopleFill } from "react-icons/bs";
-export default function TutorSidenav() {
+import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
+import React, { useState } from "react";
+
+interface Props {
+  setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export default function TutorSidenav({ setIsCollapsedState }: Props) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  
   const logout = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     try {
@@ -21,25 +30,43 @@ export default function TutorSidenav() {
       });
 
       if (!res.ok) {
-        return 
+        return;
       }
 
-      await res.json()
+      await res.json();
     } catch (error) {
       console.error(error);
     }
   };
+  
   const pathname = usePathname();
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+    setIsCollapsedState(!isCollapsed);
+  };
+
   return (
     <>
-      <div className="sidenav">
-        <Image
-          src={lightLogo}
-          alt="logo"
-          height={100}
-          width={100}
-          className="md:block hidden"
-        />
+      <div className={`sidenav ${isCollapsed ? 'collapsed w-[5%]' : 'md:w-[20%]'}`}>
+        <div className={`w-full flex ${isCollapsed ? 'justify-center' : 'justify-between'} items-center`}>
+          <div className={`${isCollapsed ? 'hidden' : 'block'}`}>
+            <Image
+              src={lightLogo}
+              alt="logo"
+              height={100}
+              width={100}
+              className="md:block hidden"
+            />
+          </div>
+          <span 
+            className="text-[#ccc] md:block hidden cursor-pointer hover:text-white transition-colors"
+            onClick={toggleSidebar}
+          >
+            {isCollapsed ? <LuPanelRightClose size={24} /> : <LuPanelLeftClose size={24} />}
+          </span>
+        </div>
+        
         <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col md:gap-1 w-full mt-0 md:mt-[2rem]">
           <div className="md:w-full">
             <SidenavComponent
@@ -52,8 +79,10 @@ export default function TutorSidenav() {
                   <MdHomeFilled size={25} color="#FFA500" />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
+          
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/tutor/course"
@@ -65,8 +94,10 @@ export default function TutorSidenav() {
                   <IoSchoolSharp size={25} color="#FFA500" />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
+          
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/tutor/student"
@@ -75,11 +106,13 @@ export default function TutorSidenav() {
                 pathname !== "/dashboard/tutor/student" ? (
                   <BsPeople size={25} />
                 ) : (
-                  <BsPeopleFill size={25} />
+                  <BsPeopleFill size={25} color="#FFA500" />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
+          
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/tutor/community"
@@ -91,8 +124,10 @@ export default function TutorSidenav() {
                   <RiCompassFill size={25} color="#FFA500" />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
+          
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/tutor/profile"
@@ -104,17 +139,19 @@ export default function TutorSidenav() {
                   <FaUser size={25} color="#FFA500" />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
         </nav>
+        
         <div className="bg-[#E2E2E2]/10 h-[1px] w-full absolute left-0 my-5 md:block hidden"></div>
 
         <div className="mt-10 md:block hidden md:w-full" onClick={logout}>
-          {" "}
           <SidenavComponent
             path="/auth"
             label="Logout"
             icon={<MdLogout size={25} />}
+            isCollapsed={isCollapsed}
           />
         </div>
       </div>

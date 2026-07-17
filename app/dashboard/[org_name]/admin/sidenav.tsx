@@ -14,7 +14,7 @@ import {
 import { GoHome } from "react-icons/go";
 import { IoSchoolOutline, IoSchoolSharp } from "react-icons/io5";
 import { RiCompass3Line, RiCompassFill } from "react-icons/ri";
-import { FaRegUser, FaUser } from "react-icons/fa";
+import { FaRegUser, FaUser, FaCalendarAlt } from "react-icons/fa";
 import { useParams, usePathname } from "next/navigation";
 import { BsPeople, BsPeopleFill } from "react-icons/bs";
 import { LuPanelLeft, LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
@@ -66,7 +66,7 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
             />
           </div>
           <span 
-            className="text-[#ccc] cursor-pointer hover:text-white transition-colors"
+            className="text-[#ccc] md:block hidden cursor-pointer hover:text-white transition-colors"
             onClick={toggleSidebar}
           >
             {isCollapsed ? <LuPanelRightClose size={24} /> : <LuPanelLeftClose size={24} />}
@@ -96,6 +96,21 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
                   <IoSchoolOutline size={20} />
                 ) : (
                   <IoSchoolSharp size={20} color="#FFA500" />
+                )
+              }
+              isCollapsed={isCollapsed}
+            />
+          </div>
+
+          <div className="md:w-full">
+            <SidenavComponent
+              path={`/dashboard/${org_name}/admin/event`}
+              label="Events"
+              icon={
+                pathname !== `/dashboard/${org_name}/admin/event` ? (
+                  <FaCalendarAlt size={20} />
+                ) : (
+                  <FaCalendarAlt size={20} color="#FFA500" />
                 )
               }
               isCollapsed={isCollapsed}

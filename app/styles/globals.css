@@ -322,6 +322,12 @@ body.chat-page-desktop {
   @apply h-[3px] bg-boldShadyColor-0;
 
 }
+
+.org_width_animation {
+    transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+
+}
+
 /*Sidenav component*/
 /* Sidenav component */
 .sidenav {

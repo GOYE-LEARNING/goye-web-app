@@ -1,3 +1,4 @@
+// app/dashboard/student/layout.tsx
 "use client";
 
 import DashboardHeader from "@/app/component/dashboard_header";
@@ -21,6 +22,7 @@ export default function DashboardLayout({
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const authCheckedRef = useRef(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   const path = ["/dashboard/student/course", "/dashboard/student/community"];
   const path2 = ["/dashboard/student/chat"];
@@ -168,54 +170,56 @@ export default function DashboardLayout({
 
   return (
     <>
-     <SocketProvider>
-       <ProgressProvider>
-        <QuizProvider>
-          <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0 ">
-            <Sidenav />
-            <div className="md:w-[80%] w-full min-w-0 max-w-full h-full md:absolute right-0">
-              <DashboardHeader />
-              <div
-                className={`
-                  w-full flex md:items-center flex-col 
-                  md:px-0 md:py-0 md:rounded-none rounded-tr-xl rounded-tl-xl 
-                  md:bg-lightSecondaryColor-0 mb-0 md:mb-5 overflow-auto px-7
-                  ${
-                    isChatPage
-                      ? "dark:bg-shadyColor-0 bg-lightSecondaryColor-0 min-h-screen md:min-h-0 overflow-y-auto mt-[14%] md:mt-0"
-                      : checkPath
-                        ? "dark:bg-shadyColor-0 bg-lightSecondaryColor-0 min-h-screen overflow-y-auto"
-                        : "dark:bg-secondaryColors-0 bg-lightSecondaryColor-0 h-full overflow-y-auto"
-                  }
-                  radial_gradient2
-                `}
-                style={
-                  isChatPage && isMobile ? { height: "calc(100vh - 4rem)" } : {}
-                }
+      <SocketProvider>
+        <ProgressProvider>
+          <QuizProvider>
+            <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0">
+              <Sidenav setIsCollapsedState={setIsCollapsed} />
+              <div 
+                className={`${isCollapsed ? "lg:w-[95%]" : "lg:w-[80%]"} org_width_animation w-full min-w-0 max-w-full h-full md:absolute right-0`}
               >
+                <DashboardHeader />
                 <div
                   className={`
+                    w-full flex md:items-center flex-col 
+                    md:px-0 md:py-0 md:rounded-none rounded-tr-xl rounded-tl-xl 
+                    md:bg-lightSecondaryColor-0 mb-0 md:mb-5 overflow-auto px-7
                     ${
-                      isChatPage && !isMobile
-                        ? "w-full h-full min-w-0"
-                        : isChatPage && isMobile
-                          ? "w-full h-full min-w-0 overflow-hidden"
-                          : "md:max-w-[707px] w-full max-w-full relative min-h-screen overflow-auto scrollbar2"
+                      isChatPage
+                        ? "dark:bg-shadyColor-0 bg-lightSecondaryColor-0 min-h-screen md:min-h-0 overflow-y-auto mt-[14%] md:mt-0"
+                        : checkPath
+                          ? "dark:bg-shadyColor-0 bg-lightSecondaryColor-0 min-h-screen overflow-y-auto"
+                          : "dark:bg-secondaryColors-0 bg-lightSecondaryColor-0 h-full overflow-y-auto"
                     }
+                    radial_gradient2
                   `}
-                  style={isChatPage && !isMobile ? { height: "100%" } : {}}
+                  style={
+                    isChatPage && isMobile ? { height: "calc(100vh - 4rem)" } : {}
+                  }
                 >
-                  {children}
-                  <br/>
-                  <br/>
-                  <br/>
+                  <div
+                    className={`
+                      ${
+                        isChatPage && !isMobile
+                          ? "w-full h-full min-w-0"
+                          : isChatPage && isMobile
+                            ? "w-full h-full min-w-0 overflow-hidden"
+                            : "md:max-w-[707px] w-full max-w-full relative min-h-screen overflow-auto scrollbar2"
+                      }
+                    `}
+                    style={isChatPage && !isMobile ? { height: "100%" } : {}}
+                  >
+                    {children}
+                    <br/>
+                    <br/>
+                    <br/>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </QuizProvider>
-      </ProgressProvider>
-     </SocketProvider>
+          </QuizProvider>
+        </ProgressProvider>
+      </SocketProvider>
     </>
   );
 }

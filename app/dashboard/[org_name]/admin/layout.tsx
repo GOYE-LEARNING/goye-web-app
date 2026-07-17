@@ -100,25 +100,21 @@ export default function OrgAdminDashboardLayout({
 
         <div className="w-full">
           <div
-            className={`${isCollapsed ? "md:w-full" : "md:w-full"}  w-full min-w-0 max-w-full min-h-screen md:absolute right-0 dark:bg-shadyColor-0 bg-lightWhite-0 radial_gradient2`}
+            className={`${isCollapsed ? "lg:w-[95%]" : "lg:w-[80%]"} org_width_animation w-full min-w-0 max-w-full min-h-screen md:absolute right-0 dark:bg-shadyColor-0 bg-lightWhite-0 radial_gradient2`}
           >
             <DashboardHeader />
             <div
               className={`w-full flex md:justify-center md:items-center flex-col md:px-0 md:py-0 md:rounded-none rounded-tr-xl rounded-tl-xl
            h-[90%] md:h-auto md:static absolute bottom-0 left-0 overflow-y-auto scrollbar2 pb-[3.5rem] md:px-0 px-[1.3rem] md:pb-0 md:mb-5`}
             >
-              <div className={` ${isCollapsed ? "w-[75%] bg-red-500 justify-start" : "md:w-full justify-center"} relative overflow-hidden flex  items-center `}>
-                <div className=" flex justify-center items-center px-[1rem] w-[80%]">
+                <div className=" flex justify-center items-center w-full">
                   <div className="md:max-w-[707px] relative w-full  max-w-full min-w-0 mt-[1.3rem] flex justify-center items-center ">
                     {children}
                   </div>
-                </div>
               </div>
             </div>
           </div>
-          <div className="absolute md:w-[25%] top-[70px] bg-white dark:bg-secondaryColors-0 border-l border-[#ccc]/30  right-0  h-full overflow-hidden">
-            <AIContainerComponent />
-          </div>
+         
         </div>
       </div>
     </SocketProvider>

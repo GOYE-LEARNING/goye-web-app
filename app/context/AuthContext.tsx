@@ -124,8 +124,8 @@ export default function AuthProvider({ children }: Props) {
       return 'organization';
     }
     
-    // Default to organization for invited users
-    return 'organization';
+    // Default to individual (student/tutor)
+    return 'individual';
   }, [authStatus]);
 
   // Check authentication status - with proper debouncing and rate limiting

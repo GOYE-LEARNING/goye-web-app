@@ -1,4 +1,5 @@
-// components/DashboardHeader.tsx - UPDATED
+// components/DashboardHeader.tsx
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -14,109 +15,143 @@ import ToogleDarkMode from "./toogleDarkMode";
 import { useSocket } from "@/app/context/SocketContext";
 import { useAuthContext } from "@/app/context/AuthContext";
 
+// ── Role resolution ───────────────────────────────────────────
+// Priority order:
+// 1. ADMIN
+// 2. ORGANIZATION_OWNER (resolved by org type)
+// 3. INVITED_MEMBER
+// 4. Tutor (role field)
+// 5. Student / INDIVIDUAL (default)
+
+type ResolvedRole = {
+  label: string;       // shown in the UI
+  chatPath: string;    // where the chat icon routes
+}
+
+function resolveRole(user: any, organization: any): ResolvedRole {
+
+  // 1. Super admin
+  if (user?.userType === "ADMIN") {
+    return {
+      label: "Super Admin",
+      chatPath: "/dashboard/admin/chat",
+    };
+  }
+
+  // 2. Organisation owner — label depends on org type
+  if (user?.userType === "ORGANIZATION_OWNER" && organization) {
+    const orgType = organization?.organization_type;
+
+    const labelMap: Record<string, string> = {
+      CHURCH: "Church Admin",
+      SCHOOL: "School Admin",
+      CLUB:   "Club Admin",
+    };
+
+    return {
+      label: labelMap[orgType] ?? "Organisation Admin",
+      chatPath: "/dashboard/organization/chat",
+    };
+  }
+
+  // 3. Invited member — belongs to an org but is not the owner
+  if (user?.userType === "INVITED_MEMBER") {
+    return {
+      label: "Invited Member",
+      chatPath: "/dashboard/student/chat",
+    };
+  }
+
+  // 4. Tutor — individual account with tutor role
+  if (user?.role === "tutor") {
+    return {
+      label: "Tutor",
+      chatPath: "/dashboard/tutor/chat",
+    };
+  }
+
+  // 5. Default — student / individual
+  return {
+    label: "Student",
+    chatPath: "/dashboard/student/chat",
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+
 export default function DashboardHeader() {
   const { darkMode, setDarkMode } = useTheme();
   const { isConnected, unreadCount, connect } = useSocket();
   const { authStatus } = useAuthContext();
 
   const [showNotification, setShowNotification] = useState(false);
-  const [showProfileBox, setShowProfileBox] = useState(false);
-  const [getHours, setGetHours] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [showProfileBox, setShowProfileBox]     = useState(false);
+  const [getHours, setGetHours]                 = useState("");
+  const [isLoading, setIsLoading]               = useState(true);
 
   const router = useRouter();
 
-  const profileBoxRef = useRef<HTMLDivElement | null>(null);
-  const desktopNotificationBtnRef = useRef<HTMLButtonElement | null>(null);
-  const mobileNotificationBtnRef = useRef<HTMLButtonElement | null>(null);
-  const desktopNotificationRef = useRef<HTMLDivElement | null>(null);
-  const mobileNotificationRef = useRef<HTMLDivElement | null>(null);
+  const profileBoxRef              = useRef<HTMLDivElement | null>(null);
+  const desktopNotificationBtnRef  = useRef<HTMLButtonElement | null>(null);
+  const mobileNotificationBtnRef   = useRef<HTMLButtonElement | null>(null);
+  const desktopNotificationRef     = useRef<HTMLDivElement | null>(null);
+  const mobileNotificationRef      = useRef<HTMLDivElement | null>(null);
 
-  // Get user data from authStatus
-  const user = authStatus?.user;
+  const user         = authStatus?.user;
   const organization = authStatus?.organization;
 
-  // Determine display data based on user type
-  const userId = user?.id;
+  // ── Resolved display values ───────────────────────────────
+  const userId          = user?.id;
   const userDisplayName = user?.first_name
     ? `${user.first_name} ${user.last_name || ""}`.trim()
     : organization?.organization_name || "User";
-  const userEmail =
-    user?.email_address || organization?.organization_email || "";
-  const userPic = user?.user_pic || organization?.organization_image || "";
+  const userEmail = user?.email_address
+    || organization?.organization_email
+    || "";
+  const userPic   = user?.user_pic
+    || organization?.organization_image
+    || "";
 
-  // Determine user role for display
-  const getUserRole = () => {
-    // Check organization data first (for invited users and org admins)
-    if (organization) {
-      console.log("Organization data found:", organization);
-      const orgUserType = organization?.organization_type;
-      if (orgUserType === "CHURCH") {
-        return "CHURCH ADMIN";
-      } else if (orgUserType === "SCHOOL") {
-        return "SCHOOL ADMIN";
-      } else if (orgUserType === "CLUB") {
-        return "CLUB ADMIN";
-      }
-      return "";
-    }
+  const { label: displayRole, chatPath } = resolveRole(user, organization);
 
-    // Check user data (for students and tutors)
-    if (user?.role === "student" || user?.userType === "INDIVIDUAL") {
-      return "student";
-    }
-    if (user?.role === "tutor") {
-      return "tutor";
-    }
-    if (user?.userType === "INVITED_MEMBER") {
-      return "invited_user";
-    }
-
-    return user?.role || user?.userType || "User";
-  };
-  const displayRole = getUserRole();
-
-  // ================= SET HOURS =================
+  // ── Greeting ──────────────────────────────────────────────
   useEffect(() => {
     const h = new Date().getHours();
     setGetHours(
-      h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening",
+      h < 12 ? "Good morning"
+      : h < 17 ? "Good afternoon"
+      : "Good evening"
     );
     setIsLoading(false);
   }, []);
 
-  // ================= RECONNECT SOCKET ON REFRESH =================
+  // ── Socket reconnect on refresh ───────────────────────────
   useEffect(() => {
     if (userId) {
       const timer = setTimeout(() => {
-        console.log("🔄 Attempting to reconnect socket after page load...");
         connect();
       }, 1000);
-
       return () => clearTimeout(timer);
     }
   }, [userId, connect]);
 
-  // ================= OUTSIDE CLICK FIX =================
+  // ── Outside click handler ─────────────────────────────────
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const t = e.target as Node;
 
-      const clickedDesktopBtn = desktopNotificationBtnRef.current?.contains(t);
-      const clickedMobileBtn = mobileNotificationBtnRef.current?.contains(t);
-
+      const clickedDesktopBtn   = desktopNotificationBtnRef.current?.contains(t);
+      const clickedMobileBtn    = mobileNotificationBtnRef.current?.contains(t);
       const clickedDesktopPanel = desktopNotificationRef.current?.contains(t);
-      const clickedMobilePanel = mobileNotificationRef.current?.contains(t);
-
-      const clickedProfile = profileBoxRef.current?.contains(t);
-
-      const clickedNotification = clickedDesktopPanel || clickedMobilePanel;
+      const clickedMobilePanel  = mobileNotificationRef.current?.contains(t);
+      const clickedProfile      = profileBoxRef.current?.contains(t);
 
       if (
         showNotification &&
         !clickedDesktopBtn &&
         !clickedMobileBtn &&
-        !clickedNotification
+        !clickedDesktopPanel &&
+        !clickedMobilePanel
       ) {
         setShowNotification(false);
       }
@@ -140,7 +175,7 @@ export default function DashboardHeader() {
     setShowNotification(false);
   };
 
-  // ================= LOADING SKELETON =================
+  // ── Loading skeleton ──────────────────────────────────────
   if (isLoading) {
     return (
       <div className="fixed top-0 left-0 right-0 z-50 w-full">
@@ -164,39 +199,36 @@ export default function DashboardHeader() {
     );
   }
 
-  // ================= UI =================
+  // ── UI ────────────────────────────────────────────────────
   return (
     <>
       <div className="h-[73px] md:h-[73px]" />
 
       <header
-        className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
-          true
-            ? "shadow-lg backdrop-blur-xl bg-white/80 dark:bg-secondaryColors-0/80"
-            : "backdrop-blur-md bg-white/30 dark:bg-gray-900/30"
-        } border-b border-white/20`}
+        className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300
+          shadow-lg backdrop-blur-xl bg-white/80 dark:bg-secondaryColors-0/80
+          border-b border-white/20`}
       >
-        {/* ================= DESKTOP ================= */}
+        {/* ── DESKTOP ── */}
         <div className="hidden md:flex justify-end items-center gap-5 px-8 py-3 relative">
           <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
 
-          {/* Connection Status Dot */}
+          {/* Connection status */}
           <div className="flex items-center justify-center gap-1">
-            <span
-              className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`}
-            ></span>
+            <span className={`w-2 h-2 rounded-full ${
+              isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+            }`} />
             <span className="text-sm text-gray-700 dark:text-gray-200">
               {isConnected ? "Online" : "Offline"}
             </span>
           </div>
 
-          {/* NOTIFICATION */}
+          {/* Notification */}
           <div className="relative">
             <button
               ref={desktopNotificationBtnRef}
               onClick={toggleNotification}
               className="relative text-gray-700 dark:text-gray-200 hover:text-primaryColors-0 transition-colors"
-              data-bell-button
             >
               <MdNotifications size={23} />
               {unreadCount > 0 && (
@@ -205,27 +237,22 @@ export default function DashboardHeader() {
                 </span>
               )}
             </button>
-
             {showNotification && (
-              <div
-                ref={desktopNotificationRef}
-                className="absolute right-0 top-12 z-[99999]"
-              >
-                <DashboardNotification
-                  onClose={() => setShowNotification(false)}
-                />
+              <div ref={desktopNotificationRef} className="absolute right-0 top-12 z-[99999]">
+                <DashboardNotification onClose={() => setShowNotification(false)} />
               </div>
             )}
           </div>
 
+          {/* Chat — role-aware path */}
           <button
-            onClick={() => router.push("/dashboard/student/chat")}
+            onClick={() => router.push(chatPath)}
             className="text-gray-700 dark:text-gray-200 hover:text-primaryColors-0 transition-colors"
           >
             <IoChatboxSharp size={23} />
           </button>
 
-          {/* PROFILE */}
+          {/* Profile */}
           <div ref={profileBoxRef} className="relative">
             <div
               className="flex items-center gap-3 cursor-pointer group"
@@ -233,16 +260,11 @@ export default function DashboardHeader() {
             >
               <div className="w-[45px] h-[45px] rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 ring-2 ring-transparent group-hover:ring-primaryColors-0 transition-all">
                 {userPic ? (
-                  <img
-                    src={userPic}
-                    className="w-full h-full object-cover"
-                    alt="Profile"
-                  />
+                  <img src={userPic} className="w-full h-full object-cover" alt="Profile" />
                 ) : (
                   <HiUserCircle size={45} className="text-gray-400" />
                 )}
               </div>
-
               <IoChevronDown className="text-gray-600 dark:text-gray-300 text-sm group-hover:text-primaryColors-0 transition-colors" />
             </div>
 
@@ -254,14 +276,13 @@ export default function DashboardHeader() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-words">
                   {userEmail}
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {/* Role badge */}
+                <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-primaryColors-0/10 text-primaryColors-0">
                   {displayRole}
-                </p>
+                </span>
                 <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
                   <button
-                    onClick={() => {
-                      router.push("/auth");
-                    }}
+                    onClick={() => router.push("/auth")}
                     className="text-xs text-red-500 hover:text-red-600 w-full text-left"
                   >
                     Sign Out
@@ -272,25 +293,20 @@ export default function DashboardHeader() {
           </div>
         </div>
 
-        {/* ================= MOBILE ================= */}
+        {/* ── MOBILE ── */}
         <div className="md:hidden flex justify-between items-center px-[16px] py-[12px]">
           <div className="flex items-center gap-2">
             <div className="w-[45px] h-[45px] rounded-full overflow-hidden bg-gray-200 ring-2 ring-white/30">
               {userPic ? (
-                <img
-                  src={userPic}
-                  className="w-full h-full object-cover"
-                  alt="Profile"
-                />
+                <img src={userPic} className="w-full h-full object-cover" alt="Profile" />
               ) : (
                 <HiUserCircle size={45} className="text-gray-400" />
               )}
             </div>
             <div>
               <p className="text-[10px] text-white/70">{getHours}</p>
-              <p className="text-[16px] font-semibold text-white">
-                {userDisplayName}
-              </p>
+              <p className="text-[16px] font-semibold text-white">{userDisplayName}</p>
+              <p className="text-[10px] text-white/60">{displayRole}</p>
             </div>
           </div>
 
@@ -307,7 +323,6 @@ export default function DashboardHeader() {
                 ref={mobileNotificationBtnRef}
                 onClick={toggleNotification}
                 className="relative text-white hover:text-gray-200 transition-colors"
-                data-bell-button
               >
                 <FaBell size={18} />
                 {unreadCount > 0 && (
@@ -316,21 +331,16 @@ export default function DashboardHeader() {
                   </span>
                 )}
               </button>
-
               {showNotification && (
-                <div
-                  ref={mobileNotificationRef}
-                  className="absolute right-0 top-10 z-[99999]"
-                >
-                  <DashboardNotification
-                    onClose={() => setShowNotification(false)}
-                  />
+                <div ref={mobileNotificationRef} className="absolute right-0 top-10 z-[99999]">
+                  <DashboardNotification onClose={() => setShowNotification(false)} />
                 </div>
               )}
             </div>
 
+            {/* Chat — role-aware path */}
             <button
-              onClick={() => router.push("/dashboard/student/chat")}
+              onClick={() => router.push(chatPath)}
               className="text-white hover:text-gray-200 transition-colors"
             >
               <IoChatboxSharp size={18} />

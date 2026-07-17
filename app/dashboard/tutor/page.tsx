@@ -4,6 +4,7 @@ import DashboardTutorActivities from "@/app/component/dashboard_tutor_activities
 import DashboardTutorCreateCourse from "@/app/component/dashboard_tutor_create-course";
 import DashboardTutorOverview from "@/app/component/dashboard_tutor_overview";
 import DashboardTutorQuickAction from "@/app/component/dashboard_tutor_quick_action";
+import DashboardTutorTopStudents from "@/app/component/dashboard_tutor_top_students";
 import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardTutorCourseBreakdown from "@/app/component/dashboard_tutor_course_breakdown";
@@ -131,6 +132,10 @@ export default function TutorDashboard() {
 
               <motion.div variants={itemVariants as any}>
                 <DashboardTutorQuickAction createCourse={openCreateCourse} />
+              </motion.div>
+
+              <motion.div variants={itemVariants as any}>
+                <DashboardTutorTopStudents />
               </motion.div>
 
               <motion.div variants={itemVariants as any}>
