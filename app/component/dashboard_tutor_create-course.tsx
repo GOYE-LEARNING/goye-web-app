@@ -1368,67 +1368,71 @@ export default function DashboardTutorCreateCourse({
               </motion.div>
             )}
 
-            <SubHeader
-              header={isEditMode ? "Edit Course" : "Create Course"}
-              backFunction={backToCourse}
-            />
-            <div className="dashboard_content_mainbox overflow-x-hidden">
-              <div className="flex gap-3">
-                {Array.from({ length: totalSteps }).map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setStep(index)}
-                    className={`h-[3px] w-[74.8px] rounded-full ${isComplete[index] ? "bg-primaryColors-0" : step === index ? "bg-primaryColors-0/50" : "bg-[#D9D9D9]/10"}`}
-                  ></button>
-                ))}
-              </div>
+            {showCourse && (
+              <>
+                <SubHeader
+                  header={isEditMode ? "Edit Course" : "Create Course"}
+                  backFunction={backToCourse}
+                />
+                <div className="dashboard_content_mainbox overflow-x-hidden">
+                  <div className="flex gap-3">
+                    {Array.from({ length: totalSteps }).map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setStep(index)}
+                        className={`h-[3px] w-[74.8px] rounded-full ${isComplete[index] ? "bg-primaryColors-0" : step === index ? "bg-primaryColors-0/50" : "bg-[#D9D9D9]/10"}`}
+                      ></button>
+                    ))}
+                  </div>
 
-              <motion.form
-                onSubmit={handleSubmit}
-                key={step}
-                initial={{ x: 100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -100, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                className="my-5"
-              >
-                {steps[step]}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    className="form_more dark:bg-shadyColor-0 bg-lightWhite-0 text-primaryColors-0"
-                    onClick={prevStep}
-                    disabled={isUploading}
+                  <motion.form
+                    onSubmit={handleSubmit}
+                    key={step}
+                    initial={{ x: 100, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -100, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                    className="my-5"
                   >
-                    Back
-                  </button>
-                  {step < totalSteps - 1 ? (
-                    <button
-                      type="button"
-                      className="form_more text-plainColors-0 bg-primaryColors-0"
-                      onClick={nextStep}
-                      disabled={isUploading}
-                    >
-                      Next <FaArrowRight />
-                    </button>
-                  ) : (
-                    <button
-                      className="form_more text-plainColors-0 bg-primaryColors-0"
-                      type="submit"
-                      disabled={isUploading}
-                    >
-                      {isUploading
-                        ? isEditMode
-                          ? "Updating Course..."
-                          : "Creating Course..."
-                        : isEditMode
-                          ? "Update Course"
-                          : "Create Course"}
-                    </button>
-                  )}
+                    {steps[step]}
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        className="form_more dark:bg-shadyColor-0 bg-lightWhite-0 text-primaryColors-0"
+                        onClick={prevStep}
+                        disabled={isUploading}
+                      >
+                        Back
+                      </button>
+                      {step < totalSteps - 1 ? (
+                        <button
+                          type="button"
+                          className="form_more text-plainColors-0 bg-primaryColors-0"
+                          onClick={nextStep}
+                          disabled={isUploading}
+                        >
+                          Next <FaArrowRight />
+                        </button>
+                      ) : (
+                        <button
+                          className="form_more text-plainColors-0 bg-primaryColors-0"
+                          type="submit"
+                          disabled={isUploading}
+                        >
+                          {isUploading
+                            ? isEditMode
+                              ? "Updating Course..."
+                              : "Creating Course..."
+                            : isEditMode
+                              ? "Update Course"
+                              : "Create Course"}
+                        </button>
+                      )}
+                    </div>
+                  </motion.form>
                 </div>
-              </motion.form>
-            </div>
+              </>
+            )}
           </div>
         </div>
       </AnimatePresence>
