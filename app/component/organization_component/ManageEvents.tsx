@@ -56,11 +56,13 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint
-      // const res = await fetch(`${API_URL}/api/organizations/events/${params.org_name}`);
-      // const data = await res.json();
-      // setEvents(data.data || []);
-      setEvents([]);
+      const res = await fetch(`${API_URL}/api/organizations/events/${params.org_name}`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEvents(data.data || []);
+      }
     } catch (error) {
       console.error("Error fetching events:", error);
     } finally {

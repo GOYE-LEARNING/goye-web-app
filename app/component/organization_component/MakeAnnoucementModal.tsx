@@ -2,9 +2,10 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  HiOutlineX, 
-  HiOutlineSpeakerphone, 
+import { useParams } from "next/navigation";
+import {
+  HiOutlineX,
+  HiOutlineSpeakerphone,
   HiOutlineMail,
   HiOutlineUserGroup,
   HiOutlineGlobe,
@@ -18,35 +19,49 @@ interface MakeAnnouncementModalProps {
   isOpen: boolean;
   onClose: () => void;
   organizationName?: string;
+  onSuccess?: () => void;
 }
 
-export default function MakeAnnouncementModal({ 
-  isOpen, 
-  onClose, 
-  organizationName 
+export default function MakeAnnouncementModal({
+  isOpen,
+  onClose,
+  organizationName,
+  onSuccess
 }: MakeAnnouncementModalProps) {
+  const params = useParams<{ org_name: string }>();
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [audience, setAudience] = useState("all");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
     if (!title.trim() || !message.trim()) return;
-    
+
     setIsSubmitting(true);
+    setError("");
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`${API_URL}/api/organizations/announcement`, {
-      //   method: "POST",
-      //   credentials: "include",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ title, message, audience })
-      // });
-      
+      const res = await fetch(`${API_URL}/api/organizations/announcements/${params.org_name}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, message, audience }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Failed to create announcement");
+        return;
+      }
+
       setSuccess(true);
+      if (onSuccess) onSuccess();
       setTimeout(() => {
         setSuccess(false);
         onClose();
@@ -55,6 +70,7 @@ export default function MakeAnnouncementModal({
       }, 2000);
     } catch (error) {
       console.error("Error making announcement:", error);
+      setError("An error occurred while creating the announcement");
     } finally {
       setIsSubmitting(false);
     }
@@ -92,11 +108,17 @@ export default function MakeAnnouncementModal({
                 <HiOutlineCheckCircle className="w-16 h-16 text-green-500 mb-4" />
                 <h3 className="text-lg font-semibold dark:text-white">Announcement Sent!</h3>
                 <p className="text-gray-500 dark:text-gray-400">
-                  Your announcement has been sent to all members.
+                  Your announcement has been sent to members.
                 </p>
               </div>
             ) : (
               <>
+                {error && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
+                    <HiOutlineExclamationCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Announcement Title

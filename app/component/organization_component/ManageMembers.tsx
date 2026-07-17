@@ -17,12 +17,14 @@ import {
   HiOutlineCheck,
   HiOutlineXCircle,
   HiOutlineEye,
+  HiOutlineSignal,
 } from "react-icons/hi";
 import { FaSpinner } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
 import Portal from "../Portal";
 import DashboardAdminUserDetails from "../admin_component/dashboard_admin_user_details";
 import { useModal } from "@/app/context/SimpleModalContext";
+import { useSocket } from "@/app/context/SocketContext";
 
 interface Member {
   id: string;
@@ -31,11 +33,12 @@ interface Member {
   email_address: string;
   role: string;
   user_pic?: string;
-  isOnline: boolean;
-  lastActive: string;
-  joinedAt: string;
-  joinedVia: string;
-  isActive: boolean;
+  isOnline?: boolean;
+  lastActive?: string;
+  joinedAt?: string;
+  joinedVia?: string;
+  isActive?: boolean;
+  isSuspended?: boolean;
 }
 
 interface ManageMembersProps {
@@ -45,6 +48,7 @@ interface ManageMembersProps {
 export default function ManageMembers({ onBack }: ManageMembersProps) {
   const params = useParams<{ org_name: string }>();
   const { showModal } = useModal();
+  const { organizationOnlineUsers, joinOrganization } = useSocket();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,6 +64,24 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const organizationId = params.org_name;
+
+  // Sync online status from Socket
+  useEffect(() => {
+    joinOrganization(organizationId);
+  }, [organizationId, joinOrganization]);
+
+  // Update member online status based on socket data
+  useEffect(() => {
+    if (organizationOnlineUsers && members.length > 0) {
+      const onlineUserIds = new Set(organizationOnlineUsers.map((u) => u.userId));
+      setMembers((prevMembers) =>
+        prevMembers.map((member) => ({
+          ...member,
+          isOnline: onlineUserIds.has(member.id),
+        }))
+      );
+    }
+  }, [organizationOnlineUsers]);
 
   useEffect(() => {
     fetchMembers();
@@ -156,16 +178,34 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
     setShowUserDetails(true);
   };
 
-  const handleSuspendUser = () => {
-    setSuspendUser(!suspendUser);
-    setShowSuspendUserModal(false);
-    showModal(
-      suspendUser ? "User Restored" : "User Suspended",
-      suspendUser 
-        ? "User access has been restored successfully." 
-        : "User access has been suspended successfully.",
-      "success"
-    );
+  const handleSuspendUser = async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/api/organizations/members/${organizationId}/${selectedUserId}/suspend`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ suspend: !suspendUser }),
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setSuspendUser(!suspendUser);
+        showModal(
+          suspendUser ? "User Restored" : "User Suspended",
+          data.message,
+          "success"
+        );
+        fetchMembers();
+      } else {
+        showModal("Error", data.message || "Failed to update user status.", "error");
+      }
+    } catch (error) {
+      showModal("Error", "An error occurred. Please try again.", "error");
+    } finally {
+      setShowSuspendUserModal(false);
+    }
   };
 
   const handleRemoveMember = (member: Member) => {
@@ -175,9 +215,20 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
       "confirm",
       async () => {
         try {
-          // Call API to remove member
-          showModal("Success", `${member.first_name} has been removed from the organization.`, "success");
-          fetchMembers();
+          const res = await fetch(
+            `${API_URL}/api/organizations/members/${organizationId}/${member.id}`,
+            {
+              method: "DELETE",
+              credentials: "include",
+            }
+          );
+          const data = await res.json();
+          if (data.success) {
+            showModal("Success", `${member.first_name} has been removed from the organization.`, "success");
+            fetchMembers();
+          } else {
+            showModal("Error", data.message || "Failed to remove member.", "error");
+          }
         } catch (error) {
           showModal("Error", "Failed to remove member. Please try again.", "error");
         }
