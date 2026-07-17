@@ -829,110 +829,117 @@ export default function DashboardTutorCreateCourse({
     const updatedModules = updatedCourseData.data?.module || [];
 
     setUploadProgress(60);
-    setUploadStatus("Uploading videos for new modules...");
+    setUploadStatus("Uploading lesson videos...");
 
-    // Step 3: Now upload videos for NEW modules only
-    // Map new modules by their temporary index to their database IDs
-    let newModuleIndex = 0;
-    const moduleIdMap = new Map();
-
+    // Step 3: Upload any newly-selected videos, for BOTH new and existing modules/lessons.
+    // A lesson gets a video upload+save whenever the tutor picked a new videoFile in this
+    // session — not just when its parent module was newly created. Previously, existing
+    // modules were skipped entirely, so replacing a video on an existing lesson never
+    // reached storage or the database (the tutor's preview looked fine locally, but
+    // students never saw the update).
+    const moduleIdMap = new Map<number, string>();
     updatedModules.forEach((dbModule: any, index: number) => {
-      // Check if this module corresponds to a new module
       const tempModule = formData.module?.[index];
       if (tempModule && !isRealDbId(tempModule.id)) {
         moduleIdMap.set(index, dbModule.id);
-        newModuleIndex++;
       }
     });
 
-    // Upload videos for modules that were newly created
+    const totalNewVideos = (formData.module || []).reduce(
+      (acc, m) => acc + (m.lessons || []).filter((l) => l.videoFile).length,
+      0,
+    );
+    let uploadedVideoCount = 0;
+
     for (let moduleIndex = 0; moduleIndex < (formData.module || []).length; moduleIndex++) {
       const tempModule = (formData.module || [])[moduleIndex];
-      
-      // Skip existing modules
-      if (isRealDbId(tempModule.id)) continue;
-      
-      const dbModuleId = moduleIdMap.get(moduleIndex);
-      
+
+      // Resolve the real database module ID whether this module is new or existing
+      const dbModuleId = isRealDbId(tempModule.id)
+        ? tempModule.id.toString()
+        : moduleIdMap.get(moduleIndex);
+
       if (!dbModuleId) {
-        console.warn(`No DB module found for new module at index ${moduleIndex}`);
+        console.warn(`No DB module found for module at index ${moduleIndex}`);
         continue;
       }
 
-      // Get the corresponding database module
+      // Get the corresponding database module (for resolving newly-created lesson IDs)
       const dbModule = updatedModules[moduleIndex];
       const dbLessons = dbModule?.lesson || [];
 
       for (let lessonIndex = 0; lessonIndex < tempModule.lessons.length; lessonIndex++) {
         const lesson = tempModule.lessons[lessonIndex];
-        const dbLesson = dbLessons[lessonIndex];
 
-        if (
-          lesson.videoFile && 
-          validateFileObject(lesson.videoFile) &&
-          dbLesson?.id
-        ) {
-          try {
-            setUploadStatus(`Uploading video: ${lesson.lesson_title}...`);
+        if (!lesson.videoFile || !validateFileObject(lesson.videoFile)) {
+          continue;
+        }
 
-            // Get duration
-            let duration = lesson.duration;
-            if (!duration) {
-              try {
-                duration = await getVideoDuration(lesson.videoFile);
-              } catch (error) {
-                duration = 300;
-              }
+        // Resolve the real database lesson ID whether this lesson is new or existing
+        const dbLessonId = isRealDbId(lesson.id)
+          ? lesson.id
+          : dbLessons[lessonIndex]?.id;
+
+        if (!dbLessonId) {
+          console.warn(`No DB lesson found for lesson at index ${lessonIndex} in module ${moduleIndex}`);
+          continue;
+        }
+
+        try {
+          setUploadStatus(`Uploading video: ${lesson.lesson_title}...`);
+
+          // Get duration
+          let duration = lesson.duration;
+          if (!duration) {
+            try {
+              duration = await getVideoDuration(lesson.videoFile);
+            } catch (error) {
+              duration = 300;
             }
-
-            // Upload the video using the database module ID
-            const uploadResult = await uploadLessonVideo(
-              lesson.videoFile,
-              courseId,
-              dbModuleId, // Use the database module ID
-            );
-
-            // Update the lesson with the video URL
-            await fetch(
-              `${API_URL}/api/course/update-lesson/${dbLesson.id}`,
-              {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                  lesson_video: uploadResult.url,
-                  lesson_title: lesson.lesson_title,
-                  duration: duration,
-                }),
-              },
-            );
-
-            // Calculate progress
-            const totalNewVideos = (formData.module || [])
-              .filter(m => !isRealDbId(m.id))
-              .reduce((acc, m) => acc + m.lessons.filter(l => l.videoFile).length, 0);
-            
-            const uploadedVideos = (formData.module || [])
-              .filter(m => !isRealDbId(m.id))
-              .reduce((acc, m) => acc + m.lessons.filter(l => l.videoFile && l.lesson_video).length, 0);
-            
-            setUploadProgress(60 + Math.round((uploadedVideos / totalNewVideos) * 30));
-          } catch (error) {
-            console.error(
-              `Failed to upload video for ${lesson.lesson_title}:`,
-              error,
-            );
           }
+
+          // Upload the video using the resolved database module ID
+          const uploadResult = await uploadLessonVideo(
+            lesson.videoFile,
+            courseId,
+            dbModuleId,
+          );
+
+          // Persist the video URL against the resolved database lesson ID
+          await fetch(
+            `${API_URL}/api/course/update-lesson/${dbLessonId}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                lesson_video: uploadResult.url,
+                lesson_title: lesson.lesson_title,
+                duration: duration,
+              }),
+            },
+          );
+
+          uploadedVideoCount++;
+          setUploadProgress(60 + Math.round((uploadedVideoCount / Math.max(totalNewVideos, 1)) * 30));
+        } catch (error) {
+          console.error(
+            `Failed to upload video for ${lesson.lesson_title}:`,
+            error,
+          );
         }
       }
     }
 
     setUploadProgress(90);
-    setUploadStatus("Uploading documents for new materials...");
+    setUploadStatus("Uploading course materials...");
 
-    // Step 4: Upload documents for new materials
+    // Step 4: Upload any newly-selected documents, for BOTH new and existing materials.
+    // Same fix as the video loop above — a material gets a document upload whenever the
+    // tutor picked a new documentFile in this session, not just when the material itself
+    // was newly created.
     const updatedMaterials = updatedCourseData.data?.material || [];
-    const materialIdMap = new Map();
+    const materialIdMap = new Map<number, string>();
 
     updatedMaterials.forEach((dbMaterial: any, index: number) => {
       const tempMaterial = formData.material?.[index];
@@ -941,38 +948,36 @@ export default function DashboardTutorCreateCourse({
       }
     });
 
+    const totalNewDocuments = (formData.material || []).filter(
+      (m) => m.material_document?.[0]?.documentFile,
+    ).length;
+    let uploadedDocumentCount = 0;
+
     for (let materialIndex = 0; materialIndex < (formData.material || []).length; materialIndex++) {
       const tempMaterial = (formData.material || [])[materialIndex];
-      
-      // Skip existing materials
-      if (isRealDbId(tempMaterial.id)) continue;
-      
-      const dbMaterialId = materialIdMap.get(materialIndex);
-      
+
+      // Resolve the real database material ID whether this material is new or existing
+      const dbMaterialId = isRealDbId(tempMaterial.id)
+        ? tempMaterial.id.toString()
+        : materialIdMap.get(materialIndex);
+
       const doc = tempMaterial.material_document?.[0];
       if (
-        doc?.documentFile && 
+        doc?.documentFile &&
         validateFileObject(doc.documentFile) &&
         dbMaterialId
       ) {
         try {
           setUploadStatus(`Uploading document: ${tempMaterial.material_title}...`);
-          
-          const documentUrl = await uploadCourseMaterial(
+
+          await uploadCourseMaterial(
             doc.documentFile,
             courseId,
             dbMaterialId,
           );
 
-          // Update progress
-          const totalNewMaterials = (formData.material || [])
-            .filter(m => !isRealDbId(m.id)).length;
-          
-          const uploadedMaterials = (formData.material || [])
-            .filter(m => !isRealDbId(m.id) && m.material_document[0]?.material_document)
-            .length;
-          
-          setUploadProgress(90 + Math.round((uploadedMaterials / totalNewMaterials) * 10));
+          uploadedDocumentCount++;
+          setUploadProgress(90 + Math.round((uploadedDocumentCount / Math.max(totalNewDocuments, 1)) * 10));
         } catch (error) {
           console.error(
             `Failed to upload document for ${tempMaterial.material_title}:`,
