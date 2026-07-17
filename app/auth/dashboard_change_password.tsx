@@ -33,28 +33,40 @@ export default function DashboardChangePassword({ backFunction }: Props) {
     const fetchProfile = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/organizations/profile`, {
+        // Try user profile first (for students)
+        const userRes = await fetch(`${API_URL}/api/user/profile`, {
           method: "GET",
           credentials: "include",
         });
 
-        const data = await res.json();
-        console.log(data);
-        setFormData((prev) => ({
-          ...prev,
-          emailAddress: data.organization.organization_email,
-        }));
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setFormData((prev) => ({
+            ...prev,
+            emailAddress: userData.user?.email_address || userData.user?.email || "",
+          }));
+        } else {
+          // Fall back to organization profile (for org members/admins)
+          const orgRes = await fetch(`${API_URL}/api/organizations/profile`, {
+            method: "GET",
+            credentials: "include",
+          });
 
-        setIsLoading(false);
+          const orgData = await orgRes.json();
+          setFormData((prev) => ({
+            ...prev,
+            emailAddress: orgData.organization?.organization_email || "",
+          }));
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching profile:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [API_URL]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
