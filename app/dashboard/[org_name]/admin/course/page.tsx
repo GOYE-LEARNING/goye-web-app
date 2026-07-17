@@ -122,10 +122,12 @@ export default function OrgAdminCourse() {
   };
 
   const backFunc = () => {
+    // Ensure all states are properly reset
     setCourseId("");
     setShowCreateCourse(false);
-    setShowCourse(true);
     setShowCourseDetails(false);
+    setShowCourse(true);
+    setSearch("");  // Also clear search for clean state
   };
 
   const showCourseFunc = () => {
@@ -133,11 +135,15 @@ export default function OrgAdminCourse() {
   };
 
   const showCreateCourseFunc = () => {
+    // Close course details if open, then open create course
+    setShowCourseDetails(false);
     setShowCourse(false);
     setShowCreateCourse(true);
   };
 
   const showCourseDetailsFunc = (id: string) => {
+    // Close create course if open, then open course details
+    setShowCreateCourse(false);
     setCourseId(id);
     setShowCourse(false);
     setShowCourseDetails(true);

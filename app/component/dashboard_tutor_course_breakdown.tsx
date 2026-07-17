@@ -63,8 +63,16 @@ export default function DashboardTutorCourseBreakdown({
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const backFunction = () => {
-    backFunc();
+    // Close all modals before going back
+    setShowReviewQuiz(false);
+    setShowAddQuiz(false);
+    setShowModule(false);
+    setShowPost(false);
+    setShowCreateCourse(false);
+    setOpenActivities(false);
+    setviewCourse(false);
     setHideQuiz(true);
+    backFunc();
     fetchCourse();
   };
 
@@ -139,6 +147,13 @@ export default function DashboardTutorCourseBreakdown({
   };
 
   const editCourse = () => {
+    // Close all other modals before opening edit
+    setShowReviewQuiz(false);
+    setShowAddQuiz(false);
+    setShowModule(false);
+    setShowPost(false);
+    setOpenActivities(false);
+    // Then open edit course
     setviewCourse(false);
     setShowCreateCourse(true);
     setHideQuiz(false);
