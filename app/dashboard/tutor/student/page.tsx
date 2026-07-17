@@ -52,20 +52,31 @@ export default function TutorStudent() {
           )}
         </div>
 
-        {/* Sidebar Panel */}
-        {studentId && (
-          <div
-            className={`fixed top-0 right-0 h-full bg-[black] md:w-[390px] w-full transform transition-transform duration-300 ease-in-out
-            ${showStudentDetails ? "translate-x-0" : "translate-x-full"}`}
-          >
-            <DashboardTutorStudentDetails
-              studentId={studentId}
-              cancel={() => {
+        {/* Sidebar Panel - Portal overlay */}
+        {showStudentDetails && studentId && (
+          <>
+            {/* Overlay backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => {
                 setShowStudentDetails(false)
                 setStudentId("")
               }}
-            />{" "}
-          </div>
+            />
+            {/* Sidebar */}
+            <div
+              className={`fixed top-0 right-0 h-full md:w-[390px] w-full bg-white dark:bg-secondaryColors-0 transform transition-transform duration-300 ease-in-out z-50
+              ${showStudentDetails ? "translate-x-0" : "translate-x-full"}`}
+            >
+              <DashboardTutorStudentDetails
+                studentId={studentId}
+                cancel={() => {
+                  setShowStudentDetails(false)
+                  setStudentId("")
+                }}
+              />
+            </div>
+          </>
         )}
       </div>
     </>

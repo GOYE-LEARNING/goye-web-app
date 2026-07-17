@@ -38,6 +38,12 @@ export default function DashboardTutorStudentDetails({
 
   const fetchStudentDetails = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!API_URL) {
+      console.error('NEXT_PUBLIC_API_URL is not defined');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       const res = await fetch(
@@ -49,29 +55,33 @@ export default function DashboardTutorStudentDetails({
       );
 
       const data = await res.json();
-      setIsLoading(false);
       if (!res.ok) {
         console.log("An error occured while fetching student details");
+        setIsLoading(false);
         return;
       }
 
-      console.log(data);
+      console.log("Student details:", data);
       setStudentDetails(data.data.student);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching student details:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStudentDetails();
-  }, []);
+    if (studentId) {
+      fetchStudentDetails();
+    }
+  }, [studentId]);
 
   return (
     <>
       {!isLoading ? (
-        <div className="md:w-[390px] w-full fixed top-0 right-0 h-full bg-black drop-shadow-2xl p-[32px] border border-[#E3E3E833] transition-all duration-300 ease-in-out">
+        <div className="md:w-[390px] w-full fixed top-0 right-0 h-full bg-white dark:bg-secondaryColors-0 drop-shadow-2xl p-[32px] border border-[#E3E3E833] transition-all duration-300 ease-in-out overflow-y-auto">
           <div className="flex justify-between items-center">
-            <h1 className="text-textSlightDark-0 font-bold text-[24px]">
+            <h1 className="text-textSlightDark-0 dark:text-white font-bold text-[24px]">
               Student Details
             </h1>
             <span onClick={cancel} className="cursor-pointer">
@@ -92,11 +102,11 @@ export default function DashboardTutorStudentDetails({
                 <FaCircleUser size={40}/>
               )}
             </div>
-            <h1 className="font-semibold text-[22px] text-textSlightDark-0">
-              {studentDetails?.full_name.replace(" ", "")}
+            <h1 className="font-semibold text-[22px] text-textSlightDark-0 dark:text-white">
+              {studentDetails?.full_name || "Loading..."}
             </h1>
-            <p className="text-[14px] text-textGrey-0">
-              {studentDetails?.email}
+            <p className="text-[14px] text-textGrey-0 dark:text-gray-400">
+              {studentDetails?.email || ""}
             </p>
             <span className="text-[13px] flex items-center gap-2 text-boldGreen-0">
               <FaAngleDoubleUp /> {studentDetails?.level}

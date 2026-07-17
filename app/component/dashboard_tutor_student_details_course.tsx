@@ -20,29 +20,45 @@ export default function DashboardTutorStudentDetailsCourse({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchGroupDetails = async () => {
-      setIsLoading(true);
+    const fetchCourseDetails = async () => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(
-        `${API_URL}/api/enroll/fetch-student-details/${studentId}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.log("An error occured while fetching the group details");
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        setIsLoading(false);
+        return;
       }
 
-      setIsLoading(false);
-      setCourseDetails(data.data.enrollments);
+      try {
+        setIsLoading(true);
+        const res = await fetch(
+          `${API_URL}/api/enroll/fetch-student-details/${studentId}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.log("An error occurred while fetching course details");
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("Course enrollments:", data.data.enrollments);
+        setCourseDetails(data.data.enrollments);
+      } catch (error) {
+        console.error("Error fetching course details:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    fetchGroupDetails();
-  }, []);
+    if (studentId) {
+      fetchCourseDetails();
+    }
+  }, [studentId]);
   return (
     <>
       {!isLoading ? (
@@ -55,7 +71,7 @@ export default function DashboardTutorStudentDetailsCourse({
                     {c.course_title}
                   </h1>
                   <p className="bg-boldGreen-0 text-white text-[12px] px-[8px] rounded-[2px]">
-                    Not done
+                    In Progress
                   </p>
                 </div>
                 <div className="flex justify-between items-center">
