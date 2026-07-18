@@ -167,25 +167,11 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
 
     fetchContacts();
 
-    // Socket connection (use cookies first, fall back to localStorage)
-    const getCookie = (name: string) => {
-      if (typeof document === "undefined") return null;
-      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-      return match ? decodeURIComponent(match[2]) : null;
-    };
+    // Socket connection: the service authenticates itself via the httpOnly
+    // session cookie (see socketService.connect / fetchSocketToken), so no
+    // userId/token needs to be passed in here.
+    socketService.connect();
 
-    const cookieUserId = getCookie("userId") || getCookie("user_id");
-    const cookieToken = getCookie("accessToken") || getCookie("token") || getCookie("access_token");
-
-    const storedUserId = cookieUserId || localStorage.getItem("userId");
-    const storedToken = cookieToken || localStorage.getItem("token");
-
-    if (storedUserId && storedToken) {
-      socketService.connect(storedUserId, storedToken);
-    } else {
-      console.warn("Skipping socket connect: missing userId or token");
-    }
-    
     // Listen for online status updates
     const unsubscribeOnline = socketService.on("user:online", (data: { userId: string; online: boolean }) => {
       setOnlineUsers(prev => {

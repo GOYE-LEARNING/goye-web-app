@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MdChevronRight } from "react-icons/md";
 import SubHeader from "./dashboard_subheader";
 import Loader from "./loader";
-import { useProgress } from "../context/progressContext";
 import VideoHelper from "../hook/videoHelper";
 
 interface Lesson {

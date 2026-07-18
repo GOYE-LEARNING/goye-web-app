@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { BiBookOpen, BiTrophy } from "react-icons/bi";
-import { FaUserGroup } from "react-icons/fa6";
-import { MdEmojiEvents } from "react-icons/md";
-import Image from "next/image";
 import Loader from "../loader";
 
 interface LeaderboardUser {

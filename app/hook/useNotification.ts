@@ -580,7 +580,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         console.error('NEXT_PUBLIC_API_URL is not defined');
         return;
       }
-      const res = await fetch(`${API_URL}/api/notifications/stats`, {
+      const res = await fetch(`${API_URL}/api/notifications/counts`, {
         method: 'GET',
         credentials: 'include',
         headers: {

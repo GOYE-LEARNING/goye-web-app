@@ -4,17 +4,15 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { 
-  MdHome, 
-  MdArrowBack, 
-  MdRefresh, 
-  MdSearch, 
+import {
+  MdHome,
+  MdArrowBack,
+  MdRefresh,
+  MdSearch,
   MdEmail,
   MdSupportAgent,
-  MdWarning,
   MdTimer,
   MdBlock,
-  MdErrorOutline,
   MdCheckCircle
 } from "react-icons/md";
 
@@ -356,6 +354,18 @@ export default function NotFound() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             The page you are looking for doesn't exist or has been moved.
           </p>
+        )}
+
+        {/* Suggest the likely intended route when the path looks like a typo */}
+        {suggestedPath && (
+          <div className="mb-6">
+            <button
+              onClick={() => router.push(suggestedPath)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+            >
+              <MdSearch /> Did you mean <span className="underline">{suggestedPath}</span>?
+            </button>
+          </div>
         )}
 
         {/* Show extracted token info for debugging */}

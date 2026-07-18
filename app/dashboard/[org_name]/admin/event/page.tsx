@@ -1,22 +1,10 @@
 "use client";
 
-import DashboardAdminEventManagement from "@/app/component/admin_component/dashboard_admin_event_management";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import ManageEvents from "@/app/component/organization_component/ManageEvents";
+import { useRouter } from "next/navigation";
 
 export default function OrgAdminEvent() {
-  const params = useParams();
-  const orgName = params.org_name as string;
-  const [showEventList, setShowEventList] = useState(true);
+  const router = useRouter();
 
-  return (
-    <div>
-      {showEventList && (
-        <DashboardAdminEventManagement
-          orgId={orgName}
-          backFunction={() => setShowEventList(false)}
-        />
-      )}
-    </div>
-  );
+  return <ManageEvents onBack={() => router.back()} />;
 }

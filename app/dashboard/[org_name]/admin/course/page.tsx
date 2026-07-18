@@ -60,13 +60,13 @@ export default function OrgAdminCourse() {
         credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok || !data?.data?.[0]?.Courses) {
         console.log("An error occurred while fetching courses");
+        return;
       }
-      setIsLoading(false);
       setCourseDetails(data.data[0].Courses);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching courses:", error);
     } finally {
       setIsLoading(false);
     }

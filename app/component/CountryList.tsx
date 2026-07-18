@@ -1,12 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  COUNTRY_LANGUAGE_DATA,
-  FLATTENED_COUNTRY_DATA,
-} from "../types/country";
+import { COUNTRY_LANGUAGE_DATA } from "../types/country";
 import { translateText } from "../utils/translator";
-import { useAuthContext } from "../context/AuthContext";
 import TranslatedText from "../hook/translateText";
 import { useTranslation } from "../hook/useTranslation";
 

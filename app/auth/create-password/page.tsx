@@ -61,6 +61,7 @@ export default function CreatePassword() {
           hasLanguage={false}
           changeTextToLogin={changeContentLogin}
           changeTextToSignin={changeContentSignin}
+          isSignupOpen={showSignin}
         />
       </div>
       <AnimatePresence mode="wait">

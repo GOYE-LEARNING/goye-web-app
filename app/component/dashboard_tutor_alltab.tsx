@@ -23,9 +23,13 @@ export default function DashboardTutorAllTab({
   search,
 }: Props) {
   const [studentDetails, setStudentDetails] = useState<StudentDetails[]>([]);
-  const [studentIds, setStudentId] = useState<string>("");
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const fetchStudent = async () => {
+    if (!API_URL) {
+      console.error('NEXT_PUBLIC_API_URL is not defined');
+      return;
+    }
+
     try {
       const res = await fetch(`${API_URL}/api/enroll/fetch-all-students`, {
         method: "GET",
@@ -33,13 +37,14 @@ export default function DashboardTutorAllTab({
       });
 
       const data = await res.json();
-      setStudentDetails(data.data.students);
-      if (!res.ok) {
+      if (!res.ok || !data?.data?.students) {
+        console.log("An error occurred while fetching students");
         return;
       }
 
+      setStudentDetails(data.data.students);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching students:", error);
     }
   };
 
@@ -50,7 +55,6 @@ export default function DashboardTutorAllTab({
   );
 
   const openStudentId = (id?: string) => {
-    setStudentId(id as any);
     openStudent(id as any);
   };
 

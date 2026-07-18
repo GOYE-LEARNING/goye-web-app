@@ -14,7 +14,6 @@ import DashboardTutorCreateModule from "./dashboard_tutor_createmodule";
 import Loader from "./loader";
 import DashboardTutorCreateCourse from "./dashboard_tutor_create-course";
 import DashboardCourseViewContent from "./dashboard_course_view_content";
-import DashboardTutorActivities from "./dashboard_tutor_activities";
 import DashboardTutorMoreCourseActivities from "./dashboard_tutor_more_course_activites";
 
 interface Props {
@@ -103,28 +102,6 @@ export default function DashboardTutorCourseBreakdown({
     setShowBackArrowFromActivity(false);
   }, []);
 
-  const fetchActivities = async () => {
-    try {
-      const res = await fetch(
-        `${API_URL}/api/course/fetch-activities/${courseId}`,
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.log(data);
-        return;
-      }
-
-      console.log(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
   const fetchCourse = async () => {
     try {
       setIsLoading(true);
@@ -133,14 +110,13 @@ export default function DashboardTutorCourseBreakdown({
         credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) {
-        console.log("An error occured while fetching courses");
+      if (!res.ok || !data?.data) {
+        console.log("An error occurred while fetching the course");
+        return;
       }
-      console.log(data.data);
-      setIsLoading(false);
       setCourseDetails([data.data]);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching course:", error);
     } finally {
       setIsLoading(false);
     }
@@ -182,10 +158,6 @@ export default function DashboardTutorCourseBreakdown({
 
         backFunc();
         setviewCourse(false);
-
-        console.log(
-          `Course deleted succesfully ID: ${courseId}, data: ${data}`,
-        );
       }
     } catch (error) {
       console.error(error);
@@ -194,7 +166,6 @@ export default function DashboardTutorCourseBreakdown({
 
   useEffect(() => {
     fetchCourse();
-    fetchActivities();
   }, [courseId]);
   return (
     <>

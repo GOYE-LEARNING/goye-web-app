@@ -9,8 +9,10 @@ import { useEffect, useRef, useState } from "react";
 import DashboardNewReply from "./dashboard_reply";
 interface Props {
   backToForum: () => void;
+  postId?: string;
+  onReplyUpdate?: (reply: any) => void;
 }
-export default function DashboardPostView({ backToForum }: Props) {
+export default function DashboardPostView({ backToForum, postId, onReplyUpdate }: Props) {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showReply, setShowReply] = useState<boolean>(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -73,21 +75,29 @@ export default function DashboardPostView({ backToForum }: Props) {
                 <span className="flex items-center gap-1 text-[#71748C]">
                   <BiLike /> 40
                 </span>
-                <span className="flex items-center gap-1 text-primaryColors-0" onClick={() => setShowReply(true)}>
-                  <FaReply /> Reply
-                </span>
+                {postId && (
+                  <span className="flex items-center gap-1 text-primaryColors-0" onClick={() => setShowReply(true)}>
+                    <FaReply /> Reply
+                  </span>
+                )}
               </p>
             </div>
             <div className="dashboard_thick_hr my-3"></div>
           </div>
         </div>
       </div>
-      <div
-        className={`fixed top-0 right-0 h-full bg-white w-[390px] transform transition-transform duration-300 ease-in-out
-          ${showReply ? "translate-x-0" : "translate-x-full"}`}
-      >
-        <DashboardNewReply cancel={() => setShowReply(false)} />
-      </div>
+      {postId && (
+        <div
+          className={`fixed top-0 right-0 h-full bg-white w-[390px] transform transition-transform duration-300 ease-in-out
+            ${showReply ? "translate-x-0" : "translate-x-full"}`}
+        >
+          <DashboardNewReply
+            cancel={() => setShowReply(false)}
+            postId={postId}
+            onReplyUpdate={onReplyUpdate || (() => {})}
+          />
+        </div>
+      )}
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import DashboardAdminNotificationSettings from "@/app/component/admin_component/dashboard_admin_notification_settings";
+import DashboardNotificationSettings from "@/app/component/dashboard_notification_settings_consolidated";
 import DashboardChangeLanguage from "@/app/component/dashboard_change_language";
 import DashboardEditProfile from "@/app/component/dashboard_editprofile";
 import { useParams, useRouter } from "next/navigation";
@@ -475,7 +475,8 @@ export default function OrgAdminProfile() {
                   }}
                 />
               ) : activePages === "notification" ? (
-                <DashboardAdminNotificationSettings
+                <DashboardNotificationSettings
+                  variant="admin"
                   backFunction={() => {
                     setShowProfile(true);
                     setShowActivePages(false);

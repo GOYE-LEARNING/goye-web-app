@@ -677,7 +677,7 @@ export default function DashboardTutorCreateCourse({
       if (!id) return false;
       return (
         typeof id === "string" &&
-        (id.startsWith("cm") || id.startsWith("cml") || id.length > 20)
+        (id.startsWith("cm") || id.length > 20)
       );
     };
 
@@ -1250,11 +1250,13 @@ export default function DashboardTutorCreateCourse({
         credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) console.log("An error occurred while fetching courses");
-      setIsLoading(false);
+      if (!res.ok || !data?.data?.[0]?.Courses) {
+        console.log("An error occurred while fetching courses");
+        return;
+      }
       setCourse(data.data[0].Courses);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching courses:", error);
     } finally {
       setIsLoading(false);
     }

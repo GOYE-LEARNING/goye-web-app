@@ -3,12 +3,12 @@ import { notFound } from 'next/navigation';
 import { AcceptInviteForm } from './AcceptInviteForm';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     invited_users_verification: string;
-  };
-  searchParams?: {
+  }>;
+  searchParams?: Promise<{
     [key: string]: string | string[] | undefined;
-  };
+  }>;
 }
 
 async function verifyInvitationWithAPI(token: string) {
@@ -82,12 +82,15 @@ async function fetchInvitationDetails(token: string) {
 }
 
 export default async function AcceptInvitePage({ params, searchParams }: PageProps) {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+
   // Log all params for debugging
-  console.log("📦 Full params:", params);
-  console.log("🔑 Token from params:", params.invited_users_verification);
-  console.log("🔍 Search params:", searchParams);
-  
-  const token = params.invited_users_verification;
+  console.log("📦 Full params:", resolvedParams);
+  console.log("🔑 Token from params:", resolvedParams.invited_users_verification);
+  console.log("🔍 Search params:", resolvedSearchParams);
+
+  const token = resolvedParams.invited_users_verification;
   
   // Case 1: No token provided
   if (!token) {

@@ -13,10 +13,6 @@ import { FaArrowRight } from "react-icons/fa";
 import { useRouter } from "next/dist/client/components/navigation";
 import { useLanguage } from "@/app/utils/checkLanguages";
 
-interface Props {
-  types: string;
-}
-
 interface TypeData {
   name: string;
   pic: any;
@@ -24,7 +20,7 @@ interface TypeData {
   p?: string;
 }
 
-export default function OrganizationType({ types }: Props) {
+export default function OrganizationType() {
   const [type, setType] = useState<string>("");
   const { formData, setFormData } = OrgSignUp();
   const router = useRouter();

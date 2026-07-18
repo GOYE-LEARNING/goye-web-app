@@ -4,11 +4,9 @@ import SidenavComponent from "@/app/component/sidenav_component";
 import Image from "next/image";
 import logo from "@/public/images/goye_final_logo.png";
 import {
-  MdGroup,
   MdGroups,
   MdHomeFilled,
   MdLogout,
-  MdOutlineGroup,
   MdOutlineGroups,
 } from "react-icons/md";
 import { GoHome } from "react-icons/go";
@@ -16,8 +14,7 @@ import { IoSchoolOutline, IoSchoolSharp } from "react-icons/io5";
 import { RiCompass3Line, RiCompassFill } from "react-icons/ri";
 import { FaRegUser, FaUser, FaCalendarAlt } from "react-icons/fa";
 import { useParams, usePathname } from "next/navigation";
-import { BsPeople, BsPeopleFill } from "react-icons/bs";
-import { LuPanelLeft, LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
+import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import React, { useState } from "react";
 interface Props {
   setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>

@@ -69,7 +69,6 @@ export default function DashboardTutorStudentDetails({
         return;
       }
 
-      console.log("Student details (complete):", data.data);
       // Store all data at once - student, enrollments, and groups
       setStudentData({
         student: data.data.student,

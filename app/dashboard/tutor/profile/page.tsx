@@ -2,7 +2,7 @@
 import DashboardChangeLanguage from "@/app/component/dashboard_change_language";
 import DashboardChangePassword from "@/app/auth/dashboard_change_password";
 import DashboardEditProfile from "@/app/component/dashboard_editprofile";
-import DashboardNotificationSettings from "@/app/component/dashboard_notification_settings";
+import DashboardNotificationSettings from "@/app/component/dashboard_notification_settings_consolidated";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { HiUserCircle } from "react-icons/hi";
@@ -344,6 +344,7 @@ export default function Profile() {
                 />
               ) : activePages === "notification" ? (
                 <DashboardNotificationSettings
+                  variant="tutor"
                   backFunction={() => {
                     setShowProfile(true);
                     setShowActivePages(false);

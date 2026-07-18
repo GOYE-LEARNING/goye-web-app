@@ -5,7 +5,6 @@ import { MdEmojiEvents, MdLeaderboard } from "react-icons/md";
 import { CiSearch } from "react-icons/ci";
 import { useEffect, useState } from "react";
 import GeneralLeaderboard from "@/app/component/leaderboard_component/general_leaderboard";
-import TopBestLeaderboard from "@/app/component/leaderboard_component/top_best_leaderboard";
 import { AnimatePresence, motion } from "framer-motion";
 interface LeaderboardUser {
   rank: number;

@@ -1,8 +1,7 @@
 // app/component/chat_component/general_post.tsx
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { BsTypeH1, BsTypeH2, BsTypeH3 } from "react-icons/bs";
+import { useEffect, useRef, useState } from "react";
 import {
   FaBold,
   FaItalic,

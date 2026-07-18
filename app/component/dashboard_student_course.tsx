@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import pic2 from "@/public/images/notfound.png";
 import { MdMenuBook } from "react-icons/md";
 import { FaArrowRight } from "react-icons/fa6";
 import { useTheme } from "../context/theme_provider";

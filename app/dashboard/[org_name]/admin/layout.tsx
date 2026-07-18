@@ -7,7 +7,6 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SocketProvider } from "@/app/context/SocketContext";
 import { useAuthContext } from "@/app/context/AuthContext";
-import AIContainerComponent from "@/app/component/AI_component/ai_container_component";
 
 export default function OrgAdminDashboardLayout({
   children,

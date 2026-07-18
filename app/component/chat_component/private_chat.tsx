@@ -1,6 +1,5 @@
 "use client";
 
-import TutorsEvents from "./event_post";
 import StudentTutors from "./student_tutors";
 
 interface Props {

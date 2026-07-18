@@ -23,20 +23,6 @@ export default function DashboardTutorQuizView({
   removeReview,
   courseId,
 }: Props) {
-  /*
-  const quiz: Quiz[] = [
-    {
-      title:
-        "According to the course material, which of these is NOT a key element of a disciple?",
-      quiz_options: {
-        option1: "Honest communication with God",
-        option2: "Regular thanksgiving",
-        option3: "Listening to gospel music",
-        option4: "Using only formal prayers",
-      },
-    },
-  ];
-*/
   const [quizDetails, setQuizDetails] = useState<Quiz[]>([]);
   const [isloading, setIsLoading] = useState<boolean>(false);
   const [courseName, setCourseName] = useState<string>("");

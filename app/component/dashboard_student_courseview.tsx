@@ -1,7 +1,5 @@
 "use client";
-import DashboardCourseSubHeader from "@/app/component/dashboard_course_subhead";
 import SubHeader from "@/app/component/dashboard_subheader";
-import Image from "next/image";
 import overviewPic from "@/public/images/overview.png";
 import { useEffect, useState } from "react";
 import DashboardCourseOverView from "@/app/component/dashboard_course_overview";
@@ -15,8 +13,7 @@ import DashboardStudentCourseList from "./dashboard_student_course_list";
 import { HiChevronDoubleUp } from "react-icons/hi";
 import { FaVideo } from "react-icons/fa6";
 import { useQuiz } from "../context/quizContext";
-import { BiLogIn, BiLock } from "react-icons/bi";
-import { GoLock } from "react-icons/go";
+import { BiLock } from "react-icons/bi";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {

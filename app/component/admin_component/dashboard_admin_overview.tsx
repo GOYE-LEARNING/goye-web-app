@@ -52,7 +52,7 @@ export default function DashboardAdminOverview() {
             : undefined;
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/user/admin-dashboard-stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/user/admin-dashboard-stats`,
           {
             headers: {
               "Content-Type": "application/json",

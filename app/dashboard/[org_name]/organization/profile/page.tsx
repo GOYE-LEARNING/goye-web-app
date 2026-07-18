@@ -1,8 +1,7 @@
 "use client";
-import DashboardAdminNotificationSettings from "@/app/component/admin_component/dashboard_admin_notification_settings";
 import DashboardChangeLanguage from "@/app/component/dashboard_change_language";
 import DashboardEditProfile from "@/app/component/dashboard_editprofile";
-import DashboardNotificationSettings from "@/app/component/dashboard_notification_settings";
+import DashboardNotificationSettings from "@/app/component/dashboard_notification_settings_consolidated";
 import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -459,7 +458,8 @@ export default function OrgProfile() {
                   }}
                 />
               ) : activePages === "notification" ? (
-                <DashboardAdminNotificationSettings
+                <DashboardNotificationSettings
+                  variant="admin"
                   backFunction={() => {
                     setShowProfile(true);
                     setShowActivePages(false);

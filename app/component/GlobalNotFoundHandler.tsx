@@ -4,7 +4,6 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
   MdHome,
   MdArrowBack,
@@ -13,7 +12,7 @@ import {
   MdRefresh,
   MdContactSupport,
 } from "react-icons/md";
-import { FaDiscord, FaTwitter, FaGithub } from "react-icons/fa";
+import { FaDiscord, FaTwitter } from "react-icons/fa";
 
 interface NotFoundContextType {
   showNotFound: (resource?: string, customMessage?: string) => void;

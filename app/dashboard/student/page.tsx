@@ -8,7 +8,6 @@ import StudentGrowth from "../../component/dashboard_students__growth";
 import UpcomingEvents from "../../component/dashboard_student_upcoming_event";
 import { AnimatePresence, motion } from "framer-motion";
 import DashboardCourseView from "@/app/component/dashboard_student_courseview";
-import SelectLanguageContext from "@/app/component/select_languages_context";
 export default function Dashboard() {
   const [showGrowth, setShowGrowth] = useState<boolean>(false);
   const [courseId, setCourseId] = useState<string>("")

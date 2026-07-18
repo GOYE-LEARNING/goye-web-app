@@ -17,7 +17,6 @@ import {
   HiOutlineCheck,
   HiOutlineXCircle,
   HiOutlineEye,
-  HiOutlineSignal,
 } from "react-icons/hi";
 import { FaSpinner } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
@@ -175,6 +174,11 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
 
   const handleViewUser = (userId: string) => {
     setSelectedUserId(userId);
+    // Seed suspend state from the actual member's current status, not whatever
+    // was left over from the last member viewed — otherwise the "Suspend/Restore"
+    // button shows the wrong action for this member.
+    const member = members.find((m) => m.id === userId);
+    setSuspendUser(!!member?.isSuspended);
     setShowUserDetails(true);
   };
 
@@ -423,9 +427,11 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                       <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
                         <div className="flex flex-col">
                           <span>
-                            {formatDistanceToNow(new Date(member.joinedAt), {
-                              addSuffix: true,
-                            })}
+                            {member.joinedAt
+                              ? formatDistanceToNow(new Date(member.joinedAt), {
+                                  addSuffix: true,
+                                })
+                              : "—"}
                           </span>
                           <span className="text-xs text-gray-400 dark:text-gray-500">
                             via {member.joinedVia}

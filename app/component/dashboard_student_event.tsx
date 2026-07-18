@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { IoBookOutline } from "react-icons/io5";
-import pic2 from "@/public/images/notfound.png";
 import { useParams, useRouter } from "next/navigation";
 import { FaArrowRight } from "react-icons/fa6";
 import { MdEvent } from "react-icons/md";

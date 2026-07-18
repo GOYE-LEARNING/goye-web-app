@@ -51,7 +51,6 @@ export default function DashboardTutorActive({ openStudent }: Props) {
       // Filter only online (active) students
       const activeStudents = data.data.students.filter((s: StudentDetails) => s.is_online === true);
       setStudentDetails(activeStudents);
-      console.log("Active students:", activeStudents);
     } catch (error) {
       console.error("Error fetching active students:", error);
     } finally {

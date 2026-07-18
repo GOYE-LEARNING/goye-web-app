@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { OrgSignUp, INITIAL_FORM_DATA } from "../BodyProvider";
-import OrgInfo from "../organization-information/page";
-import ChurchInfo from "../organization-church/page";
-import SchoolInfo from "../organization-school/page";
-import ClubInfo from "../organization-club/page";
+import OrgInfo from "../organization-information/OrgInfo";
+import ChurchInfo from "../organization-church/ChurchInfo";
+import SchoolInfo from "../organization-school/SchoolInfo";
+import ClubInfo from "../organization-club/ClubInfo";
 import { IoReload, IoCopy } from "react-icons/io5";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaCheck, FaEye, FaEyeSlash } from "react-icons/fa6";
 import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
-import UserInfo from "../user-information/page";
+import UserInfo from "../user-information/UserInfo";
 import { useModal } from "@/app/context/SimpleModalContext";
 import Portal from "@/app/component/Portal";
 import { useRouter } from "next/navigation";

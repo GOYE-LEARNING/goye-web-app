@@ -54,7 +54,6 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
         });
 
         const data = await response.json();
-        console.log("Leaderboard response:", data);
 
         if (!response.ok) {
           throw new Error(data.message || "Failed to fetch rankings");
@@ -151,17 +150,19 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
         Top Performing Students
       </h1>
       <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px] flex flex-col gap-3">
-        {students.map((student, idx) => (
+        {students.map((student, idx) => {
+          const rank = student.rank ?? idx + 1;
+          return (
           <div
             key={idx}
             className="flex items-center justify-between p-3 border border-[#F1F1F1] dark:border-[#ccc]/10 rounded hover:bg-gray-50 dark:hover:bg-shadyColor-0 transition"
           >
             <div className="flex items-center gap-2 flex-1">
-              <span className={`${getMedalColor(student.rank)} text-lg`}>
-                {student.rank === 1 && "🥇"}
-                {student.rank === 2 && "🥈"}
-                {student.rank === 3 && "🥉"}
-                {student.rank > 3 && <span className="text-sm font-bold">#{student.rank}</span>}
+              <span className={`${getMedalColor(rank)} text-lg`}>
+                {rank === 1 && "🥇"}
+                {rank === 2 && "🥈"}
+                {rank === 3 && "🥉"}
+                {rank > 3 && <span className="text-sm font-bold">#{rank}</span>}
               </span>
               <div>
                 <h2 className="text-[13px] font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 line-clamp-1">
@@ -176,7 +177,8 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
               </p>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

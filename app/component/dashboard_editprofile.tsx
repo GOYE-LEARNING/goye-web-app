@@ -427,19 +427,40 @@ export default function DashboardEditProfile({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("organizationId", params?.org_name as string);
-    formData.append("documentType", documentType);
-
     try {
       setIsLoading(true);
 
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${API_URL}/api/upload-organization-document`, {
+      if (!API_URL) {
+        console.error('NEXT_PUBLIC_API_URL is not defined');
+        return;
+      }
+
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1] || result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const organizationId = params?.org_name as string;
+      const endpoint =
+        documentType === "school"
+          ? `${API_URL}/api/organizations/upload-school-document/${organizationId}`
+          : `${API_URL}/api/organizations/upload-club-document/${organizationId}`;
+
+      const res = await fetch(endpoint, {
         method: "POST",
         credentials: "include",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          file: base64,
+          fileName: file.name,
+          mimeType: file.type,
+        }),
       });
 
       const data = await res.json();
@@ -453,7 +474,7 @@ export default function DashboardEditProfile({
           ...prev,
           school: {
             ...prev.school,
-            school_document: data.documentUrl,
+            school_document: data.url,
           },
         }));
       } else {
@@ -461,7 +482,7 @@ export default function DashboardEditProfile({
           ...prev,
           Club: {
             ...prev.Club,
-            club_document: data.documentUrl,
+            club_document: data.url,
           },
         }));
       }
