@@ -3,6 +3,7 @@
 import DashboardHeader from "@/app/component/dashboard_header";
 import AdminSidenav from "./sidenav";
 import { usePathname } from "next/navigation";
+import { SocketProvider } from "@/app/context/SocketContext";
 
 export default function DashboardLayout({
   children,
@@ -18,7 +19,7 @@ export default function DashboardLayout({
   const checkPath = path.some(p => pathname == p)
 
   return (
-    <>
+    <SocketProvider>
       <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0 ">
         <div className="">
           <AdminSidenav />
@@ -34,6 +35,6 @@ export default function DashboardLayout({
           </div>
         </div>
       </div>
-    </>
+    </SocketProvider>
   );
 }

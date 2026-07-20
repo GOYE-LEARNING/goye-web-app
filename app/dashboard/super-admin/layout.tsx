@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DashboardHeader from "@/app/component/dashboard_header";
 import SuperAdminSidenav from "./sidenav";
 import Loader from "@/app/component/loader";
+import { SocketProvider } from "@/app/context/SocketContext";
 
 export default function SuperAdminLayout({
   children,
@@ -69,16 +70,18 @@ export default function SuperAdminLayout({
   }
 
   return (
-    <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0">
-      <div>
-        <SuperAdminSidenav />
-      </div>
-      <div className="md:w-[80%] w-full min-w-0 max-w-full h-full md:absolute right-0">
-        <DashboardHeader />
-        <div className="w-full flex md:justify-center md:items-center flex-col md:px-0 md:py-0 p-[clamp(12px,4vw,20px)] md:rounded-none rounded-tr-xl rounded-tl-xl md:bg-transparent bg-secondaryColors-0 h-[90%] md:h-auto md:static absolute bottom-0 left-0 overflow-y-auto scrollbar2 pb-[3.5rem] md:pb-0 md:mb-5">
-          <div className="md:max-w-[1100px] w-full max-w-full min-w-0">{children}</div>
+    <SocketProvider>
+      <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0">
+        <div>
+          <SuperAdminSidenav />
+        </div>
+        <div className="md:w-[80%] w-full min-w-0 max-w-full h-full md:absolute right-0">
+          <DashboardHeader />
+          <div className="w-full flex md:justify-center md:items-center flex-col md:px-0 md:py-0 p-[clamp(12px,4vw,20px)] md:rounded-none rounded-tr-xl rounded-tl-xl md:bg-transparent bg-secondaryColors-0 h-[90%] md:h-auto md:static absolute bottom-0 left-0 overflow-y-auto scrollbar2 pb-[3.5rem] md:pb-0 md:mb-5">
+            <div className="md:max-w-[1100px] w-full max-w-full min-w-0">{children}</div>
+          </div>
         </div>
       </div>
-    </div>
+    </SocketProvider>
   );
 }
