@@ -114,16 +114,24 @@ export default function AuthProvider({ children }: Props) {
     const userType = authStatus?.user?.userType;
     const role = authStatus?.user?.role;
     
+    // Platform admins (goye_admin) have no profile-fetch endpoint of their
+    // own — /api/user/profile and /api/organizations/profile both reject
+    // this role with a 400. Classify them separately so checkAuth doesn't
+    // call either.
+    if (role === 'goye_admin') {
+      return 'admin';
+    }
+
     // Check if user is an individual (student/tutor)
     if (role === 'student' || role === 'tutor' || userType === 'INDIVIDUAL') {
       return 'individual';
     }
-    
+
     // Check if user is invited or org admin
     if (userType === 'INVITED_MEMBER' || role === 'org_admin' || userType === 'ORGANIZATION_OWNER') {
       return 'organization';
     }
-    
+
     // Default to individual (student/tutor)
     return 'individual';
   }, [authStatus]);
@@ -159,7 +167,30 @@ export default function AuthProvider({ children }: Props) {
     
     try {
       const userType = getUserType();
-      
+
+      // Platform admins have no profile-fetch endpoint of their own (see
+      // getUserType above) — every real API call still enforces auth via
+      // the httpOnly session cookie server-side regardless of this local
+      // status, so we trust the identity already captured at login rather
+      // than calling an endpoint built for a different role.
+      if (userType === 'admin') {
+        console.log("🛡️ Platform admin - skipping profile fetch, trusting session cookie");
+        setAuthStatus({
+          isExistingUser: true,
+          isProfileComplete: true,
+          requiresProfileCompletion: false,
+          isLoading: false,
+          user: {
+            first_name: localStorage.getItem('first_name') || '',
+            last_name: localStorage.getItem('last_name') || '',
+            role: localStorage.getItem('role') || 'goye_admin',
+          } as any,
+          organization: undefined,
+        });
+        isCheckingRef.current = false;
+        return true;
+      }
+
       // Students and Tutors use /api/user/profile
       if (userType === 'individual') {
         console.log("📡 Individual user (student/tutor) - Using /api/user/profile");
