@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import { GoVideo } from "react-icons/go";
 import { AnimatePresence, motion } from "framer-motion";
 import { MdChevronRight } from "react-icons/md";
+import { FaTrophy } from "react-icons/fa";
+import confetti from "canvas-confetti";
 import SubHeader from "./dashboard_subheader";
 import Loader from "./loader";
 import VideoHelper from "../hook/videoHelper";
@@ -47,6 +49,12 @@ export default function DashboardStudentCourseList({
   const [loadingLesson, setLoadingLesson] = useState<boolean>(false);
   const [videoDurations, setVideoDurations] = useState<Map<string, number>>(new Map());
   const [initialSeekTime, setInitialSeekTime] = useState<number | undefined>(undefined);
+  const [completionCelebration, setCompletionCelebration] = useState<{
+    pointsEarned?: number;
+    leveledUp?: boolean;
+    newLevel?: string | number;
+    certificateUrl?: string | null;
+  } | null>(null);
 
   // ─── Race-condition guard ──────────────────────────────────────────────────
   // Prevents concurrent POST /track-video calls for the same lesson,
@@ -70,6 +78,25 @@ export default function DashboardStudentCourseList({
       console.error("Error getting tracker ID:", error);
       return null;
     }
+  };
+
+  // The moment a course actually finishes (last lesson watched to completion),
+  // the backend awards XP, possibly levels the student up, and issues a
+  // certificate — none of which had any visible UI before this. Confetti +
+  // a modal makes that moment feel earned instead of a silent state update.
+  const celebrateCourseCompletion = (data: any) => {
+    confetti({
+      particleCount: 150,
+      spread: 100,
+      origin: { y: 0.6 },
+      colors: ["#FBB041", "#4466E4", "#DA0E29", "#00BFFF", "#30A46F"],
+    });
+    setCompletionCelebration({
+      pointsEarned: data.gamification?.pointsEarned,
+      leveledUp: data.gamification?.leveledUp,
+      newLevel: data.gamification?.newLevel,
+      certificateUrl: data.certificateUrl,
+    });
   };
 
   // Core tracking function (create or update)
@@ -113,6 +140,9 @@ export default function DashboardStudentCourseList({
           setFinishedLessons((prev) => new Set(prev).add(lessonId));
           setCompletedLessons((prev) => new Set(prev).add(lessonId));
         }
+        if (data.courseCompleted) {
+          celebrateCourseCompletion(data);
+        }
       } else {
         const response = await fetch(`${API_URL}/api/video/track-video`, {
           method: "POST",
@@ -133,6 +163,9 @@ export default function DashboardStudentCourseList({
         if (data.data?.videoFinished) {
           setFinishedLessons((prev) => new Set(prev).add(lessonId));
           setCompletedLessons((prev) => new Set(prev).add(lessonId));
+        }
+        if (data.courseCompleted) {
+          celebrateCourseCompletion(data);
         }
       }
 
@@ -506,6 +539,65 @@ export default function DashboardStudentCourseList({
             )}
           </div>
         </div>
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {completionCelebration && (
+          <motion.div
+            key="course-completion"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setCompletionCelebration(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: "20%" }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: "20%" }}
+              transition={{ duration: 0.3, ease: "easeIn" }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[400px] p-[40px] rounded-[16px] flex flex-col items-center gap-3 bg-secondaryColors-0 text-center"
+            >
+              <FaTrophy size={64} color="#FBB041" />
+              <h1 className="text-[32px] text-white font-[600]">
+                Course Completed!
+              </h1>
+              <p className="text-[15px] text-white/90">
+                You finished &ldquo;{course_title}&rdquo; — well done.
+              </p>
+
+              {typeof completionCelebration.pointsEarned === "number" && (
+                <p className="text-primaryColors-0 text-[15px] font-[600]">
+                  +{completionCelebration.pointsEarned} XP earned
+                </p>
+              )}
+
+              {completionCelebration.leveledUp && (
+                <p className="text-boldGreen-0 text-[15px] font-[600]">
+                  🎉 You leveled up{completionCelebration.newLevel ? ` to ${completionCelebration.newLevel}` : ""}!
+                </p>
+              )}
+
+              {completionCelebration.certificateUrl ? (
+                <p className="text-white/80 text-[13px]">
+                  Your certificate is ready — find it in your Growth tab.
+                </p>
+              ) : (
+                <p className="text-white/60 text-[12px]">
+                  Your certificate is on its way — check your Growth tab shortly.
+                </p>
+              )}
+
+              <button
+                className="form_more bg-primaryColors-0 text-white w-full mt-2"
+                onClick={() => setCompletionCelebration(null)}
+              >
+                Keep Going
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
