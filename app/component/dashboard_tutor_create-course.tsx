@@ -105,10 +105,13 @@ export default function DashboardTutorCreateCourse({
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const [showError, setShowError] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [uploadWarnings, setUploadWarnings] = useState<string[]>([]);
   const [showPop, setShowPop] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [createdCourseId, setCreatedCourseId] = useState<string>("");
+  const [createdCourseTitle, setCreatedCourseTitle] = useState<string>("");
   const [course, setCourse] = useState<Course[]>([]);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [initialLoad, setInitialLoad] = useState<boolean>(true);
@@ -324,10 +327,62 @@ export default function DashboardTutorCreateCourse({
     }
   };
 
+  // Turns a raw thrown error (a network TypeError, a "Failed to create
+  // course: 500 - {...}" string, etc.) into a calm, honest message —
+  // never the raw error text, but never a lie about what happened either.
+  // Nothing the tutor entered is lost on failure, since formData is only
+  // cleared after a confirmed success.
+  const describeCreateCourseError = (error: any): string => {
+    const raw = String(error?.message || "");
+
+    if (raw.includes("Failed to fetch") || raw.includes("NetworkError") || raw.includes("network")) {
+      return "We couldn't reach the server just now. Please check your connection and try again — nothing you've entered has been lost.";
+    }
+    if (raw.includes(": 401") || raw.includes(": 403")) {
+      return "Your session needs a refresh. Please log in again, then try creating your course once more.";
+    }
+    if (raw.includes(": 500") || raw.includes(": 502") || raw.includes(": 503")) {
+      return "Something didn't go through on our end. Please try again in a moment — your course details are still here, ready to go.";
+    }
+    return "We hit a snag creating your course. Please try again — your details are still here, ready to go.";
+  };
+
+  // Checks the fields the backend actually requires before we ever hit the
+  // network, so a tutor sees a specific, friendly message ("add a level")
+  // instead of the course silently 500-ing after a long upload wait.
+  const validateCourseBeforeSubmit = (): string | null => {
+    if (!formData.course_title?.trim()) {
+      return "Please give your course a title before continuing.";
+    }
+    if (!formData.course_description?.trim()) {
+      return "Please add a course description before continuing.";
+    }
+    if (!formData.course_level?.trim()) {
+      return "Please choose a course level before continuing.";
+    }
+    if (!formData.module || formData.module.length === 0) {
+      return "Please add at least one module before continuing.";
+    }
+    const hasLesson = formData.module.some((m) => (m.lessons || []).length > 0);
+    if (!hasLesson) {
+      return "Please add at least one lesson to a module before continuing.";
+    }
+    return null;
+  };
+
   const handleCreateCourse = async (e?: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
+
+    const validationMessage = validateCourseBeforeSubmit();
+    if (validationMessage) {
+      setErrorMessage(validationMessage);
+      setShowError(true);
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
+    setUploadWarnings([]);
     setUploadStatus("Starting course creation...");
 
     try {
@@ -461,6 +516,10 @@ export default function DashboardTutorCreateCourse({
           });
         } catch (error) {
           console.error("Failed to upload course image:", error);
+          setUploadWarnings((prev) => [
+            ...prev,
+            "Your course image didn't upload — you can add it from Edit Course.",
+          ]);
         }
       }
 
@@ -542,6 +601,10 @@ export default function DashboardTutorCreateCourse({
                   `Failed to upload video for ${lesson.lesson_title}:`,
                   error,
                 );
+                setUploadWarnings((prev) => [
+                  ...prev,
+                  `The video for "${lesson.lesson_title}" didn't upload — you can add it from Edit Course.`,
+                ]);
               }
             }
           }
@@ -595,6 +658,10 @@ export default function DashboardTutorCreateCourse({
                 `Failed to upload document for ${tempMaterial.material_title}:`,
                 error,
               );
+              setUploadWarnings((prev) => [
+                ...prev,
+                `The document for "${tempMaterial.material_title}" didn't upload — you can add it from Edit Course.`,
+              ]);
             }
           }
         }
@@ -620,6 +687,10 @@ export default function DashboardTutorCreateCourse({
 
       setUploadProgress(100);
       setUploadStatus("Course created successfully!");
+      // Snapshot the title before formData is cleared below — the success
+      // popup renders after this reset, so it can't safely read
+      // formData.course_title live without showing it blank.
+      setCreatedCourseTitle(formData.course_title || "");
       setShowPop(true);
 
       setFormData({
@@ -641,6 +712,7 @@ export default function DashboardTutorCreateCourse({
     } catch (error: any) {
       console.error("❌ Course creation failed:", error);
       setUploadStatus("Course creation failed!");
+      setErrorMessage(describeCreateCourseError(error));
       setShowError(true);
     } finally {
       setIsUploading(false);
@@ -1233,7 +1305,12 @@ export default function DashboardTutorCreateCourse({
   const backToCourseFunc = () => {
     setShowCourse(true);
     setShowBreakdownCourse(false);
-    setIsEditMode(true);
+    // Only re-enter edit mode if this instance was already editing an
+    // existing course (courseId prop present from the start). After a
+    // fresh creation, courseId stays undefined — forcing edit mode here
+    // would mislabel the form as "Edit Course" while still routing
+    // submits through handleCreateCourse, silently creating a duplicate.
+    setIsEditMode(!!courseId);
   };
 
   const reviewCourseFunc = () => {
@@ -1304,7 +1381,7 @@ export default function DashboardTutorCreateCourse({
         {showBreakdownCourse && (
           <DashboardTutorCourseBreakdown
             backFunc={backToCourse}
-            courseId={courseId as any}
+            courseId={(courseId || createdCourseId) as any}
             onDelete={handleDelete}
             refreshCourse={fetchCourse}
           />
@@ -1316,28 +1393,60 @@ export default function DashboardTutorCreateCourse({
               close={close}
               backToCourse={backToCourseFunc}
               reviewCourse={reviewCourseFunc}
-              paragraph={`Your course "${formData.course_title}" has been ${isEditMode ? "updated" : "created"} successfully.`}
+              paragraph={
+                isEditMode
+                  ? `Your course "${formData.course_title}" has been updated successfully.`
+                  : `Your course "${createdCourseTitle}" has been created successfully.${
+                      uploadWarnings.length > 0
+                        ? " A couple of files need another try — you'll see them below."
+                        : ""
+                    }`
+              }
               buttonFunc="Review Course"
             />
+          )}
+          {showPop && !isEditMode && uploadWarnings.length > 0 && (
+            <motion.div
+              key="upload-warnings"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-full max-w-[380px] px-4"
+            >
+              <div className="bg-primaryYellow-0/10 border border-primaryYellow-0 rounded-lg p-4">
+                <p className="text-primaryYellow-0 text-[13px] font-[600] mb-2">
+                  Your course is live! A few files just need another try:
+                </p>
+                <ul className="text-textSlightDark-0 text-[12px] list-disc pl-4 space-y-1">
+                  {uploadWarnings.map((warning, i) => (
+                    <li key={i}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            </motion.div>
           )}
           <div key="create-course">
             {showError && (
               <motion.div
                 key="error"
-                initial={{ y: -50 }}
-                animate={{ y: 0 }}
-                exit={{ y: 50 }}
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 50, opacity: 0 }}
                 transition={{ duration: 0.3, ease: "easeIn" }}
-                className="fixed md:top-2 top-[9rem] w-full left-0 flex justify-center items-center flex-col"
+                className="fixed md:top-2 top-[9rem] w-full left-0 flex justify-center items-center flex-col z-[60] px-4"
               >
-                <div className="bg-[#da0e2913] py-2 px-[12px] w-[280px] border border-[#DA0E29] flex justify-between items-center">
-                  <span>
-                    <TbCancel size={30} color="#DA0E29" />
+                <div className="bg-[#da0e2913] py-3 px-[16px] max-w-[380px] w-full rounded-lg border border-[#DA0E29] flex gap-3 items-start">
+                  <span className="flex-shrink-0 mt-0.5">
+                    <TbCancel size={24} color="#DA0E29" />
                   </span>
-                  <p className="text-[#DA0E29] text-[13px]">
-                    Sorry, all forms must be filled and files uploaded
+                  <p className="text-[#DA0E29] text-[13px] flex-1">
+                    {errorMessage || "We hit a snag. Please try again — your details are still here, ready to go."}
                   </p>
-                  <span onClick={() => setShowError(false)}>&times;</span>
+                  <span
+                    onClick={() => setShowError(false)}
+                    className="text-[#DA0E29] cursor-pointer flex-shrink-0 text-lg leading-none"
+                  >
+                    &times;
+                  </span>
                 </div>
               </motion.div>
             )}
