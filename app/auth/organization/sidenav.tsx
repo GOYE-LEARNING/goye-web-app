@@ -114,7 +114,9 @@ export default function Sidenav() {
             icon={<MdOutlineShield size={19} />}
             disabled={!isOrgInfoComplete || !isUserComplete || (formData.main_type === "church" && !isChurchComplete) || (formData.main_type === "school" && !isSchoolComplete) || (formData.main_type === "club" && !isClubComplete)}
             onClick={() => {
-              const typeComplete = formData.main_type === "church" ? isChurchComplete : formData.main_type === "school" ? isSchoolComplete : formData.main_type === "club" ? isClubComplete : false;
+              // "other" has no dedicated info step, so there's nothing
+              // further to complete beyond Org Info + User Info.
+              const typeComplete = formData.main_type === "church" ? isChurchComplete : formData.main_type === "school" ? isSchoolComplete : formData.main_type === "club" ? isClubComplete : formData.main_type === "other" ? true : false;
               handleNavigationClick("Verification", isOrgInfoComplete && isUserComplete && typeComplete, "Please complete all previous forms first");
             }}
           />

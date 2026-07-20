@@ -153,9 +153,12 @@ export default function LoadingPage() {
             redirectPath = "/dashboard/tutor";
             console.log("Redirecting as instructor/tutor to:", redirectPath);
           }
-          // Check for platform admin (goye_admin)
+          // Check for platform admin (goye_admin) — super_admin gets the
+          // platform-wide dashboard; content_admin/user_admin keep the
+          // existing single-scope admin view.
           else if (role === "goye_admin") {
-            redirectPath = "/dashboard/admin";
+            const adminRole = localStorage.getItem("admin_role");
+            redirectPath = adminRole === "super_admin" ? "/dashboard/super-admin" : "/dashboard/admin";
             console.log("Redirecting as goye_admin to:", redirectPath);
           }
           // Check for organization admin (org_admin or admin)

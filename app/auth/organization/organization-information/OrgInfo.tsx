@@ -149,11 +149,13 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
   );
 
   const handleOrgTypeSelect = (type: string) => {
-    if (formData.main_type) {
-      setFormData({ ...formData, org_type: type });
-    } else {
-      setFormData({ ...formData, org_type: type, main_type: type });
-    }
+    // Keep main_type in sync with org_type. main_type drives step-routing
+    // and progress-completion logic elsewhere (BodyProvider, sidenav); if
+    // this page only updated org_type, changing the type here could make
+    // the two fields disagree about what kind of organization is being
+    // created, breaking navigation for whichever type main_type still
+    // pointed at.
+    setFormData({ ...formData, org_type: type, main_type: type });
     setOrgTypeDropdown(false);
     setOrgTypeState(type);
   };

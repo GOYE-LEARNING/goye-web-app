@@ -166,6 +166,11 @@ export default function Login({
 
         if (userType === "ADMIN") {
           localStorage.setItem("type", "admin");
+          // Distinguishes a platform-wide super_admin from a content_admin/
+          // user_admin — only the former is routed to /dashboard/super-admin.
+          if (userData.adminRole) {
+            localStorage.setItem("admin_role", userData.adminRole);
+          }
         } else if (userType === "INVITED_USER") {
           localStorage.setItem("type", "invited_user");
           if (userData.organizationId) {

@@ -301,7 +301,9 @@ export default function BodyProvider({
     if (index === 1) return isOrgInfoComplete;
     if (index === 2) return isUserComplete;
     if (index === 3)
-      return isChurchComplete || isSchoolComplete || isClubComplete;
+      // "other" organizations have no dedicated info step to fill in, so
+      // there's nothing to be incomplete about — treat it as satisfied.
+      return isChurchComplete || isSchoolComplete || isClubComplete || formData.main_type === "other";
     if (index === 4) return false;
     return false;
   };
@@ -364,6 +366,9 @@ export default function BodyProvider({
         router.push("/auth/organization/organization-school");
       } else if (formData.main_type === "club") {
         router.push("/auth/organization/organization-club");
+      } else if (formData.main_type === "other") {
+        // "other" has no dedicated info step — go straight to verification.
+        router.push("/auth/organization/organization-verification");
       }
     } else {
       return errorTimeout();
@@ -375,7 +380,7 @@ export default function BodyProvider({
       isOrgInfoComplete &&
       isUserComplete &&
       formData.main_type &&
-      (isChurchComplete || isSchoolComplete || isClubComplete)
+      (isChurchComplete || isSchoolComplete || isClubComplete || formData.main_type === "other")
     ) {
       router.push("/auth/organization/organization-verification");
     } else {

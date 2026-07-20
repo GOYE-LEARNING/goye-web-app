@@ -374,9 +374,9 @@ export default function UserInfo({ hideButton = false }: Props) {
                   } else if (formData.org_type == "club") {
                     router.push("/auth/organization/organization-club");
                   } else {
-                    router.push(
-                      "/auth/organization/organization/organization-verification",
-                    );
+                    // "other" (and anything unrecognized) has no dedicated
+                    // info step, so it goes straight to verification.
+                    router.push(path);
                   }
                 }}
                 disabled={!isUserComplete}
