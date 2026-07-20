@@ -9,20 +9,43 @@ import { HiOutlineOfficeBuilding, HiOfficeBuilding } from "react-icons/hi";
 import { BsActivity } from "react-icons/bs";
 import { usePathname } from "next/navigation";
 import { useAuthContext } from "@/app/context/AuthContext";
+import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
+import React, { useState } from "react";
 
-export default function SuperAdminSidenav() {
+interface Props {
+  setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
   const pathname = usePathname();
   const { logout } = useAuthContext();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+    setIsCollapsedState(!isCollapsed);
+  };
 
   return (
-    <div className="sidenav">
-      <Image
-        src={logo}
-        alt="logo"
-        height={100}
-        width={100}
-        className="md:block hidden"
-      />
+    <div className={`sidenav ${isCollapsed ? 'collapsed w-[5%]' : 'md:w-[20%]'}`}>
+      <div className={`w-full flex ${isCollapsed ? 'justify-center' : 'justify-between'} items-center`}>
+        <div className={`${isCollapsed ? 'hidden' : 'block'}`}>
+          <Image
+            src={logo}
+            alt="logo"
+            height={100}
+            width={100}
+            className="md:block hidden"
+          />
+        </div>
+        <span
+          className="text-[#ccc] md:block hidden cursor-pointer hover:text-white transition-colors"
+          onClick={toggleSidebar}
+        >
+          {isCollapsed ? <LuPanelRightClose size={24} /> : <LuPanelLeftClose size={24} />}
+        </span>
+      </div>
+
       <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col md:gap-1 w-full mt-0 md:mt-[2rem]">
         <div className="md:w-full">
           <SidenavComponent
@@ -35,6 +58,7 @@ export default function SuperAdminSidenav() {
                 <MdHomeFilled size={25} color="#FFA500" />
               )
             }
+            isCollapsed={isCollapsed}
           />
         </div>
         <div className="md:w-full">
@@ -48,6 +72,7 @@ export default function SuperAdminSidenav() {
                 <HiOfficeBuilding size={25} color="#FFA500" />
               )
             }
+            isCollapsed={isCollapsed}
           />
         </div>
         <div className="md:w-full">
@@ -60,6 +85,7 @@ export default function SuperAdminSidenav() {
                 color={pathname === "/dashboard/super-admin/activity" ? "#FFA500" : undefined}
               />
             }
+            isCollapsed={isCollapsed}
           />
         </div>
       </nav>
@@ -70,6 +96,7 @@ export default function SuperAdminSidenav() {
           path="/"
           label="Logout"
           icon={<MdLogout size={25} />}
+          isCollapsed={isCollapsed}
         />
       </div>
     </div>
