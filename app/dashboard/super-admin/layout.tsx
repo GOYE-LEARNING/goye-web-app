@@ -79,7 +79,7 @@ export default function SuperAdminLayout({
         >
           <DashboardHeader />
           <div className="w-full flex md:justify-center md:items-center flex-col md:px-0 md:py-0 p-[clamp(12px,4vw,20px)] md:rounded-none rounded-tr-xl rounded-tl-xl md:bg-transparent bg-secondaryColors-0 h-[90%] md:h-auto md:static absolute bottom-0 left-0 overflow-y-auto scrollbar2 pb-[3.5rem] md:pb-0 md:mb-5">
-            <div className="md:max-w-[1100px] w-full max-w-full min-w-0">{children}</div>
+            <div className="md:max-w-[707px] w-full max-w-full min-w-0"><br/> {children}</div>
           </div>
         </div>
       </div>

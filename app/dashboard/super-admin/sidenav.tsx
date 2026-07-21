@@ -3,10 +3,11 @@
 import SidenavComponent from "@/app/component/sidenav_component";
 import Image from "next/image";
 import logo from "@/public/images/goye-removebg-preview.png";
-import { MdHomeFilled, MdLogout } from "react-icons/md";
+import { MdHomeFilled, MdLogout, MdCampaign } from "react-icons/md";
 import { GoHome } from "react-icons/go";
 import { HiOutlineOfficeBuilding, HiOfficeBuilding } from "react-icons/hi";
-import { BsActivity } from "react-icons/bs";
+import { IoSchoolOutline, IoSchoolSharp } from "react-icons/io5";
+import { BsActivity, BsPeople, BsPeopleFill, BsCalendarEvent, BsCalendarEventFill } from "react-icons/bs";
 import { usePathname } from "next/navigation";
 import { useAuthContext } from "@/app/context/AuthContext";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
@@ -71,6 +72,61 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
               ) : (
                 <HiOfficeBuilding size={25} color="#FFA500" />
               )
+            }
+            isCollapsed={isCollapsed}
+          />
+        </div>
+        <div className="md:w-full">
+          <SidenavComponent
+            path="/dashboard/super-admin/users"
+            label="Users"
+            icon={
+              pathname !== "/dashboard/super-admin/users" ? (
+                <BsPeople size={25} />
+              ) : (
+                <BsPeopleFill size={25} color="#FFA500" />
+              )
+            }
+            isCollapsed={isCollapsed}
+          />
+        </div>
+        <div className="md:w-full">
+          <SidenavComponent
+            path="/dashboard/super-admin/courses"
+            label="Courses"
+            icon={
+              pathname !== "/dashboard/super-admin/courses" ? (
+                <IoSchoolOutline size={25} />
+              ) : (
+                <IoSchoolSharp size={25} color="#FFA500" />
+              )
+            }
+            isCollapsed={isCollapsed}
+          />
+        </div>
+        <div className="md:w-full">
+          <SidenavComponent
+            path="/dashboard/super-admin/events"
+            label="Events"
+            icon={
+              pathname !== "/dashboard/super-admin/events" ? (
+                <BsCalendarEvent size={22} />
+              ) : (
+                <BsCalendarEventFill size={22} color="#FFA500" />
+              )
+            }
+            isCollapsed={isCollapsed}
+          />
+        </div>
+        <div className="md:w-full">
+          <SidenavComponent
+            path="/dashboard/super-admin/announcements"
+            label="Announce"
+            icon={
+              <MdCampaign
+                size={26}
+                color={pathname === "/dashboard/super-admin/announcements" ? "#FFA500" : undefined}
+              />
             }
             isCollapsed={isCollapsed}
           />
