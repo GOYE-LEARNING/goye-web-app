@@ -30,11 +30,18 @@ type ResolvedRole = {
 
 function resolveRole(user: any, organization: any): ResolvedRole {
 
-  // 1. Super admin
-  if (user?.userType === "ADMIN") {
+  // 1. Platform admin (goye_admin). The DB userType for these accounts is
+  // often INDIVIDUAL, so we key off the role + adminRole the profile
+  // endpoint returns, not userType. Label reflects the specific admin tier.
+  if (user?.role === "goye_admin" || user?.userType === "ADMIN") {
+    const adminLabelMap: Record<string, string> = {
+      super_admin: "Super Admin",
+      content_admin: "Content Admin",
+      user_admin: "User Admin",
+    };
     return {
-      label: "Super Admin",
-      chatPath: "/dashboard/admin/chat",
+      label: adminLabelMap[user?.adminRole] ?? "Admin",
+      chatPath: "/dashboard/super-admin",
     };
   }
 
