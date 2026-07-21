@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IoChatboxSharp, IoChevronDown } from "react-icons/io5";
+import { IoChatboxSharp, IoChevronDown, IoLanguage } from "react-icons/io5";
 import { MdNotifications } from "react-icons/md";
 import DashboardNotification from "./dashboard_notification";
 import { FaBell } from "react-icons/fa";
@@ -14,6 +14,7 @@ import { FiMoon, FiSun } from "react-icons/fi";
 import ToogleDarkMode from "./toogleDarkMode";
 import { useSocket } from "@/app/context/SocketContext";
 import { useAuthContext } from "@/app/context/AuthContext";
+import { useLanguage } from "@/app/context/LanguageContext";
 
 // ── Role resolution ───────────────────────────────────────────
 // Priority order:
@@ -90,6 +91,7 @@ export default function DashboardHeader() {
   const { darkMode, setDarkMode } = useTheme();
   const { isConnected, unreadCount, connect } = useSocket();
   const { authStatus } = useAuthContext();
+  const { openLanguageSelector } = useLanguage();
 
   const [showNotification, setShowNotification] = useState(false);
   const [showProfileBox, setShowProfileBox]     = useState(false);
@@ -220,6 +222,16 @@ export default function DashboardHeader() {
         <div className="hidden md:flex justify-end items-center gap-5 px-8 py-3 relative">
           <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
 
+          {/* Language selector — globally reachable from any dashboard */}
+          <button
+            onClick={openLanguageSelector}
+            title="Change language"
+            aria-label="Change language"
+            className="text-gray-700 dark:text-gray-200 hover:text-primaryColors-0 transition-colors"
+          >
+            <IoLanguage size={22} />
+          </button>
+
           {/* Connection status */}
           <div className="flex items-center justify-center gap-1">
             <span className={`w-2 h-2 rounded-full ${
@@ -323,6 +335,16 @@ export default function DashboardHeader() {
               className="text-white hover:text-gray-200 transition-colors"
             >
               {darkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
+            </button>
+
+            {/* Language selector — globally reachable from any dashboard */}
+            <button
+              onClick={openLanguageSelector}
+              title="Change language"
+              aria-label="Change language"
+              className="text-white hover:text-gray-200 transition-colors"
+            >
+              <IoLanguage size={18} />
             </button>
 
             <div className="relative">
