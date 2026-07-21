@@ -18,6 +18,7 @@ import { BuiltInTabProvider } from "./context/BuiltinTabContext";
 import { GlobalAPIErrorHandler } from "./component/GlobalApiErrorHandler";
 import { GlobalNotFoundHandler } from "./component/GlobalNotFoundHandler";
 import { LanguageProvider } from "./context/LanguageContext";
+import { I18nProvider } from "./context/I18nContext";
 export default function RootLayout({
   children,
 }: {
@@ -41,13 +42,15 @@ export default function RootLayout({
                     <ModalProvider>
                       <BuiltInTabProvider>
                         <LanguageProvider>
-                          <div className="min-h-[100dvh] w-full max-w-[100vw] min-w-0  overflow-x-hidden">
-                            <Cursor />
+                          <I18nProvider>
+                            <div className="min-h-[100dvh] w-full max-w-[100vw] min-w-0  overflow-x-hidden">
+                              <Cursor />
 
-                            {children}
-                            <div id="modal-root" />
-                            <div id="slideshow-modal-root" />
-                          </div>
+                              {children}
+                              <div id="modal-root" />
+                              <div id="slideshow-modal-root" />
+                            </div>
+                          </I18nProvider>
                         </LanguageProvider>
                       </BuiltInTabProvider>
                     </ModalProvider>

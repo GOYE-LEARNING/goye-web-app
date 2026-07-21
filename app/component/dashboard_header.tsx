@@ -15,6 +15,7 @@ import ToogleDarkMode from "./toogleDarkMode";
 import { useSocket } from "@/app/context/SocketContext";
 import { useAuthContext } from "@/app/context/AuthContext";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 // ── Role resolution ───────────────────────────────────────────
 // Priority order:
@@ -92,6 +93,7 @@ export default function DashboardHeader() {
   const { isConnected, unreadCount, connect } = useSocket();
   const { authStatus } = useAuthContext();
   const { openLanguageSelector } = useLanguage();
+  const { t } = useI18n();
 
   const [showNotification, setShowNotification] = useState(false);
   const [showProfileBox, setShowProfileBox]     = useState(false);
@@ -238,7 +240,7 @@ export default function DashboardHeader() {
               isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
             }`} />
             <span className="text-sm text-gray-700 dark:text-gray-200">
-              {isConnected ? "Online" : "Offline"}
+              {isConnected ? t("Online") : t("Offline")}
             </span>
           </div>
 
@@ -297,14 +299,14 @@ export default function DashboardHeader() {
                 </p>
                 {/* Role badge */}
                 <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-primaryColors-0/10 text-primaryColors-0">
-                  {displayRole}
+                  {t(displayRole)}
                 </span>
                 <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
                   <button
                     onClick={() => router.push("/auth")}
                     className="text-xs text-red-500 hover:text-red-600 w-full text-left"
                   >
-                    Sign Out
+                    {t("Sign Out")}
                   </button>
                 </div>
               </div>
@@ -323,9 +325,9 @@ export default function DashboardHeader() {
               )}
             </div>
             <div>
-              <p className="text-[10px] text-white/70">{getHours}</p>
+              <p className="text-[10px] text-white/70">{t(getHours)}</p>
               <p className="text-[16px] font-semibold text-white">{userDisplayName}</p>
-              <p className="text-[10px] text-white/60">{displayRole}</p>
+              <p className="text-[10px] text-white/60">{t(displayRole)}</p>
             </div>
           </div>
 
