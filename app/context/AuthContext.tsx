@@ -3,6 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
+import { getUserProfile, clearUserProfile } from "@/app/utils/database/db";
 
 interface Props {
   children: React.ReactNode;
@@ -175,14 +176,15 @@ export default function AuthProvider({ children }: Props) {
       // than calling an endpoint built for a different role.
       if (userType === 'admin') {
         console.log("🛡️ Platform admin - skipping profile fetch, trusting session cookie");
+        const profile = await getUserProfile();
         setAuthStatus({
           isExistingUser: true,
           isProfileComplete: true,
           requiresProfileCompletion: false,
           isLoading: false,
           user: {
-            first_name: localStorage.getItem('first_name') || '',
-            last_name: localStorage.getItem('last_name') || '',
+            first_name: profile?.first_name || '',
+            last_name: profile?.last_name || '',
             role: localStorage.getItem('role') || 'goye_admin',
           } as any,
           organization: undefined,
@@ -399,7 +401,9 @@ export default function AuthProvider({ children }: Props) {
         method: "POST",
         credentials: "include",
       });
-      
+
+      await clearUserProfile();
+
       setAuthStatus({
         isExistingUser: false,
         isProfileComplete: false,

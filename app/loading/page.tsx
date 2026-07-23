@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
 import { useAuthContext } from "@/app/context/AuthContext";
+import { getUserProfile } from "@/app/utils/database/db";
 
 export default function LoadingPage() {
   const { organizationId } = useOrganizationContext();
@@ -48,9 +49,10 @@ export default function LoadingPage() {
       const userType = localStorage.getItem("type");
       const isProfileComplete =
         localStorage.getItem("isProfileComplete") === "true";
-      const firstName = localStorage.getItem("first_name");
-      const lastName = localStorage.getItem("last_name");
-      const email = localStorage.getItem("email");
+      const profile = await getUserProfile();
+      const firstName = profile?.first_name;
+      const lastName = profile?.last_name;
+      const email = profile?.email_address;
       const userLevel = localStorage.getItem("level");
 
       console.log("Loading page - user data check:", {

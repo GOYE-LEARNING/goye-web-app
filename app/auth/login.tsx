@@ -13,6 +13,7 @@ import GoogleSignInButton from "../component/google_btn";
 import useGoogleSignupButton from "../hook/useGoogleSignupButton";
 import { useTranslation } from "../hook/useTranslation";
 import TranslatedText from "../hook/translateText";
+import { saveUserProfile } from "@/app/utils/database/db";
 
 interface formData {
   email: string;
@@ -160,8 +161,10 @@ export default function Login({
         const userType = userData.type;
 
         localStorage.setItem("user_id", userData.id);
-        localStorage.setItem("first_name", userData.first_name);
-        localStorage.setItem("last_name", userData.last_name);
+        await saveUserProfile({
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+        });
         localStorage.setItem("role", userData.role);
 
         if (userType === "ADMIN") {
@@ -238,8 +241,10 @@ export default function Login({
     const { userData, status } = data;
 
     if (userData) {
-      localStorage.setItem("first_name", userData.first_name || "");
-      localStorage.setItem("last_name", userData.last_name || "");
+      await saveUserProfile({
+        first_name: userData.first_name || "",
+        last_name: userData.last_name || "",
+      });
       localStorage.setItem("role", userData.role || "student");
       localStorage.setItem("type", userData.type || "user");
       localStorage.setItem(

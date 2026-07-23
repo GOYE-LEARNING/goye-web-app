@@ -10,6 +10,7 @@ import { useEffect, useState, useRef } from "react";
 import { useAuthContext } from "@/app/context/AuthContext";
 import AuthLoader from "@/app/auth/auth_loader";
 import { SocketProvider } from "@/app/context/SocketContext";
+import { getUserProfile } from "@/app/utils/database/db";
 
 export default function DashboardLayout({
   children,
@@ -48,9 +49,10 @@ export default function DashboardLayout({
       const userRole = localStorage.getItem("role");
       const userType = localStorage.getItem("type");
       const isProfileComplete = localStorage.getItem("isProfileComplete") === "true";
-      const firstName = localStorage.getItem("first_name");
-      const lastName = localStorage.getItem("last_name");
-      const email = localStorage.getItem("email");
+      const profile = await getUserProfile();
+      const firstName = profile?.first_name;
+      const lastName = profile?.last_name;
+      const email = profile?.email_address;
       const progressId = localStorage.getItem("progress_id");
       const planId = localStorage.getItem("plan_id");
 

@@ -8,6 +8,7 @@ import { FaCheck } from "react-icons/fa";
 import Loader from "./loader";
 import { useParams } from "next/navigation";
 import { IoDocumentText } from "react-icons/io5";
+import { saveUserProfile } from "@/app/utils/database/db";
 
 interface Props {
   backFunction: () => void;
@@ -256,8 +257,10 @@ export default function DashboardEditProfile({
         throw new Error(data.message || "Failed to update profile");
       }
 
-      localStorage.setItem("first_name", data.data.first_name);
-      localStorage.setItem("last_name", data.data.last_name);
+      await saveUserProfile({
+        first_name: data.data.first_name,
+        last_name: data.data.last_name,
+      });
 
       if (onProfileUpdate) {
         onProfileUpdate(formData);

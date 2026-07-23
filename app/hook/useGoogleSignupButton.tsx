@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { auth, googleProvider, signInWithPopup } from "../config/firebase";
 import { useAuthContext } from "../context/AuthContext";
+import { saveUserProfile } from "@/app/utils/database/db";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -67,9 +68,11 @@ const useGoogleSignupButton = () => {
 
         // ✅ ONLY save user data, NO tokens
         if (user) {
-          localStorage.setItem("first_name", user.first_name || "");
-          localStorage.setItem("last_name", user.last_name || "");
-          localStorage.setItem("email", user.email_address || "");
+          await saveUserProfile({
+            first_name: user.first_name || "",
+            last_name: user.last_name || "",
+            email_address: user.email_address || "",
+          });
           localStorage.setItem("role", user.role || "student");
           localStorage.setItem("type", user.type || "user");
           localStorage.setItem("isProfileComplete", String(status?.isProfileComplete || false));

@@ -9,6 +9,7 @@ import Step3 from "./step3";
 import Finished from "../../finished";
 import { useSignup } from "../../../context/SignupContext";
 import { useAuthContext } from "@/app/context/AuthContext";
+import { saveUserProfile } from "@/app/utils/database/db";
 
 export default function WelcomeMoreAuth() {
   const [step, setStep] = useState<number>(0);
@@ -65,8 +66,7 @@ export default function WelcomeMoreAuth() {
       if (!res.ok) {
         console.log(data);
       }
-      localStorage.removeItem("token");
-      localStorage.setItem("first_name", authStatus.user?.first_name as any);
+      await saveUserProfile({ first_name: authStatus.user?.first_name as any });
     } catch (error) {
       console.error(error);
     }

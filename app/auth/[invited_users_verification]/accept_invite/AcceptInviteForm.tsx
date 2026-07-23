@@ -14,6 +14,7 @@ import {
 import { IoReload } from 'react-icons/io5';
 import { FaCheck } from 'react-icons/fa6';
 import { useModal } from '@/app/context/SimpleModalContext';
+import { saveOtpToken, getOtpToken, clearOtpToken } from '@/app/utils/database/db';
 
 interface AcceptInviteFormProps {
   token: string;
@@ -215,9 +216,7 @@ export function AcceptInviteForm({
       }
 
       // Store the OTP session token
-      localStorage.setItem('otp-token', data.sessionToken);
-      localStorage.setItem('otp-email', email);
-      localStorage.setItem('temp-user-id', userId);
+      await saveOtpToken(data.sessionToken);
 
       setEmailForOTP(email);
 
@@ -289,7 +288,7 @@ export function AcceptInviteForm({
         return;
       }
 
-      localStorage.setItem('otp-token', data.sessionToken);
+      await saveOtpToken(data.sessionToken);
 
       setResendCount((prev) => prev + 1);
       setTimeLeft(600);
@@ -321,7 +320,7 @@ export function AcceptInviteForm({
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const baseUrl = apiUrl?.replace(/\/$/, '');
 
-      const otpSessionToken = localStorage.getItem('otp-token');
+      const otpSessionToken = await getOtpToken();
 
       if (!otpSessionToken) {
         setOtpError('No OTP session found. Please request a new OTP.');
@@ -349,9 +348,7 @@ export function AcceptInviteForm({
 
       setOtpSuccess('OTP verified successfully!');
 
-      localStorage.removeItem('otp-token');
-      localStorage.removeItem('otp-email');
-      localStorage.removeItem('temp-user-id');
+      await clearOtpToken();
 
       setTimeout(() => {
         setShowOTPModal(false);
