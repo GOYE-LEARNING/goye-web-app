@@ -109,31 +109,48 @@ export default function AuthProvider({ children }: Props) {
     }
   }, []);
 
-  // Determine user type from authStatus or localStorage
+  // Determine user type so checkAuth knows which profile endpoint to call.
+  //
+  // Reads localStorage directly rather than trusting authStatus.user: every
+  // call site (loading page, every dashboard layout) calls updateAuthStatus()
+  // and then immediately awaits checkAuth() in the same synchronous block.
+  // setAuthStatus is async, so the already-memoized checkAuth closure still
+  // sees the *previous* render's authStatus (user: undefined) — not what
+  // updateAuthStatus just set. That silently sent every non-admin,
+  // non-plain-student/tutor account (organization owners, invited members)
+  // through the 'individual' default below, hitting /api/user/profile and
+  // getting a 400 back. localStorage is written synchronously at login,
+  // before checkAuth is ever called, so it isn't subject to that race.
+  //
+  // "type" is the frontend's own normalized classifier, written identically
+  // by every login path (see login.tsx / useGoogleSignupButton.tsx) to
+  // exactly one of "admin" | "organization" | "invited_user" | "user" — a
+  // more reliable signal than exact-matching backend role/userType strings,
+  // which vary and may not even be present yet.
   const getUserType = React.useCallback(() => {
-    // Check authStatus first
+    const type = (localStorage.getItem('type') || authStatus?.user?.type || '').toLowerCase();
+    const role = localStorage.getItem('role') || authStatus?.user?.role;
     const userType = authStatus?.user?.userType;
-    const role = authStatus?.user?.role;
-    
-    // Platform admins (goye_admin) have no profile-fetch endpoint of their
-    // own — /api/user/profile and /api/organizations/profile both reject
-    // this role with a 400. Classify them separately so checkAuth doesn't
-    // call either.
-    if (role === 'goye_admin') {
+
+    if (type === 'admin' || role === 'goye_admin') {
       return 'admin';
     }
 
-    // Check if user is an individual (student/tutor)
-    if (role === 'student' || role === 'tutor' || userType === 'INDIVIDUAL') {
-      return 'individual';
-    }
-
-    // Check if user is invited or org admin
-    if (userType === 'INVITED_MEMBER' || role === 'org_admin' || userType === 'ORGANIZATION_OWNER') {
+    if (
+      type === 'organization' ||
+      type === 'invited_user' ||
+      userType === 'INVITED_MEMBER' ||
+      userType === 'ORGANIZATION_OWNER' ||
+      role === 'org_admin'
+    ) {
       return 'organization';
     }
 
-    // Default to individual (student/tutor)
+    if (type === 'user' || role === 'student' || role === 'tutor' || userType === 'INDIVIDUAL') {
+      return 'individual';
+    }
+
+    // Default to individual (student/tutor) when nothing is known yet.
     return 'individual';
   }, [authStatus]);
 
