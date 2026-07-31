@@ -5,7 +5,7 @@ import DashboardSubHeaderMore from "./dashboard_subheaderMore";
 import pic from "@/public/images/overview.png";
 import { useCallback, useEffect, useState } from "react";
 import DashboardTutorTabOverview from "./dashboard_tutor_tab_overview";
-import DashboardTutorTabMaterial from "./dashboard_tutor_tab_material";
+import DashboardCourseMaterials from "./dashboard_course_materials";
 import DashboardTutorTabQuiz from "./dashboard_tutor_tab_quiz";
 import DashboardTutorTabForum from "./dashboard_tutor_tab_forum";
 import DashboardTutorQuizView from "./dashboard_tutor_quiz_view";
@@ -279,7 +279,7 @@ export default function DashboardTutorCourseBreakdown({
                         }}
                       />
                     ) : activeTab == "materials" ? (
-                      <DashboardTutorTabMaterial courseId={courseId} />
+                      <DashboardCourseMaterials courseId={courseId} />
                     ) : activeTab == "forums" ? (
                       <DashboardTutorTabForum
                         courseId={courseId}
