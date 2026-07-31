@@ -54,7 +54,17 @@ interface AuthState {
 
 const AuthContext = React.createContext<AuthState | undefined>(undefined);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// Falls back to the known production backend so a missing/misconfigured
+// NEXT_PUBLIC_API_URL doesn't silently turn every fetch(`${API_URL}/...`)
+// call into a relative path resolved against this app's own origin (which
+// has no matching route and 404s with an HTML error page instead of JSON).
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://goye-platform-backend.onrender.com";
+if (!process.env.NEXT_PUBLIC_API_URL && typeof window !== "undefined") {
+  console.error(
+    "⚠️ NEXT_PUBLIC_API_URL is not set — falling back to the production backend URL. " +
+    "Set it in your deployment's environment variables and redeploy.",
+  );
+}
 
 export default function AuthProvider({ children }: Props) {
   const router = useRouter();

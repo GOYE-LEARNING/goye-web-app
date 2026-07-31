@@ -4,7 +4,11 @@ import { auth, googleProvider, signInWithPopup } from "../config/firebase";
 import { useAuthContext } from "../context/AuthContext";
 import { saveUserProfile } from "@/app/utils/database/db";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// Falls back to the known production backend so a missing/misconfigured
+// NEXT_PUBLIC_API_URL doesn't leave axios's baseURL undefined — which makes
+// every request resolve as a relative path against this app's own origin
+// (no matching route there, so it 404s) instead of the actual backend.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://goye-platform-backend.onrender.com";
 
 // Create axios instance with default config
 const apiClient = axios.create({
