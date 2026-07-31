@@ -44,12 +44,12 @@ export default function LoadingPage() {
       authCheckedRef.current = true;
 
       // Get user data from localStorage
-      const userId = localStorage.getItem("user_id");
       const role = localStorage.getItem("role");
       const userType = localStorage.getItem("type");
       const isProfileComplete =
         localStorage.getItem("isProfileComplete") === "true";
       const profile = await getUserProfile();
+      const userId = profile?.userId;
       const firstName = profile?.first_name;
       const lastName = profile?.last_name;
       const email = profile?.email_address;

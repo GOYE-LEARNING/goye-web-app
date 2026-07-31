@@ -37,11 +37,12 @@ export interface StoreLanguage {
   updatedAt: string;
 }
 
-// Signed-in user's identity (name/email). Access/refresh tokens never live
-// here or anywhere client-side — the backend issues them as httpOnly
-// cookies, so the browser JS layer can't read them at all.
+// Signed-in user's identity (database id, name, email). Access/refresh
+// tokens never live here or anywhere client-side — the backend issues them
+// as httpOnly cookies, so the browser JS layer can't read them at all.
 export interface UserProfile {
-  id: string; // fixed "current" — one record for whoever is signed in
+  id: string; // Dexie's own key, fixed "current" — one record for whoever is signed in
+  userId?: string; // the actual User.id from the backend, NOT this record's key
   first_name?: string;
   last_name?: string;
   email_address?: string;
@@ -93,7 +94,7 @@ const CURRENT_OTP_SESSION_ID = "current";
 // Merges into the existing record so a caller that only has first/last name
 // (e.g. the profile-edit form) doesn't clobber the email saved at login.
 export async function saveUserProfile(
-  profile: Partial<Pick<UserProfile, "first_name" | "last_name" | "email_address">>,
+  profile: Partial<Pick<UserProfile, "userId" | "first_name" | "last_name" | "email_address">>,
 ): Promise<void> {
   const existing = await db.userProfile.get(CURRENT_PROFILE_ID);
   await db.userProfile.put({

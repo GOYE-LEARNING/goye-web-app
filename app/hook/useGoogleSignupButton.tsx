@@ -72,17 +72,17 @@ const useGoogleSignupButton = () => {
 
         // ✅ ONLY save user data, NO tokens
         if (user) {
+          // Without userId here, /loading's `if (userId && role)` gate never
+          // passes for a Google sign-in — the auth check itself succeeds
+          // (cookies are set correctly), but the very next page bounces back
+          // to /auth with "No user data found" because it was never written.
+          // The email/password flow in login.tsx already sets this.
           await saveUserProfile({
+            userId: user.id,
             first_name: user.first_name || "",
             last_name: user.last_name || "",
             email_address: user.email_address || "",
           });
-          // Without this, /loading's `if (userId && role)` gate never passes
-          // for a Google sign-in — the auth check itself succeeds (cookies
-          // are set correctly), but the very next page bounces back to
-          // /auth with "No user data found" because user_id was never
-          // written. The email/password flow in login.tsx already sets this.
-          if (user.id) localStorage.setItem("user_id", user.id);
           localStorage.setItem("role", user.role || "student");
           localStorage.setItem("type", user.type || "user");
           localStorage.setItem("isProfileComplete", String(status?.isProfileComplete || false));

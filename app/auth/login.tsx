@@ -160,8 +160,8 @@ export default function Login({
         const userData = responseData.user;
         const userType = userData.type;
 
-        localStorage.setItem("user_id", userData.id);
         await saveUserProfile({
+          userId: userData.id,
           first_name: userData.first_name,
           last_name: userData.last_name,
         });

@@ -45,11 +45,11 @@ export default function DashboardLayout({
       const hasRefreshToken = document.cookie.includes("refreshToken");
       
       // Check localStorage for user data
-      const userId = localStorage.getItem("user_id");
       const userRole = localStorage.getItem("role");
       const userType = localStorage.getItem("type");
       const isProfileComplete = localStorage.getItem("isProfileComplete") === "true";
       const profile = await getUserProfile();
+      const userId = profile?.userId;
       const firstName = profile?.first_name;
       const lastName = profile?.last_name;
       const email = profile?.email_address;

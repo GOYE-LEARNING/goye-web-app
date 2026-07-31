@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthContext } from "@/app/context/AuthContext";
 import AuthLoader from "@/app/auth/auth_loader";
+import { getUserProfile } from "@/app/utils/database/db";
 
 export default function DashboardStudentAuthContext({
   children,
@@ -25,7 +26,8 @@ export default function DashboardStudentAuthContext({
       const hasRefreshToken = document.cookie.includes("refreshToken");
       
       // Check localStorage for user data
-      const userId = localStorage.getItem("user_id");
+      const profile = await getUserProfile();
+      const userId = profile?.userId;
       const userRole = localStorage.getItem("role");
       const userType = localStorage.getItem("type");
 
