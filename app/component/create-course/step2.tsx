@@ -9,7 +9,6 @@ import Image from "next/image";
 import Pic from "@/public/images/notfound.png";
 import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
-import usePersistentState from "@/app/hook/usePersistentState";
 
 interface Props {
   formData: any;
@@ -36,7 +35,14 @@ interface Module {
 }
 
 export default function CourseStep2({ formData, setFormData }: Props) {
-  const [modules, setModules] = usePersistentState<Module[]>("module", []);
+  // Seeded from the wizard's own formData (owned by the parent, which stays
+  // mounted across step navigation) rather than persisted to localStorage —
+  // see the identical comment in step3.tsx: a picked lesson's `videoFile`
+  // is a real File object and can't survive a JSON round-trip, so the old
+  // localStorage-backed state silently lost the file on every remount
+  // (e.g. going to step 3 and back) while still showing a "video attached"
+  // preview.
+  const [modules, setModules] = useState<Module[]>(formData.module || []);
 
   const modulesForm = [
     { label: "Module Title", type: "text", name: "module_title" },

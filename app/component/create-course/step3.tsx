@@ -9,7 +9,6 @@ import Image from "next/image";
 import Pic from "@/public/images/notfound.png";
 import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
-import usePersistentState from "@/app/hook/usePersistentState";
 
 interface Props {
   formData: any;
@@ -34,10 +33,14 @@ interface Material {
 }
 
 export default function CourseStep3({ formData, setFormData }: Props) {
-  const [material, setMaterial] = usePersistentState<Material[]>(
-    "course_materials",
-    []
-  );
+  // Seeded from the wizard's own formData (owned by the parent, which stays
+  // mounted across step navigation) rather than persisted to localStorage.
+  // A picked document's `documentFile` is a real File object, and File
+  // instances can't survive JSON.stringify — they serialize to "{}", which
+  // is still truthy, so on the next mount (e.g. going to step 4 and back)
+  // the document looked "uploaded" in the preview but the real file was
+  // gone, and course creation silently failed to upload it.
+  const [material, setMaterial] = useState<Material[]>(formData.material || []);
 
   useEffect(() => {
     setFormData((prev: any) => ({...prev, material: material}))

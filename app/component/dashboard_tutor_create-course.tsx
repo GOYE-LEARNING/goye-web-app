@@ -1183,12 +1183,8 @@ export default function DashboardTutorCreateCourse({
           objective: objectiveArray,
         });
 
-        if (modules.length > 0)
-          localStorage.setItem("module", JSON.stringify(modules));
         if (quizzes.length > 0)
           localStorage.setItem("quiz", JSON.stringify(quizzes));
-        if (materials.length > 0)
-          localStorage.setItem("course_materials", JSON.stringify(materials));
         if (data.data.course_title)
           localStorage.setItem("COURSE TITLE", data.data.course_title);
       }
