@@ -10,6 +10,7 @@ import { useAuthContext } from "@/app/context/AuthContext";
 import AuthLoader from "@/app/auth/auth_loader";
 import { SocketProvider } from "@/app/context/SocketContext";
 import { getUserProfile } from "@/app/utils/database/db";
+import ShekiAIWidget from "@/app/component/AI_component/ShekiAIWidget";
 
 export default function DashboardLayout({
   children,
@@ -215,6 +216,7 @@ export default function DashboardLayout({
         <ProgressProvider>
           <QuizProvider>
             <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0">
+              <ShekiAIWidget />
               <TutorSidenav setIsCollapsedState={setIsCollapsed} />
               <div 
                 className={`${isCollapsed ? "lg:w-[95%]" : "lg:w-[80%]"} org_width_animation w-full min-w-0 max-w-full h-full md:absolute right-0`}

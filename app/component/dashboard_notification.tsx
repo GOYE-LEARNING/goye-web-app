@@ -28,7 +28,6 @@ export default function DashboardNotification({
   const [localNotifications, setLocalNotifications] = useState<Notification[]>([]);
   const [localUnreadCount, setLocalUnreadCount] = useState(0);
 
-  const panelRef = useRef<HTMLDivElement | null>(null);
   const isInitialMount = useRef(true);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -166,19 +165,14 @@ export default function DashboardNotification({
   const displayedNotifications =
     activeTab === "all" ? localNotifications : unreadNotifications;
 
-  // Close on outside click - FIXED
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        const target = event.target as HTMLElement;
-        if (target.closest('[data-bell-button]')) return;
-        if (onClose) onClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
+  // Outside-click-to-close is handled entirely by the parent
+  // (dashboard_header.tsx), which tracks both the desktop and mobile panel
+  // refs together. This component is mounted twice at once (desktop +
+  // mobile, one hidden via CSS at any given time) — an outside-click
+  // listener scoped to just this instance's own subtree would see clicks
+  // inside the *other, hidden* instance as "outside" and close the shared
+  // panel state, which is exactly the bug where clicking a notification
+  // row or "Mark as read" closed the dropdown instead of acting on it.
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -191,7 +185,6 @@ export default function DashboardNotification({
 
   return (
     <div
-      ref={panelRef}
       className="h-[700px] w-[390px] scrollbar2 dark:bg-secondaryColors-0 bg-white backdrop-blur-md border border-[#ccc]/10 drop-shadow-2xl md:h-[509px] md:w-[400px] z-[99999] right-0 absolute p-[20px] rounded-xl overflow-hidden"
     >
       <div className="dashboard_triangle absolute -top-[0.8rem] right-4"></div>
