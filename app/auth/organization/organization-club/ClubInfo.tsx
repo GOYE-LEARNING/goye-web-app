@@ -70,7 +70,6 @@ export default function ClubInfo({
           "Club Role",
           "Meeting Frequency",
           "Social Media / Messaging Group Link",
-          "Parent Church / School",
           "Short Description of Activities",
           "Upload Document"
         ];
@@ -146,7 +145,6 @@ export default function ClubInfo({
       name: "club_social_link",
       type: "text",
     },
-    { label: "Parent Church / School", name: "club_parent_org", type: "text" },
     {
       label: "Short Description of Activities",
       name: "club_description",

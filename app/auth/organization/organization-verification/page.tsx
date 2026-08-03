@@ -738,7 +738,7 @@ export default function PreviewVerification() {
           school_website: formData.school_website,
           school_accreditation_number: formData.school_accreditation_number,
           school_document: "",
-          school_email: formData.school_email_domain,
+          school_email: formData.school_email,
         },
       }),
       ...(formData.main_type === "club" && {
@@ -748,8 +748,7 @@ export default function PreviewVerification() {
           club_leader_name: formData.club_leader_name,
           club_meeting_frequency: formData.club_meeting_frequency,
           club_social_link: formData.club_social_link,
-          club_parent_org: formData.club_parent_org,
-          club_dscription: formData.club_description,
+          club_description: formData.club_description,
           club_document: "",
           club_role: formData.club_role,
         },

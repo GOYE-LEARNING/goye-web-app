@@ -290,7 +290,6 @@ export default function BodyProvider({
     !!formData.club_role &&
     !!formData.club_meeting_frequency &&
     !!formData.club_social_link &&
-    !!formData.club_parent_org &&
     !!formData.club_description &&
     !!formData.club_document;
 
