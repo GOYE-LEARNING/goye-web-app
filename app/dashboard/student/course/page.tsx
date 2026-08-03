@@ -8,7 +8,8 @@ import DashboardSearch from "@/app/component/dashboard_search";
 import DashboardCourseView from "@/app/component/dashboard_student_courseview";
 import DashboardTabSelection from "@/app/component/dashboard_tab_selection";
 import Loader from "@/app/component/loader";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { IoMdRefresh } from "react-icons/io";
 
 type TabType = "all" | "enrolled" | "saved" | "done";
@@ -21,9 +22,11 @@ export default function MainContainer() {
   const [refresh, setRefresh] = useState<boolean>(false);
   const [courseId, setCourseId] = useState<string>("");
   const [isLoadingCourse, setIsLoadingCourse] = useState<boolean>(false);
-  
+
   // Store the previous tab before opening a course
   const previousTabRef = useRef<TabType>("all");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const openCourse = async (selectedCourseId: string) => {
     // Store which tab is currently active before navigating
@@ -41,6 +44,17 @@ export default function MainContainer() {
       setIsLoadingCourse(false);
     }
   };
+
+  // Lets a course card clicked elsewhere (e.g. the ShekiAI assistant panel)
+  // deep-link straight to a specific course via /dashboard/student/course?courseId=...
+  // instead of needing a real dynamic route just for this one entry point.
+  useEffect(() => {
+    const linkedCourseId = searchParams.get("courseId");
+    if (!linkedCourseId) return;
+    openCourse(linkedCourseId);
+    router.replace("/dashboard/student/course");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const backFunction = () => {
     // Restore the previous tab that was active before opening the course

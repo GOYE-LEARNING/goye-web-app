@@ -26,10 +26,22 @@ import {
   startMentorMatch,
 } from "@/app/utils/ai/mentorMatchApi";
 
+export interface TutorCandidate {
+  id: string;
+  name: string;
+  bio: string | null;
+  church_role: string | null;
+  courses: { id: string; title: string }[];
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
+  // Only set on the assistant reply from the turn that actually ran a fresh
+  // search_tutors — lets the panel show real, clickable candidates right
+  // where they were found instead of leaving them as plain prose.
+  tutorCandidates?: TutorCandidate[];
 }
 
 export type AssistantStatus = "idle" | "listening" | "thinking" | "speaking" | "awaiting_approval" | "matched" | "error";
@@ -70,6 +82,22 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
   // 0..1 loudness of the assistant's own voice, so the orb can pulse in
   // time with what's actually being said instead of on a fixed timer.
   const [speakingLevel, setSpeakingLevel] = useState(0);
+
+  // Candidates from a student's last search_tutors call — every turn's
+  // result carries the full (persisted) state, so without this we'd
+  // re-attach the same stale cards to every unrelated reply after it.
+  const lastCandidateIdsRef = useRef<string>("");
+  const candidatesForTurn = useCallback((state: any): TutorCandidate[] | undefined => {
+    const candidates: TutorCandidate[] | undefined = state?.candidates;
+    if (!candidates?.length) return undefined;
+    const ids = candidates
+      .map((c) => c.id)
+      .sort()
+      .join(",");
+    if (ids === lastCandidateIdsRef.current) return undefined;
+    lastCandidateIdsRef.current = ids;
+    return candidates;
+  }, []);
 
   const socketRef = useRef<Socket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -200,13 +228,14 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         setSessionId(result.sessionId);
         if (!isStudent) setCourseTitle(result.draft?.course_title || null);
         if (result.matchedTutor) setMatchedTutor(result.matchedTutor);
+        const tutorCandidates = isStudent ? candidatesForTurn(result.state) : undefined;
         setMessages(
           initialMessage
             ? [
                 { id: `u-${Date.now()}`, role: "user", content: initialMessage },
-                { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply },
+                { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply, tutorCandidates },
               ]
-            : [{ id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply }],
+            : [{ id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply, tutorCandidates }],
         );
         setStatus(statusFor(result.status));
         connectSocket(result.sessionId);
@@ -219,7 +248,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         setIsStarting(false);
       }
     },
-    [connectSocket, isStudent, playReply],
+    [connectSocket, isStudent, playReply, candidatesForTurn],
   );
 
   const sendMessage = useCallback(
@@ -235,7 +264,8 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         const result = res.data[0];
         if (!isStudent) setCourseTitle(result.draft?.course_title || null);
         if (result.matchedTutor) setMatchedTutor(result.matchedTutor);
-        setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply }]);
+        const tutorCandidates = isStudent ? candidatesForTurn(result.state) : undefined;
+        setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply, tutorCandidates }]);
         setStatus(statusFor(result.status));
         if (voiceModeRef.current && result.assistantReply) await playReply(result.assistantReply);
       } catch (e: any) {
@@ -243,7 +273,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         setStatus("error");
       }
     },
-    [sessionId, start, isStudent, playReply],
+    [sessionId, start, isStudent, playReply, candidatesForTurn],
   );
 
   const sendVoice = useCallback(
@@ -258,10 +288,11 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         const result = res.data[0];
         if (!isStudent) setCourseTitle(result.draft?.course_title || null);
         if (result.matchedTutor) setMatchedTutor(result.matchedTutor);
+        const tutorCandidates = isStudent ? candidatesForTurn(result.state) : undefined;
         setMessages((prev) => [
           ...prev,
           { id: `u-${Date.now()}`, role: "user", content: result.transcript },
-          { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply },
+          { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply, tutorCandidates },
         ]);
         setStatus(statusFor(result.status));
         if (result.assistantReply) await playReply(result.assistantReply);
@@ -270,7 +301,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         setStatus("error");
       }
     },
-    [sessionId, playReply, isStudent],
+    [sessionId, playReply, isStudent, candidatesForTurn],
   );
 
   const sendDocument = useCallback(
@@ -284,7 +315,8 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         const result = res.data[0];
         if (!isStudent) setCourseTitle(result.draft?.course_title || null);
         if (result.matchedTutor) setMatchedTutor(result.matchedTutor);
-        setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply }]);
+        const tutorCandidates = isStudent ? candidatesForTurn(result.state) : undefined;
+        setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply, tutorCandidates }]);
         setStatus(statusFor(result.status));
         if (voiceModeRef.current && result.assistantReply) await playReply(result.assistantReply);
       } catch (e: any) {
@@ -292,7 +324,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         setStatus("error");
       }
     },
-    [sessionId, isStudent, playReply],
+    [sessionId, isStudent, playReply, candidatesForTurn],
   );
 
   const finalize = useCallback(async () => {
@@ -311,6 +343,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
     setCourseTitle(null);
     setMatchedTutor(null);
     setStatus("idle");
+    lastCandidateIdsRef.current = "";
   }, [sessionId, isStudent]);
 
   return {

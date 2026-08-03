@@ -1,14 +1,92 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import MessagesModal from "@/app/component/MessagesModal";
 import { IoClose, IoDocumentText } from "react-icons/io5";
 import { FiChevronRight } from "react-icons/fi";
 import { FaPaperPlane, FaPaperclip } from "react-icons/fa6";
 import { MdOpenInFull, MdCloseFullscreen } from "react-icons/md";
+import { FaUserGraduate } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import ShekiAIOrb from "./ShekiAIOrb";
-import { AssistantMode, useShekiAI } from "@/app/hook/useShekiAI";
+import { AssistantMode, TutorCandidate, useShekiAI } from "@/app/hook/useShekiAI";
+
+// Reveals assistant text a chunk at a time rather than all at once, so a
+// reply feels spoken rather than dumped on screen. Chunked (not per-char)
+// so a long paragraph still finishes in roughly the same ~1.5s regardless
+// of length, instead of a fixed per-character delay taking forever.
+function TypingText({ text, onDone }: { text: string; onDone: () => void }) {
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => {
+    if (shown >= text.length) {
+      onDone();
+      return;
+    }
+    const step = Math.max(1, Math.round(text.length / 60));
+    const id = setTimeout(() => setShown((s) => Math.min(text.length, s + step)), 18);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shown, text]);
+
+  return <>{text.slice(0, shown)}</>;
+}
+
+function TutorCandidateCards({
+  candidates,
+  onPick,
+  onOpenCourse,
+}: {
+  candidates: TutorCandidate[];
+  onPick: (tutor: TutorCandidate) => void;
+  onOpenCourse: (courseId: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 mt-1 max-w-[90%]">
+      {candidates.map((tutor) => (
+        <div
+          key={tutor.id}
+          className="rounded-xl border border-black/5 dark:border-white/5 bg-white dark:bg-boldShadyColor-0 p-3"
+        >
+          <button
+            onClick={() => onPick(tutor)}
+            className="w-full flex items-start gap-3 text-left"
+          >
+            <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-primaryYellow-0 to-primaryColors-0 flex items-center justify-center text-white">
+              <FaUserGraduate size={15} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-lightBoldText-0 dark:text-textSlightDark-0 truncate">
+                {tutor.name}
+              </div>
+              {tutor.church_role && (
+                <div className="text-xs text-nearTextColors-0 dark:text-textGrey-0 truncate">{tutor.church_role}</div>
+              )}
+              {tutor.bio && (
+                <p className="text-xs text-nearTextColors-0 dark:text-textGrey-0 mt-1 line-clamp-2">{tutor.bio}</p>
+              )}
+            </div>
+          </button>
+          {tutor.courses.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2 pl-12">
+              {tutor.courses.slice(0, 3).map((course) => (
+                <button
+                  key={course.id}
+                  onClick={() => onOpenCourse(course.id)}
+                  className="text-[11px] px-2 py-1 rounded-full bg-primaryYellow-0/15 text-primaryColors-0 hover:bg-primaryYellow-0/25 transition-colors truncate max-w-[140px]"
+                  title={course.title}
+                >
+                  {course.title}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const TUTOR_QUICK_ACTIONS = [
   { label: "Create a course", prompt: "I'd like to create a new course. Can you help me plan it out?" },
@@ -67,6 +145,11 @@ export default function AIContainerComponent({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  // Once a message has fully typed out, it's marked done here so a re-render
+  // (e.g. triggered by the next message arriving) shows it complete instead
+  // of replaying the animation from scratch.
+  const animatedIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -101,6 +184,17 @@ export default function AIContainerComponent({
   const handleQuickAction = (prompt: string) => {
     if (!sessionId) start(prompt);
     else sendMessage(prompt);
+  };
+
+  // Clicking a candidate doesn't fake a navigation — it asks the assistant
+  // to actually propose the match, so the real propose_match tool call (and
+  // the notification/chat it opens) still happens on the backend.
+  const handlePickTutor = (tutor: TutorCandidate) => {
+    sendMessage(`I'd like to connect with ${tutor.name}.`);
+  };
+
+  const handleOpenCourse = (courseId: string) => {
+    router.push(`/dashboard/student/course?courseId=${courseId}`);
   };
 
   const handleFinalize = async () => {
@@ -175,24 +269,42 @@ export default function AIContainerComponent({
           </div>
         ) : (
           <div className="flex flex-col gap-3 py-4">
-            {messages.map((m) => (
-              <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                {m.role === "assistant" && (
-                  <div className="mr-2 shrink-0">
-                    <ShekiAIOrb status="idle" size={28} />
+            {messages.map((m) => {
+              const alreadyAnimated = animatedIdsRef.current.has(m.id);
+              return (
+                <div key={m.id} className="flex flex-col gap-1">
+                  <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {m.role === "assistant" && (
+                      <div className="mr-2 shrink-0">
+                        <ShekiAIOrb status="idle" size={28} />
+                      </div>
+                    )}
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap ${
+                        m.role === "user"
+                          ? "bg-primaryColors-0 text-plainColors-0 rounded-br-sm"
+                          : "bg-white dark:bg-boldShadyColor-0 text-lightBoldText-0 dark:text-textSlightDark-0 rounded-bl-sm"
+                      }`}
+                    >
+                      {m.role === "assistant" && !alreadyAnimated ? (
+                        <TypingText text={m.content} onDone={() => animatedIdsRef.current.add(m.id)} />
+                      ) : (
+                        m.content
+                      )}
+                    </div>
                   </div>
-                )}
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap ${
-                    m.role === "user"
-                      ? "bg-primaryColors-0 text-plainColors-0 rounded-br-sm"
-                      : "bg-white dark:bg-boldShadyColor-0 text-lightBoldText-0 dark:text-textSlightDark-0 rounded-bl-sm"
-                  }`}
-                >
-                  {m.content}
+                  {m.role === "assistant" && m.tutorCandidates && (
+                    <div className="pl-9">
+                      <TutorCandidateCards
+                        candidates={m.tutorCandidates}
+                        onPick={handlePickTutor}
+                        onOpenCourse={handleOpenCourse}
+                      />
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {(status === "thinking" || isUploadingDoc) && (
               <div className="flex items-center gap-2 text-nearTextColors-0 dark:text-textGrey-0 text-sm px-1">

@@ -52,7 +52,24 @@ export default function ShekiAIWidget({
     setPanelWidth?.(!isDesktop || isExpanded || hiddenForSidenav ? 0 : isCollapsed ? RAIL_WIDTH : PANEL_WIDTH);
   }, [isDesktop, isCollapsed, isExpanded, hiddenForSidenav, setPanelWidth]);
 
-  if (hiddenForSidenav) return null;
+  // Sidenav is full-width, so the panel/rail have nowhere to live — but the
+  // user still needs a way back in. A small floating trigger fills that gap:
+  // clicking it fires onInteract (collapses the sidenav) which flips
+  // sidenavExpanded false next render, letting the panel take its place.
+  if (hiddenForSidenav) {
+    return (
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        onClick={() => onInteract?.()}
+        aria-label="Open ShekiAI assistant"
+        className="hidden lg:flex fixed bottom-8 right-8 z-40 h-14 w-14 rounded-full shadow-lg items-center justify-center"
+        style={{ background: "radial-gradient(circle at 35% 30%, #FBB041, #FFA500 70%)" }}
+      >
+        <ShekiAIOrb status="idle" size={26} />
+      </motion.button>
+    );
+  }
 
   if (isDesktop) {
 
