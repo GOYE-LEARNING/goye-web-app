@@ -61,21 +61,47 @@ export default function ShekiAIOrb({
             : { duration: active ? 0.9 : 2.4, repeat: Infinity, ease: "easeInOut" }
         }
       />
-      {/* subtle "face" so it reads as a character, not just a ball */}
-      <div className="absolute flex gap-[14%]" style={{ width: size * 0.34 }}>
-        <motion.span
-          className="block rounded-full bg-white/90"
-          style={{ width: size * 0.07, height: size * 0.16 }}
-          animate={{ scaleY: active ? [1, 0.3, 1] : [1, 0.85, 1] }}
-          transition={{ duration: active ? 1.6 : 3.2, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.span
-          className="block rounded-full bg-white/90"
-          style={{ width: size * 0.07, height: size * 0.16 }}
-          animate={{ scaleY: active ? [1, 0.3, 1] : [1, 0.85, 1] }}
-          transition={{ duration: active ? 1.6 : 3.2, repeat: Infinity, ease: "easeInOut", delay: 0.15 }}
-        />
-      </div>
+      {/* subtle "face" so it reads as a character, not just a ball. The
+          whole group drifts left-and-back and blinks/smiles on its own
+          independent timers (rather than one synced loop) so it reads as
+          idle life rather than a mechanical repeat. */}
+      <motion.div
+        className="absolute flex flex-col items-center"
+        animate={{ x: [0, 0, -size * 0.08, -size * 0.08, 0, 0], rotate: [0, 0, -4, -4, 0, 0] }}
+        transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", times: [0, 0.55, 0.68, 0.85, 0.95, 1] }}
+      >
+        <div className="flex gap-[14%]" style={{ width: size * 0.34 }}>
+          <motion.span
+            className="block rounded-full bg-white/90"
+            style={{ width: size * 0.07, height: size * 0.16 }}
+            animate={{ scaleY: active ? [1, 1, 0.1, 1, 1] : [1, 1, 0.1, 1, 1] }}
+            transition={{ duration: active ? 1.8 : 3.6, repeat: Infinity, ease: "easeInOut", times: [0, 0.9, 0.95, 1, 1] }}
+          />
+          <motion.span
+            className="block rounded-full bg-white/90"
+            style={{ width: size * 0.07, height: size * 0.16 }}
+            animate={{ scaleY: active ? [1, 1, 0.1, 1, 1] : [1, 1, 0.1, 1, 1] }}
+            transition={{ duration: active ? 1.8 : 3.6, repeat: Infinity, ease: "easeInOut", times: [0, 0.9, 0.95, 1, 1], delay: 0.06 }}
+          />
+        </div>
+        {/* smile — a simple arc that curves upward on its own slow cycle */}
+        <motion.svg
+          width={size * 0.3}
+          height={size * 0.14}
+          viewBox="0 0 100 40"
+          style={{ marginTop: size * 0.05 }}
+          initial={false}
+        >
+          <motion.path
+            stroke="rgba(255,255,255,0.9)"
+            strokeWidth={9}
+            strokeLinecap="round"
+            fill="none"
+            animate={{ d: ["M10,10 Q50,10 90,10", "M10,8 Q50,32 90,8", "M10,10 Q50,10 90,10"] }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </motion.svg>
+      </motion.div>
     </div>
   );
 }
