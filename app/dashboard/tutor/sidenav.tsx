@@ -12,15 +12,29 @@ import { FaRegUser, FaUser } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { BsPeople, BsPeopleFill } from "react-icons/bs";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface Props {
   setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>;
+  // Bump this (any change in value) to force the sidenav closed — used so
+  // opening the AI panel collapses the sidenav rather than the two
+  // fighting for the same horizontal space.
+  forceCollapseSignal?: number;
 }
 
-export default function TutorSidenav({ setIsCollapsedState }: Props) {
+export default function TutorSidenav({ setIsCollapsedState, forceCollapseSignal }: Props) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
+
+  useEffect(() => {
+    if (forceCollapseSignal === undefined) return;
+    setIsCollapsed(true);
+    setIsCollapsedState(true);
+    // Only the signal should retrigger this — setIsCollapsedState is a
+    // stable setState reference from the parent, not a dependency that
+    // should force a re-run of its own effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceCollapseSignal]);
+
   const logout = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     try {

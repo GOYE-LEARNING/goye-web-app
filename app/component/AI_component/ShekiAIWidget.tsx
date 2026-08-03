@@ -16,9 +16,19 @@ const RAIL_WIDTH = 56;
 export default function ShekiAIWidget({
   mode = "tutor",
   setPanelWidth,
+  onInteract,
+  sidenavExpanded,
 }: {
   mode?: AssistantMode;
   setPanelWidth?: (px: number) => void;
+  // Fired on any interaction with an open panel, so the dashboard layout
+  // can collapse its sidenav in response — the two shouldn't both try to
+  // occupy space at once.
+  onInteract?: () => void;
+  // True when the desktop sidenav is at full width. Only meaningful there —
+  // the sidenav's own expand/collapse toggle is hidden below the md:
+  // breakpoint, so this must never hide the mobile trigger.
+  sidenavExpanded?: boolean;
 }) {
   const width = useWindowWidth();
   const isDesktop = (width ?? 0) >= DESKTOP_BREAKPOINT;
@@ -36,11 +46,16 @@ export default function ShekiAIWidget({
   // its content by the same amount — that's what makes this a real third
   // column rather than a panel floating over the page. Mirrors how
   // TutorSidenav reports its own state up via setIsCollapsedState.
+  const hiddenForSidenav = isDesktop && !!sidenavExpanded;
+
   useEffect(() => {
-    setPanelWidth?.(!isDesktop || isExpanded ? 0 : isCollapsed ? RAIL_WIDTH : PANEL_WIDTH);
-  }, [isDesktop, isCollapsed, isExpanded, setPanelWidth]);
+    setPanelWidth?.(!isDesktop || isExpanded || hiddenForSidenav ? 0 : isCollapsed ? RAIL_WIDTH : PANEL_WIDTH);
+  }, [isDesktop, isCollapsed, isExpanded, hiddenForSidenav, setPanelWidth]);
+
+  if (hiddenForSidenav) return null;
 
   if (isDesktop) {
+
     // Width is a plain style + CSS transition rather than a framer-motion
     // animation: it's a layout-critical dimension, so the resting value must
     // be correct even if an animation never runs or gets interrupted.
@@ -50,10 +65,14 @@ export default function ShekiAIWidget({
         className={`hidden lg:flex flex-col fixed right-0 top-0 h-screen overflow-hidden border-l border-black/5 dark:border-white/5 bg-lightSecondaryColor-0 dark:bg-shadyColor-0 transition-[width] duration-300 ease-in-out ${
           isExpanded ? "z-50" : "z-30"
         }`}
+        onClick={() => !isCollapsed && onInteract?.()}
       >
         {isCollapsed ? (
           <button
-            onClick={() => setIsCollapsed(false)}
+            onClick={() => {
+              setIsCollapsed(false);
+              onInteract?.();
+            }}
             aria-label="Expand ShekiAI assistant"
             className="h-full w-full flex flex-col items-center gap-3 pt-5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
           >
@@ -85,7 +104,10 @@ export default function ShekiAIWidget({
         <motion.button
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            setIsOpen(true);
+            onInteract?.();
+          }}
           aria-label="Open ShekiAI assistant"
           className="fixed bottom-24 right-5 z-40 h-14 w-14 rounded-full shadow-lg flex items-center justify-center"
           style={{ background: "radial-gradient(circle at 35% 30%, #FBB041, #FFA500 70%)" }}

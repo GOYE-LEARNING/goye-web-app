@@ -27,6 +27,9 @@ export default function DashboardLayout({
   // Horizontal space the ShekiAI panel occupies, reported by the widget so
   // the content column can inset and sit beside it as a real third column.
   const [aiPanelWidth, setAiPanelWidth] = useState<number>(0);
+  // Bumped whenever the AI panel is opened/interacted with, forcing the
+  // sidenav closed so the two never fight for the same horizontal space.
+  const [sidenavCollapseSignal, setSidenavCollapseSignal] = useState<number | undefined>(undefined);
 
   const path = ["/dashboard/tutor/course", "/dashboard/tutor/community"];
   const path2 = ["/dashboard/tutor/chat"];
@@ -219,8 +222,8 @@ export default function DashboardLayout({
         <ProgressProvider>
           <QuizProvider>
             <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0">
-              <ShekiAIWidget setPanelWidth={setAiPanelWidth} />
-              <TutorSidenav setIsCollapsedState={setIsCollapsed} />
+              <ShekiAIWidget setPanelWidth={setAiPanelWidth} onInteract={() => setSidenavCollapseSignal((n) => (n ?? 0) + 1)} sidenavExpanded={!isCollapsed} />
+              <TutorSidenav setIsCollapsedState={setIsCollapsed} forceCollapseSignal={sidenavCollapseSignal} />
               <div 
                 className={`${isCollapsed ? "lg:w-[95%]" : "lg:w-[80%]"} org_width_animation w-full min-w-0 max-w-full h-full md:absolute right-0`}
                 style={{ paddingRight: aiPanelWidth }}

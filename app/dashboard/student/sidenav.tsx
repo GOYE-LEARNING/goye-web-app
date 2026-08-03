@@ -10,16 +10,27 @@ import { RiCompass3Line, RiCompassFill } from "react-icons/ri";
 import { FaRegUser, FaUser } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface Props {
   setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>
+  // Bump this (any change in value) to force the sidenav closed — used so
+  // opening the AI panel collapses the sidenav rather than the two
+  // fighting for the same horizontal space.
+  forceCollapseSignal?: number;
 }
 
-export default function Sidenav({ setIsCollapsedState }: Props) {
+export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Props) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
+
+  useEffect(() => {
+    if (forceCollapseSignal === undefined) return;
+    setIsCollapsed(true);
+    setIsCollapsedState(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceCollapseSignal]);
+
   const logout = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     try {
