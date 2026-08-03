@@ -24,6 +24,9 @@ export default function DashboardLayout({
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const authCheckedRef = useRef(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  // Horizontal space the ShekiAI panel occupies, reported by the widget so
+  // the content column can inset and sit beside it as a real third column.
+  const [aiPanelWidth, setAiPanelWidth] = useState<number>(0);
 
   const path = ["/dashboard/tutor/course", "/dashboard/tutor/community"];
   const path2 = ["/dashboard/tutor/chat"];
@@ -216,10 +219,11 @@ export default function DashboardLayout({
         <ProgressProvider>
           <QuizProvider>
             <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0">
-              <ShekiAIWidget />
+              <ShekiAIWidget setPanelWidth={setAiPanelWidth} />
               <TutorSidenav setIsCollapsedState={setIsCollapsed} />
               <div 
                 className={`${isCollapsed ? "lg:w-[95%]" : "lg:w-[80%]"} org_width_animation w-full min-w-0 max-w-full h-full md:absolute right-0`}
+                style={{ paddingRight: aiPanelWidth }}
               >
                 <DashboardHeader />
                 <div

@@ -14,6 +14,7 @@ import {
   finalizeCourseDraft,
   sendCourseDraftMessage,
   sendCourseDraftVoiceMessage,
+  sendCourseDraftDocument,
   speakCourseDraftText,
   startCourseDraft,
 } from "@/app/utils/ai/courseDraftApi";
@@ -21,6 +22,7 @@ import {
   abandonMentorMatch,
   sendMentorMatchMessage,
   sendMentorMatchVoiceMessage,
+  sendMentorMatchDocument,
   startMentorMatch,
 } from "@/app/utils/ai/mentorMatchApi";
 
@@ -30,7 +32,7 @@ export interface ChatMessage {
   content: string;
 }
 
-export type AssistantStatus = "idle" | "thinking" | "speaking" | "awaiting_approval" | "matched" | "error";
+export type AssistantStatus = "idle" | "listening" | "thinking" | "speaking" | "awaiting_approval" | "matched" | "error";
 
 export type AssistantMode = "tutor" | "student";
 
@@ -61,9 +63,21 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
   const [courseTitle, setCourseTitle] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // When on, every assistant reply is spoken aloud, not just replies to
+  // spoken input — that's what makes it feel like a conversation rather
+  // than a transcript.
+  const [voiceMode, setVoiceMode] = useState(false);
+  // 0..1 loudness of the assistant's own voice, so the orb can pulse in
+  // time with what's actually being said instead of on a fixed timer.
+  const [speakingLevel, setSpeakingLevel] = useState(0);
 
   const socketRef = useRef<Socket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const voiceModeRef = useRef(false);
+  voiceModeRef.current = voiceMode;
 
   useEffect(() => {
     getUserProfile().then((profile) => {
@@ -71,22 +85,69 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
     });
   }, []);
 
+  // Resolves once the assistant has finished speaking, so a voice
+  // conversation can hand the microphone straight back afterwards.
   const playReply = useCallback(async (text: string) => {
     try {
       setStatus("speaking");
       const blob = await speakCourseDraftText(text);
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
+      audio.crossOrigin = "anonymous";
       audioRef.current = audio;
-      audio.onended = () => {
-        setStatus("idle");
-        URL.revokeObjectURL(url);
-      };
-      await audio.play();
+
+      // Route through Web Audio so the orb can react to real amplitude.
+      // Must also connect to the destination or playback goes silent.
+      try {
+        const ctx = audioCtxRef.current ?? new AudioContext();
+        audioCtxRef.current = ctx;
+        const source = ctx.createMediaElementSource(audio);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+        analyser.connect(ctx.destination);
+        analyserRef.current = analyser;
+
+        const buffer = new Float32Array(analyser.fftSize);
+        const tick = () => {
+          if (!analyserRef.current) return;
+          analyser.getFloatTimeDomainData(buffer);
+          let sum = 0;
+          for (let i = 0; i < buffer.length; i++) sum += buffer[i] * buffer[i];
+          setSpeakingLevel(Math.min(1, Math.sqrt(sum / buffer.length) * 8));
+          rafRef.current = requestAnimationFrame(tick);
+        };
+        rafRef.current = requestAnimationFrame(tick);
+      } catch {
+        // Amplitude metering is a nicety — never let it stop playback.
+      }
+
+      await new Promise<void>((resolve) => {
+        audio.onended = () => resolve();
+        audio.onerror = () => resolve();
+        audio.play().catch(() => resolve());
+      });
+
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      analyserRef.current = null;
+      setSpeakingLevel(0);
+      setStatus("idle");
+      URL.revokeObjectURL(url);
     } catch {
       // Voice is a nice-to-have — never block the text reply on TTS failing.
+      setSpeakingLevel(0);
       setStatus("idle");
     }
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    audioRef.current?.pause();
+    audioRef.current = null;
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    analyserRef.current = null;
+    setSpeakingLevel(0);
   }, []);
 
   const connectSocket = useCallback((sid: string) => {
@@ -149,6 +210,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         );
         setStatus(statusFor(result.status));
         connectSocket(result.sessionId);
+        if (voiceModeRef.current && result.assistantReply) await playReply(result.assistantReply);
         return result;
       } catch (e: any) {
         setError(e.message);
@@ -157,7 +219,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         setIsStarting(false);
       }
     },
-    [connectSocket, isStudent],
+    [connectSocket, isStudent, playReply],
   );
 
   const sendMessage = useCallback(
@@ -175,12 +237,13 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         if (result.matchedTutor) setMatchedTutor(result.matchedTutor);
         setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply }]);
         setStatus(statusFor(result.status));
+        if (voiceModeRef.current && result.assistantReply) await playReply(result.assistantReply);
       } catch (e: any) {
         setError(e.message);
         setStatus("error");
       }
     },
-    [sessionId, start, isStudent],
+    [sessionId, start, isStudent, playReply],
   );
 
   const sendVoice = useCallback(
@@ -201,13 +264,35 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
           { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply },
         ]);
         setStatus(statusFor(result.status));
-        if (result.assistantReply) playReply(result.assistantReply);
+        if (result.assistantReply) await playReply(result.assistantReply);
       } catch (e: any) {
         setError(e.message);
         setStatus("error");
       }
     },
     [sessionId, playReply, isStudent],
+  );
+
+  const sendDocument = useCallback(
+    async (file: File) => {
+      if (!sessionId) return;
+      setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: "user", content: `📄 Shared "${file.name}"` }]);
+      setStatus("thinking");
+      setError(null);
+      try {
+        const res = isStudent ? await sendMentorMatchDocument(sessionId, file) : await sendCourseDraftDocument(sessionId, file);
+        const result = res.data[0];
+        if (!isStudent) setCourseTitle(result.draft?.course_title || null);
+        if (result.matchedTutor) setMatchedTutor(result.matchedTutor);
+        setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply }]);
+        setStatus(statusFor(result.status));
+        if (voiceModeRef.current && result.assistantReply) await playReply(result.assistantReply);
+      } catch (e: any) {
+        setError(e.message);
+        setStatus("error");
+      }
+    },
+    [sessionId, isStudent, playReply],
   );
 
   const finalize = useCallback(async () => {
@@ -231,6 +316,11 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
   return {
     tutorName,
     matchedTutor,
+    voiceMode,
+    setVoiceMode,
+    speakingLevel,
+    playReply,
+    stopSpeaking,
     sessionId,
     messages,
     status,
@@ -240,6 +330,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
     start,
     sendMessage,
     sendVoice,
+    sendDocument,
     finalize,
     abandon,
   };

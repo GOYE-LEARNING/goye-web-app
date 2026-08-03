@@ -71,3 +71,16 @@ export async function speakCourseDraftText(text: string): Promise<Blob> {
   }
   return res.blob();
 }
+
+export async function sendCourseDraftDocument(sessionId: string, file: File) {
+  const form = new FormData();
+  form.append("document", file, file.name);
+  const res = await fetch(`${API_URL}/api/course-draft/${sessionId}/document`, {
+    method: "POST",
+    credentials: "include",
+    body: form,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
+  return data;
+}

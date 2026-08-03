@@ -3,10 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import MessagesModal from "@/app/component/MessagesModal";
 import { IoClose } from "react-icons/io5";
-import { FaMicrophone, FaPaperPlane, FaStop } from "react-icons/fa6";
+import { FiChevronRight } from "react-icons/fi";
+import { FaMicrophone, FaPaperPlane, FaPaperclip, FaStop } from "react-icons/fa6";
+import { MdOpenInFull, MdCloseFullscreen } from "react-icons/md";
 import { motion, AnimatePresence } from "framer-motion";
 import ShekiAIOrb from "./ShekiAIOrb";
 import { AssistantMode, useShekiAI } from "@/app/hook/useShekiAI";
+import { useVoiceConversation } from "@/app/hook/useVoiceConversation";
 
 const TUTOR_QUICK_ACTIONS = [
   { label: "Create a course", prompt: "I'd like to create a new course. Can you help me plan it out?" },
@@ -22,7 +25,21 @@ const STUDENT_QUICK_ACTIONS = [
   { label: "Learn a new skill", prompt: "I want to learn a new skill — who on GOYE could teach me?" },
 ];
 
-export default function AIContainerComponent({ onClose, mode = "tutor" }: { onClose?: () => void; mode?: AssistantMode }) {
+export default function AIContainerComponent({
+  onClose,
+  mode = "tutor",
+  closeVariant = "close",
+  isExpanded,
+  onToggleExpand,
+}: {
+  onClose?: () => void;
+  mode?: AssistantMode;
+  // On desktop the panel collapses to a rail rather than disappearing, so
+  // a chevron reads more honestly there than an X.
+  closeVariant?: "close" | "collapse";
+  isExpanded?: boolean;
+  onToggleExpand?: (next: boolean) => void;
+}) {
   const isStudent = mode === "student";
   const QUICK_ACTIONS = isStudent ? STUDENT_QUICK_ACTIONS : TUTOR_QUICK_ACTIONS;
   const {
@@ -36,18 +53,36 @@ export default function AIContainerComponent({ onClose, mode = "tutor" }: { onCl
     start,
     sendMessage,
     sendVoice,
+    sendDocument,
     finalize,
+    voiceMode,
+    setVoiceMode,
+    speakingLevel,
+    stopSpeaking,
   } = useShekiAI(mode);
 
   const [input, setInput] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
   const [finalizedCourseId, setFinalizedCourseId] = useState<string | null>(null);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Voice mode is read inside the utterance handler, which is created before
+  // the next render — a ref keeps it from capturing a stale value mid-loop.
+  const voiceModeRef = useRef(voiceMode);
+  voiceModeRef.current = voiceMode;
+
+  const { isListening, micLevel, micError, start: startListening, stop: stopListening } = useVoiceConversation({
+    onUtterance: async (audio) => {
+      await sendVoice(audio);
+      // The whole point of hands-free: once the assistant has finished
+      // speaking its reply, pick the microphone straight back up so the
+      // conversation continues without anyone pressing anything.
+      if (voiceModeRef.current) startListening();
+    },
+  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,28 +103,34 @@ export default function AIContainerComponent({ onClose, mode = "tutor" }: { onCl
     }
   };
 
-  const toggleRecording = async () => {
-    if (isRecording) {
-      mediaRecorderRef.current?.stop();
-      setIsRecording(false);
-      return;
-    }
+  const handleUploadDocument = async (file: File) => {
+    setIsUploadingDoc(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-      recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
-      recorder.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        await sendVoice(blob);
-      };
-      mediaRecorderRef.current = recorder;
-      recorder.start();
-      setIsRecording(true);
-    } catch {
-      // Mic permission denied or unavailable — the tutor can still type.
+      await sendDocument(file);
+    } finally {
+      setIsUploadingDoc(false);
     }
+  };
+
+  const endVoiceMode = () => {
+    // Update the ref synchronously, not just via state: stopListening()
+    // fires MediaRecorder.onstop in this same tick, and that handler checks
+    // voiceModeRef to decide whether to send the clip and pick the mic back
+    // up. Waiting for the re-render would let one last utterance through
+    // after the user has explicitly said they're done.
+    voiceModeRef.current = false;
+    setVoiceMode(false);
+    stopListening();
+    stopSpeaking();
+  };
+
+  const beginVoiceMode = () => {
+    voiceModeRef.current = true;
+    setVoiceMode(true);
+    // Hands-free is an eyes-on-the-orb interaction, so give it the room.
+    onToggleExpand?.(true);
+    if (!sessionId) start();
+    startListening();
   };
 
   const handleFinalize = async () => {
@@ -112,15 +153,26 @@ export default function AIContainerComponent({ onClose, mode = "tutor" }: { onCl
           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primaryYellow-0 to-primaryColors-0" />
           <span className="font-semibold text-lightBoldText-0 dark:text-textSlightDark-0">ShekiAI</span>
         </div>
+        <div className="flex items-center gap-2">
+        {onToggleExpand && (
+          <button
+            onClick={() => onToggleExpand(!isExpanded)}
+            aria-label={isExpanded ? "Exit full screen" : "Expand to full screen"}
+            className="h-8 w-8 bg-boldShadyColor-0/10 dark:bg-boldShadyColor-0 rounded-full flex justify-center items-center text-lightBoldText-0 dark:text-white hover:opacity-80"
+          >
+            {isExpanded ? <MdCloseFullscreen size={14} /> : <MdOpenInFull size={14} />}
+          </button>
+        )}
         {onClose && (
           <button
             onClick={onClose}
-            aria-label="Close assistant"
+            aria-label={closeVariant === "collapse" ? "Collapse assistant" : "Close assistant"}
             className="h-8 w-8 bg-boldShadyColor-0/10 dark:bg-boldShadyColor-0 rounded-full flex justify-center items-center text-lightBoldText-0 dark:text-white hover:opacity-80"
           >
-            <IoClose />
+            {closeVariant === "collapse" ? <FiChevronRight size={15} /> : <IoClose />}
           </button>
         )}
+        </div>
       </div>
 
       {/* Content */}
@@ -136,7 +188,11 @@ export default function AIContainerComponent({ onClose, mode = "tutor" }: { onCl
               </p>
             </div>
 
-            <ShekiAIOrb status={status} size={130} />
+            <ShekiAIOrb
+              status={isListening ? "listening" : status}
+              size={isExpanded ? 190 : 130}
+              level={isListening ? micLevel : speakingLevel}
+            />
 
             <div className="grid grid-cols-2 gap-2.5 w-full max-w-sm">
               {QUICK_ACTIONS.map((action) => (
@@ -172,12 +228,18 @@ export default function AIContainerComponent({ onClose, mode = "tutor" }: { onCl
               </div>
             ))}
 
-            {status === "thinking" && (
+            {(status === "thinking" || status === "speaking" || isListening) && (
               <div className="flex items-center gap-2 text-nearTextColors-0 dark:text-textGrey-0 text-sm px-1">
-                <ShekiAIOrb status="thinking" size={24} />
-                <span>Thinking…</span>
+                <ShekiAIOrb
+                  status={isListening ? "listening" : status}
+                  size={isExpanded ? 40 : 24}
+                  level={isListening ? micLevel : speakingLevel}
+                />
+                <span>{isListening ? "Listening…" : status === "speaking" ? "Speaking…" : "Thinking…"}</span>
               </div>
             )}
+
+            {micError && <div className="text-sm text-primaryColors-0 px-1">{micError}</div>}
 
             {error && <div className="text-sm text-red-500 px-1">{error}</div>}
 
@@ -223,45 +285,86 @@ export default function AIContainerComponent({ onClose, mode = "tutor" }: { onCl
 
       {/* Input bar */}
       <div className="shrink-0 p-4 border-t border-black/5 dark:border-white/5">
-        <div className="flex items-center gap-2 bg-white dark:bg-boldShadyColor-0 rounded-full px-4 py-2 border border-black/5 dark:border-white/5">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Ask me anything…"
-            className="flex-1 bg-transparent outline-none text-sm text-lightBoldText-0 dark:text-textSlightDark-0 placeholder:text-nearTextColors-0"
-          />
-          <AnimatePresence mode="wait">
-            {input.trim() ? (
-              <motion.button
-                key="send"
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.7, opacity: 0 }}
-                onClick={() => handleSend()}
-                aria-label="Send message"
-                className="h-8 w-8 rounded-full bg-primaryColors-0 text-white flex items-center justify-center shrink-0"
-              >
-                <FaPaperPlane size={13} />
-              </motion.button>
-            ) : (
-              <motion.button
-                key="mic"
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.7, opacity: 0 }}
-                onClick={toggleRecording}
-                aria-label={isRecording ? "Stop recording" : "Record voice message"}
-                className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-white ${
-                  isRecording ? "bg-red-500 animate-pulse" : "bg-primaryColors-0"
-                }`}
-              >
-                {isRecording ? <FaStop size={12} /> : <FaMicrophone size={13} />}
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
+        {voiceMode ? (
+          // Hands-free conversation: no press-to-talk, no press-to-stop —
+          // speak, pause, and the reply comes back spoken.
+          <div className="flex items-center gap-3">
+            <div className="flex-1 flex items-center gap-3">
+              <ShekiAIOrb
+                status={isListening ? "listening" : status}
+                size={34}
+                level={isListening ? micLevel : speakingLevel}
+              />
+              <span className="text-sm text-nearTextColors-0 dark:text-textGrey-0">
+                {isListening ? "Go ahead, I'm listening…" : status === "speaking" ? "Speaking…" : "One moment…"}
+              </span>
+            </div>
+            <button
+              onClick={endVoiceMode}
+              aria-label="End voice conversation"
+              className="shrink-0 text-sm px-3 py-1.5 rounded-lg bg-boldShadyColor-0/10 dark:bg-boldShadyColor-0 text-lightBoldText-0 dark:text-textSlightDark-0"
+            >
+              Done talking
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 bg-white dark:bg-boldShadyColor-0 rounded-full px-3 py-2 border border-black/5 dark:border-white/5">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Attach a document"
+              disabled={!sessionId || isUploadingDoc}
+              className="h-8 w-8 rounded-full shrink-0 flex items-center justify-center text-nearTextColors-0 hover:text-primaryColors-0 disabled:opacity-40"
+            >
+              <FaPaperclip size={14} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.txt,.md"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleUploadDocument(file);
+                e.target.value = "";
+              }}
+            />
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder={isUploadingDoc ? "Reading your document…" : "Ask me anything…"}
+              className="flex-1 bg-transparent outline-none text-sm text-lightBoldText-0 dark:text-textSlightDark-0 placeholder:text-nearTextColors-0"
+            />
+            <AnimatePresence mode="wait">
+              {input.trim() ? (
+                <motion.button
+                  key="send"
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.7, opacity: 0 }}
+                  onClick={() => handleSend()}
+                  aria-label="Send message"
+                  className="h-8 w-8 rounded-full bg-primaryColors-0 text-white flex items-center justify-center shrink-0"
+                >
+                  <FaPaperPlane size={13} />
+                </motion.button>
+              ) : (
+                <motion.button
+                  key="mic"
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.7, opacity: 0 }}
+                  onClick={beginVoiceMode}
+                  aria-label="Start a voice conversation"
+                  className="h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-white bg-primaryColors-0"
+                >
+                  <FaMicrophone size={13} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {/* Reuses GOYE's existing messaging UI rather than routing to

@@ -39,3 +39,16 @@ export async function sendMentorMatchVoiceMessage(sessionId: string, audioBlob: 
 export async function abandonMentorMatch(sessionId: string) {
   return call(`/${sessionId}/abandon`, { method: "POST" });
 }
+
+export async function sendMentorMatchDocument(sessionId: string, file: File) {
+  const form = new FormData();
+  form.append("document", file, file.name);
+  const res = await fetch(`${API_URL}/api/mentor-match/${sessionId}/document`, {
+    method: "POST",
+    credentials: "include",
+    body: form,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
+  return data;
+}
