@@ -13,6 +13,10 @@ interface SignupData {
   language?: string;
   level?: string;
   password?: string;
+  bio?: string;
+  church_name?: string;
+  church_role?: string;
+  social_media?: string;
 }
 
 const SignupContext = createContext<any>(null);

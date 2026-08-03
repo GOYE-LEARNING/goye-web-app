@@ -11,6 +11,7 @@ import AuthLoader from "./auth_loader";
 import { useRouter } from "next/navigation";
 import TranslatedText from "../hook/translateText";
 import { useModal } from "@/app/context/SimpleModalContext";
+import { getFriendlyErrorMessage } from "@/app/utils/errorMessages";
 
 interface Props {
   changeContentLogin: () => void
@@ -87,8 +88,8 @@ export default function Signin({changeContentLogin} : Props) {
     } catch (error) {
       console.error(error);
       showModal(
-        "Network Error",
-        "Please check your internet connection and try again.",
+        "Something went wrong",
+        getFriendlyErrorMessage(error, "sending your verification code"),
         "error"
       );
       setShowSignup(true);

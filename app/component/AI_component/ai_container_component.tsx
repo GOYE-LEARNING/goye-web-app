@@ -1,22 +1,33 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import MessagesModal from "@/app/component/MessagesModal";
 import { IoClose } from "react-icons/io5";
 import { FaMicrophone, FaPaperPlane, FaStop } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 import ShekiAIOrb from "./ShekiAIOrb";
-import { useShekiAI } from "@/app/hook/useShekiAI";
+import { AssistantMode, useShekiAI } from "@/app/hook/useShekiAI";
 
-const QUICK_ACTIONS = [
+const TUTOR_QUICK_ACTIONS = [
   { label: "Create a course", prompt: "I'd like to create a new course. Can you help me plan it out?" },
   { label: "Give me ideas", prompt: "I'm not sure what to teach yet — can you suggest some course ideas?" },
   { label: "Add a quiz", prompt: "Let's add a quiz to test what students have learned." },
   { label: "Review my draft", prompt: "Can you show me what we've built so far?" },
 ];
 
-export default function AIContainerComponent({ onClose }: { onClose?: () => void }) {
+const STUDENT_QUICK_ACTIONS = [
+  { label: "Find me a mentor", prompt: "I'd like to find a mentor who can guide me." },
+  { label: "Help me grow spiritually", prompt: "I want to grow spiritually — can you connect me with someone who can help?" },
+  { label: "I'm struggling with something", prompt: "I'm struggling with something and could use someone to talk to and learn from." },
+  { label: "Learn a new skill", prompt: "I want to learn a new skill — who on GOYE could teach me?" },
+];
+
+export default function AIContainerComponent({ onClose, mode = "tutor" }: { onClose?: () => void; mode?: AssistantMode }) {
+  const isStudent = mode === "student";
+  const QUICK_ACTIONS = isStudent ? STUDENT_QUICK_ACTIONS : TUTOR_QUICK_ACTIONS;
   const {
     tutorName,
+    matchedTutor,
     sessionId,
     messages,
     status,
@@ -26,12 +37,13 @@ export default function AIContainerComponent({ onClose }: { onClose?: () => void
     sendMessage,
     sendVoice,
     finalize,
-  } = useShekiAI();
+  } = useShekiAI(mode);
 
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [finalizedCourseId, setFinalizedCourseId] = useState<string | null>(null);
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -119,7 +131,9 @@ export default function AIContainerComponent({ onClose }: { onClose?: () => void
               <h2 className="text-xl font-semibold text-lightBoldText-0 dark:text-textSlightDark-0">
                 Hello, {tutorName}!
               </h2>
-              <p className="text-nearTextColors-0 dark:text-textGrey-0 mt-1">How can I help you today?</p>
+              <p className="text-nearTextColors-0 dark:text-textGrey-0 mt-1">
+                {isStudent ? "Looking for a mentor? Let's find the right person." : "How can I help you today?"}
+              </p>
             </div>
 
             <ShekiAIOrb status={status} size={130} />
@@ -167,7 +181,7 @@ export default function AIContainerComponent({ onClose }: { onClose?: () => void
 
             {error && <div className="text-sm text-red-500 px-1">{error}</div>}
 
-            {status === "awaiting_approval" && !finalizedCourseId && (
+            {!isStudent && status === "awaiting_approval" && !finalizedCourseId && (
               <div className="bg-shadyYellow-0 border border-primaryYellow-0/40 rounded-xl p-3 flex items-center justify-between gap-3">
                 <span className="text-sm text-lightBoldText-0 dark:text-textSlightDark-0">
                   Your draft is ready — want me to create the course?
@@ -185,6 +199,20 @@ export default function AIContainerComponent({ onClose }: { onClose?: () => void
             {finalizedCourseId && (
               <div className="bg-shadyGrreen-0 border border-boldGreen-0/40 rounded-xl p-3 text-sm text-lightBoldText-0 dark:text-textSlightDark-0">
                 🎉 Course created! You can add lesson videos and materials from your course dashboard.
+              </div>
+            )}
+
+            {isStudent && matchedTutor && (
+              <div className="bg-shadyGrreen-0 border border-boldGreen-0/40 rounded-xl p-3 flex items-center justify-between gap-3">
+                <span className="text-sm text-lightBoldText-0 dark:text-textSlightDark-0">
+                  🎉 {matchedTutor.name} has been notified — your chat is ready.
+                </span>
+                <button
+                  onClick={() => setShowMessages(true)}
+                  className="shrink-0 text-sm px-3 py-1.5 rounded-lg bg-primaryColors-0 text-white"
+                >
+                  Open chat
+                </button>
               </div>
             )}
 
@@ -235,6 +263,11 @@ export default function AIContainerComponent({ onClose }: { onClose?: () => void
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Reuses GOYE's existing messaging UI rather than routing to
+          /dashboard/student/chat, which isn't a real route (the dashboard
+          header links to it, but no such page exists). */}
+      <MessagesModal isOpen={showMessages} onClose={() => setShowMessages(false)} />
     </div>
   );
 }

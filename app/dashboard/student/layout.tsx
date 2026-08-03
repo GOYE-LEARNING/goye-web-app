@@ -10,6 +10,7 @@ import { useEffect, useState, useRef } from "react";
 import { useAuthContext } from "@/app/context/AuthContext";
 import AuthLoader from "@/app/auth/auth_loader";
 import { SocketProvider } from "@/app/context/SocketContext";
+import ShekiAIWidget from "@/app/component/AI_component/ShekiAIWidget";
 import { getUserProfile } from "@/app/utils/database/db";
 
 export default function DashboardLayout({
@@ -176,6 +177,7 @@ export default function DashboardLayout({
         <ProgressProvider>
           <QuizProvider>
             <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0">
+              <ShekiAIWidget mode="student" />
               <Sidenav setIsCollapsedState={setIsCollapsed} />
               <div 
                 className={`${isCollapsed ? "lg:w-[95%]" : "lg:w-[80%]"} org_width_animation w-full min-w-0 max-w-full h-full md:absolute right-0`}

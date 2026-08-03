@@ -6,24 +6,32 @@ import { motion } from "framer-motion";
 import Step1 from "./step1";
 import Step2 from "./step2";
 import Step3 from "./step3";
+import Step4 from "./step4";
 import Finished from "../../finished";
 import { useSignup } from "../../../context/SignupContext";
 import { useAuthContext } from "@/app/context/AuthContext";
 import { saveUserProfile } from "@/app/utils/database/db";
+import { useModal } from "@/app/context/SimpleModalContext";
+import { getFriendlyErrorMessage } from "@/app/utils/errorMessages";
 
 export default function WelcomeMoreAuth() {
   const [step, setStep] = useState<number>(0);
 
   const [showPopup, setShowPopup] = useState<boolean>(false);
   const [showMoreAuth, setShowMoreAuth] = useState<boolean>(true);
-  const totalSteps = 3;
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // ✅ store all step data
   const { formData, setFormData } = useSignup();
   const { authStatus } = useAuthContext();
-  //To send register the user
-  const signupUser = async () => {
-    console.log(formData);
+  const { showModal } = useModal();
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const isInstructor = formData.role === "instructor";
+  const totalSteps = isInstructor ? 4 : 3;
+
+  //To send register the user — returns whether it actually succeeded, so
+  // the caller doesn't advance past the form on a failed attempt.
+  const signupUser = async (): Promise<boolean> => {
     try {
       const res = await fetch(
         `${API_URL}${authStatus.requiresProfileCompletion ? "/api/user/complete-profile" : "/api/user/signup"}`,
@@ -43,6 +51,14 @@ export default function WelcomeMoreAuth() {
                   phone_number: formData.phone,
                   role: formData.role,
                   level: formData.level,
+                  ...(isInstructor
+                    ? {
+                        bio: formData.bio,
+                        church_name: formData.church_name,
+                        church_role: formData.church_role,
+                        social_media: formData.social_media,
+                      }
+                    : {}),
                 }
               : {
                   first_name: formData.firstname,
@@ -56,6 +72,14 @@ export default function WelcomeMoreAuth() {
                   phone_number: formData.phone,
                   role: formData.role,
                   level: formData.level,
+                  ...(isInstructor
+                    ? {
+                        bio: formData.bio,
+                        church_name: formData.church_name,
+                        church_role: formData.church_role,
+                        social_media: formData.social_media,
+                      }
+                    : {}),
                 },
           ),
           credentials: "include",
@@ -64,11 +88,14 @@ export default function WelcomeMoreAuth() {
 
       const data = await res.json();
       if (!res.ok) {
-        console.log(data);
+        showModal("Something went wrong", getFriendlyErrorMessage(new Error(data?.message || `: ${res.status}`), "finishing your signup"), "error");
+        return false;
       }
       await saveUserProfile({ first_name: authStatus.user?.first_name as any });
+      return true;
     } catch (error) {
-      console.error(error);
+      showModal("Something went wrong", getFriendlyErrorMessage(error, "finishing your signup"), "error");
+      return false;
     }
   };
 
@@ -77,6 +104,7 @@ export default function WelcomeMoreAuth() {
     formData.country && formData.city && formData.phone,
     formData.role,
     formData.level,
+    isInstructor ? !!(formData.bio && formData.church_name && formData.church_role) : true,
   ];
 
   const nextStep = () => {
@@ -98,13 +126,19 @@ export default function WelcomeMoreAuth() {
     <Step1 formData={formData} setFormData={setFormData} />,
     <Step2 formData={formData} setFormData={setFormData} />,
     <Step3 formData={formData} setFormData={setFormData} />,
+    ...(isInstructor ? [<Step4 formData={formData} setFormData={setFormData} />] : []),
   ];
 
-  const openPopup = () => {
+  const openPopup = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    const succeeded = await signupUser();
+    setIsSubmitting(false);
+    if (!succeeded) return; // stays on the form — error already shown via showModal
+
+    localStorage.setItem("role", formData.role as any);
     setShowMoreAuth(false);
     setShowPopup(true);
-    localStorage.setItem("role", formData.role as any);
-    signupUser();
   };
 
   return (
@@ -146,10 +180,10 @@ export default function WelcomeMoreAuth() {
                 Back
               </span>
               <span
-                className="form_more text-plainColors-0 bg-primaryColors-0"
-                onClick={step === 2 && isComplete[step] ? openPopup : nextStep}
+                className={`form_more text-plainColors-0 bg-primaryColors-0 ${isSubmitting ? "opacity-60 pointer-events-none" : ""}`}
+                onClick={step === totalSteps - 1 && isComplete[step] ? openPopup : nextStep}
               >
-                Next <FaArrowRight />
+                {isSubmitting ? "Please wait…" : "Next"} <FaArrowRight />
               </span>
             </div>
           </div>

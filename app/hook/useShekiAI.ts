@@ -1,10 +1,11 @@
 // hook/useShekiAI.ts
 //
-// Drives the ShekiAI course-drafting assistant panel: session lifecycle via
-// GOYE's proxy routes (courseDraftApi.ts), plus a socket connection straight
-// to ShekiAI's own Socket.IO server for live progress events — a second,
-// separate socket from GOYE's own SocketProvider/socketService, since
-// ShekiAI runs its own realtime layer (see ShekiAI's src/realtime/socket.ts).
+// Drives the ShekiAI assistant panel in either mode — "tutor" (drafting a
+// course) or "student" (finding a mentor) — via GOYE's proxy routes, plus a
+// socket connection straight to ShekiAI's own Socket.IO server for live
+// progress events. That socket is separate from GOYE's own
+// SocketProvider/socketService, since ShekiAI runs its own realtime layer
+// (see ShekiAI's src/realtime/socket.ts).
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { getUserProfile } from "@/app/utils/database/db";
@@ -16,6 +17,12 @@ import {
   speakCourseDraftText,
   startCourseDraft,
 } from "@/app/utils/ai/courseDraftApi";
+import {
+  abandonMentorMatch,
+  sendMentorMatchMessage,
+  sendMentorMatchVoiceMessage,
+  startMentorMatch,
+} from "@/app/utils/ai/mentorMatchApi";
 
 export interface ChatMessage {
   id: string;
@@ -23,12 +30,31 @@ export interface ChatMessage {
   content: string;
 }
 
-export type AssistantStatus = "idle" | "thinking" | "speaking" | "awaiting_approval" | "error";
+export type AssistantStatus = "idle" | "thinking" | "speaking" | "awaiting_approval" | "matched" | "error";
+
+export type AssistantMode = "tutor" | "student";
+
+export interface MatchedTutor {
+  id: string;
+  name: string;
+  reason: string;
+}
 
 const SHEKIAI_URL = process.env.NEXT_PUBLIC_SHEKIAI_URL;
 
-export function useShekiAI() {
+// Backend session statuses differ per mode (course-draft uses
+// AWAITING_APPROVAL; mentor-match uses MATCHED / NO_MATCH), so map both
+// onto the panel's own UI states in one place.
+function statusFor(backendStatus: string): AssistantStatus {
+  if (backendStatus === "AWAITING_APPROVAL") return "awaiting_approval";
+  if (backendStatus === "MATCHED") return "matched";
+  return "idle";
+}
+
+export function useShekiAI(mode: AssistantMode = "tutor") {
+  const isStudent = mode === "student";
   const [tutorName, setTutorName] = useState("there");
+  const [matchedTutor, setMatchedTutor] = useState<MatchedTutor | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<AssistantStatus>("idle");
@@ -108,10 +134,11 @@ export function useShekiAI() {
       setIsStarting(true);
       setError(null);
       try {
-        const res = await startCourseDraft(initialMessage);
+        const res = isStudent ? await startMentorMatch(initialMessage) : await startCourseDraft(initialMessage);
         const result = res.data[0];
         setSessionId(result.sessionId);
-        setCourseTitle(result.draft?.course_title || null);
+        if (!isStudent) setCourseTitle(result.draft?.course_title || null);
+        if (result.matchedTutor) setMatchedTutor(result.matchedTutor);
         setMessages(
           initialMessage
             ? [
@@ -120,7 +147,7 @@ export function useShekiAI() {
               ]
             : [{ id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply }],
         );
-        setStatus(result.status === "AWAITING_APPROVAL" ? "awaiting_approval" : "idle");
+        setStatus(statusFor(result.status));
         connectSocket(result.sessionId);
         return result;
       } catch (e: any) {
@@ -130,7 +157,7 @@ export function useShekiAI() {
         setIsStarting(false);
       }
     },
-    [connectSocket],
+    [connectSocket, isStudent],
   );
 
   const sendMessage = useCallback(
@@ -142,17 +169,18 @@ export function useShekiAI() {
       setStatus("thinking");
       setError(null);
       try {
-        const res = await sendCourseDraftMessage(sessionId, text);
+        const res = isStudent ? await sendMentorMatchMessage(sessionId, text) : await sendCourseDraftMessage(sessionId, text);
         const result = res.data[0];
-        setCourseTitle(result.draft?.course_title || null);
+        if (!isStudent) setCourseTitle(result.draft?.course_title || null);
+        if (result.matchedTutor) setMatchedTutor(result.matchedTutor);
         setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply }]);
-        setStatus(result.status === "AWAITING_APPROVAL" ? "awaiting_approval" : "idle");
+        setStatus(statusFor(result.status));
       } catch (e: any) {
         setError(e.message);
         setStatus("error");
       }
     },
-    [sessionId, start],
+    [sessionId, start, isStudent],
   );
 
   const sendVoice = useCallback(
@@ -161,22 +189,25 @@ export function useShekiAI() {
       setStatus("thinking");
       setError(null);
       try {
-        const res = await sendCourseDraftVoiceMessage(sessionId, audioBlob);
+        const res = isStudent
+          ? await sendMentorMatchVoiceMessage(sessionId, audioBlob)
+          : await sendCourseDraftVoiceMessage(sessionId, audioBlob);
         const result = res.data[0];
-        setCourseTitle(result.draft?.course_title || null);
+        if (!isStudent) setCourseTitle(result.draft?.course_title || null);
+        if (result.matchedTutor) setMatchedTutor(result.matchedTutor);
         setMessages((prev) => [
           ...prev,
           { id: `u-${Date.now()}`, role: "user", content: result.transcript },
           { id: `a-${Date.now()}`, role: "assistant", content: result.assistantReply },
         ]);
-        setStatus(result.status === "AWAITING_APPROVAL" ? "awaiting_approval" : "idle");
+        setStatus(statusFor(result.status));
         if (result.assistantReply) playReply(result.assistantReply);
       } catch (e: any) {
         setError(e.message);
         setStatus("error");
       }
     },
-    [sessionId, playReply],
+    [sessionId, playReply, isStudent],
   );
 
   const finalize = useCallback(async () => {
@@ -187,16 +218,19 @@ export function useShekiAI() {
 
   const abandon = useCallback(async () => {
     if (!sessionId) return;
-    await abandonCourseDraft(sessionId);
+    if (isStudent) await abandonMentorMatch(sessionId);
+    else await abandonCourseDraft(sessionId);
     socketRef.current?.disconnect();
     setSessionId(null);
     setMessages([]);
     setCourseTitle(null);
+    setMatchedTutor(null);
     setStatus("idle");
-  }, [sessionId]);
+  }, [sessionId, isStudent]);
 
   return {
     tutorName,
+    matchedTutor,
     sessionId,
     messages,
     status,

@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IoChatboxSharp, IoChevronDown, IoLanguage } from "react-icons/io5";
+import { IoChevronDown, IoLanguage } from "react-icons/io5";
 import { MdNotifications } from "react-icons/md";
 import DashboardNotification from "./dashboard_notification";
 import { FaBell } from "react-icons/fa";
@@ -26,8 +26,7 @@ import { useI18n } from "@/app/context/I18nContext";
 // 5. Student / INDIVIDUAL (default)
 
 type ResolvedRole = {
-  label: string;       // shown in the UI
-  chatPath: string;    // where the chat icon routes
+  label: string; // shown in the UI
 }
 
 function resolveRole(user: any, organization: any): ResolvedRole {
@@ -41,10 +40,7 @@ function resolveRole(user: any, organization: any): ResolvedRole {
       content_admin: "Content Admin",
       user_admin: "User Admin",
     };
-    return {
-      label: adminLabelMap[user?.adminRole] ?? "Admin",
-      chatPath: "/dashboard/super-admin",
-    };
+    return { label: adminLabelMap[user?.adminRole] ?? "Admin" };
   }
 
   // 2. Organisation owner — label depends on org type
@@ -57,33 +53,21 @@ function resolveRole(user: any, organization: any): ResolvedRole {
       CLUB:   "Club Admin",
     };
 
-    return {
-      label: labelMap[orgType] ?? "Organisation Admin",
-      chatPath: "/dashboard/organization/chat",
-    };
+    return { label: labelMap[orgType] ?? "Organisation Admin" };
   }
 
   // 3. Invited member — belongs to an org but is not the owner
   if (user?.userType === "INVITED_MEMBER") {
-    return {
-      label: "Invited Member",
-      chatPath: "/dashboard/student/chat",
-    };
+    return { label: "Invited Member" };
   }
 
   // 4. Tutor — individual account with tutor role
   if (user?.role === "tutor") {
-    return {
-      label: "Tutor",
-      chatPath: "/dashboard/tutor/chat",
-    };
+    return { label: "Tutor" };
   }
 
   // 5. Default — student / individual
-  return {
-    label: "Student",
-    chatPath: "/dashboard/student/chat",
-  };
+  return { label: "Student" };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -123,7 +107,7 @@ export default function DashboardHeader() {
     || organization?.organization_image
     || "";
 
-  const { label: displayRole, chatPath } = resolveRole(user, organization);
+  const { label: displayRole } = resolveRole(user, organization);
 
   // ── Greeting ──────────────────────────────────────────────
   useEffect(() => {
@@ -265,14 +249,6 @@ export default function DashboardHeader() {
             )}
           </div>
 
-          {/* Chat — role-aware path */}
-          <button
-            onClick={() => router.push(chatPath)}
-            className="text-gray-700 dark:text-gray-200 hover:text-primaryColors-0 transition-colors"
-          >
-            <IoChatboxSharp size={23} />
-          </button>
-
           {/* Profile */}
           <div ref={profileBoxRef} className="relative">
             <div
@@ -369,13 +345,6 @@ export default function DashboardHeader() {
               )}
             </div>
 
-            {/* Chat — role-aware path */}
-            <button
-              onClick={() => router.push(chatPath)}
-              className="text-white hover:text-gray-200 transition-colors"
-            >
-              <IoChatboxSharp size={18} />
-            </button>
           </div>
         </div>
       </header>

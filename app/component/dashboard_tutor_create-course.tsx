@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { TbCancel } from "react-icons/tb";
 import DashboardPop from "./dashboard_popop";
 import DashboardTutorCourseBreakdown from "./dashboard_tutor_course_breakdown";
+import { getFriendlyErrorMessage } from "@/app/utils/errorMessages";
 
 interface Props {
   courseId?: string;
@@ -332,20 +333,7 @@ export default function DashboardTutorCreateCourse({
   // never the raw error text, but never a lie about what happened either.
   // Nothing the tutor entered is lost on failure, since formData is only
   // cleared after a confirmed success.
-  const describeCreateCourseError = (error: any): string => {
-    const raw = String(error?.message || "");
-
-    if (raw.includes("Failed to fetch") || raw.includes("NetworkError") || raw.includes("network")) {
-      return "We couldn't reach the server just now. Please check your connection and try again — nothing you've entered has been lost.";
-    }
-    if (raw.includes(": 401") || raw.includes(": 403")) {
-      return "Your session needs a refresh. Please log in again, then try creating your course once more.";
-    }
-    if (raw.includes(": 500") || raw.includes(": 502") || raw.includes(": 503")) {
-      return "Something didn't go through on our end. Please try again in a moment — your course details are still here, ready to go.";
-    }
-    return "We hit a snag creating your course. Please try again — your details are still here, ready to go.";
-  };
+  const describeCreateCourseError = (error: any): string => getFriendlyErrorMessage(error, "creating your course");
 
   // Checks the fields the backend actually requires before we ever hit the
   // network, so a tutor sees a specific, friendly message ("add a level")
