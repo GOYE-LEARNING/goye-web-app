@@ -43,21 +43,17 @@ export default function DashboardAdminOverview() {
         setLoading(true);
         setError(null);
 
-        const token =
-          typeof window !== "undefined"
-            ? document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("token="))
-                ?.split("=")[1]
-            : undefined;
-
+        // This used to hand-roll an Authorization header from a legacy,
+        // non-httpOnly `token` cookie. Login sets accessToken/refreshToken as
+        // httpOnly, so document.cookie can't read them and that lookup was
+        // effectively always undefined — but a browser still holding an old
+        // `token` cookie would now have it preferred over its valid session
+        // cookie (the backend gives an explicit header precedence). Rely on
+        // credentials: "include" like every other authenticated call here.
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/user/admin-dashboard-stats`,
           {
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
+            headers: { "Content-Type": "application/json" },
             credentials: "include",
           }
         );
