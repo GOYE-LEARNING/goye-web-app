@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { getUserProfile } from "@/app/utils/database/db";
+import { getFriendlyErrorMessage } from "@/app/utils/errorMessages";
 import {
   abandonCourseDraft,
   finalizeCourseDraft,
@@ -182,8 +183,29 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
     if (!SHEKIAI_URL) return;
     if (socketRef.current) socketRef.current.disconnect();
 
-    const socket = io(SHEKIAI_URL, { transports: ["websocket", "polling"], withCredentials: true });
+    // The socket is best-effort — every reply already comes back through the
+    // plain REST response regardless of whether this ever connects (only the
+    // live "thinking…"/progress pings depend on it). ShekiAI's free-tier
+    // server sleeps when idle, so this fails outright while it's asleep; a
+    // bounded retry means the console settles down instead of retrying (and
+    // logging) forever until something else wakes the server up.
+    const socket = io(SHEKIAI_URL, {
+      transports: ["websocket", "polling"],
+      withCredentials: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 5000,
+      timeout: 8000,
+    });
     socketRef.current = socket;
+
+    socket.on("connect_error", () => {
+      // Swallow — connect_error already fires once per failed attempt;
+      // reconnectionAttempts above is what stops it from being forever.
+    });
+    socket.io.on("reconnect_failed", () => {
+      socket.disconnect();
+    });
 
     socket.on("connect", async () => {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/socket-token`, {
@@ -242,7 +264,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         if (voiceModeRef.current && result.assistantReply) await playReply(result.assistantReply);
         return result;
       } catch (e: any) {
-        setError(e.message);
+        setError(getFriendlyErrorMessage(e, "starting that conversation"));
         setStatus("error");
       } finally {
         setIsStarting(false);
@@ -269,7 +291,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         setStatus(statusFor(result.status));
         if (voiceModeRef.current && result.assistantReply) await playReply(result.assistantReply);
       } catch (e: any) {
-        setError(e.message);
+        setError(getFriendlyErrorMessage(e, "sending that message"));
         setStatus("error");
       }
     },
@@ -297,7 +319,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         setStatus(statusFor(result.status));
         if (result.assistantReply) await playReply(result.assistantReply);
       } catch (e: any) {
-        setError(e.message);
+        setError(getFriendlyErrorMessage(e, "sending that voice message"));
         setStatus("error");
       }
     },
@@ -320,7 +342,7 @@ export function useShekiAI(mode: AssistantMode = "tutor") {
         setStatus(statusFor(result.status));
         if (voiceModeRef.current && result.assistantReply) await playReply(result.assistantReply);
       } catch (e: any) {
-        setError(e.message);
+        setError(getFriendlyErrorMessage(e, "sharing that document"));
         setStatus("error");
       }
     },
