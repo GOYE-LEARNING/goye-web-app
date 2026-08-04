@@ -61,8 +61,10 @@ function resolveRole(user: any, organization: any): ResolvedRole {
     return { label: "Invited Member" };
   }
 
-  // 4. Tutor — individual account with tutor role
-  if (user?.role === "tutor") {
+  // 4. Tutor — individual account with tutor role. Signup sets role to
+  // "instructor" (see auth/welcome/auth/step2.tsx); "tutor" is kept as a
+  // legacy alias other checks in this codebase also accept.
+  if (user?.role === "instructor" || user?.role === "tutor") {
     return { label: "Tutor" };
   }
 

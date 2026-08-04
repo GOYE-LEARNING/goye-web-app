@@ -4,7 +4,7 @@ export function getRoleRedirectPath() {
   
   if (role === "student") {
     return "/dashboard/student/profile";
-  } else if (role === "tutor") {
+  } else if (role === "instructor" || role === "tutor") {
     return "/dashboard/tutor/profile";
   } else if (role === "invited_user") {
     return `/dashboard/${org_name}/organization/profile`;
