@@ -8,9 +8,10 @@ import { FiChevronRight } from "react-icons/fi";
 import { FaPaperPlane, FaPaperclip } from "react-icons/fa6";
 import { MdOpenInFull, MdCloseFullscreen } from "react-icons/md";
 import { FaUserGraduate } from "react-icons/fa";
+import { IoSchoolOutline, IoPeopleOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import ShekiAIOrb from "./ShekiAIOrb";
-import { AssistantMode, TutorCandidate, useShekiAI } from "@/app/hook/useShekiAI";
+import { AssistantMode, CourseCandidate, GroupCandidate, TutorCandidate, useShekiAI } from "@/app/hook/useShekiAI";
 
 // Reveals assistant text a chunk at a time rather than all at once, so a
 // reply feels spoken rather than dumped on screen. Chunked (not per-char)
@@ -83,6 +84,76 @@ function TutorCandidateCards({
             </div>
           )}
         </div>
+      ))}
+    </div>
+  );
+}
+
+function CourseCandidateCards({
+  candidates,
+  onOpen,
+}: {
+  candidates: CourseCandidate[];
+  onOpen: (courseId: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 mt-1 max-w-[90%]">
+      {candidates.map((course) => (
+        <button
+          key={course.id}
+          onClick={() => onOpen(course.id)}
+          className="rounded-xl border border-black/5 dark:border-white/5 bg-white dark:bg-boldShadyColor-0 p-3 flex items-start gap-3 text-left w-full"
+        >
+          <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-primaryYellow-0 to-primaryColors-0 flex items-center justify-center text-white">
+            <IoSchoolOutline size={16} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-lightBoldText-0 dark:text-textSlightDark-0 truncate">
+              {course.title}
+            </div>
+            {course.level && (
+              <div className="text-xs text-nearTextColors-0 dark:text-textGrey-0 truncate">{course.level}</div>
+            )}
+            {course.description && (
+              <p className="text-xs text-nearTextColors-0 dark:text-textGrey-0 mt-1 line-clamp-2">{course.description}</p>
+            )}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function GroupCandidateCards({
+  candidates,
+  onOpen,
+}: {
+  candidates: GroupCandidate[];
+  onOpen: (groupId: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 mt-1 max-w-[90%]">
+      {candidates.map((group) => (
+        <button
+          key={group.id}
+          onClick={() => onOpen(group.id)}
+          className="rounded-xl border border-black/5 dark:border-white/5 bg-white dark:bg-boldShadyColor-0 p-3 flex items-start gap-3 text-left w-full"
+        >
+          <div className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-primaryYellow-0 to-primaryColors-0 flex items-center justify-center text-white">
+            <IoPeopleOutline size={16} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-lightBoldText-0 dark:text-textSlightDark-0 truncate">
+              {group.title}
+            </div>
+            <div className="text-xs text-nearTextColors-0 dark:text-textGrey-0 truncate">
+              {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
+            </div>
+            {group.description && (
+              <p className="text-xs text-nearTextColors-0 dark:text-textGrey-0 mt-1 line-clamp-2">{group.description}</p>
+            )}
+          </div>
+        </button>
       ))}
     </div>
   );
@@ -197,6 +268,10 @@ export default function AIContainerComponent({
     router.push(`/dashboard/student/course?courseId=${courseId}`);
   };
 
+  const handleOpenGroup = (groupId: string) => {
+    router.push(`/dashboard/student/community?groupId=${groupId}`);
+  };
+
   const handleFinalize = async () => {
     setIsFinalizing(true);
     try {
@@ -300,6 +375,16 @@ export default function AIContainerComponent({
                         onPick={handlePickTutor}
                         onOpenCourse={handleOpenCourse}
                       />
+                    </div>
+                  )}
+                  {m.role === "assistant" && m.courseCandidates && (
+                    <div className="pl-9">
+                      <CourseCandidateCards candidates={m.courseCandidates} onOpen={handleOpenCourse} />
+                    </div>
+                  )}
+                  {m.role === "assistant" && m.groupCandidates && (
+                    <div className="pl-9">
+                      <GroupCandidateCards candidates={m.groupCandidates} onOpen={handleOpenGroup} />
                     </div>
                   )}
                 </div>

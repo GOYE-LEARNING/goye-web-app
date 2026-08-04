@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
 import { FaMessage, FaPeopleGroup } from "react-icons/fa6";
 import { IoExtensionPuzzle } from "react-icons/io5";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Lazy load heavy components
 const SocialMode = lazy(() => import("@/app/component/dashboard_social_feed"));
@@ -155,6 +156,23 @@ export default function StudentCommunity() {
   const [showCommunity, setShowCommunity] = useState(true);
   const [search, setSearch] = useState("");
   const [joiningId, setJoiningId] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Lets a group card clicked elsewhere (e.g. the ShekiAI assistant panel)
+  // deep-link straight to a specific group via
+  // /dashboard/student/community?groupId=... — mirrors the same pattern
+  // added to the course page for the same reason.
+  useEffect(() => {
+    const linkedGroupId = searchParams.get("groupId");
+    if (!linkedGroupId) return;
+    setActiveTab("groups");
+    setShowCommunity(false);
+    setShowCommunityGroup(true);
+    setGroupId(linkedGroupId);
+    router.replace("/dashboard/student/community");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Use refs to prevent unnecessary re-renders
   const isMounted = useRef(true);
