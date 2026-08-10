@@ -5,7 +5,9 @@
 import { useEffect, useRef, useState } from "react";
 import { IoChevronDown, IoLanguage } from "react-icons/io5";
 import { MdNotifications } from "react-icons/md";
+import { HiOutlineChatAlt2 } from "react-icons/hi";
 import DashboardNotification from "./dashboard_notification";
+import FeedbackModal from "./feedback_modal";
 import { FaBell } from "react-icons/fa";
 import { HiUserCircle } from "react-icons/hi";
 import { useRouter } from "next/navigation";
@@ -83,6 +85,7 @@ export default function DashboardHeader() {
 
   const [showNotification, setShowNotification] = useState(false);
   const [showProfileBox, setShowProfileBox]     = useState(false);
+  const [showFeedback, setShowFeedback]         = useState(false);
   const [getHours, setGetHours]                 = useState("");
   const [isLoading, setIsLoading]               = useState(true);
 
@@ -220,6 +223,16 @@ export default function DashboardHeader() {
             <IoLanguage size={22} />
           </button>
 
+          {/* Feedback — reachable from any dashboard */}
+          <button
+            onClick={() => setShowFeedback(true)}
+            title="Send feedback"
+            aria-label="Send feedback"
+            className="text-gray-700 dark:text-gray-200 hover:text-primaryColors-0 transition-colors"
+          >
+            <HiOutlineChatAlt2 size={22} />
+          </button>
+
           {/* Connection status */}
           <div className="flex items-center justify-center gap-1">
             <span className={`w-2 h-2 rounded-full ${
@@ -327,6 +340,16 @@ export default function DashboardHeader() {
               <IoLanguage size={18} />
             </button>
 
+            {/* Feedback — reachable from any dashboard */}
+            <button
+              onClick={() => setShowFeedback(true)}
+              title="Send feedback"
+              aria-label="Send feedback"
+              className="text-white hover:text-gray-200 transition-colors"
+            >
+              <HiOutlineChatAlt2 size={18} />
+            </button>
+
             <div className="relative">
               <button
                 ref={mobileNotificationBtnRef}
@@ -350,6 +373,8 @@ export default function DashboardHeader() {
           </div>
         </div>
       </header>
+
+      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
     </>
   );
 }

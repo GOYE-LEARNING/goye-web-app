@@ -8,6 +8,7 @@ import { GoHome } from "react-icons/go";
 import { HiOutlineOfficeBuilding, HiOfficeBuilding } from "react-icons/hi";
 import { IoSchoolOutline, IoSchoolSharp } from "react-icons/io5";
 import { BsActivity, BsPeople, BsPeopleFill, BsCalendarEvent, BsCalendarEventFill } from "react-icons/bs";
+import { HiOutlineChatAlt2, HiChatAlt2 } from "react-icons/hi";
 import { usePathname } from "next/navigation";
 import { useAuthContext } from "@/app/context/AuthContext";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
@@ -140,6 +141,20 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
                 size={25}
                 color={pathname === "/dashboard/super-admin/activity" ? "#FFA500" : undefined}
               />
+            }
+            isCollapsed={isCollapsed}
+          />
+        </div>
+        <div className="md:w-full">
+          <SidenavComponent
+            path="/dashboard/super-admin/feedback"
+            label="Feedback"
+            icon={
+              pathname !== "/dashboard/super-admin/feedback" ? (
+                <HiOutlineChatAlt2 size={25} />
+              ) : (
+                <HiChatAlt2 size={25} color="#FFA500" />
+              )
             }
             isCollapsed={isCollapsed}
           />
