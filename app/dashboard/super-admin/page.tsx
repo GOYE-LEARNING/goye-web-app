@@ -22,6 +22,9 @@ interface OverviewData {
   usersByRole: { role: string; count: number }[];
   organizationsByType: { type: string; count: number }[];
   signupsLast30Days: { date: string; count: number }[];
+  enrollmentsLast30Days: { date: string; count: number }[];
+  organizationGrowthLast6Months: { month: string; count: number }[];
+  topCoursesByEnrollment: { courseId: string; title: string; enrollments: number }[];
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -77,60 +80,146 @@ function StatTile({
   );
 }
 
-// Single-series line chart with area wash + hover crosshair. One series → no
-// legend; the section title names it.
-function SignupsTrendChart({ data }: { data: { date: string; count: number }[] }) {
+// Multi-series line chart with area wash (single series only) + hover
+// crosshair + shared tooltip across all series. A legend renders above the
+// chart whenever there's more than one series.
+function MultiSeriesLineChart({
+  series,
+}: {
+  series: { name: string; color: string; data: { date: string; count: number }[] }[];
+}) {
   const [hover, setHover] = useState<number | null>(null);
   const width = 640;
   const height = 200;
   const padL = 8, padR = 8, padT = 14, padB = 26;
-  const max = Math.max(1, ...data.map((d) => d.count));
+  const dates = series[0]?.data ?? [];
+  const max = Math.max(1, ...series.flatMap((s) => s.data.map((d) => d.count)));
   const pw = width - padL - padR;
   const ph = height - padT - padB;
 
-  const pts = data.map((d, i) => ({
-    x: padL + (i / Math.max(1, data.length - 1)) * pw,
-    y: padT + ph - (d.count / max) * ph,
-    ...d,
+  const seriesPts = series.map((s) => ({
+    ...s,
+    pts: s.data.map((d, i) => ({
+      x: padL + (i / Math.max(1, s.data.length - 1)) * pw,
+      y: padT + ph - (d.count / max) * ph,
+      ...d,
+    })),
   }));
-  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
-  const area = `${line} L ${pts[pts.length - 1]?.x ?? 0} ${padT + ph} L ${pts[0]?.x ?? 0} ${padT + ph} Z`;
-  const h = hover !== null ? pts[hover] : null;
 
   return (
     <div className="relative">
+      {series.length > 1 && (
+        <div className="flex items-center gap-4 mb-2">
+          {series.map((s) => (
+            <div key={s.name} className="flex items-center gap-1.5">
+              <span className="h-[8px] w-[8px] rounded-full" style={{ backgroundColor: s.color }} />
+              <span className="text-[11px] text-textGrey-0">{s.name}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-[200px]" onMouseLeave={() => setHover(null)}>
         <defs>
-          <linearGradient id="signupFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={ACCENT} stopOpacity="0.22" />
-            <stop offset="100%" stopColor={ACCENT} stopOpacity="0.02" />
-          </linearGradient>
+          {series.length === 1 && (
+            <linearGradient id="signupFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={series[0].color} stopOpacity="0.22" />
+              <stop offset="100%" stopColor={series[0].color} stopOpacity="0.02" />
+            </linearGradient>
+          )}
         </defs>
         <line x1={padL} y1={padT + ph} x2={width - padR} y2={padT + ph} className="text-[#ccc]/20" stroke="currentColor" strokeWidth={1} />
-        <path d={area} fill="url(#signupFill)" />
-        <path d={line} fill="none" stroke={ACCENT} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-        {h && (
-          <>
-            <line x1={h.x} y1={padT} x2={h.x} y2={padT + ph} className="text-[#ccc]/30" stroke="currentColor" strokeWidth={1} />
-            <circle cx={h.x} cy={h.y} r={4} fill={ACCENT} stroke="white" strokeWidth={2} />
-          </>
+        {seriesPts.map((s) => {
+          const line = s.pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+          const area = `${line} L ${s.pts[s.pts.length - 1]?.x ?? 0} ${padT + ph} L ${s.pts[0]?.x ?? 0} ${padT + ph} Z`;
+          return (
+            <g key={s.name}>
+              {series.length === 1 && <path d={area} fill="url(#signupFill)" />}
+              <path d={line} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+              {hover !== null && s.pts[hover] && (
+                <circle cx={s.pts[hover].x} cy={s.pts[hover].y} r={4} fill={s.color} stroke="white" strokeWidth={2} />
+              )}
+            </g>
+          );
+        })}
+        {hover !== null && seriesPts[0]?.pts[hover] && (
+          <line x1={seriesPts[0].pts[hover].x} y1={padT} x2={seriesPts[0].pts[hover].x} y2={padT + ph} className="text-[#ccc]/30" stroke="currentColor" strokeWidth={1} />
         )}
-        {pts.map((p, i) => (
-          <rect key={i} x={p.x - pw / data.length / 2} y={padT} width={pw / data.length} height={ph} fill="transparent" onMouseEnter={() => setHover(i)} />
+        {dates.map((_, i) => (
+          <rect key={i} x={padL + (i / Math.max(1, dates.length)) * pw} y={padT} width={pw / Math.max(1, dates.length)} height={ph} fill="transparent" onMouseEnter={() => setHover(i)} />
         ))}
       </svg>
-      {h && (
+      {hover !== null && dates[hover] && (
         <div
-          className="absolute -translate-x-1/2 bg-secondaryColors-0 text-white text-[11px] rounded px-2 py-1 pointer-events-none whitespace-nowrap shadow-lg"
-          style={{ left: `${(h.x / width) * 100}%`, top: 0 }}
+          className="absolute -translate-x-1/2 bg-secondaryColors-0 text-white text-[11px] rounded px-2 py-1.5 pointer-events-none whitespace-nowrap shadow-lg flex flex-col gap-0.5"
+          style={{ left: `${(seriesPts[0].pts[hover].x / width) * 100}%`, top: 0 }}
         >
-          {new Date(h.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}: {h.count} signup{h.count === 1 ? "" : "s"}
+          <span className="font-[600]">{new Date(dates[hover].date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+          {series.map((s) => (
+            <span key={s.name}>{s.name}: {s.data[hover]?.count ?? 0}</span>
+          ))}
         </div>
       )}
       <div className="flex justify-between text-[11px] text-textGrey-0 mt-1">
-        <span>{data[0] ? new Date(data[0].date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}</span>
-        <span>{data[data.length - 1] ? new Date(data[data.length - 1].date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}</span>
+        <span>{dates[0] ? new Date(dates[0].date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}</span>
+        <span>{dates[dates.length - 1] ? new Date(dates[dates.length - 1].date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}</span>
       </div>
+    </div>
+  );
+}
+
+// Horizontal bar list for top-N rankings with long labels (course titles).
+function TopCoursesBarChart({ data }: { data: { title: string; enrollments: number }[] }) {
+  if (data.length === 0) {
+    return <p className="text-textGrey-0 text-sm text-center py-8">No enrollments yet</p>;
+  }
+  const max = Math.max(1, ...data.map((d) => d.enrollments));
+  return (
+    <div className="flex flex-col gap-3">
+      {data.map((d, i) => {
+        const hue = CATEGORICAL[i % CATEGORICAL.length];
+        return (
+          <div key={d.title + i} className="flex items-center gap-3">
+            <span className="text-[12px] text-textSlightDark-0 dark:text-white w-[140px] flex-shrink-0 truncate" title={d.title}>
+              {d.title}
+            </span>
+            <div className="flex-1 h-[20px] bg-[#ccc]/10 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${(d.enrollments / max) * 100}%`, backgroundColor: hue.light }}
+              />
+            </div>
+            <span className="text-[12px] font-[600] text-textSlightDark-0 dark:text-white w-[30px] text-right flex-shrink-0">
+              {d.enrollments}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Vertical bar chart for monthly org-growth — month labels instead of a
+// generic categorical label.
+function MonthlyGrowthBarChart({ data }: { data: { month: string; count: number }[] }) {
+  const max = Math.max(1, ...data.map((d) => d.count));
+  return (
+    <div className="flex items-end gap-3 h-[180px] w-full">
+      {data.map((d) => {
+        const pct = (d.count / max) * 100;
+        const label = new Date(`${d.month}-01`).toLocaleDateString(undefined, { month: "short" });
+        return (
+          <div key={d.month} className="flex-1 flex flex-col items-center justify-end h-full min-w-0">
+            <span className="text-[12px] font-[700] text-textSlightDark-0 dark:text-white mb-1">{d.count}</span>
+            <div className="w-full flex justify-center h-full items-end">
+              <div
+                className="w-full max-w-[36px] rounded-t-[4px] transition-all duration-300"
+                style={{ height: `${Math.max(pct, 2)}%`, backgroundColor: ACCENT }}
+              />
+            </div>
+            <span className="text-[10px] text-textGrey-0 mt-2">{label}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -320,9 +409,14 @@ export default function SuperAdminOverview() {
 
       <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10 mb-6">
         <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-3">
-          Signups — last 30 days
+          Signups vs Enrollments — last 30 days
         </h2>
-        <SignupsTrendChart data={data.signupsLast30Days} />
+        <MultiSeriesLineChart
+          series={[
+            { name: "Signups", color: ACCENT, data: data.signupsLast30Days },
+            { name: "Enrollments", color: CATEGORICAL[0].light, data: data.enrollmentsLast30Days },
+          ]}
+        />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -336,6 +430,17 @@ export default function SuperAdminOverview() {
             data={data.organizationsByType.map((o) => ({ label: o.type, value: o.count }))}
             dark={dark}
           />
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
+        <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10">
+          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">Top Courses by Enrollment</h2>
+          <TopCoursesBarChart data={data.topCoursesByEnrollment} />
+        </div>
+        <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10">
+          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">New Organizations — last 6 months</h2>
+          <MonthlyGrowthBarChart data={data.organizationGrowthLast6Months} />
         </div>
       </div>
 
