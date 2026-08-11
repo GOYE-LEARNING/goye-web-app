@@ -4,6 +4,7 @@ import { IoBookOutline } from "react-icons/io5";
 import { useParams, useRouter } from "next/navigation";
 import { FaArrowRight } from "react-icons/fa6";
 import { MdEvent } from "react-icons/md";
+import { useI18n } from "../context/I18nContext";
 
 interface Props {
   openEvent: () => void;
@@ -75,16 +76,17 @@ export default function DashboardStudentEvent({ openEvent }: Props) {
   };
 
   const router = useRouter();
+  const { t } = useI18n();
   return (
     <div className="dashboard_content_box">
       <div className="dashboard_content_header">
-        <h1>Upcoming Events</h1>
+        <h1>{t("Upcoming Events")}</h1>
         {events.length == 0 ? (
           <div></div>
         ) : (
           <div>
             <span onClick={openEvent} className="cursor-pointer">
-              View All
+              {t("View All")}
             </span>
           </div>
         )}
@@ -94,19 +96,19 @@ export default function DashboardStudentEvent({ openEvent }: Props) {
       {isLoading && (
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primaryColors-0"></div>
-          <p className="ml-2">Loading events...</p>
+          <p className="ml-2">{t("Loading events...")}</p>
         </div>
       )}
 
       {/* Error State */}
       {error && !isLoading && (
         <div className="text-center py-8 text-red-500">
-          <p>Error loading events: {error}</p>
+          <p>{t("Error loading events")}: {error}</p>
           <button
             onClick={fetchEvent}
             className="mt-2 px-4 py-2 bg-primaryColors-0 text-white rounded"
           >
-            Retry
+            {t("Retry")}
           </button>
         </div>
       )}
@@ -118,7 +120,7 @@ export default function DashboardStudentEvent({ openEvent }: Props) {
             <MdEvent size={60} color="rgb(219 204 205)" />
           </span>
           <h1 className="text-textSlightDark-0 font-semibold text-[18px] mt-4">
-            No upcoming events.
+            {t("No upcoming events.")}
           </h1>
           <button
             onClick={() =>
@@ -130,7 +132,7 @@ export default function DashboardStudentEvent({ openEvent }: Props) {
             }
             className="game_button flex items-center gap-2"
           >
-            Catch up with an event
+            {t("Catch up with an event")}
             <FaArrowRight />
           </button>
         </div>
@@ -148,17 +150,17 @@ export default function DashboardStudentEvent({ openEvent }: Props) {
                   </span>
                   <div className="flex justify-start items-start flex-col gap-[12px]">
                     <h1 className="text-[14px] font-[600] text-[#41415A] dark:text-white">
-                      {event.event_name || "Untitled Event"}
+                      {event.event_name || t("Untitled Event")}
                     </h1>
                     <p className="text-[12px]">
                       {formatDate(event.event_date)}
                       <span className="text-[8px] mx-2">|</span>
-                      {event.event_time || "TBD"}
+                      {event.event_time || t("TBD")}
                     </p>
                   </div>
                 </div>
                 <span className="text-[#ffffff] py-[0.1rem] px-2 bg-[#FF6B30] text-center rounded-[2px]">
-                  {event.event_type || "Event"}
+                  {event.event_type || t("Event")}
                 </span>
               </div>
             </div>

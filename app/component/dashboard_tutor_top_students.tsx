@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FaMedal } from "react-icons/fa";
+import { useI18n } from "../context/I18nContext";
 
 interface StudentRanking {
   rank?: number;
@@ -28,6 +29,7 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
   const [students, setStudents] = useState<StudentRanking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
@@ -86,11 +88,11 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
           }));
           setStudents(mappedStudents);
         } else {
-          setError("No leaderboard data found");
+          setError(t("No leaderboard data found"));
         }
       } catch (err: any) {
         console.error("Error fetching top students:", err);
-        setError(err.message || "Failed to load rankings");
+        setError(err.message || t("Failed to load rankings"));
       } finally {
         setIsLoading(false);
       }
@@ -103,7 +105,7 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
     return (
       <div className="cr_box">
         <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600] mb-3">
-          Top Students
+          {t("Top Students")}
         </h1>
         <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px]">
           <div className="animate-pulse space-y-3">
@@ -120,11 +122,11 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
     return (
       <div className="cr_box">
         <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600] mb-3">
-          Top Students
+          {t("Top Students")}
         </h1>
         <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px]">
           <p className="text-textGrey-0 text-sm text-center">
-            {error || "No student data available"}
+            {error || t("No student data available")}
           </p>
         </div>
       </div>
@@ -147,7 +149,7 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
   return (
     <div className="cr_box">
       <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600] mb-3">
-        Top Performing Students
+        {t("Top Performing Students")}
       </h1>
       <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px] flex flex-col gap-3">
         {students.map((student, idx) => {
@@ -168,7 +170,7 @@ export default function DashboardTutorTopStudents({ courseId }: Props) {
                 <h2 className="text-[13px] font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 line-clamp-1">
                   {student.name}
                 </h2>
-                <p className="text-[11px] text-textGrey-0">Lv {student.level}</p>
+                <p className="text-[11px] text-textGrey-0">{t("Lv")} {student.level}</p>
               </div>
             </div>
             <div className="text-right">

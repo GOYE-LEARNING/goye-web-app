@@ -8,7 +8,9 @@ import StudentGrowth from "../../component/dashboard_students__growth";
 import UpcomingEvents from "../../component/dashboard_student_upcoming_event";
 import { AnimatePresence, motion } from "framer-motion";
 import DashboardCourseView from "@/app/component/dashboard_student_courseview";
+import { useI18n } from "@/app/context/I18nContext";
 export default function Dashboard() {
+  const { t } = useI18n();
   const [showGrowth, setShowGrowth] = useState<boolean>(false);
   const [courseId, setCourseId] = useState<string>("")
   const [showDashboard, setShowDashboard] = useState<boolean>(true);
@@ -95,7 +97,7 @@ export default function Dashboard() {
               exit="exit"
             >
               <motion.h1 variants={itemVariant as any} className="dashboard_h1">
-                Dashboard
+                {t("Dashboard")}
               </motion.h1>
 
               {showAnnounement && (

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { MdMenuBook } from "react-icons/md";
 import { FaArrowRight } from "react-icons/fa6";
 import { useTheme } from "../context/theme_provider";
+import { useI18n } from "../context/I18nContext";
 
 interface Props {
   openCourse: (courseId: string) => void;
@@ -51,6 +52,7 @@ interface CourseData {
 
 export default function DashboardStudentCourse({ openCourse }: Props) {
   const navigate = useRouter();
+  const { t } = useI18n();
   const { darkMode, setDarkMode } = useTheme();
   const params = useParams<{ org_name: string }>();
   const type = localStorage.getItem("type");
@@ -98,11 +100,11 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
   const getStatusText = (status: string) => {
     switch (status) {
       case "COMPLETED":
-        return "Completed";
+        return t("Completed");
       case "IN_PROGRESS":
-        return "In Progress";
+        return t("In Progress");
       default:
-        return "Enrolled";
+        return t("Enrolled");
     }
   };
 
@@ -110,7 +112,7 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
     <>
       <div className="dashboard_content_box">
         <div className="dashboard_content_header">
-          <h1>My Courses</h1>
+          <h1>{t("My Courses")}</h1>
           {courseData?.courses && courseData.courses.length > 0 ? (
             <div>
               <span
@@ -123,7 +125,7 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                   )
                 }
               >
-                View All ({courseData.total_courses})
+                {t("View All")} ({courseData.total_courses})
               </span>
             </div>
           ) : (
@@ -134,7 +136,7 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
         {isLoading && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primaryColors-0"></div>
-            <p className="ml-2 text-gray-600 dark:text-gray-400">Loading courses...</p>
+            <p className="ml-2 text-gray-600 dark:text-gray-400">{t("Loading courses...")}</p>
           </div>
         )}
 
@@ -148,9 +150,9 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                 />
               </span>
               <h1 className="text-textSlightDark-0 font-semibold text-[18px] mt-4">
-                No courses enrolled yet.
+                {t("No courses enrolled yet.")}
               </h1>
-              <p className="text-gray-500 text-sm">Start your learning journey by joining a course</p>
+              <p className="text-gray-500 text-sm">{t("Start your learning journey by joining a course")}</p>
               <button
                 onClick={() =>
                   navigate.push(
@@ -161,7 +163,7 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                 }
                 className="game_button flex items-center gap-2 mt-2"
               >
-                Join a course
+                {t("Join a course")}
                 <FaArrowRight />
               </button>
             </div>
@@ -189,7 +191,7 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                     <div className="dashboard_content_progress mt-4">
                       <div className="flex justify-between items-center mb-2">
                         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Your Progress
+                          {t("Your Progress")}
                         </h3>
                         <span className="text-xs font-semibold" style={{
                           color: getProgressColor(enrollment.course_progress.percentage).includes("green") 
@@ -209,7 +211,7 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                       </div>
                       <div className="flex justify-between items-center mt-2">
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {enrollment.course_progress.completed_lessons} of {enrollment.course_progress.total_lessons} lessons
+                          {enrollment.course_progress.completed_lessons} {t("of")} {enrollment.course_progress.total_lessons} {t("lessons")}
                         </p>
 
                       </div>
@@ -221,7 +223,7 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                       className="h-[36px] py-[17px] bg-primaryColors-0 hover:bg-primaryColors-0/90 transition-colors flex justify-center items-center w-full text-[#ffffff] rounded-md mt-4"
                       onClick={() => openCourse(enrollment.course.id)}
                     >
-                      {enrollment.enrollment_status === "COMPLETED" ? "Review Course" : "Continue Course"}
+                      {enrollment.enrollment_status === "COMPLETED" ? t("Review Course") : t("Continue Course")}
                     </button>
                   </div>
                 ))}

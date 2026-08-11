@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { FaArrowRight, FaRocket } from "react-icons/fa6";
 import { MdMenuBook } from "react-icons/md";
 import { useProgress } from "../context/progressContext";
+import { useI18n } from "../context/I18nContext";
 
 interface Props {
   openGrowth: () => void;
@@ -46,6 +47,7 @@ interface GrowthData {
 
 export default function DashboardStudentGrowth({ openGrowth }: Props) {
   const { progressId, setProgressId } = useProgress();
+  const { t } = useI18n();
   const [growthData, setGrowthData] = useState<GrowthData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +123,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
     <>
       <div className="dashboard_content_box">
         <div className="dashboard_content_header">
-          <h1>My Spiritual Growth</h1>
+          <h1>{t("My Spiritual Growth")}</h1>
           <div></div>
         </div>
 
@@ -129,7 +131,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primaryColors-0"></div>
             <p className="ml-2 text-gray-600 dark:text-gray-400">
-              Loading growth data...
+              {t("Loading growth data...")}
             </p>
           </div>
         ) : error ? (
@@ -139,7 +141,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
               onClick={fetchGrowthData}
               className="mt-4 px-4 py-2 bg-primaryColors-0 text-white rounded-md"
             >
-              Try Again
+              {t("Try Again")}
             </button>
           </div>
         ) : growthData ? (
@@ -147,7 +149,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
             {/* Level Display */}
             <div className="font-semibold md:mb-4 mb-7 text-center">
               <h1 className="text-xl">
-                Level {growthData.user.levelNumber}{" "}
+                {t("Level")} {growthData.user.levelNumber}{" "}
                 <span className="dark:text-white">
                   {growthData.user.currentLevel}/
                   <i className="not-italic text-primaryColors-0">
@@ -164,7 +166,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
               {/* XP Progress */}
               <div className="dashboard_content_progress">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-sm font-medium">XP Progress</h3>
+                  <h3 className="text-sm font-medium">{t("XP Progress")}</h3>
                   <span className="text-xs font-semibold text-primaryColors-0">
                     {growthData.user.totalXP} / {growthData.user.nextLevelXP} XP
                   </span>
@@ -177,11 +179,11 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                 </div>
                 <div className="flex justify-between items-center mt-2">
                   <p className="text-xs text-gray-500">
-                    {roundedUpNumber(growthData.user.progressToNextLevel)}% to
-                    Level {growthData.user.levelNumber + 1}
+                    {roundedUpNumber(growthData.user.progressToNextLevel)}% {t("to")}
+                    {" "}{t("Level")} {growthData.user.levelNumber + 1}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Next: {growthData.user.nextLevelXP} XP
+                    {t("Next")}: {growthData.user.nextLevelXP} XP
                   </p>
                 </div>
                 <div className="dark:bg-[#EFEFF2]/10 bg-[#ccc]/20 h-[1px] w-full my-3"></div>
@@ -194,7 +196,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                     {growthData.stats.totalAchievements}
                   </span>
                   <p className="font-[400] text-[12px] text-[#71748C]">
-                    Achievements
+                    {t("Achievements")}
                   </p>
                 </div>
 
@@ -203,7 +205,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                     {growthData.stats.completedCourses}
                   </span>
                   <p className="font-[400] text-[12px] text-[#71748C]">
-                    Courses
+                    {t("Courses")}
                   </p>
                 </div>
 
@@ -212,7 +214,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                     {growthData.stats.totalBadges}
                   </span>
                   <p className="font-[400] text-[12px] text-[#71748C]">
-                    Badges
+                    {t("Badges")}
                   </p>
                 </div>
 
@@ -221,7 +223,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                     {growthData.user.totalXP}
                   </span>
                   <p className="font-[400] text-[12px] text-[#71748C]">
-                    Total XP
+                    {t("Total XP")}
                   </p>
                 </div>
               </div>
@@ -230,7 +232,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
               {growthData.recentActivity.length > 0 && (
                 <div className="mt-4">
                   <h3 className="text-sm font-semibold mb-2">
-                    Recent Activity
+                    {t("Recent Activity")}
                   </h3>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {growthData.recentActivity
@@ -256,7 +258,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                 className="h-[45px] py-[17px]  bg-primaryColors-0 flex justify-center items-center w-full  text-white font-[600] cursor-pointer rounded-md mt-4 hover:opacity-90 transition-opacity"
                 onClick={openGrowth}
               >
-                View Full Growth Details
+                {t("View Full Growth Details")}
               </button>
             </div>
           </div>
@@ -268,11 +270,10 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                 <FaRocket size={60} color="#FFA500" />
               </span>
               <h1 className="text-textSlightDark-0 font-semibold text-[18px] mt-4">
-                Start Your Spiritual Growth Journey
+                {t("Start Your Spiritual Growth Journey")}
               </h1>
               <p className="text-gray-500 text-sm text-center max-w-md">
-                Begin your first course to track your progress, earn badges, and
-                grow spiritually.
+                {t("Begin your first course to track your progress, earn badges, and grow spiritually.")}
               </p>
             </div>
           </div>

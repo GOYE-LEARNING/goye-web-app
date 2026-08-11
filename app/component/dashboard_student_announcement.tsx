@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MdOutlineCancel } from "react-icons/md";
 import { PiSpeakerSimpleNoneFill } from "react-icons/pi";
+import { useI18n } from "../context/I18nContext";
 
 interface Props {
   backFunc: () => void;
@@ -16,6 +17,7 @@ interface Announcement {
 }
 
 export default function DashboardStudentAnnouncement({ backFunc }: Props) {
+  const { t } = useI18n();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -49,7 +51,7 @@ export default function DashboardStudentAnnouncement({ backFunc }: Props) {
           <div className="flex items-center justify-between gap-1">
             <div className="flex items-center">
               <PiSpeakerSimpleNoneFill color="#30A46F" />
-              <h1 className="text-[12px] ml-1">Announcement</h1>
+              <h1 className="text-[12px] ml-1">{t("Announcement")}</h1>
             </div>
             {/* Cancel button always visible */}
             <span onClick={backFunc} className="cursor-pointer">

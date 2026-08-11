@@ -8,8 +8,10 @@ import DashboardTutorTopStudents from "@/app/component/dashboard_tutor_top_stude
 import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardTutorCourseBreakdown from "@/app/component/dashboard_tutor_course_breakdown";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function TutorDashboard() {
+  const { t } = useI18n();
   const [showCreateCoursePage, setShowCreateCourse] = useState<boolean>(false);
   const [showTutorPage, setShowTutorPage] = useState<boolean>(true);
   const [courseId, setCourseId] = useState<string>("");
@@ -116,7 +118,7 @@ export default function TutorDashboard() {
             exit="exit"
             className="w-full"
           >
-            <h1 className="dashboard_h1 px-[1rem] md:px-0">Dashboard</h1>
+            <h1 className="dashboard_h1 px-[1rem] md:px-0">{t("Dashboard")}</h1>
 
             <motion.div
               variants={containerVariants}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { FaCrown, FaSync } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { useI18n } from "../context/I18nContext";
 
 interface TutorOverviewData {
   topCourse: {
@@ -27,6 +28,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const fetchTutorOverview = async (showRefresh = false) => {
@@ -76,7 +78,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
     return (
       <div className="cr_box">
         <div className="flex justify-between items-center mb-2">
-          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">Overview</h1>
+          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">{t("Overview")}</h1>
         </div>
         <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px] mt-[20px] flex flex-col gap-1">
           <div className="animate-pulse space-y-3">
@@ -98,7 +100,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
     return (
       <div className="cr_box">
         <div className="flex justify-between items-center mb-2">
-          <h1 className="text-textSlightDark-0 text-[14px] font-[600]">Overview</h1>
+          <h1 className="text-textSlightDark-0 text-[14px] font-[600]">{t("Overview")}</h1>
           <button
             onClick={() => fetchTutorOverview(true)}
             className="p-2 hover:bg-gray-100 rounded-full transition"
@@ -112,7 +114,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
             onClick={() => fetchTutorOverview(true)}
             className="form_more bg-primaryColors-0 text-white text-sm"
           >
-            Retry
+            {t("Retry")}
           </button>
         </div>
       </div>
@@ -123,7 +125,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
     return (
       <div className="cr_box">
         <div className="flex justify-between items-center mb-2">
-          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">Overview</h1>
+          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">{t("Overview")}</h1>
           <button
             onClick={() => fetchTutorOverview(true)}
             className="p-2 hover:bg-gray-100 rounded-full transition"
@@ -133,12 +135,12 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
           </button>
         </div>
         <div className="bg-shadyColor-0 p-[16px] mt-[20px] flex flex-col gap-3 text-center">
-          <p className="text-textGrey-0 text-sm">No courses published yet</p>
+          <p className="text-textGrey-0 text-sm">{t("No courses published yet")}</p>
           <button
             onClick={() => router.push("/dashboard/tutor/course")}
             className="form_more bg-primaryColors-0 text-white text-sm"
           >
-            Create Your First Course
+            {t("Create Your First Course")}
           </button>
         </div>
       </div>
@@ -150,7 +152,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
   return (
     <div className="cr_box">
       <div className="flex justify-between items-center mb-2">
-        <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">Overview</h1>
+        <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">{t("Overview")}</h1>
         <button
           onClick={() => fetchTutorOverview(true)}
           disabled={isRefreshing}
@@ -163,7 +165,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
       <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px] mt-[20px] flex flex-col gap-1">
         <span className="flex items-center gap-1">
           <FaCrown className="text-primaryYellow-0" />
-          <h1 className="text-[13px] dark:text-textSlightDark-0 text-lightBoldText-0 font-medium">Top Performing Course</h1>
+          <h1 className="text-[13px] dark:text-textSlightDark-0 text-lightBoldText-0 font-medium">{t("Top Performing Course")}</h1>
         </span>
 
         <div className="flex items-center gap-3 mt-1">
@@ -179,7 +181,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
               {topCourse.course_title}
             </h1>
             <p className="text-textGrey-0 text-[11px] mt-0.5">
-              {topCourse.course_level} • {topCourse.totalStudents} students
+              {topCourse.course_level} • {topCourse.totalStudents} {t("students")}
             </p>
           </div>
         </div>
@@ -193,15 +195,15 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
         <div className="flex justify-around items-center w-full my-2">
           <div className="flex flex-col gap-1 items-center dark:text-textSlightDark-0 text-lightBoldText-0">
             <h1 className="font-bold text-[18px]">{topCourse.totalStudents}</h1>
-            <p className="text-textGrey-0 md:text-[12px] text-[10px]">Total Students</p>
+            <p className="text-textGrey-0 md:text-[12px] text-[10px]">{t("Total Students")}</p>
           </div>
           <div className="flex flex-col gap-1 items-center dark:text-textSlightDark-0 text-lightBoldText-0">
             <h1 className="font-bold text-[18px]">{totalPublishedCourses}</h1>
-            <p className="text-textGrey-0 md:text-[12px] text-[10px]">Published Courses</p>
+            <p className="text-textGrey-0 md:text-[12px] text-[10px]">{t("Published Courses")}</p>
           </div>
           <div className="flex flex-col gap-1 items-center dark:text-textSlightDark-0 text-lightBoldText-0">
             <h1 className="font-bold text-[18px]">{avgCompletionPercentage}%</h1>
-            <p className="text-textGrey-0 md:text-[12px] text-[10px]">Avg Completion</p>
+            <p className="text-textGrey-0 md:text-[12px] text-[10px]">{t("Avg Completion")}</p>
           </div>
         </div>
 
@@ -219,7 +221,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
           onClick={handleViewCourse}
           className="form_more dark:bg-secondaryColors-0 bg-primaryColors-0 text-white dark:text-primaryColors-0 font-semibold text-[14px] mt-3 hover:bg-boldShadyColor-0/80 transition"
         >
-          View Course
+          {t("View Course")}
         </button>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { HiOutlineBookOpen } from "react-icons/hi";
 import { useEffect, useState } from "react";
 import { FaSpinner } from "react-icons/fa";
 import { FaArrowLeft } from "react-icons/fa6";
+import { useI18n } from "../context/I18nContext";
 
 interface Notification {
   id: string;
@@ -18,6 +19,7 @@ interface Notification {
 export default function DashboardTutorActivities() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useI18n();
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -56,9 +58,9 @@ export default function DashboardTutorActivities() {
       (now.getTime() - date.getTime()) / (1000 * 60 * 60),
     );
 
-    if (diffInHours < 1) return "Just now";
-    if (diffInHours < 24) return `${diffInHours}hr ago`;
-    return `${Math.floor(diffInHours / 24)}d ago`;
+    if (diffInHours < 1) return t("Just now");
+    if (diffInHours < 24) return `${diffInHours}${t("hr ago")}`;
+    return `${Math.floor(diffInHours / 24)}${t("d ago")}`;
   };
 
   const getIcon = (type: string) => {
@@ -76,7 +78,7 @@ export default function DashboardTutorActivities() {
 
       <div className="cr_box">
         <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">
-          Fast Notifications
+          {t("Fast Notifications")}
         </h1>
         <div className="mt-[20px] flex flex-col gap-3">
           {isLoading ? (
@@ -88,7 +90,7 @@ export default function DashboardTutorActivities() {
             </div>
           ) : notifications.length === 0 ? (
             <div className="text-center py-8 text-textGrey-0 text-[14px]">
-              No notifications yet
+              {t("No notifications yet")}
             </div>
           ) : (
             notifications.slice(0, 5).map((notification, index) => (
