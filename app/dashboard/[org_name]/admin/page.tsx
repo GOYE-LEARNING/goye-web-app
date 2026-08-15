@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
 import DashboardOrgAdminOverview from "@/app/component/organization_component/dashboard_org_admin_overview";
 import DashboardAdminOrgBreakdown from "@/app/component/organization_component/dashboard_org_admin_breakdown";
+import DashboardOrgAdminAnalytics from "@/app/component/organization_component/dashboard_org_admin_analytics";
 import DashboardOrgAdminQuickActions from "@/app/component/organization_component/dashboard_org_quickactions";
 import DashboardOrgAdminActivities from "@/app/component/organization_component/dashboard_org_admin_activities";
 import ManageMembers from "@/app/component/organization_component/ManageMembers";
@@ -115,6 +116,10 @@ export default function OrgAdminDashboard() {
 
               <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                 <DashboardAdminOrgBreakdown />
+              </motion.div>
+
+              <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                <DashboardOrgAdminAnalytics />
               </motion.div>
 
               <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
