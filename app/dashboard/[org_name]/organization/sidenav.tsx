@@ -16,37 +16,50 @@ import { IoSchoolOutline, IoSchoolSharp } from "react-icons/io5";
 import { RiCompass3Line, RiCompassFill } from "react-icons/ri";
 import { FaRegUser, FaUser } from "react-icons/fa";
 import { useParams, usePathname } from "next/navigation";
-export default function OrgSidenav() {
+import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
+import { useState } from "react";
+import { useAuthContext } from "@/app/context/AuthContext";
+
+interface Props {
+  setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export default function OrgSidenav({ setIsCollapsedState }: Props) {
   const params = useParams<{ org_name: string }>();
   const { org_name } = params;
-  const logout = async () => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    try {
-      const res = await fetch(`${API_URL}/api/user/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        return;
-      }
-
-      await res.json();
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  // Hand-rolled logout replaced with the shared context one, so the local
+  // session/localStorage is actually cleared rather than just pinging the API.
+  const { logout } = useAuthContext();
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+    setIsCollapsedState(!isCollapsed);
+  };
+
   return (
     <>
-      <div className="sidenav">
-        <Image
-          src={logo}
-          alt="logo"
-          height={100}
-          width={100}
-          className="md:block hidden"
-        />
+      {/* Same missing-width bug as /dashboard/admin: `.sidenav` defaults to
+          w-full, so without md:w-[20%] this covered the whole page. */}
+      <div className={`sidenav ${isCollapsed ? "collapsed w-[5%]" : "md:w-[20%]"}`}>
+        <div className={`w-full flex ${isCollapsed ? "justify-center" : "justify-between"} items-center`}>
+          <div className={`${isCollapsed ? "hidden" : "block"}`}>
+            <Image
+              src={logo}
+              alt="logo"
+              height={100}
+              width={100}
+              className="md:block hidden"
+            />
+          </div>
+          <span
+            className="text-[#ccc] md:block hidden cursor-pointer hover:text-white transition-colors"
+            onClick={toggleSidebar}
+          >
+            {isCollapsed ? <LuPanelRightClose size={24} /> : <LuPanelLeftClose size={24} />}
+          </span>
+        </div>
         <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col md:gap-1 w-full mt-0 md:mt-[2rem]">
           <div className="w-full">
             <SidenavComponent
@@ -59,6 +72,7 @@ export default function OrgSidenav() {
                   <MdHomeFilled size={25} color="#FFA500" />
                 )
               }
+            isCollapsed={isCollapsed}
             />
           </div>
           <div className="w-full">
@@ -72,6 +86,7 @@ export default function OrgSidenav() {
                   <IoSchoolSharp size={25} color="#FFA500" />
                 )
               }
+            isCollapsed={isCollapsed}
             />
           </div>
 
@@ -86,6 +101,7 @@ export default function OrgSidenav() {
                   <RiCompassFill size={25} color="#FFA500" />
                 )
               }
+            isCollapsed={isCollapsed}
             />
           </div>
           <div className="w-full">
@@ -99,6 +115,7 @@ export default function OrgSidenav() {
                   <FaUser size={25} color="#FFA500" />
                 )
               }
+            isCollapsed={isCollapsed}
             />
           </div>
         </nav>
@@ -110,6 +127,7 @@ export default function OrgSidenav() {
             path="/"
             label="Logout"
             icon={<MdLogout size={25} />}
+            isCollapsed={isCollapsed}
           />
         </div>
       </div>

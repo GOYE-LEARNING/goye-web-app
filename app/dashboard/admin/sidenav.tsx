@@ -10,35 +10,50 @@ import { RiCompass3Line, RiCompassFill } from "react-icons/ri";
 import { FaRegUser, FaUser } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { BsPeople, BsPeopleFill } from "react-icons/bs";
-export default function AdminSidenav() {
-  const logout = async () => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    try {
-      const res = await fetch(`${API_URL}`, {
-        method: "POST",
-        credentials: "include",
-      });
+import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
+import { useState } from "react";
+import { useAuthContext } from "@/app/context/AuthContext";
 
-      if (!res.ok) {
-        return 
-      }
+interface Props {
+  setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-      await res.json()
-    } catch (error) {
-      console.error(error);
-    }
-  };
+export default function AdminSidenav({ setIsCollapsedState }: Props) {
+  // Was a hand-rolled fetch to `${API_URL}` with no path at all — it POSTed
+  // to the API root, ignored the result, and never cleared the session.
+  // Uses the same context logout every other sidenav does now.
+  const { logout } = useAuthContext();
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+    setIsCollapsedState(!isCollapsed);
+  };
+
   return (
     <>
-      <div className="sidenav">
-        <Image
-          src={logo}
-          alt="logo"
-          height={100}
-          width={100}
-          className="md:block hidden"
-        />
+      {/* `.sidenav` is `w-full` by default and every sidenav is expected to
+          supply its own desktop width — this one didn't, so on /dashboard/admin
+          it stayed full-bleed and covered the entire page. */}
+      <div className={`sidenav ${isCollapsed ? "collapsed w-[5%]" : "md:w-[20%]"}`}>
+        <div className={`w-full flex ${isCollapsed ? "justify-center" : "justify-between"} items-center`}>
+          <div className={`${isCollapsed ? "hidden" : "block"}`}>
+            <Image
+              src={logo}
+              alt="logo"
+              height={100}
+              width={100}
+              className="md:block hidden"
+            />
+          </div>
+          <span
+            className="text-[#ccc] md:block hidden cursor-pointer hover:text-white transition-colors"
+            onClick={toggleSidebar}
+          >
+            {isCollapsed ? <LuPanelRightClose size={24} /> : <LuPanelLeftClose size={24} />}
+          </span>
+        </div>
         <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col md:gap-1 w-full mt-0 md:mt-[2rem]">
           <div className="md:w-full">
             <SidenavComponent
@@ -51,6 +66,7 @@ export default function AdminSidenav() {
                   <MdHomeFilled size={25} color="#FFA500" />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
           <div className="md:w-full">
@@ -64,6 +80,7 @@ export default function AdminSidenav() {
                   <IoSchoolSharp size={25} color="#FFA500" />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
           <div className="md:w-full hidden md:block">
@@ -77,6 +94,7 @@ export default function AdminSidenav() {
                   <BsPeopleFill size={25} />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
           <div className="md:w-full">
@@ -90,6 +108,7 @@ export default function AdminSidenav() {
                   <RiCompassFill size={25} color="#FFA500" />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
           <div className="md:w-full">
@@ -103,6 +122,7 @@ export default function AdminSidenav() {
                   <FaUser size={25} color="#FFA500" />
                 )
               }
+              isCollapsed={isCollapsed}
             />
           </div>
         </nav>
@@ -114,6 +134,7 @@ export default function AdminSidenav() {
             path="/"
             label="Logout"
             icon={<MdLogout size={25} />}
+            isCollapsed={isCollapsed}
           />
         </div>
       </div>

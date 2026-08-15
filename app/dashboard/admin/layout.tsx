@@ -4,6 +4,7 @@ import DashboardHeader from "@/app/component/dashboard_header";
 import AdminSidenav from "./sidenav";
 import { usePathname } from "next/navigation";
 import { SocketProvider } from "@/app/context/SocketContext";
+import { useState } from "react";
 
 export default function DashboardLayout({
   children,
@@ -17,14 +18,15 @@ export default function DashboardLayout({
 
   const pathname = usePathname();
   const checkPath = path.some(p => pathname == p)
+  // Content width now tracks the sidenav's collapsed state, matching the
+  // student/tutor/super-admin layouts; this was hardcoded to md:w-[80%].
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <SocketProvider>
       <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0 ">
-        <div className="">
-          <AdminSidenav />
-        </div>
-        <div className="md:w-[80%] w-full min-w-0 max-w-full h-full md:absolute right-0">
+        <AdminSidenav setIsCollapsedState={setIsCollapsed} />
+        <div className={`${isCollapsed ? "lg:w-[95%]" : "lg:w-[80%]"} org_width_animation w-full min-w-0 max-w-full h-full md:absolute right-0`}>
           <DashboardHeader />
           <div
             className={`w-full flex md:justify-center md:items-center flex-col md:px-0 md:py-0 p-[clamp(12px,4vw,20px)] md:rounded-none rounded-tr-xl rounded-tl-xl md:bg-transparent ${

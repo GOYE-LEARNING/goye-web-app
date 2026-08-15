@@ -18,6 +18,7 @@ export default function InvitedUserDashboardLayout({
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const fetchInvitedUserData = async () => {
@@ -111,10 +112,8 @@ export default function InvitedUserDashboardLayout({
       <ProgressProvider>
         <QuizProvider>
           <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0">
-            <div className="">
-              <OrgSidenav />
-            </div>
-            <div className="md:w-[80%] w-full min-w-0 max-w-full min-h-screen md:absolute right-0 dark:bg-shadyColor-0 bg-lightWhite-0 radial_gradient2">
+            <OrgSidenav setIsCollapsedState={setIsCollapsed} />
+            <div className={`${isCollapsed ? "lg:w-[95%]" : "lg:w-[80%]"} org_width_animation w-full min-w-0 max-w-full min-h-screen md:absolute right-0 dark:bg-shadyColor-0 bg-lightWhite-0 radial_gradient2`}>
               <DashboardHeader />
               <div
                 className={`w-full flex md:justify-center md:items-center flex-col md:px-0 md:py-0 md:rounded-none rounded-tr-xl rounded-tl-xl

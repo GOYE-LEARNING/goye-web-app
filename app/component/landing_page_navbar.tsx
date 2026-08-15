@@ -8,6 +8,37 @@ import { useEffect, useRef, useState } from "react";
 import { MdClose, MdMenu } from "react-icons/md";
 import ToogleDarkMode from "./toogleDarkMode";
 import { useTheme } from "../context/theme_provider";
+import { useAuthContext } from "../context/AuthContext";
+
+/**
+ * Where an already-signed-in visitor goes from the landing page. Mirrors
+ * AuthContext's own classification rather than importing it, since that
+ * helper isn't exported.
+ */
+function dashboardHomeForUser(user: { role?: string; type?: string; userType?: string } | undefined): string {
+  if (typeof window === "undefined") return "/auth";
+  const type = (localStorage.getItem("type") || user?.type || "").toLowerCase();
+  const role = localStorage.getItem("role") || user?.role;
+  const userType = user?.userType;
+
+  if (type === "admin" || role === "goye_admin") return "/dashboard/admin";
+
+  if (
+    type === "organization" ||
+    type === "invited_user" ||
+    userType === "INVITED_MEMBER" ||
+    userType === "ORGANIZATION_OWNER" ||
+    role === "org_admin"
+  ) {
+    const orgName = localStorage.getItem("org_name");
+    if (!orgName) return "/auth";
+    return role === "org_admin"
+      ? `/dashboard/${orgName}/admin`
+      : `/dashboard/${orgName}/organization`;
+  }
+
+  return role === "instructor" || role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
+}
 
 const NAV_LINKS = [
   { label: "Home", href: "#home" },
@@ -24,6 +55,11 @@ export default function LandingPageNavBar() {
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [activeSection, setActiveSection] = useState<string>("#home");
   const [scrolled, setScrolled] = useState(false);
+  // The landing page no longer force-redirects signed-in visitors, so the
+  // navbar has to give them a deliberate way back to their dashboard.
+  const { authStatus } = useAuthContext();
+  const isSignedIn = !!authStatus?.user;
+  const dashboardHref = dashboardHomeForUser(authStatus?.user);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -148,24 +184,36 @@ export default function LandingPageNavBar() {
         {/* Main Buttons (Desktop) */}
         <div className="hidden md:flex items-center md:flex-row flex-col md:justify-start justify-center gap-3 flex-shrink-0">
           <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
-          <motion.button
-            variants={itemVariants as any}
-            className="nav_btn md:w-[93px] w-full md:border md:border-primaryColors-0 dark:text-white  text-lightBoldText-0"
-            onClick={() => {
-              router.push("/auth");
-            }}
-          >
-            Login
-          </motion.button>
-          <motion.button
-            variants={itemVariants as any}
-            className="nav_btn md:w-[93px] w-full md:bg-primaryColors-0 md:text-white text-primaryColors-0"
-            onClick={() => {
-              router.push("/auth");
-            }}
-          >
-            Signup
-          </motion.button>
+          {isSignedIn ? (
+            <motion.button
+              variants={itemVariants as any}
+              className="nav_btn md:w-[160px] w-full md:bg-primaryColors-0 md:text-white text-primaryColors-0"
+              onClick={() => router.push(dashboardHref)}
+            >
+              Go to Dashboard
+            </motion.button>
+          ) : (
+            <>
+              <motion.button
+                variants={itemVariants as any}
+                className="nav_btn md:w-[93px] w-full md:border md:border-primaryColors-0 dark:text-white  text-lightBoldText-0"
+                onClick={() => {
+                  router.push("/auth");
+                }}
+              >
+                Login
+              </motion.button>
+              <motion.button
+                variants={itemVariants as any}
+                className="nav_btn md:w-[93px] w-full md:bg-primaryColors-0 md:text-white text-primaryColors-0"
+                onClick={() => {
+                  router.push("/auth");
+                }}
+              >
+                Signup
+              </motion.button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Icon */}
@@ -201,22 +249,33 @@ export default function LandingPageNavBar() {
                   </a>
                 ))}
                 <div className="h-[1px] bg-[#ccc]/10 my-2" />
-                <button
-                  className="nav_btn w-full border border-primaryColors-0 mb-2"
-                  onClick={() => {
-                    router.push("/auth");
-                  }}
-                >
-                  Login
-                </button>
-                <button
-                  className="nav_btn w-full bg-primaryColors-0 text-white"
-                  onClick={() => {
-                    router.push("/auth");
-                  }}
-                >
-                  Signup
-                </button>
+                {isSignedIn ? (
+                  <button
+                    className="nav_btn w-full bg-primaryColors-0 text-white"
+                    onClick={() => router.push(dashboardHref)}
+                  >
+                    Go to Dashboard
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      className="nav_btn w-full border border-primaryColors-0 mb-2"
+                      onClick={() => {
+                        router.push("/auth");
+                      }}
+                    >
+                      Login
+                    </button>
+                    <button
+                      className="nav_btn w-full bg-primaryColors-0 text-white"
+                      onClick={() => {
+                        router.push("/auth");
+                      }}
+                    >
+                      Signup
+                    </button>
+                  </>
+                )}
               </motion.div>
             )}
           </div>
