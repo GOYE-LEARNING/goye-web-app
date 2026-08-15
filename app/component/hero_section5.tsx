@@ -32,11 +32,12 @@ export default function HeroSecton5() {
     <>
       <AnimatePresence mode="wait">
         <motion.div
+          id="app"
           variants={containerVariants}
           initial="hidden"
           viewport={{ once: false }}
           whileInView="visible"
-          className="dark:bg-shadyColor-0 bg-lightSecondaryColor-0 w-full py-[48px] md:px-[136px] px-[45px] flex justify-center items-center flex-col"
+          className="dark:bg-shadyColor-0 bg-lightSecondaryColor-0 w-full py-[48px] md:px-[136px] px-[45px] flex justify-center items-center flex-col scroll-mt-24"
         >
           
           <motion.div
@@ -46,7 +47,7 @@ export default function HeroSecton5() {
             <div>
               <motion.p
                 variants={itemVariants as any}
-                className="uppercase font-bold mt-[40px]"
+                className="uppercase font-bold mt-[40px] text-[13px] tracking-wide dark:text-textSlightDark-0 text-lightBoldText-0/60"
               >
                 Available on Mobile
               </motion.p>
@@ -77,7 +78,7 @@ export default function HeroSecton5() {
               variants={itemVariants as any}
               className="md:w-[35%] w-full  h-full md:absolute bottom-0 md:right-0 right-[20px] flex justify-end items-end flex-col"
             >
-              <Image src={pic1} alt="pic1" className="h-auto w-full" />
+              <Image src={pic1} alt="GOYE mobile app preview" className="h-auto w-full" />
             </motion.div>
           </motion.div>
         </motion.div>

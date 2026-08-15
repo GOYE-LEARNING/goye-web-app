@@ -31,7 +31,7 @@ export default function HeroSection4() {
     {
       pic: {
         image: (
-          <Image src={pic1} alt="pic1" className="mt-[4.5rem] w-[80%] h-auto" />
+          <Image src={pic1} alt="Instructor dashboard preview" className="mt-[4.5rem] w-[80%] h-auto" />
         ),
       },
       header: "Multiply your impact, effortlessly.",
@@ -49,7 +49,7 @@ export default function HeroSection4() {
         image: (
           <Image
             src={pic2}
-            alt="pic2"
+            alt="Student growth dashboard preview"
             className="mt-[4.5rem] md:w-[80%] w-full h-auto"
           />
         ),
@@ -69,11 +69,12 @@ export default function HeroSection4() {
     <>
       <AnimatePresence mode="wait">
         <motion.div
+          id="community"
           variants={containerVariants}
           initial="hidden"
           viewport={{ once: false }}
           whileInView="visible"
-          className="dark:bg-shadyColor-0 bg-white py-[88px] md:px-[136px] flex justify-center items-center flex-col gap-[35px] w-full"
+          className="dark:bg-shadyColor-0 bg-white py-[88px] md:px-[136px] flex justify-center items-center flex-col gap-[35px] w-full scroll-mt-24"
         >
           <div className="md:w-full px-[45px] md:px-0 flex justify-center items-center flex-col gap-20 md:gap-0">
             {content.map((c, i) => (
@@ -85,7 +86,7 @@ export default function HeroSection4() {
                 }`}
               >
                 <div className="flex flex-col gap-3 md:w-[456.66px] w-full">
-                  <h1 className="text-[48px] font-medium">{c.header}</h1>
+                  <h1 className="text-[36px] md:text-[48px] font-medium dark:text-white text-lightBoldText-0/80">{c.header}</h1>
                   <p className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[16px] md:w-[75%] w-full">
                     {c.p}
                   </p>
@@ -127,7 +128,7 @@ export default function HeroSection4() {
                       {c.list.l4}
                     </li>
                   </ul>
-                  <button className="bg-primaryColors-0 md:w-[50%] w-[75%] text-white h-[40px]  text-[14px]">
+                  <button className="bg-primaryColors-0 hover:opacity-90 transition-opacity md:w-[50%] w-[75%] text-white h-[44px] rounded-[6px] font-medium text-[14px]">
                     {c.button}
                   </button>
                 </div>

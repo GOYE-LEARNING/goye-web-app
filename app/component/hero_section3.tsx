@@ -31,23 +31,23 @@ export default function HeroSection3() {
   };
   const content = [
     {
-      image: <Image src={pic1} alt="pic1" />,
+      image: <Image src={pic1} alt="Interactive Learning" />,
       header: "Interactive Learning",
       text: "Bite-sized lessons and quizzes that make learning engaging and memorable.",
     },
     {
-      image: <Image src={pic2} alt="pic2" />,
+      image: <Image src={pic2} alt="Smart Tracking" />,
       header: "Smart Tracking",
       text: "Progress dashboards for students and tutors to visualize spiritual growth.",
     },
 
     {
-      image: <Image src={pic3} alt="pic3" />,
+      image: <Image src={pic3} alt="Collaboration" />,
       header: "Collaboration",
       text: "Discussion boards, group reflections, and shared notes for community learning.",
     },
     {
-      image: <Image src={pic4} alt="pic4" />,
+      image: <Image src={pic4} alt="Scalable Mentorship" />,
       header: "Scalable Mentorship",
       text: "One-to-one or group discipleship programs that grow with your community.",
     },
@@ -56,16 +56,17 @@ export default function HeroSection3() {
     <>
       <AnimatePresence mode="wait">
         <motion.div
+          id="platform"
           variants={containerVariants}
           initial="hidden"
           viewport={{ once: false }}
           whileInView="visible"
-          className="md:w-full radial-gradient py-[88px] flex justify-between items-center flex-col gap-[35px] dark:bg-secondaryColors-0 bg-lightSecondaryColor-0"
+          className="md:w-full radial-gradient py-[88px] flex justify-between items-center flex-col gap-[35px] dark:bg-secondaryColors-0 bg-lightSecondaryColor-0 scroll-mt-24"
         >
           <div className="px-[45px] md:px-0 md:w-full flex justify-center items-center flex-col relative z-20">
             <motion.h1
               variants={itemVariants as any}
-              className="dark:text-white text-lightBoldText-0/80 font-medium md:text-[48px] text-[35px] text-center md:"
+              className="dark:text-white text-lightBoldText-0/80 font-medium md:text-[48px] text-[35px] text-center"
             >
               Everything you need to grow together.
             </motion.h1>
@@ -81,7 +82,7 @@ export default function HeroSection3() {
               <motion.div
                 variants={itemVariants as any}
                 key={i}
-                className="dark:bg-secondaryColors-0 bg-white border border-[#ccc]/10 drop-shadow-2xl rounded-[20px] p-[32px] md:w-[524px] w-full h-[389px] "
+                className="dark:bg-secondaryColors-0 bg-white border border-[#ccc]/10 drop-shadow-2xl rounded-[20px] p-[32px] md:w-[524px] w-full h-[389px] transition-transform duration-300 hover:-translate-y-1"
               >
                 <div className={`h-[226px] w-full dark:bg-shadyColor-0 bg-lightSecondaryColor-0 flex  overflow-hidden ${i == 0 ? 'justify-end items-end' : 'flex items-center justify-center'}`}>
                   {c.image}

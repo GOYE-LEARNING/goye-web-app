@@ -56,11 +56,12 @@ export default function HeroSection2() {
     <>
       <AnimatePresence mode="wait">
         <motion.div
+          id="features"
           variants={containerVariants}
           initial="hidden"
           viewport={{once: false}}
           whileInView="visible"
-          className="dark:bg-secondaryColors-0 bg-white w-full  py-[88px] flex md:justify-center items-center flex-col gap-5"
+          className="dark:bg-secondaryColors-0 bg-white w-full  py-[88px] flex md:justify-center items-center flex-col gap-5 scroll-mt-24"
         >
           <div className="w-[300px] md:w-full flex justify-center items-center flex-col">
             <motion.h1
@@ -81,21 +82,11 @@ export default function HeroSection2() {
             {content.map((c, i) => (
               <motion.div
                 variants={itemVariants as any}
-                className="dark:bg-shadyColor-0 bg-lightSecondaryColor-0 p-[24px] rounded-[4px] md:w-[272px] w-[330px]"
+                className="dark:bg-shadyColor-0 bg-lightSecondaryColor-0 p-[24px] rounded-[8px] md:w-[272px] w-[330px] transition-transform duration-300 hover:-translate-y-1"
                 key={i}
               >
                 <span
-                  className={`w-[56px] h-[56px] dark:bg-secondaryColors-0 bg-white flex justify-center items-center flex-col mb-3 ${
-                    i == 0
-                      ? "text-[#EA4335]"
-                      : i == 1
-                        ? "text-[#2C7FFF] "
-                        : i == 2
-                          ? "text-[#34A853]"
-                          : i == 3
-                            ? "text-[#FBBC04]"
-                            : ""
-                  }`}
+                  className="w-[56px] h-[56px] dark:bg-secondaryColors-0 bg-white text-primaryColors-0 flex justify-center items-center flex-col mb-3 rounded-[8px] text-[26px]"
                 >
                   {c.icon}
                 </span>

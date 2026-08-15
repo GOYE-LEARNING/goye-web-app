@@ -30,7 +30,7 @@ export default function MidSection4() {
   return (
     <>
       <AnimatePresence mode="wait">
-        <div className="dark:bg-secondaryColors-0 bg-white w-full py-[48px] md:px-[136px] flex justify-center items-center flex-col">
+        <div id="testimonials" className="dark:bg-secondaryColors-0 bg-white w-full py-[48px] md:px-[136px] flex justify-center items-center flex-col scroll-mt-24">
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -59,13 +59,13 @@ export default function MidSection4() {
               <div className="h-[60px] w-[60px] rounded-[4px] bg-shadyColor-0 overflow-hidden">
                 <Image
                   src={pic2}
-                  alt="pic2"
+                  alt="Ian Hunt"
                   className="h-full w-full object-cover"
                 />
               </div>
               <div className="flex flex-col gap-1 dark:text-textSlightDark-0 text-lightBoldText-0/80">
                 <h1 className="font-bold text-[24px]">Ian Hunt</h1>
-                <p className="text-[14px]">Director of CX at Liberty London</p>
+                <p className="text-[14px]">Tutor &amp; Church Pastor, GOYE Community</p>
               </div>
             </motion.div>
           </motion.div>

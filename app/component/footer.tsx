@@ -52,16 +52,16 @@ export default function Footer() {
                 Learn More
               </motion.h1>
               <div className="flex items-center gap-3 text-[25px]">
-                <motion.span variants={itemVariants as any}>
+                <motion.span variants={itemVariants as any} className="cursor-pointer transition-colors hover:text-primaryColors-0">
                   <FaXTwitter />
                 </motion.span>
-                <motion.span variants={itemVariants as any}>
+                <motion.span variants={itemVariants as any} className="cursor-pointer transition-colors hover:text-primaryColors-0">
                   <FaFacebookF />
                 </motion.span>
-                <motion.span variants={itemVariants as any}>
+                <motion.span variants={itemVariants as any} className="cursor-pointer transition-colors hover:text-primaryColors-0">
                   <FaLinkedinIn />
                 </motion.span>
-                <motion.span variants={itemVariants as any}>
+                <motion.span variants={itemVariants as any} className="cursor-pointer transition-colors hover:text-primaryColors-0">
                   <FaInstagram />
                 </motion.span>
               </div>

@@ -4,21 +4,27 @@ import pic from "@/public/images/goye_final_logo.png";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { CiSearch } from "react-icons/ci";
-import { MdMenu, MdSearch } from "react-icons/md";
+import { useEffect, useRef, useState } from "react";
+import { MdClose, MdMenu } from "react-icons/md";
 import ToogleDarkMode from "./toogleDarkMode";
 import { useTheme } from "../context/theme_provider";
-interface Props {
-  //For Search props 
-  search: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-}
-export default function LandingPageNavBar({search, onChange} : Props) {
+
+const NAV_LINKS = [
+  { label: "Home", href: "#home" },
+  { label: "Features", href: "#features" },
+  { label: "Platform", href: "#platform" },
+  { label: "Community", href: "#community" },
+  { label: "Testimonials", href: "#testimonials" },
+  { label: "Get the App", href: "#app" },
+];
+
+export default function LandingPageNavBar() {
   const [box, showBox] = useState<boolean>(false);
-  const {darkMode, setDarkMode} = useTheme()
+  const { darkMode, setDarkMode } = useTheme();
   const boxRef = useRef<HTMLDivElement | null>(null);
-  const [showSearch, setShowSearch] = useState<boolean>(false);
+  const [activeSection, setActiveSection] = useState<string>("#home");
+  const [scrolled, setScrolled] = useState(false);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -42,13 +48,8 @@ export default function LandingPageNavBar({search, onChange} : Props) {
     },
   };
 
-  // Toggle dropdown
   const toggleDropdown = () => {
     showBox((prev) => !prev);
-  };
-
-  const toggleSearch = () => {
-    setShowSearch((prev) => !prev);
   };
 
   const router = useRouter();
@@ -64,38 +65,89 @@ export default function LandingPageNavBar({search, onChange} : Props) {
     return () => document.removeEventListener("mousedown", removeDropdown);
   }, []);
 
+  // Lightweight scroll-spy — highlights whichever section is currently in
+  // view so the nav reflects scroll position, not just click state.
+  useEffect(() => {
+    const sections = NAV_LINKS.map((l) => document.getElementById(l.href.slice(1))).filter(
+      (el): el is HTMLElement => !!el,
+    );
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActiveSection(`#${visible.target.id}`);
+      },
+      { rootMargin: "-40% 0px -50% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, []);
+
+  // Transparent over the hero so the globe reads uninterrupted; a soft
+  // blurred surface fades in once the page scrolls past it, for legibility
+  // over the busier sections below.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const goTo = (href: string) => {
+    showBox(false);
+    document.getElementById(href.slice(1))?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
-        className={`dark:bg-secondaryColors-0 bg-white sticky top-0 left-0 w-full py-[20px] px-[24px] md:py-[25px] gap-5 flex md:justify-around  items-center z-40 drop-shadow-sm`}
+        className={`fixed top-0 left-0 w-full py-[16px] px-[24px] md:py-[18px] md:px-[48px] gap-6 flex justify-between items-center z-40 transition-all duration-300 ${
+          scrolled
+            ? "backdrop-blur-md dark:bg-secondaryColors-0/70 bg-white/70 drop-shadow-sm"
+            : "bg-transparent"
+        }`}
       >
         {/* Logo */}
-        <motion.div variants={itemVariants as any}>
-          <Image src={pic} alt="logo" height={100} width={100} />
+        <motion.div variants={itemVariants as any} className="flex-shrink-0">
+          <a href="#home" onClick={(e) => { e.preventDefault(); goTo("#home"); }}>
+            <Image src={pic} alt="logo" height={100} width={100} className="h-[42px] w-auto md:h-[48px]" />
+          </a>
         </motion.div>
 
-        {/* Search Input */}
-        <motion.div
+        {/* Section links (Desktop) */}
+        <motion.nav
           variants={itemVariants as any}
-          className="relative dark:bg-shadyColor-0 bg-lightSecondaryColor-0 flex gap-2 items-center border border-[#D2D5DA]/10 h-[40px] p-[20px] max-md:hidden"
+          className="hidden lg:flex items-center gap-7"
         >
-          <MdSearch color={darkMode ? "white" : "#ccc"}/>
-          <input
-            type="text"
-            value={search}
-            name="search"
-            onChange={onChange}
-            placeholder="Search For Courses..."
-            className="bg-transparent  border-none outline-none w-[514px]"
-          />
-        </motion.div>
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={(e) => {
+                e.preventDefault();
+                goTo(link.href);
+              }}
+              className={`text-[14px] font-medium transition-colors whitespace-nowrap ${
+                activeSection === link.href
+                  ? "text-primaryColors-0"
+                  : "dark:text-textSlightDark-0 text-lightBoldText-0/60 hover:text-primaryColors-0"
+              }`}
+            >
+              {link.label}
+            </a>
+          ))}
+        </motion.nav>
 
         {/* Main Buttons (Desktop) */}
-        <div className="hidden md:flex items-center md:flex-row flex-col md:justify-start justify-center gap-3">
-          <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)}/>
+        <div className="hidden md:flex items-center md:flex-row flex-col md:justify-start justify-center gap-3 flex-shrink-0">
+          <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
           <motion.button
             variants={itemVariants as any}
             className="nav_btn md:w-[93px] w-full md:border md:border-primaryColors-0 dark:text-white  text-lightBoldText-0"
@@ -117,36 +169,10 @@ export default function LandingPageNavBar({search, onChange} : Props) {
         </div>
 
         {/* Mobile Menu Icon */}
-
-        <div className="flex items-center justify-end md:hidden w-full gap-2">
-          <motion.div
-            className={`transform transition-all duration-200 ${
-              showSearch
-                ? "w-[40px] p-[5px] flex justify-center items-center border-none"
-                : "w-full px-2 py-3 h-[40px] flex items-center gap-2"
-            } flex border`}
-          >
-            <span className="" onClick={toggleSearch}>
-              <CiSearch size={28} />
-            </span>
-            <input
-              type="text"
-              value={search}
-              onChange={onChange}
-              placeholder="Foundation of Discipleship"
-              className={` ${
-                showSearch
-                  ? "w-0"
-                  : "bg-transparent border-none outline-none w-full"
-              }`}
-            />
-          </motion.div>
-          <div
-            className="md:hidden block cursor-pointer"
-            onClick={toggleDropdown}
-            ref={boxRef}
-          >
-            <MdMenu size={28} />
+        <div className="flex items-center justify-end md:hidden gap-2" ref={boxRef}>
+          <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
+          <div className="relative cursor-pointer" onClick={toggleDropdown}>
+            {box ? <MdClose size={28} /> : <MdMenu size={28} />}
 
             {box && (
               <motion.div
@@ -155,8 +181,26 @@ export default function LandingPageNavBar({search, onChange} : Props) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
-                className="absolute bottom-[-125px] left-0 bg-white flex flex-col justify-center items-center w-full py-5 px-4 drop-shadow-sm rounded-md"
+                className="absolute top-[calc(100%+16px)] right-0 dark:bg-secondaryColors-0 bg-white flex flex-col justify-center items-stretch w-[220px] py-4 px-4 drop-shadow-lg rounded-md gap-1"
               >
+                {NAV_LINKS.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      goTo(link.href);
+                    }}
+                    className={`text-[15px] font-medium py-2 px-2 rounded ${
+                      activeSection === link.href
+                        ? "text-primaryColors-0"
+                        : "dark:text-textSlightDark-0 text-lightBoldText-0/70"
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                ))}
+                <div className="h-[1px] bg-[#ccc]/10 my-2" />
                 <button
                   className="nav_btn w-full border border-primaryColors-0 mb-2"
                   onClick={() => {
