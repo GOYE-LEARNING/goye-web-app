@@ -4,7 +4,9 @@
 
 /*form container*/
 /* In your globals.css */
-
+@theme {
+  --font-poppins: var(--font-poppins);
+}
 /* Dark mode base — deeper contrast when .dark is on */
 .dark body {
   @apply dark:bg-[#0b0b0e] bg-lightSecondaryColor-0 dark:text-[#E6E7EB] text-lightBoldText-0/50;
@@ -66,18 +68,18 @@ body.chat-page-desktop {
 .dark .dashboard_content_mainbox,
 .dark .dashboard_content_box,
 .dark .cr_box {
-  @apply dark:bg-secondaryColors-0/50 bg-lightWhite-0 backdrop-blur-md border-[#1f2937] ;
+  @apply dark:bg-secondaryColors-0/50 bg-lightWhite-0 backdrop-blur-md border-[#1f2937];
 }
 
-.dashboard_content_mainbox, .dashboard_content_box, .cr_box {
-  @apply bg-white backdrop-blur-md border border-[#ccc]/10
-} 
+.dashboard_content_mainbox,
+.dashboard_content_box,
+.cr_box {
+  @apply bg-white backdrop-blur-md border border-[#ccc]/10;
+}
 
 .dark .dashboard_h1 {
   @apply text-[#E6E7EB];
 }
-
-
 
 .dark .dashboard_content_subbox,
 .dark .admin_dashboard_data,
@@ -91,7 +93,7 @@ body.chat-page-desktop {
 
 /*Landing Page*/
 .nav_btn {
-  @apply md:h-[40px] h-[50px] font-semibold text-[14px];
+  @apply md:h-[55px] h-[45px] rounded-full font-semibold text-[14px] flex items-center justify-center gap-3;
 }
 
 .box {
@@ -124,7 +126,11 @@ body.chat-page-desktop {
   height: 120%;
   top: -10%;
   left: -10%;
-  background: radial-gradient(circle, rgba(255, 166, 0, 0.326), transparent 50%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 166, 0, 0.326),
+    transparent 50%
+  );
   filter: blur(40px);
   animation: moveGradient 5s infinite ease-in-out;
 }
@@ -153,21 +159,49 @@ body.chat-page-desktop {
 }
 
 .loader {
-    width: 40px;
-    height: 40px;
-    --c:no-repeat linear-gradient(orange 0 0);
-    background: var(--c),var(--c),var(--c),var(--c);
-    background-size: 21px 21px;
-    animation: l5 1.5s infinite cubic-bezier(0.3,1,0,1);
+  width: 40px;
+  height: 40px;
+  --c: no-repeat linear-gradient(orange 0 0);
+  background: var(--c), var(--c), var(--c), var(--c);
+  background-size: 21px 21px;
+  animation: l5 1.5s infinite cubic-bezier(0.3, 1, 0, 1);
 }
 @keyframes l5 {
-   0%   {background-position: 0    0,100% 0   ,100% 100%,0 100%}
-   33%  {background-position: 0    0,100% 0   ,100% 100%,0 100%;width:60px;height: 60px}
-   66%  {background-position: 100% 0,100% 100%,0    100%,0 0   ;width:60px;height: 60px}
-   100% {background-position: 100% 0,100% 100%,0    100%,0 0   }
+  0% {
+    background-position:
+      0 0,
+      100% 0,
+      100% 100%,
+      0 100%;
+  }
+  33% {
+    background-position:
+      0 0,
+      100% 0,
+      100% 100%,
+      0 100%;
+    width: 60px;
+    height: 60px;
+  }
+  66% {
+    background-position:
+      100% 0,
+      100% 100%,
+      0 100%,
+      0 0;
+    width: 60px;
+    height: 60px;
+  }
+  100% {
+    background-position:
+      100% 0,
+      100% 100%,
+      0 100%,
+      0 0;
+  }
 }
 .pricing_card:hover button {
-  @apply bg-white text-secondaryColors-0
+  @apply bg-white text-secondaryColors-0;
 }
 
 /*Form contianer*/
@@ -318,22 +352,23 @@ body.chat-page-desktop {
   @apply rounded-full bg-[#ccc];
 }
 
-
 .scrollbar_x::-webkit-scrollbar {
   @apply h-[3px] bg-boldShadyColor-0;
-
 }
 
 .org_width_animation {
-    transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
-
+  transition:
+    width 0.3s ease-in-out,
+    padding 0.3s ease-in-out;
 }
 
 /*Sidenav component*/
 /* Sidenav component */
 .sidenav {
   @apply dark:bg-secondaryColors-0 bg-white  w-full min-w-0 md:h-full h-[auto] fixed left-0 md:top-0 bottom-0 md:px-[32px] md:py-[40px] py-[20px] px-[20px] overflow-hidden md:drop-shadow-none drop-shadow-lg z-[60] border-r dark:border-boldShadyColor-0/80 border-r-[#ccc]/20;
-  transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+  transition:
+    width 0.3s ease-in-out,
+    padding 0.3s ease-in-out;
 }
 
 .sidenav.collapsed {
@@ -439,15 +474,13 @@ body.chat-page-desktop {
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-   border-bottom: 15px solid white;
+  border-bottom: 15px solid white;
   @apply drop-shadow-sm;
 }
 
 .dark .dashboard_triangle {
-   border-bottom: 15px solid #1a1d26;
+  border-bottom: 15px solid #1a1d26;
 }
-
-
 
 .dashboard_triangle2 {
   width: 0;
@@ -487,7 +520,7 @@ body.chat-page-desktop {
 
 .dashboard_thick_hr {
   @apply bg-boldShadyColor-0 border-t border-b border-boldShadyColor-0 h-[16px] w-full;
-} 
+}
 
 .reply_hook::after {
   content: "";

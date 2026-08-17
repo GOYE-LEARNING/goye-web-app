@@ -21,7 +21,7 @@ export default function Home() {
   // is one deliberate click rather than a forced redirect.
   return (
     <>
-      <div className="dark:bg-shadyColor-0 bg-white overflow-x-hidden">
+      <div className="dark:bg-shadyColor-0 bg-white overflow-x-hidden scrollbar2">
         <LandingPageNavBar />
         <div>
           <HeroSection1 />

@@ -14,7 +14,7 @@ import {
   MdNotifications,
   MdSecurity,
 } from "react-icons/md";
-import { useAPIErrorHandler, } from "@/app/hook/useAPIErrorHandler";
+import { useAPIErrorHandler } from "@/app/hook/useAPIErrorHandler";
 import api from "@/app/lib/api-client";
 import { APIErrorDisplay } from "@/app/component/APIErrorDisplay";
 import DashboardChangePassword from "@/app/auth/dashboard_change_password";
@@ -90,7 +90,7 @@ export default function OrgAdminProfile() {
   const params = useParams<{ org_name: string }>();
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
-  
+
   const [details, setDetails] = useState<Details>({
     organization_name: "",
     organization_email: "",
@@ -112,20 +112,15 @@ export default function OrgAdminProfile() {
       level: "",
     },
   });
-  
+
   const [loading, setLoading] = useState<boolean>(false);
   const [activePages, setActivePages] = useState<
     "edit" | "password" | "notification" | "language"
   >();
   const [showActivePages, setShowActivePages] = useState<boolean>(false);
-  
+
   // Use the error handler
-  const { 
-    errorState, 
-    clearError, 
-    handleError,
-    isError 
-  } = useAPIErrorHandler();
+  const { errorState, clearError, handleError, isError } = useAPIErrorHandler();
 
   const logout = async () => {
     try {
@@ -162,11 +157,11 @@ export default function OrgAdminProfile() {
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     clearError();
-    
+
     try {
-      const data = await api.get('/api/organizations/profile');
+      const data = await api.get("/api/organizations/profile");
       console.log("Profile data:", data);
-      
+
       if (data.organization) {
         setDetails(data.organization);
         if (data.organization.organization_image) {
@@ -182,7 +177,7 @@ export default function OrgAdminProfile() {
     } catch (error: any) {
       console.error("Profile fetch error:", error);
       handleError(error);
-      
+
       // If unauthorized, the API client will handle the redirect
       if (error.status === 401) {
         // Optional: Add a toast notification here
@@ -204,7 +199,7 @@ export default function OrgAdminProfile() {
 
     setLoading(true);
     clearError();
-    
+
     try {
       const arrayBuffer = await uploadFile.arrayBuffer();
       const base64String = btoa(
@@ -225,13 +220,13 @@ export default function OrgAdminProfile() {
           body: JSON.stringify(payload),
         },
       );
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(data.message || "Upload failed");
       }
-      
+
       console.log("Upload success:", data);
       setProfilePic(data.url);
       setDetails((prev) => ({ ...prev, organization_image: data.url }));
@@ -257,7 +252,7 @@ export default function OrgAdminProfile() {
       {/* Show error display if there's an error */}
       {errorState.error && (
         <div className="mb-4">
-          <APIErrorDisplay 
+          <APIErrorDisplay
             error={errorState.error}
             onDismiss={clearError}
             onRetry={fetchProfile}
@@ -300,7 +295,9 @@ export default function OrgAdminProfile() {
 
             <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px] flex flex-col gap-3">
               <div className="flex justify-between items-center">
-                <p className="dark:text-white text-lightBoldText-0 text-[14px]">Email</p>
+                <p className="dark:text-white text-lightBoldText-0 text-[14px]">
+                  Email
+                </p>
                 <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
@@ -311,7 +308,9 @@ export default function OrgAdminProfile() {
               </div>
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
-                <p className="dark:text-white text-lightBoldText-0 text-[14px]">Phone Number</p>
+                <p className="dark:text-white text-lightBoldText-0 text-[14px]">
+                  Phone Number
+                </p>
                 <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
@@ -322,7 +321,9 @@ export default function OrgAdminProfile() {
               </div>
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
-                <p className="dark:text-white text-lightBoldText-0 text-[14px]">Location</p>
+                <p className="dark:text-white text-lightBoldText-0 text-[14px]">
+                  Location
+                </p>
                 <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
@@ -421,8 +422,8 @@ export default function OrgAdminProfile() {
                   <MdChevronRight size={29} />
                 </span>
               </div>
-              <button 
-                className="text-[#DA0E29] border border-[#ccc]/20 h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px] hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" 
+              <button
+                className="text-[#DA0E29] border border-[#ccc]/20 h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px] hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 onClick={logout}
               >
                 <MdLogout /> Logout

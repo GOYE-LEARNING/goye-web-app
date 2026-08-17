@@ -1,13 +1,14 @@
 "use client";
 import "@/app/styles/globals.css";
-import React from "react";
 import "@fontsource/inter";
 import "@fontsource/fustat"; // Default weight 400
 import "@fontsource/fustat/500.css"; // Optional bold weight
 import "@fontsource/fustat/600.css"; // Optional bold weight
 import "@fontsource/fustat/700.css"; // Optional bold weight
-import { usePathname } from "next/navigation";
 
+import React from "react";
+import { usePathname } from "next/navigation";
+import localFont from "next/font/local";
 import OrganizationProvider from "@/app/component/organization_component/organanization_context";
 import { ThemeProvider } from "@/app/context/theme_provider";
 import Cursor from "./component/cursor";
@@ -19,6 +20,10 @@ import { GlobalAPIErrorHandler } from "./component/GlobalApiErrorHandler";
 import { GlobalNotFoundHandler } from "./component/GlobalNotFoundHandler";
 import { LanguageProvider } from "./context/LanguageContext";
 import { I18nProvider } from "./context/I18nContext";
+const Poppins = localFont({
+  src: "../public/font/Poppins-Regular.ttf", // Path to the font file
+  variable: "--font-poppins", // Defines the CSS variable
+});
 export default function RootLayout({
   children,
 }: {
@@ -31,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body
-        className={`min-h-full dark:bg-secondaryColors-0 bg-white dark:text-textSlightDark-0 text-lightBoldText-0 antialiased font-['Fustat',_'sans-erif'] scrollbar2 ${checkAll ? "overflow-hidden" : ""}`}
+        className={`min-h-full ${Poppins.variable} dark:bg-secondaryColors-0 bg-white dark:text-textSlightDark-0 text-lightBoldText-0 antialiased font-['Fustat',_'sans-erif'] scrollbar2 ${checkAll ? "overflow-hidden" : ""}`}
       >
         <GlobalNotFoundHandler>
           <GlobalAPIErrorHandler>

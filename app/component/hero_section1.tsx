@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useTheme } from "../context/theme_provider";
 import GlobeHero from "./globe/GlobeHero";
+import { FaArrowRight } from "react-icons/fa";
 
 const container = {
   hidden: {},
@@ -11,7 +12,11 @@ const container = {
 
 const item = {
   hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" as const },
+  },
 };
 
 export default function HeroSection1() {
@@ -39,7 +44,7 @@ export default function HeroSection1() {
       >
         <motion.h1
           variants={item as any}
-          className="font-medium text-[40px] md:text-[64px] leading-[1.05] text-center text-primaryColors-0"
+          className="font-medium text-[40px] md:text-[70px] font-bold leading-[1.05] text-center dark:text-transparent bg-clip-text bg-gradient-to-r font-poppins dark:from-white dark:to-primaryColors-0 text-primaryColors-0"
         >
           Grow. Teach. Multiply
         </motion.h1>
@@ -47,14 +52,20 @@ export default function HeroSection1() {
           variants={item as any}
           className="mt-[16px] max-w-[46ch] text-center dark:text-textSlightDark-0 text-lightBoldText-0/50 text-[18px] md:text-[24px]"
         >
-          A self-learning discipleship platform built for both students
-          seeking growth and tutors guiding transformation.
+          A self-learning discipleship platform built for both students seeking
+          growth and tutors guiding transformation.
         </motion.p>
-        <motion.div variants={item as any} className="flex items-center gap-3 mt-[32px]">
-          <button className="nav_btn transition-all duration-200 hover:opacity-30 text-primaryColors-0 dark:bg-secondaryColors-0 bg-white md:w-[171px] w-[130px] md:text-[14px] text-[18px]">
+        <motion.div
+          variants={item as any}
+          className="flex items-center gap-3 mt-[32px]"
+        >
+          <button className="nav_btn border border-[#ccc]/20  transition-all duration-200 hover:opacity-30 text-primaryColors-0 dark:bg-secondaryColors-0 bg-white md:w-[171px] w-[180px] md:text-[14px] text-[18px]">
             Start Teaching
+            <div className="flex justify-center items-center h-[35px] w-[35px] rounded-full bg-white">
+              <FaArrowRight />
+            </div>
           </button>
-          <button className="nav_btn transition-all duration-200 hover:opacity-30 md:w-[171px] w-[130px] bg-primaryColors-0 text-white md:text-[14px] text-[18px]">
+          <button className="nav_btn transition-all duration-200 hover:opacity-30 md:w-[171px] w-[180px] bg-primaryColors-0 text-white md:text-[14px] text-[18px]">
             Start Learning
           </button>
         </motion.div>
