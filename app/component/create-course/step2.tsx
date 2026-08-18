@@ -155,9 +155,9 @@ export default function CourseStep2({ formData, setFormData }: Props) {
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+      const MAX_VIDEO_SIZE = 95 * 1024 * 1024; // 95MB
       if (file.size > MAX_VIDEO_SIZE) {
-        alert(`Video must be 50MB or less. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+        alert(`Video must be 95MB or less. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`);
         e.target.value = '';
         return;
       }
