@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import logo from "@/public/images/goye_white.png";
+import logo from "@/public/images/goye_final_logo.png";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";

@@ -2,7 +2,7 @@
 
 import SidenavComponent from "@/app/component/sidenav_component";
 import Image from "next/image";
-import logo from "@/public/images/goye-removebg-preview.png";
+import logo from "@/public/images/goye_final_logo.png";
 import { MdHomeFilled, MdLogout, MdCampaign } from "react-icons/md";
 import { GoHome } from "react-icons/go";
 import { HiOutlineOfficeBuilding, HiOfficeBuilding } from "react-icons/hi";
