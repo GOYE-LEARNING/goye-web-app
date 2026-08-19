@@ -517,7 +517,7 @@ export function ChartCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10 ${className}`}>
+    <div className={`bg-lightWhite-0 dark:bg-boldShadyColor-0 rounded-xl p-4 border border-[#ccc]/10 ${className}`}>
       <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px]">{title}</h2>
       {subtitle && <p className="text-textGrey-0 text-[12px] mt-0.5 mb-3">{subtitle}</p>}
       <div className={subtitle ? "" : "mt-3"}>{children}</div>

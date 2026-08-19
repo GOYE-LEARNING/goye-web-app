@@ -112,44 +112,6 @@ export default function DashboardOrgAdminAnalytics() {
 
   return (
     <div className="w-full">
-      <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[18px]">
-        Analytics
-      </h2>
-      <p className="text-textGrey-0 text-[13px] mb-4">
-        How your members are engaging with your courses.
-      </p>
-
-      {/* Headline numbers */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatTile
-          label="Members"
-          value={summary.totalMembers}
-          icon={<HiOutlineUserGroup />}
-          accent={hueAt(0, dark)}
-          sublabel={`${summary.onlineMembers} online now`}
-        />
-        <StatTile
-          label="Courses"
-          value={summary.totalCourses}
-          icon={<HiOutlineBookOpen />}
-          accent={hueAt(1, dark)}
-          sublabel={`${summary.publishedCourses} published`}
-        />
-        <StatTile
-          label="Enrollments"
-          value={summary.totalEnrollments}
-          icon={<HiOutlineClipboardCheck />}
-          accent={hueAt(2, dark)}
-          sublabel={`${activeEnrollments} still active`}
-        />
-        <StatTile
-          label="Completion rate"
-          value={`${summary.completionRate}%`}
-          icon={<HiOutlineClipboardCheck />}
-          accent={hueAt(3, dark)}
-          sublabel={`${summary.completedEnrollments} finished`}
-        />
-      </div>
 
       {/* Line — the two series that answer "is activity growing?" */}
       <div className="mb-6">
