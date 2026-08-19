@@ -7,8 +7,8 @@ import {
 } from "react-icons/fa6";
 import { AnimatePresence, motion } from "framer-motion";
 
-import picLightMode from "@/public/images/goye_final_logo.png";
-import picDarkMode from "@/public/images/goye_white.png"
+import logo from '@/public/images/goye_final_logo.png'
+
 import { useTheme } from "../context/theme_provider";
 export default function Footer() {
   const {darkMode} = useTheme()
@@ -70,7 +70,7 @@ export default function Footer() {
             <div className="flex md:justify-between text-center md:text-left items-center md:flex-row flex-col">
               <motion.div variants={itemVariants as any}>
                 {" "}
-                <Image src={darkMode ? picDarkMode : picLightMode} height={80} width={80} alt="logo" />
+                <Image src={logo} height={80} width={80} alt="logo" />
               </motion.div>
               <motion.p
                 variants={itemVariants as any}

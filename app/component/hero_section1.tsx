@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "../context/theme_provider";
 import GlobeHero from "./globe/GlobeHero";
 import { FaArrowRight } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 const container = {
   hidden: {},
@@ -21,7 +22,7 @@ const item = {
 
 export default function HeroSection1() {
   const { darkMode } = useTheme();
-
+const router = useRouter()
   return (
     <section
       id="home"
@@ -59,13 +60,13 @@ export default function HeroSection1() {
           variants={item as any}
           className="flex items-center gap-3 mt-[32px]"
         >
-          <button className="nav_btn border border-[#ccc]/20  transition-all duration-200 hover:opacity-30 text-primaryColors-0 dark:bg-secondaryColors-0 bg-white md:w-[171px] w-[180px] md:text-[14px] text-[18px]">
+          <button onClick={() => router.push("/auth")} className="nav_btn border border-[#ccc]/20  transition-all duration-200 hover:opacity-30 text-primaryColors-0 dark:bg-secondaryColors-0 bg-white md:w-[171px] w-[180px] md:text-[14px] text-[18px]">
             Start Teaching
             <div className="flex justify-center items-center h-[35px] w-[35px] rounded-full bg-white">
               <FaArrowRight />
             </div>
           </button>
-          <button className="nav_btn transition-all duration-200 hover:opacity-30 md:w-[171px] w-[180px] bg-primaryColors-0 text-white md:text-[14px] text-[18px]">
+          <button onClick={() => router.push("/auth")} className="nav_btn transition-all duration-200 hover:opacity-30 md:w-[171px] w-[180px] bg-primaryColors-0 text-white md:text-[14px] text-[18px]">
             Start Learning
           </button>
         </motion.div>
