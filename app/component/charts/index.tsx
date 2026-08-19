@@ -69,7 +69,7 @@ export function StatTile({
       )}
       <div className="min-w-0">
         <p className="text-textGrey-0 text-[12px] truncate">{label}</p>
-        <p className="text-textSlightDark-0 dark:text-white text-[22px] font-[700] leading-tight tabular-nums">
+        <p className="text-lightBoldText-0-0 dark:text-white text-[22px] font-[700] leading-tight tabular-nums">
           {typeof value === "number" ? value.toLocaleString() : value}
         </p>
         {sublabel && <p className="text-textGrey-0 text-[11px] mt-0.5">{sublabel}</p>}
@@ -170,7 +170,7 @@ export function DonutChart({
           x={cx}
           y={active ? cy - 4 : cy + 2}
           textAnchor="middle"
-          className="fill-textSlightDark-0 dark:fill-white"
+          className="fill-lightBoldText-0 dark:fill-white"
           style={{ fontSize: 22, fontWeight: 700 }}
         >
           {active ? active.value.toLocaleString() : total.toLocaleString()}
@@ -198,7 +198,7 @@ export function DonutChart({
               className="h-[10px] w-[10px] rounded-sm flex-shrink-0"
               style={{ backgroundColor: hueAt(s.i, dark) }}
             />
-            <span className="text-[12px] text-textSlightDark-0 dark:text-white truncate flex-1 capitalize">
+            <span className="text-[12px] text-lightBoldText-0-0 dark:text-white truncate flex-1 capitalize">
               {s.label.toLowerCase().replace(/_/g, " ")}
             </span>
             <span className="text-[12px] text-textGrey-0 tabular-nums flex-shrink-0">
@@ -386,7 +386,7 @@ export function BarChart({
             onMouseEnter={() => setHover(i)}
             onMouseLeave={() => setHover(null)}
           >
-            <span className="text-[12px] font-[700] text-textSlightDark-0 dark:text-white mb-1 tabular-nums">
+            <span className="text-[12px] font-[700] text-lightBoldText-0-0 dark:text-white mb-1 tabular-nums">
               {d.value}
             </span>
             <div className="w-full flex justify-center h-full items-end">
@@ -432,7 +432,7 @@ export function HorizontalBars({
       {sorted.map((d, i) => (
         <div key={`${d.label}-${i}`} className="flex items-center gap-3">
           <span
-            className="text-[12px] text-textSlightDark-0 dark:text-white flex-shrink-0 truncate"
+            className="text-[12px] text-lightBoldText-0-0 dark:text-white flex-shrink-0 truncate"
             style={{ width: labelWidth }}
             title={d.label}
           >
@@ -444,7 +444,7 @@ export function HorizontalBars({
               style={{ width: `${(d.value / max) * 100}%`, backgroundColor: hueAt(i, dark) }}
             />
           </div>
-          <span className="text-[12px] font-[600] text-textSlightDark-0 dark:text-white w-[40px] text-right flex-shrink-0 tabular-nums">
+          <span className="text-[12px] font-[600] text-lightBoldText-0-0 dark:text-white w-[40px] text-right flex-shrink-0 tabular-nums">
             {d.value}
           </span>
         </div>
@@ -493,7 +493,7 @@ export function ProgressRing({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[28px] font-[700] text-textSlightDark-0 dark:text-white tabular-nums">{pct}%</span>
+          <span className="text-[28px] font-[700] text-lightBoldText-0-0 dark:text-white tabular-nums">{pct}%</span>
           <span className="text-[11px] text-textGrey-0">{label}</span>
         </div>
       </div>
@@ -517,8 +517,8 @@ export function ChartCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-lightWhite-0 dark:bg-boldShadyColor-0 rounded-xl p-4 border border-[#ccc]/10 ${className}`}>
-      <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px]">{title}</h2>
+    <div className={`bg-white dark:bg-boldShadyColor-0 rounded-xl p-4 border border-[#ccc]/10 ${className}`}>
+      <h2 className="text-lightBoldText-0 dark:text-white font-[600] text-[14px]">{title}</h2>
       {subtitle && <p className="text-textGrey-0 text-[12px] mt-0.5 mb-3">{subtitle}</p>}
       <div className={subtitle ? "" : "mt-3"}>{children}</div>
     </div>

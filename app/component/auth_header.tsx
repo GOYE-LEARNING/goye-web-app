@@ -2,8 +2,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useTheme } from "../context/theme_provider";
-import logoDarkMode from "@/public/images/goye_white.png";
-import logoLightMode from "@/public/images/goye-removebg-preview.png";
+import logo from '@/public/images/goye_final_logo.png'
 import ToogleDarkMode from "./toogleDarkMode";
 import { CiGlobe } from "react-icons/ci";
 import { FaChevronDown } from "react-icons/fa";
@@ -85,7 +84,7 @@ export default function AuthHeader({
     <>
       <div className="pt-[48px] md:flex justify-between items-center font-[400] hidden relative z-[10] w-full">
         <Image
-          src={darkMode ? logoDarkMode : logoLightMode}
+          src={logo}
           alt="logo"
           height={100}
           width={100}
