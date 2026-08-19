@@ -29,7 +29,7 @@ import {
   setupDeviceIdSync,
   syncDeviceIdAcrossTabs
 } from "@/app/utils/database/db";
-import { setupGlobalFetchInterceptor } from "@/app/utils/globalFetch";
+import "@/app/utils/globalFetch";
 
 const Poppins = localFont({
   src: "../public/font/Poppins-Regular.ttf",
@@ -150,15 +150,6 @@ function DeviceIdSync() {
   return null;
 }
 
-// Global fetch interceptor component
-function GlobalFetchInterceptor() {
-  useEffect(() => {
-    setupGlobalFetchInterceptor();
-  }, []);
-
-  return null;
-}
-
 export default function RootLayout({
   children,
 }: {
@@ -184,7 +175,6 @@ export default function RootLayout({
                         <LanguageProvider>
                           <I18nProvider>
                             <AuthGuard>
-                              <GlobalFetchInterceptor />
                               <DeviceIdSync />
                               <CrossTabSync />
                               <div className="min-h-[100dvh] w-full max-w-[100vw] min-w-0 overflow-x-hidden">
