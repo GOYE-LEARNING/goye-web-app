@@ -150,15 +150,15 @@ export default function AuthProvider({ children }: Props) {
     }
   }, [isPublicRoute]);
 
-  const getUserType = React.useCallback(() => {
-    const type = localStorage.getItem('type') || '';
-    const role = localStorage.getItem('role') || '';
+const getUserType = React.useCallback(async (): Promise<string> => {
+  const profile = await getUserProfile();
+  const type = profile?.userType || '';
+  const role = profile?.role || '';
 
-    if (type === 'admin' || role === 'goye_admin') return 'admin';
-    if (type === 'organization' || type === 'invited_user' || role === 'org_admin') return 'organization';
-    return 'individual';
-  }, []);
-
+  if (type === 'admin' || role === 'goye_admin') return 'admin';
+  if (type === 'organization' || type === 'invited_user' || role === 'org_admin') return 'organization';
+  return 'individual';
+}, []);
   // Extracted so it can be called twice (once normally, once after a
   // successful refresh) WITHOUT re-entering the isCheckingRef guard that
   // wraps the public checkAuth() below.
@@ -182,7 +182,7 @@ export default function AuthProvider({ children }: Props) {
     const userType = getUserType();
 
     // Admin
-    if (userType === 'admin') {
+    if (userType === 'admin' as any) {
       const profile = await getUserProfile();
       setAuthStatus({
         isExistingUser: true,
@@ -202,7 +202,7 @@ export default function AuthProvider({ children }: Props) {
     }
 
     // Individual
-    if (userType === 'individual') {
+    if (userType === 'individual' as any) {
       const headers = await authHeaders();
       const response = await fetch(`${API_URL}/api/user/profile`, {
         credentials: 'include',
@@ -269,7 +269,7 @@ export default function AuthProvider({ children }: Props) {
     }
 
     // Organization
-    if (userType === 'organization') {
+    if (userType === 'organization' as any) {
       const headers = await authHeaders();
       const response = await fetch(`${API_URL}/api/organizations/profile`, {
         credentials: 'include',
@@ -381,52 +381,57 @@ export default function AuthProvider({ children }: Props) {
   }, [isPublicRoute, runAuthCheck, authStatus.isExistingUser]);
 
   const login = React.useCallback(async (userData: any, orgData?: any): Promise<boolean> => {
-    try {
-      console.log("🔐 Login function called with:", { userData, orgData });
+  try {
+    console.log("🔐 Login function called with:", { userData, orgData });
 
-      if (userData) {
-        await saveUserProfile({
-          userId: userData.id,
-          first_name: userData.first_name || '',
-          last_name: userData.last_name || '',
-          email_address: userData.email_address || userData.email || '',
-          userType: userData.type || userData.userType || 'user',
-          role: userData.role || 'student',
-          organizationId: userData.organizationId || null,
-        });
-      } else if (orgData) {
-        await saveUserProfile({
-          userId: orgData.userId || orgData.id,
-          first_name: orgData.organization_name || '',
-          last_name: '',
-          email_address: orgData.organization_email || '',
-          userType: 'organization',
-          role: orgData.organization_role || 'admin',
-          organizationId: orgData.id,
-        });
-      }
-
-      await updateSessionState({
-        isAuthenticated: true,
-        lastActivity: new Date().toISOString(),
+    if (userData) {
+      await saveUserProfile({
+        userId: userData.id,
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
+        email_address: userData.email_address || userData.email || '',
+        userType: userData.type || userData.userType || 'user',
+        role: userData.role || 'student',
+        organizationId: userData.organizationId || null,
+        isProfileComplete: userData.isProfileComplete ?? true,
+        level: userData.level,
+        adminRole: userData.adminRole,
       });
-
-      setAuthStatus({
-        isExistingUser: true,
-        isProfileComplete: userData?.isProfileComplete !== undefined ? userData.isProfileComplete : true,
-        requiresProfileCompletion: userData?.isProfileComplete === false,
-        isLoading: false,
-        user: userData,
-        organization: orgData,
+    } else if (orgData) {
+      await saveUserProfile({
+        userId: orgData.userId || orgData.id,
+        first_name: orgData.organization_name || '',
+        last_name: '',
+        email_address: orgData.organization_email || '',
+        userType: 'organization',
+        role: orgData.organization_role || 'admin',
+        organizationId: orgData.id,
+        organizationName: orgData.organization_name,
+        isProfileComplete: true,
       });
-
-      console.log("✅ Login successful, auth status updated");
-      return true;
-    } catch (error) {
-      console.error("Login error:", error);
-      return false;
     }
-  }, []);
+
+    await updateSessionState({
+      isAuthenticated: true,
+      lastActivity: new Date().toISOString(),
+    });
+
+    setAuthStatus({
+      isExistingUser: true,
+      isProfileComplete: userData?.isProfileComplete !== undefined ? userData.isProfileComplete : true,
+      requiresProfileCompletion: userData?.isProfileComplete === false,
+      isLoading: false,
+      user: userData,
+      organization: orgData,
+    });
+
+    console.log("✅ Login successful, auth status updated");
+    return true;
+  } catch (error) {
+    console.error("Login error:", error);
+    return false;
+  }
+}, []);
 
   React.useEffect(() => {
     if (isPublicRoute()) {
@@ -444,37 +449,33 @@ export default function AuthProvider({ children }: Props) {
     return () => clearTimeout(timer);
   }, [isPublicRoute, checkAuth]);
 
-  const logout = React.useCallback(async (): Promise<void> => {
-    try {
-      const headers = await authHeaders();
-      await fetch(`${API_URL}/api/user/logout`, {
-        method: "POST",
-        credentials: "include",
-        headers,
-      });
+ const logout = React.useCallback(async (): Promise<void> => {
+  try {
+    const headers = await authHeaders();
+    await fetch(`${API_URL}/api/user/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers,
+    });
 
-      await clearAllData();
-      localStorage.removeItem('type');
-      localStorage.removeItem('role');
-      localStorage.removeItem('organization_id');
-      localStorage.removeItem('organization_name');
+    await clearAllData(); // ✅ this alone is now sufficient
 
-      setAuthStatus({
-        isExistingUser: false,
-        isProfileComplete: false,
-        requiresProfileCompletion: false,
-        isLoading: false,
-        user: undefined,
-        organization: undefined,
-      });
+    setAuthStatus({
+      isExistingUser: false,
+      isProfileComplete: false,
+      requiresProfileCompletion: false,
+      isLoading: false,
+      user: undefined,
+      organization: undefined,
+    });
 
-      router.push("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-      await clearAllData();
-      router.push("/login");
-    }
-  }, [router, authHeaders]);
+    router.push("/login");
+  } catch (error) {
+    console.error("Logout error:", error);
+    await clearAllData();
+    router.push("/login");
+  }
+}, [router, authHeaders]);
 
   const updateAuthStatus = React.useCallback((status: Partial<AuthContextType>) => {
     setAuthStatus((prev) => ({ ...prev, ...status, isLoading: false }));

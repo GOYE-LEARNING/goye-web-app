@@ -9,7 +9,7 @@ import { useAuthContext } from "@/app/context/AuthContext";
 import { getUserProfile } from "@/app/utils/database/db";
 
 export default function LoadingPage() {
-  const { organizationId } = useOrganizationContext();
+  const { organizationId, setOrganizationId } = useOrganizationContext();
   const { updateAuthStatus, checkAuth } = useAuthContext();
   const router = useRouter();
   const [progress, setProgress] = useState(0);
@@ -18,7 +18,6 @@ export default function LoadingPage() {
   const redirectAttempted = useRef(false);
   const authCheckedRef = useRef(false);
 
-  // Status messages based on progress
   const statusMessages = [
     { progress: 20, message: "Verifying credentials..." },
     { progress: 40, message: "Loading your profile..." },
@@ -28,7 +27,6 @@ export default function LoadingPage() {
   ];
 
   useEffect(() => {
-    // Update status message based on progress
     const currentStatus = statusMessages.reduce((prev, curr) => {
       if (progress >= curr.progress) return curr.message;
       return prev;
@@ -37,23 +35,23 @@ export default function LoadingPage() {
     setStatus(currentStatus);
   }, [progress]);
 
-  // Check auth and ensure context is updated
   useEffect(() => {
     const verifyAndUpdateAuth = async () => {
       if (authCheckedRef.current) return;
       authCheckedRef.current = true;
 
-      // Get user data from localStorage
-      const role = localStorage.getItem("role");
-      const userType = localStorage.getItem("type");
-      const isProfileComplete =
-        localStorage.getItem("isProfileComplete") === "true";
+      // ✅ Read everything from Dexie — single source of truth
       const profile = await getUserProfile();
+
       const userId = profile?.userId;
+      const role = profile?.role;
+      const userType = profile?.userType;
+      const isProfileComplete = profile?.isProfileComplete ?? false;
       const firstName = profile?.first_name;
       const lastName = profile?.last_name;
       const email = profile?.email_address;
-      const userLevel = localStorage.getItem("level");
+      const userLevel = profile?.level;
+      const orgId = profile?.organizationId;
 
       console.log("Loading page - user data check:", {
         userId,
@@ -64,10 +62,12 @@ export default function LoadingPage() {
         lastName,
         email,
         userLevel,
+        orgId,
       });
 
       if (userId && role) {
-        // Update auth context with the data from localStorage
+        if (orgId) setOrganizationId(orgId);
+
         updateAuthStatus({
           isExistingUser: true,
           isProfileComplete: isProfileComplete,
@@ -83,9 +83,8 @@ export default function LoadingPage() {
             level: userLevel || "Beginners",
           },
         });
-        console.log("✅ Updated auth context from localStorage");
+        console.log("✅ Updated auth context from Dexie profile");
 
-        // Verify with backend
         try {
           const isValid = await checkAuth();
           console.log("Backend auth check result:", isValid);
@@ -108,7 +107,6 @@ export default function LoadingPage() {
 
     verifyAndUpdateAuth();
 
-    // Simulate loading progress
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -120,105 +118,74 @@ export default function LoadingPage() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [router, updateAuthStatus, checkAuth]);
+  }, [router, updateAuthStatus, checkAuth, setOrganizationId]);
 
   useEffect(() => {
-    // Only redirect once when progress reaches 100
     if (progress === 100 && !redirectAttempted.current && !error) {
       redirectAttempted.current = true;
 
-      const role = localStorage.getItem("role")?.toLowerCase();
-      const userType = localStorage.getItem("type")?.toLowerCase();
-      const formType = localStorage.getItem("form_type")?.toLowerCase();
-      const organizationId_local = localStorage.getItem("organization_id");
-      const finalOrgId = organizationId || organizationId_local;
+      const redirect = async () => {
+        const profile = await getUserProfile();
+        const role = profile?.role?.toLowerCase();
+        const userType = profile?.userType?.toLowerCase();
+        const finalOrgId = organizationId || profile?.organizationId;
+        const adminRole = profile?.adminRole;
 
-      console.log("Redirecting with:", { role, userType, formType, finalOrgId });
+        console.log("Redirecting with:", { role, userType, finalOrgId });
 
-      // Small delay for smooth transition
-      const timeout = setTimeout(() => {
-        try {
-          let redirectPath = "/dashboard";
+        const timeout = setTimeout(() => {
+          try {
+            let redirectPath = "/dashboard";
 
-          // ✅ FIXED: Check for invited user FIRST (before admin checks)
-          // Invited users should go to organization page
-          if (role === "invited") {
-            if (finalOrgId) {
-              redirectPath = `/dashboard/${finalOrgId}/organization`;
+            if (role === "invited") {
+              redirectPath = finalOrgId ? `/dashboard/${finalOrgId}/organization` : "/dashboard/student";
+              console.log("Redirecting as invited user to:", redirectPath);
+            } else if (role === "instructor" || role === "tutor") {
+              redirectPath = "/dashboard/tutor";
+              console.log("Redirecting as instructor/tutor to:", redirectPath);
+            } else if (role === "goye_admin") {
+              redirectPath = adminRole === "super_admin" ? "/dashboard/super-admin" : "/dashboard/admin";
+              console.log("Redirecting as goye_admin to:", redirectPath);
+            } else if (role === "org_admin" || role === "admin" || role === "administrator") {
+              redirectPath = finalOrgId ? `/dashboard/${finalOrgId}/admin` : "/dashboard/admin";
+              console.log("Redirecting as org admin to:", redirectPath);
+            } else if (role === "invited_user" || role === "organization_member") {
+              redirectPath = finalOrgId ? `/dashboard/${finalOrgId}/organization` : "/dashboard/student";
+              console.log("Redirecting as organization member to:", redirectPath);
+            } else if (role === "student") {
+              redirectPath = "/dashboard/student";
+              console.log("Redirecting as student to:", redirectPath);
             } else {
               redirectPath = "/dashboard/student";
+              console.log("Redirecting as default student to:", redirectPath);
             }
-            console.log("Redirecting as invited user to:", redirectPath);
-          }
-          // Check for instructor/tutor
-          else if (role === "instructor" || role === "tutor") {
-            redirectPath = "/dashboard/tutor";
-            console.log("Redirecting as instructor/tutor to:", redirectPath);
-          }
-          // Check for platform admin (goye_admin) — super_admin gets the
-          // platform-wide dashboard; content_admin/user_admin keep the
-          // existing single-scope admin view.
-          else if (role === "goye_admin") {
-            const adminRole = localStorage.getItem("admin_role");
-            redirectPath = adminRole === "super_admin" ? "/dashboard/super-admin" : "/dashboard/admin";
-            console.log("Redirecting as goye_admin to:", redirectPath);
-          }
-          // Check for organization admin (org_admin or admin)
-          else if (role === "org_admin" || role === "admin" || role === "administrator") {
-            if (finalOrgId) {
-              redirectPath = `/dashboard/${finalOrgId}/admin`;
-            } else {
-              redirectPath = "/dashboard/admin";
-            }
-            console.log("Redirecting as org admin to:", redirectPath);
-          }
-          // Check for organization member
-          else if (role === "invited_user" || role === "organization_member") {
-            if (finalOrgId) {
-              redirectPath = `/dashboard/${finalOrgId}/organization`;
-            } else {
-              redirectPath = "/dashboard/student";
-            }
-            console.log("Redirecting as organization member to:", redirectPath);
-          }
-          // Default to student (includes "student" role and "user" type)
-          else if (role === "student") {
-            redirectPath = "/dashboard/student";
-            console.log("Redirecting as student to:", redirectPath);
-          }
-          // Fallback for any other role
-          else {
-            redirectPath = "/dashboard/student";
-            console.log("Redirecting as default student to:", redirectPath);
-          }
 
-          console.log("Final redirect path:", redirectPath);
+            console.log("Final redirect path:", redirectPath);
+            router.push(redirectPath);
+          } catch (err) {
+            console.error("Redirect error:", err);
+            setError("Failed to redirect. Please try again.");
+            redirectAttempted.current = false;
+          }
+        }, 500);
 
-          // Use router.push to ensure state is preserved
-          router.push(redirectPath);
-        } catch (err) {
-          console.error("Redirect error:", err);
-          setError("Failed to redirect. Please try again.");
-          redirectAttempted.current = false;
-        }
-      }, 500);
+        return () => clearTimeout(timeout);
+      };
 
-      return () => clearTimeout(timeout);
+      redirect();
     }
   }, [progress, router, organizationId, error]);
 
-  // Handle retry if error occurs
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setError(null);
     setProgress(0);
     redirectAttempted.current = false;
     authCheckedRef.current = false;
 
-    const role = localStorage.getItem("role");
-    if (!role) {
+    const profile = await getUserProfile();
+    if (!profile?.role) {
       router.push("/auth");
     } else {
-      // Retry the verification
       window.location.reload();
     }
   };
@@ -248,7 +215,6 @@ export default function LoadingPage() {
   return (
     <div className="absolute inset-0 h-full overflow-hidden">
       <div className="flex justify-center items-center flex-col gap-6 min-h-[85vh] transition-all duration-300 px-4">
-        {/* Logo with pulse animation */}
         <div className="relative">
           <div className="absolute inset-0 bg-primaryColors-0 rounded-full blur-xl opacity-20 animate-pulse"></div>
           <Image
@@ -261,7 +227,6 @@ export default function LoadingPage() {
           />
         </div>
 
-        {/* Title with animation */}
         <div className="text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 animate-fade-in">
             Almost there
@@ -269,26 +234,22 @@ export default function LoadingPage() {
           <p className="text-gray-400 text-lg animate-fade-in-up">{status}</p>
         </div>
 
-        {/* Progress bar container */}
         <div className="w-full max-w-md space-y-3">
           <div className="relative bg-white/10 h-2 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-primaryColors-0 to-primaryColors-1 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             >
-              {/* Shimmer effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent shimmer"></div>
             </div>
           </div>
 
-          {/* Progress percentage */}
           <div className="flex justify-between text-sm text-gray-500">
             <span>Loading</span>
             <span className="font-mono">{Math.round(progress)}%</span>
           </div>
         </div>
 
-        {/* Loading tips */}
         <div className="mt-8 text-center text-sm text-gray-600 max-w-md">
           <p className="animate-pulse">
             ✨ Get ready to encounter the best JESUS ✨

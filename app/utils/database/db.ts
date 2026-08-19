@@ -57,6 +57,22 @@ export interface DeviceInfo {
   updatedAt: string;
 }
 
+export interface UserProfile {
+  id: string;
+  userId?: string;
+  first_name?: string;
+  last_name?: string;
+  email_address?: string;
+  userType?: string;
+  role?: string;
+  organizationId?: string | null;
+  organizationName?: string;      // ✅ added
+  isProfileComplete?: boolean;    // ✅ added
+  level?: string;                 // ✅ added
+  adminRole?: string;             // ✅ added
+  updatedAt: string;
+}
+
 export interface SessionState {
   id: string;
   isAuthenticated: boolean;
@@ -136,18 +152,11 @@ const CURRENT_OTP_SESSION_ID = "current";
 
 // ==================== User Profile Functions ====================
 export async function saveUserProfile(
-  profile: Partial<
-    Pick<
-      UserProfile,
-      | "userId"
-      | "first_name"
-      | "last_name"
-      | "email_address"
-      | "userType"
-      | "role"
-      | "organizationId"
-    >
-  >,
+  profile: Partial<Pick<UserProfile,
+    "userId" | "first_name" | "last_name" | "email_address" |
+    "userType" | "role" | "organizationId" | "organizationName" |
+    "isProfileComplete" | "level" | "adminRole"
+  >>,
 ): Promise<void> {
   const existing = await db.userProfile.get(CURRENT_PROFILE_ID);
   await db.userProfile.put({
@@ -156,12 +165,13 @@ export async function saveUserProfile(
     first_name: existing?.first_name || profile.first_name,
     last_name: existing?.last_name || profile.last_name,
     email_address: existing?.email_address || profile.email_address,
-    userType: existing?.userType || profile.userType,
-    role: existing?.role || profile.role,
-    organizationId:
-      existing?.organizationId !== undefined
-        ? existing.organizationId
-        : profile.organizationId,
+    userType: profile.userType ?? existing?.userType,
+    role: profile.role ?? existing?.role,
+    organizationId: profile.organizationId !== undefined ? profile.organizationId : existing?.organizationId,
+    organizationName: profile.organizationName ?? existing?.organizationName,
+    isProfileComplete: profile.isProfileComplete !== undefined ? profile.isProfileComplete : existing?.isProfileComplete,
+    level: profile.level ?? existing?.level,
+    adminRole: profile.adminRole ?? existing?.adminRole,
     updatedAt: new Date().toISOString(),
   });
 }
