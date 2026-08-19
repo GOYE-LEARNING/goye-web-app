@@ -1,13 +1,14 @@
-// app/hooks/useLogin.ts - FIXED (NO X-Device-Id header)
+// app/hooks/useLogin.ts
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  saveUserProfile, 
-  updateSessionState, 
+import {
+  saveUserProfile,
+  updateSessionState,
   broadcastLogin,
-  getOrCreateDeviceId 
+  getOrCreateDeviceId,
+   saveAuthTokens,
 } from "@/app/utils/database/db";
 import { useAuthContext } from "../context/AuthContext";
 
@@ -27,19 +28,20 @@ export function useLogin() {
     setError(null);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL ||
+        "https://goye-platform-backend.onrender.com";
       const deviceId = await getOrCreateDeviceId();
 
-      // ✅ REMOVED X-Device-Id header - send ONLY in body
       const response = await fetch(`${API_URL}/api/user/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // ❌ REMOVED: "X-Device-Id": deviceId
+          "X-Device-Id": deviceId,
         },
         body: JSON.stringify({
           ...credentials,
-          deviceId: deviceId // ✅ Send in body
+          deviceId: deviceId,
         }),
         credentials: "include",
       });
@@ -57,6 +59,13 @@ export function useLogin() {
         }
       }
 
+      if (responseData.accessToken || responseData.refreshToken) {
+  await saveAuthTokens({
+    accessToken: responseData.accessToken,
+    refreshToken: responseData.refreshToken,
+  });
+}
+
       // Process user data
       let userProfileData: any = null;
 
@@ -64,12 +73,13 @@ export function useLogin() {
         const userData = responseData.user;
         userProfileData = {
           userId: userData.id,
-          first_name: userData.first_name || "",
-          last_name: userData.last_name || "",
-          email_address: userData.email_address || userData.email || "",
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          email_address: userData.email_address || userData.email,
           userType: userData.type || userData.userType || "user",
           role: userData.role || "student",
-          organizationId: userData.organizationId || userData.organization_id || null,
+          organizationId:
+            userData.organizationId || userData.organization_id || null,
         };
 
         // Save to Dexie
@@ -91,21 +101,20 @@ export function useLogin() {
           user: userData,
         });
 
-        // Store non-sensitive data in localStorage
+        // Store non-sensitive data
         localStorage.setItem("type", userData.type || "user");
         localStorage.setItem("role", userData.role || "student");
         if (userData.organizationId) {
           localStorage.setItem("organization_id", userData.organizationId);
         }
-
       } else if (responseData.organization) {
         // Organization login
         const orgData = responseData.organization;
         userProfileData = {
           userId: orgData.id || orgData.userId,
-          first_name: orgData.organization_name || "",
+          first_name: orgData.organization_name,
           last_name: "",
-          email_address: orgData.organization_email || "",
+          email_address: orgData.organization_email,
           userType: "organization",
           role: orgData.organization_role || "admin",
           organizationId: orgData.id,
@@ -129,7 +138,7 @@ export function useLogin() {
 
         localStorage.setItem("type", "organization");
         localStorage.setItem("organization_id", orgData.id);
-        localStorage.setItem("organization_name", orgData.organization_name || "");
+        localStorage.setItem("organization_name", orgData.organization_name);
       }
 
       // Redirect based on user type
@@ -149,7 +158,6 @@ export function useLogin() {
       }
 
       return { success: true, data: responseData };
-
     } catch (error: any) {
       setError(error.message || "An error occurred during login");
       return { success: false, error: error.message };

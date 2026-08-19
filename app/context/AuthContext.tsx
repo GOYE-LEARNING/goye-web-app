@@ -1,9 +1,16 @@
-// src/context/AuthContext.tsx - FIXED WITH PROPER DEBOUNCING
+// src/context/AuthContext.tsx - WITH LOGIN FUNCTION
 "use client";
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
-import { getUserProfile, clearUserProfile } from "@/app/utils/database/db";
+import { 
+  getUserProfile, 
+  clearUserProfile, 
+  saveUserProfile,
+  getSessionState,
+  updateSessionState,
+  clearAllData
+} from "@/app/utils/database/db";
 
 interface Props {
   children: React.ReactNode;
@@ -42,6 +49,7 @@ export interface AuthContextType {
   };
 }
 
+// Add login to the AuthState interface
 interface AuthState {
   authStatus: AuthContextType;
   setAuthStatus: React.Dispatch<React.SetStateAction<AuthContextType>>;
@@ -50,24 +58,20 @@ interface AuthState {
   checkAuth: () => Promise<boolean>;
   refreshToken: () => Promise<boolean>;
   logout: () => Promise<void>;
+  getDeviceId: () => Promise<string>;
+  login: (userData: any, orgData?: any) => Promise<boolean>; // Add this
 }
 
 const AuthContext = React.createContext<AuthState | undefined>(undefined);
 
-// Falls back to the known production backend so a missing/misconfigured
-// NEXT_PUBLIC_API_URL doesn't silently turn every fetch(`${API_URL}/...`)
-// call into a relative path resolved against this app's own origin (which
-// has no matching route and 404s with an HTML error page instead of JSON).
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://goye-platform-backend.onrender.com";
-if (!process.env.NEXT_PUBLIC_API_URL && typeof window !== "undefined") {
-  console.error(
-    "⚠️ NEXT_PUBLIC_API_URL is not set — falling back to the production backend URL. " +
-    "Set it in your deployment's environment variables and redeploy.",
-  );
-}
+
+// Define public routes
+const PUBLIC_ROUTES = ['/login', '/signup', '/auth', '/', '/about', '/contact', '/forgot-password'];
 
 export default function AuthProvider({ children }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [authStatus, setAuthStatus] = React.useState<AuthContextType>({
     isExistingUser: false,
     isProfileComplete: false,
@@ -77,221 +81,91 @@ export default function AuthProvider({ children }: Props) {
     organization: undefined,
   });
   
+  const isInitializedRef = React.useRef(false);
   const isCheckingRef = React.useRef(false);
-  const checkTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  const lastCheckTimeRef = React.useRef<number>(0);
-  const checkCountRef = React.useRef<number>(0);
 
-  // Refresh the access token
-  const refreshToken = React.useCallback(async (): Promise<boolean> => {
-    try {
-      console.log("🔄 Attempting to refresh token...");
-      const response = await fetch(`${API_URL}/api/verify/refresh-token`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      console.log("Refresh token response status:", response.status);
-      
-      if (response.status === 429) {
-        console.warn("⚠️ Rate limited on token refresh");
-        dispatchAPIError({
-          status: 429,
-          message: "Too many requests, please slow down and try again later.",
-          retryAfter: 5,
-          endpoint: "/api/verify/refresh-token"
-        });
-        return false;
-      }
-      
-      if (response.ok) {
-        console.log("✅ Token refresh successful");
-        return true;
-      }
-      console.log("❌ Token refresh failed with status:", response.status);
-      return false;
-    } catch (error) {
-      console.error("Token refresh failed:", error);
-      return false;
-    }
+  // Check if current route is public
+  const isPublicRoute = React.useCallback(() => {
+    if (!pathname) return true;
+    return PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+  }, [pathname]);
+
+  const getDeviceId = React.useCallback(async (): Promise<string> => {
+    const { getOrCreateDeviceId } = await import("@/app/utils/database/db");
+    return await getOrCreateDeviceId();
   }, []);
 
-  // Determine user type so checkAuth knows which profile endpoint to call.
-  //
-  // Reads localStorage directly rather than trusting authStatus.user: every
-  // call site (loading page, every dashboard layout) calls updateAuthStatus()
-  // and then immediately awaits checkAuth() in the same synchronous block.
-  // setAuthStatus is async, so the already-memoized checkAuth closure still
-  // sees the *previous* render's authStatus (user: undefined) — not what
-  // updateAuthStatus just set. That silently sent every non-admin,
-  // non-plain-student/tutor account (organization owners, invited members)
-  // through the 'individual' default below, hitting /api/user/profile and
-  // getting a 400 back. localStorage is written synchronously at login,
-  // before checkAuth is ever called, so it isn't subject to that race.
-  //
-  // "type" is the frontend's own normalized classifier, written identically
-  // by every login path (see login.tsx / useGoogleSignupButton.tsx) to
-  // exactly one of "admin" | "organization" | "invited_user" | "user" — a
-  // more reliable signal than exact-matching backend role/userType strings,
-  // which vary and may not even be present yet.
-  const getUserType = React.useCallback(() => {
-    const type = (localStorage.getItem('type') || authStatus?.user?.type || '').toLowerCase();
-    const role = localStorage.getItem('role') || authStatus?.user?.role;
-    const userType = authStatus?.user?.userType;
+  // Refresh token
+ const refreshToken = React.useCallback(async (): Promise<boolean> => {
+  if (isPublicRoute()) return false;
 
-    if (type === 'admin' || role === 'goye_admin') {
-      return 'admin';
-    }
-
-    if (
-      type === 'organization' ||
-      type === 'invited_user' ||
-      userType === 'INVITED_MEMBER' ||
-      userType === 'ORGANIZATION_OWNER' ||
-      role === 'org_admin'
-    ) {
-      return 'organization';
-    }
-
-    if (type === 'user' || role === 'student' || role === 'tutor' || userType === 'INDIVIDUAL') {
-      return 'individual';
-    }
-
-    // Default to individual (student/tutor) when nothing is known yet.
-    return 'individual';
-  }, [authStatus]);
-
-  // Check authentication status - with proper debouncing and rate limiting
-  const checkAuth = React.useCallback(async (): Promise<boolean> => {
-    // Clear any pending check
-    if (checkTimeoutRef.current) {
-      clearTimeout(checkTimeoutRef.current);
-      checkTimeoutRef.current = null;
-    }
-
-    // Prevent multiple concurrent checks
-    if (isCheckingRef.current) {
-      console.log("Auth check already in progress, skipping...");
-      return authStatus.isExistingUser;
-    }
+  try {
+    console.log("🔄 Attempting to refresh token...");
     
-    // Rate limit: Only allow check every 5 seconds
-    const now = Date.now();
-    if (now - lastCheckTimeRef.current < 5000) {
-      console.log(`⏳ Rate limiting auth check. Last check was ${(now - lastCheckTimeRef.current) / 1000}s ago`);
-      return authStatus.isExistingUser;
-    }
-    
-    // Increment check counter
-    checkCountRef.current += 1;
-    console.log(`🔍 Auth check #${checkCountRef.current} starting...`);
-    
-    isCheckingRef.current = true;
-    lastCheckTimeRef.current = now;
-    setAuthStatus(prev => ({ ...prev, isLoading: true }));
-    
-    try {
-      const userType = getUserType();
+    const { getOrCreateDeviceId, getAuthTokens, saveAuthTokens } = await import("@/app/utils/database/db");
+    const deviceId = await getOrCreateDeviceId();
+    const tokens = await getAuthTokens();
 
-      // Platform admins have no profile-fetch endpoint of their own (see
-      // getUserType above) — every real API call still enforces auth via
-      // the httpOnly session cookie server-side regardless of this local
-      // status, so we trust the identity already captured at login rather
-      // than calling an endpoint built for a different role.
-      if (userType === 'admin') {
-        console.log("🛡️ Platform admin - skipping profile fetch, trusting session cookie");
-        const profile = await getUserProfile();
-        setAuthStatus({
-          isExistingUser: true,
-          isProfileComplete: true,
-          requiresProfileCompletion: false,
-          isLoading: false,
-          user: {
-            first_name: profile?.first_name || '',
-            last_name: profile?.last_name || '',
-            role: localStorage.getItem('role') || 'goye_admin',
-          } as any,
-          organization: undefined,
-        });
-        isCheckingRef.current = false;
-        return true;
+    const response = await fetch(`${API_URL}/api/verify/refresh-token`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Id': deviceId,
+        ...(tokens?.refreshToken && { 'x-refresh-token': tokens.refreshToken }),
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      
+      // ✅ Save the freshly rotated accessToken
+      if (data.accessToken) {
+        await saveAuthTokens({ accessToken: data.accessToken });
       }
 
-      // Students and Tutors use /api/user/profile
-      if (userType === 'individual') {
-        console.log("📡 Individual user (student/tutor) - Using /api/user/profile");
-        const response = await fetch(`${API_URL}/api/user/profile`, {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-          }
-        });
-        
-        console.log("📡 /api/user/profile response status:", response.status);
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log("✅ Auth check successful via /api/user/profile");
-          
-          setAuthStatus({
-            isExistingUser: true,
-            isProfileComplete: data.user?.isProfileComplete || false,
-            requiresProfileCompletion: !data.user?.isProfileComplete,
-            isLoading: false,
-            user: data.user || undefined,
-            organization: undefined,
-          });
-          isCheckingRef.current = false;
-          return true;
-        }
-        
-        if (response.status === 429) {
-          console.warn("⚠️ Rate limited on auth check");
-          dispatchAPIError({
-            status: 429,
-            message: "Too many requests, please slow down and try again later.",
-            retryAfter: 5,
-            endpoint: "/api/user/profile"
-          });
-          setAuthStatus(prev => ({ ...prev, isLoading: false }));
-          isCheckingRef.current = false;
-          return authStatus.isExistingUser;
-        }
-        
-        if (response.status === 401) {
-          console.log("⚠️ Unauthorized, attempting refresh...");
-          const refreshed = await refreshToken();
-          
-          if (refreshed) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            const retryResponse = await fetch(`${API_URL}/api/user/profile`, {
-              credentials: 'include',
-            });
-            
-            if (retryResponse.ok) {
-              const retryData = await retryResponse.json();
-              console.log("✅ Auth check successful after refresh");
-              
-              setAuthStatus({
-                isExistingUser: true,
-                isProfileComplete: retryData.user?.isProfileComplete || false,
-                requiresProfileCompletion: !retryData.user?.isProfileComplete,
-                isLoading: false,
-                user: retryData.user || undefined,
-                organization: undefined,
-              });
-              isCheckingRef.current = false;
-              return true;
-            }
-          }
-        }
-        
-        console.log("❌ Auth check failed");
+      console.log("✅ Token refresh successful");
+      await updateSessionState({
+        isAuthenticated: true,
+        lastActivity: new Date().toISOString(),
+      });
+      return true;
+    }
+    console.log("❌ Token refresh failed with status:", response.status);
+    return false;
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+    return false;
+  }
+}, [isPublicRoute]);
+
+  const getUserType = React.useCallback(() => {
+    const type = localStorage.getItem('type') || '';
+    const role = localStorage.getItem('role') || '';
+    
+    if (type === 'admin' || role === 'goye_admin') return 'admin';
+    if (type === 'organization' || type === 'invited_user' || role === 'org_admin') return 'organization';
+    return 'individual';
+  }, []);
+
+  // Check authentication - only on protected routes
+  const checkAuth = React.useCallback(async (): Promise<boolean> => {
+    // CRITICAL: Skip completely on public routes
+    if (isPublicRoute()) {
+      setAuthStatus(prev => ({ ...prev, isLoading: false }));
+      return false;
+    }
+
+    if (isCheckingRef.current) {
+      return authStatus.isExistingUser;
+    }
+
+    isCheckingRef.current = true;
+    setAuthStatus(prev => ({ ...prev, isLoading: true }));
+
+    try {
+      const session = await getSessionState();
+      if (!session?.isAuthenticated) {
         setAuthStatus({
           isExistingUser: false,
           isProfileComplete: false,
@@ -301,80 +175,103 @@ export default function AuthProvider({ children }: Props) {
           organization: undefined,
         });
         isCheckingRef.current = false;
+        if (!isPublicRoute()) {
+          router.push('/login');
+        }
         return false;
       }
-      
-      // Invited Users and Organization Admins use /api/organizations/profile
-      console.log("🏢 Organization user (invited/org_admin) - Using /api/organizations/profile");
-      const response = await fetch(`${API_URL}/api/organizations/profile`, {
-        credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        }
-      });
-      
-      console.log("📡 /api/organizations/profile response status:", response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log("✅ Auth check successful via /api/organizations/profile");
-        
+
+      const userType = getUserType();
+
+      // Admin
+      if (userType === 'admin') {
+        const profile = await getUserProfile();
         setAuthStatus({
           isExistingUser: true,
           isProfileComplete: true,
           requiresProfileCompletion: false,
           isLoading: false,
-          user: data.organization?.user || undefined,
-          organization: data.organization || undefined,
+          user: {
+            id: profile?.userId || '',
+            first_name: profile?.first_name || '',
+            last_name: profile?.last_name || '',
+            email_address: profile?.email_address || '',
+            role: localStorage.getItem('role') || 'goye_admin',
+            type: 'admin',
+          } as any,
         });
         isCheckingRef.current = false;
         return true;
       }
-      
-      if (response.status === 429) {
-        console.warn("⚠️ Rate limited on auth check");
-        dispatchAPIError({
-          status: 429,
-          message: "Too many requests, please slow down and try again later.",
-          retryAfter: 5,
-          endpoint: "/api/organizations/profile"
+
+      // Individual
+      if (userType === 'individual') {
+        const response = await fetch(`${API_URL}/api/user/profile`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
         });
-        setAuthStatus(prev => ({ ...prev, isLoading: false }));
-        isCheckingRef.current = false;
-        return authStatus.isExistingUser;
-      }
-      
-      if (response.status === 401) {
-        console.log("⚠️ Unauthorized, attempting refresh...");
-        const refreshed = await refreshToken();
-        
-        if (refreshed) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+
+        if (response.ok) {
+          const data = await response.json();
+          const userData = data.user;
           
-          const retryResponse = await fetch(`${API_URL}/api/organizations/profile`, {
-            credentials: 'include',
+          await saveUserProfile({
+            userId: userData?.id,
+            first_name: userData?.first_name,
+            last_name: userData?.last_name,
+            email_address: userData?.email_address,
+            userType: 'user',
+            role: userData?.role || 'student',
           });
-          
-          if (retryResponse.ok) {
-            const retryData = await retryResponse.json();
-            console.log("✅ Auth check successful after refresh");
-            
-            setAuthStatus({
-              isExistingUser: true,
-              isProfileComplete: true,
-              requiresProfileCompletion: false,
-              isLoading: false,
-              user: retryData.organization?.user || undefined,
-              organization: retryData.organization || undefined,
-            });
-            isCheckingRef.current = false;
-            return true;
-          }
+
+          setAuthStatus({
+            isExistingUser: true,
+            isProfileComplete: userData?.isProfileComplete || false,
+            requiresProfileCompletion: !userData?.isProfileComplete,
+            isLoading: false,
+            user: userData,
+          });
+          isCheckingRef.current = false;
+          return true;
         }
       }
-      
-      console.log("❌ Auth check failed with status:", response.status);
+
+      // Organization
+      if (userType === 'organization') {
+        const response = await fetch(`${API_URL}/api/organizations/profile`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const orgData = data.organization;
+          
+          await saveUserProfile({
+            userId: orgData?.user?.id,
+            first_name: orgData?.organization_name,
+            last_name: '',
+            email_address: orgData?.organization_email,
+            userType: 'organization',
+            role: orgData?.organization_role || 'admin',
+            organizationId: orgData?.id,
+          });
+
+          setAuthStatus({
+            isExistingUser: true,
+            isProfileComplete: true,
+            requiresProfileCompletion: false,
+            isLoading: false,
+            user: orgData?.user,
+            organization: orgData,
+          });
+          isCheckingRef.current = false;
+          return true;
+        }
+      }
+
+      // Auth failed
+      await clearAllData();
       setAuthStatus({
         isExistingUser: false,
         isProfileComplete: false,
@@ -384,52 +281,101 @@ export default function AuthProvider({ children }: Props) {
         organization: undefined,
       });
       isCheckingRef.current = false;
+      if (!isPublicRoute()) {
+        router.push('/login');
+      }
       return false;
-      
+
     } catch (error) {
       console.error("Auth check error:", error);
       setAuthStatus(prev => ({ ...prev, isLoading: false }));
       isCheckingRef.current = false;
-      return authStatus.isExistingUser;
+      return false;
     }
-  }, [refreshToken, authStatus.isExistingUser, getUserType]);
+  }, [isPublicRoute, getUserType, router, authStatus.isExistingUser]);
 
-  // Debounced version of checkAuth - with longer delay
-  const debouncedCheckAuth = React.useCallback(() => {
-    // Clear any pending check
-    if (checkTimeoutRef.current) {
-      clearTimeout(checkTimeoutRef.current);
-      checkTimeoutRef.current = null;
+  // Login function - called from login component
+  const login = React.useCallback(async (userData: any, orgData?: any): Promise<boolean> => {
+    try {
+      console.log("🔐 Login function called with:", { userData, orgData });
+      
+      if (userData) {
+        await saveUserProfile({
+          userId: userData.id,
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          email_address: userData.email_address || userData.email || '',
+          userType: userData.type || userData.userType || 'user',
+          role: userData.role || 'student',
+          organizationId: userData.organizationId || null,
+        });
+      } else if (orgData) {
+        await saveUserProfile({
+          userId: orgData.userId || orgData.id,
+          first_name: orgData.organization_name || '',
+          last_name: '',
+          email_address: orgData.organization_email || '',
+          userType: 'organization',
+          role: orgData.organization_role || 'admin',
+          organizationId: orgData.id,
+        });
+      }
+
+      await updateSessionState({
+        isAuthenticated: true,
+        lastActivity: new Date().toISOString(),
+      });
+
+      setAuthStatus({
+        isExistingUser: true,
+        isProfileComplete: userData?.isProfileComplete !== undefined ? userData.isProfileComplete : true,
+        requiresProfileCompletion: userData?.isProfileComplete === false,
+        isLoading: false,
+        user: userData,
+        organization: orgData,
+      });
+
+      console.log("✅ Login successful, auth status updated");
+      return true;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
     }
-    
-    // Check if we already have user data
-    if (authStatus.isExistingUser && authStatus.user) {
-      console.log("✅ Already have auth data, skipping check");
+  }, []);
+
+  // Initialize - ONLY runs on protected routes
+  React.useEffect(() => {
+    // Skip entirely on public routes
+    if (isPublicRoute()) {
+      setAuthStatus(prev => ({ ...prev, isLoading: false }));
       return;
     }
-    
-    // Check if we recently checked
-    const now = Date.now();
-    if (now - lastCheckTimeRef.current < 3000) {
-      console.log(`⏳ Skipping check, last check was ${(now - lastCheckTimeRef.current) / 1000}s ago`);
-      return;
-    }
-    
-    console.log("⏰ Scheduling auth check...");
-    checkTimeoutRef.current = setTimeout(() => {
+
+    // Only initialize once
+    if (isInitializedRef.current) return;
+    isInitializedRef.current = true;
+
+    // Check auth after a small delay
+    const timer = setTimeout(() => {
       checkAuth();
-      checkTimeoutRef.current = null;
-    }, 500); // 500ms delay
-  }, [checkAuth, authStatus.isExistingUser, authStatus.user]);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [isPublicRoute, checkAuth]);
 
   const logout = React.useCallback(async (): Promise<void> => {
     try {
       await fetch(`${API_URL}/api/user/logout`, {
         method: "POST",
         credentials: "include",
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      await clearUserProfile();
+      await clearAllData();
+      localStorage.removeItem('type');
+      localStorage.removeItem('role');
+      localStorage.removeItem('organization_id');
+      localStorage.removeItem('organization_name');
 
       setAuthStatus({
         isExistingUser: false,
@@ -440,14 +386,15 @@ export default function AuthProvider({ children }: Props) {
         organization: undefined,
       });
       
-      router.push("/auth");
+      router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
+      await clearAllData();
+      router.push("/login");
     }
   }, [router]);
 
   const updateAuthStatus = React.useCallback((status: Partial<AuthContextType>) => {
-    console.log("📝 Updating auth status:", status);
     setAuthStatus((prev) => ({ ...prev, ...status, isLoading: false }));
   }, []);
 
@@ -462,31 +409,21 @@ export default function AuthProvider({ children }: Props) {
     });
   }, []);
 
-  // Check auth once on mount with debounce - only once
-  React.useEffect(() => {
-    // Only check if we don't have auth data
-    if (!authStatus.isExistingUser && !authStatus.user) {
-      debouncedCheckAuth();
-    }
-    
-    return () => {
-      if (checkTimeoutRef.current) {
-        clearTimeout(checkTimeoutRef.current);
-        checkTimeoutRef.current = null;
-      }
-    };
-  }, []); // Empty dependency array - ONLY RUNS ONCE
+  // Provide login in the context
+  const contextValue: AuthState = {
+    authStatus,
+    setAuthStatus,
+    updateAuthStatus,
+    clearAuth,
+    checkAuth,
+    refreshToken,
+    logout,
+    getDeviceId,
+    login,
+  };
 
   return (
-    <AuthContext.Provider value={{ 
-      authStatus, 
-      setAuthStatus, 
-      updateAuthStatus, 
-      clearAuth,
-      checkAuth,
-      refreshToken,
-      logout
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

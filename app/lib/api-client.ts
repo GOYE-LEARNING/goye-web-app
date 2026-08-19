@@ -2,7 +2,7 @@
 "use client";
 
 import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
-
+import { getOrCreateDeviceId } from "@/app/utils/database/db";
 interface QueuedRequest {
   resolve: (value: any) => void;
   reject: (reason?: any) => void;
@@ -40,40 +40,44 @@ class APIClient {
   }
 
   private async refreshToken(): Promise<boolean> {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/verify/refresh-token`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Refresh token failed");
-      }
-
-      const data = await response.json();
-      return data.success === true;
-    } catch (error) {
-      console.error("Token refresh failed:", error);
-      return false;
-    }
-  }
-
-  private async executeRequest(url: string, options: RequestInit, retryCount = 0): Promise<any> {
-    try {
-      const response = await fetch(url, {
-        ...options,
+  try {
+    const deviceId = await getOrCreateDeviceId();
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/verify/refresh-token`,
+      {
+        method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...options.headers,
+          "X-Device-Id": deviceId,
         },
-      });
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Refresh token failed");
+    }
+
+    const data = await response.json();
+    return data.success === true;
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+    return false;
+  }
+}
+
+  private async executeRequest(url: string, options: RequestInit, retryCount = 0): Promise<any> {
+    try {
+        const deviceId = await getOrCreateDeviceId();
+    const response = await fetch(url, {
+      ...options,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Device-Id": deviceId,
+        ...options.headers,
+      },
+    });
 
       // Handle 401 - Unauthorized (token expired)
       if (response.status === 401 && retryCount < this.MAX_RETRY) {

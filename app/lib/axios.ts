@@ -1,5 +1,6 @@
 // src/lib/axios.ts
 import axios from "axios";
+import { getOrCreateDeviceId } from "@/app/utils/database/db";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -9,6 +10,14 @@ const axiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+// ✅ Request interceptor — attaches X-Device-Id to every outgoing request
+axiosInstance.interceptors.request.use(async (config) => {
+  const deviceId = await getOrCreateDeviceId();
+  config.headers = config.headers || {};
+  config.headers["X-Device-Id"] = deviceId;
+  return config;
 });
 
 let isRefreshing = false;
@@ -26,9 +35,7 @@ const processQueue = (error: any = null) => {
 };
 
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
@@ -37,22 +44,22 @@ axiosInstance.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then(() => {
-            return axiosInstance(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
+          .then(() => axiosInstance(originalRequest))
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
+        const deviceId = await getOrCreateDeviceId();
         const refreshResponse = await axios.post(
           `${API_URL}/api/verify/refresh-token`,
           {},
-          { withCredentials: true }
+          {
+            withCredentials: true,
+            headers: { "X-Device-Id": deviceId },
+          }
         );
 
         if (refreshResponse.data.success) {
@@ -60,13 +67,11 @@ axiosInstance.interceptors.response.use(
           return axiosInstance(originalRequest);
         } else {
           processQueue(new Error("Refresh token failed"));
-          // Redirect to auth page
           window.location.href = "/auth?session=expired";
           return Promise.reject(error);
         }
       } catch (refreshError) {
         processQueue(refreshError);
-        // Redirect to auth page
         window.location.href = "/auth?session=expired";
         return Promise.reject(refreshError);
       } finally {

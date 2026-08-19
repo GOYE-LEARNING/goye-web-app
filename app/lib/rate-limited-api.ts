@@ -2,7 +2,7 @@
 "use client";
 
 import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
-
+import { getOrCreateDeviceId } from "@/app/utils/database/db";
 class RateLimitedAPI {
   private static instance: RateLimitedAPI;
   private requestLogs: Map<string, number[]> = new Map();
@@ -136,15 +136,37 @@ class RateLimitedAPI {
   }
 
   private async executeRequest(url: string, options: RequestInit, endpointKey: string, retryCount: number): Promise<any> {
-    try {
-      const response = await fetch(url, {
-        ...options,
+  try {
+    const deviceId = await getOrCreateDeviceId();
+    const response = await fetch(url, {
+      ...options,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Device-Id": deviceId,
+        ...options.headers,
+      },
+    });
+
+       if (response.status === 401 && retryCount < 3) {
+      const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/verify/refresh-token`, {
+        method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...options.headers,
+          "X-Device-Id": deviceId,
         },
       });
+
+      if (refreshResponse.ok) {
+        return this.executeRequest(url, options, endpointKey, retryCount + 1);
+      } else {
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth')) {
+          window.location.href = '/auth';
+        }
+        throw { status: 401, message: "Session expired" };
+      }
+    }
 
       if (response.status === 429) {
         const retryAfter = response.headers.get("retry-after") || "5";
