@@ -8,7 +8,7 @@ import { LuUser } from "react-icons/lu";
 import { FaAngleDoubleUp } from "react-icons/fa";
 import { MdCheckCircle, MdPlayCircleFilled } from "react-icons/md";
 import { HiOutlineClock } from "react-icons/hi";
-import logo from "@/public/images/logo.png";
+import logo from "@/public/images/goye_final_logo.png";
 import Loader from "./loader";
 
 interface Course {
