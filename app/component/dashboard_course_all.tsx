@@ -26,29 +26,29 @@ export default function DashboardCourseAllProvider({
   const pathname = usePathname();
 
   // ✅ Check if we're in an organization route
-  const isOrganizationRoute = pathname?.includes('/organization/');
+  const isOrganizationRoute = pathname?.includes("/organization/");
 
   // Fetch all courses - uses different endpoint based on route
   const fetchCourses = async () => {
     try {
       setInitialLoading(true);
-      
+
       // ✅ Use organization-specific endpoint if in organization route
       const endpoint = isOrganizationRoute
         ? `${API_URL}/api/organizations/get-courses-by-organization`
         : `${API_URL}/api/course/get-all-courses-level`;
-      
+
       console.log(`📡 Fetching courses from: ${endpoint}`);
-      
+
       const res = await fetch(endpoint, {
         method: "GET",
         credentials: "include",
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) throw new Error(data.message || "Failed to fetch courses");
-      
+      console.log("CHECK THE COURSES AND THEIR RETURNED VALUES ", data);
       // ✅ Handle different response structures
       let courses = [];
       if (isOrganizationRoute) {
@@ -60,7 +60,7 @@ export default function DashboardCourseAllProvider({
         courses = data.data?.getAllCourses || [];
         console.log(`🌐 Global courses found: ${courses.length}`);
       }
-      
+
       setCourseDetails(courses);
     } catch (error) {
       console.error("Error fetching courses:", error);
@@ -79,12 +79,12 @@ export default function DashboardCourseAllProvider({
       });
       const data = await res.json();
       if (!res.ok) throw new Error("Failed to fetch saved courses");
-      
+
       const savedItems = data.data || [];
       const savedIds = savedItems
         .filter((item: any) => item.courses !== null)
         .map((item: any) => item.courses.id);
-      
+
       setBookmarkedIds(savedIds);
     } catch (error) {
       console.error("Could not load saved courses", error);
@@ -109,10 +109,10 @@ export default function DashboardCourseAllProvider({
 
   const toggleBookmark = async (id: string) => {
     if (isToggling === id) return;
-    
+
     setIsToggling(id);
     const isCurrentlySaved = bookmarkedIds.includes(id);
-    
+
     try {
       const endpoint = isCurrentlySaved
         ? `${API_URL}/api/course/unsave-course/${id}`
@@ -123,20 +123,31 @@ export default function DashboardCourseAllProvider({
         method,
         credentials: "include",
       });
-      
+
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || `Failed to ${isCurrentlySaved ? "unsave" : "save"} course`);
+        throw new Error(
+          errorData.message ||
+            `Failed to ${isCurrentlySaved ? "unsave" : "save"} course`,
+        );
       }
 
       setBookmarkedIds((prev) =>
-        isCurrentlySaved ? prev.filter((i) => i !== id) : [...prev, id]
+        isCurrentlySaved ? prev.filter((i) => i !== id) : [...prev, id],
       );
-      
-      showModal("Success", isCurrentlySaved ? "Course removed from saved" : "Course saved", "success");
+
+      showModal(
+        "Success",
+        isCurrentlySaved ? "Course removed from saved" : "Course saved",
+        "success",
+      );
     } catch (error) {
       console.error(error);
-      showModal("Error", `Could not ${isCurrentlySaved ? "unsave" : "save"} course`, "error");
+      showModal(
+        "Error",
+        `Could not ${isCurrentlySaved ? "unsave" : "save"} course`,
+        "error",
+      );
       await fetchSavedCourseIds();
     } finally {
       setIsToggling(null);
@@ -156,7 +167,7 @@ export default function DashboardCourseAllProvider({
   const filteredCourses = courseDetails.filter(
     (course) =>
       course.course_title?.toLowerCase().includes(search.toLowerCase()) ||
-      course.course_description?.toLowerCase().includes(search.toLowerCase())
+      course.course_description?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -167,7 +178,11 @@ export default function DashboardCourseAllProvider({
       onViewCourse={handleViewCourse}
       loadingCourseId={loadingCourseId}
       isLoading={initialLoading || isRefreshing}
-      emptyMessage={isOrganizationRoute ? "No courses found in this organization" : "No Course Found"}
+      emptyMessage={
+        isOrganizationRoute
+          ? "No courses found in this organization"
+          : "No Course Found"
+      }
       isToggling={isToggling}
     />
   );

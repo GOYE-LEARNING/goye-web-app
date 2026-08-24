@@ -386,6 +386,8 @@ export default function DashboardEditProfile({
       if (!res.ok) {
         throw new Error(data.message || "Failed to update profile");
       }
+      
+      console.log(res)
 
       if (isInvitedUser) {
         if (onProfileUpdate) {
@@ -1137,7 +1139,7 @@ export default function DashboardEditProfile({
     if (!formData.Club) return null;
     return (
       <div className="w-full mb-6">
-        <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
+        <h2 className="text-[16px] font-semibold dark:text-white mb-4">
           Club Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1148,8 +1150,7 @@ export default function DashboardEditProfile({
             <input
               type="text"
               value={formData.Club.club_name || "N/A"}
-              disabled
-              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
+              className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none "
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
@@ -1250,8 +1251,8 @@ export default function DashboardEditProfile({
   };
 
   return (
-    <>
-      <div>
+    <div className="w-full">
+      <div className="w-full">
         <SubHeader header="Edit Profile" backFunction={backFunc} />
         <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] w-full my-5">
           <div className="w-full flex justify-center items-center overflow-hidden">
@@ -1924,7 +1925,7 @@ export default function DashboardEditProfile({
                               name={form.name}
                               onChange={form.onchange}
                               value={(formData.Club as any)?.[form.name] || ""}
-                              className="text-lightBoldText-0 dark:text-white/80 text-[16px] font-[500] outline-none border-none"
+                              className="text-lightBoldText-0 bg-transparent dark:text-white/80 text-[16px] font-[500] outline-none border-none"
                               required
                             />
                           </div>
@@ -1941,7 +1942,7 @@ export default function DashboardEditProfile({
                 <button
                   type="button"
                   onClick={backFunc}
-                  className="form_more bg-[#ffffff] text-lightBoldText-0 dark:text-white border border-[#D9D9D9]"
+                  className="form_more bg-[#ffffff] dark:bg-shadyColor-0 text-lightBoldText-0 dark:text-white border border-[#D9D9D9]/20"
                 >
                   Cancel
                 </button>
@@ -1967,6 +1968,6 @@ export default function DashboardEditProfile({
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

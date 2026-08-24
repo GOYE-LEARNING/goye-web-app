@@ -22,7 +22,7 @@ interface Course {
   organizationName?: string;
   enrollmentStatus: string;
   isEnrolled: boolean;
-  totalEnrollments: number;
+  enrollment: [];
   progress: {
     percentage: number;
     completedLessons: number;
@@ -33,6 +33,14 @@ interface Course {
   };
   totalDuration: number;
   lessonCount: number;
+  module: [
+    {
+      lesson: [{ duration: number }];
+      _count: {
+        lesson: number;
+      };
+    },
+  ];
   moduleCount: number;
   lastAccessed?: string | null;
   completedAt?: string | null;
@@ -88,7 +96,24 @@ export default function CourseCard({
   const statusInfo = getStatusInfo();
   const progressPercentage = course.progress?.percentage || 0;
   const isCompleted = course.progress?.isCompleted || false;
+  const totalLesssons = course.module.reduce((sum, item) => sum += item._count.lesson, 0)
+  const totalDuration = Number(course.module.map((m) =>
+    m.lesson.reduce((sum, item) => (sum += item.duration), 0),
+  ))
 
+  const formatDuration = (duration: number) => {
+    if (duration > 60) {
+      return (
+        <span>
+          {Math.floor(duration / 60)}hr {duration % 60}min
+        </span>
+      );
+    } else if (duration < 60) {
+      return (<span>{duration}min</span>)
+    } else {
+      return <div>0</div>
+    }
+  };
   return (
     <div className="md:bg-white dark:md:bg-secondaryColors-0 md:drop-shadow-sm w-full md:p-[24px] my-5 flex flex-col gap-2 hover:border-2 hover:border-dashed hover:border-primaryColors-0/50 transition-all duration-200 cursor-pointer">
       <div className="flex justify-start items-start w-full gap-3">
@@ -127,7 +152,7 @@ export default function CourseCard({
               {course.course_title}
             </h1>
             <span className="text-[10px] text-[#41415A] bg-[#F1F1F4] dark:bg-gray-700 dark:text-white px-[4px] rounded whitespace-nowrap">
-              {course.totalEnrollments || 0} students
+              {course.enrollment.length || 0} students
             </span>
           </div>
 
@@ -156,7 +181,11 @@ export default function CourseCard({
           <div className="flex items-center gap-4 flex-wrap">
             <span className="flex items-center gap-2 text-primaryColors-0 md:text-[13px] text-[12px]">
               <LuUser className="w-4 h-4" />
-              {course.organizationName || "Unknown"}
+              {course.organizationName ? (
+                <div>{course.organizationName}</div>
+              ) : (
+                <div>{course.createdBy}</div>
+              )}
             </span>
 
             <span className="flex items-center gap-2 text-[#30A46F] text-[13px]">
@@ -166,11 +195,11 @@ export default function CourseCard({
 
             <span className="flex items-center gap-2 text-gray-500 text-[12px]">
               <HiOutlineClock className="w-3 h-3" />
-              {course.totalDuration || 0} min
+              {formatDuration(totalDuration)}
             </span>
 
             <span className="flex items-center gap-2 text-gray-500 text-[12px]">
-              {course.lessonCount || 0} lessons
+              {totalLesssons || 0} lessons
             </span>
           </div>
 

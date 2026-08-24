@@ -15,7 +15,6 @@ import ReviewCourses from "@/app/component/organization_component/ReviewCourses"
 import ManageEvents from "@/app/component/organization_component/ManageEvents";
 import MakeAnnouncementModal from "@/app/component/organization_component/MakeAnnoucementModal";
 
-
 type SubPage = "m-members" | "r-courses" | "m-event" | null;
 
 const pageTransitionVariants = {
@@ -29,38 +28,108 @@ export default function OrgAdminDashboard() {
   const [subPage, setSubPage] = useState<SubPage>(null);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState<boolean>(false);
   const [organizationName, setOrganizationName] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   
   const { organizationId, setOrganizationId } = useOrganizationContext();
   const router = useRouter();
   const params = useParams<{ org_name: string }>();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
-    if (!organizationId) {
-      router.push("../../../auth");
-      return;
-    }
-
-    const fetchOrganization = async () => {
+    const initOrgData = async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/api/organizations/fetch-specific-organization/${params.org_name}`,
-          { method: "GET" }
-        );
-        const data = await res.json();
-        if (data.status === 404) {
-          router.push("../../../notfoundPage");
+        // ✅ Check if we have organizationId from context
+        if (organizationId) {
+          console.log("✅ Organization ID from context:", organizationId);
+          
+          // ✅ Get org name from localStorage or set from URL
+          const storedOrgName = localStorage.getItem('org_name');
+          if (storedOrgName) {
+            setOrganizationName(storedOrgName);
+          } else {
+            setOrganizationName(params.org_name);
+          }
+          
+          setIsLoading(false);
           return;
         }
-        setOrganizationId(data.data.id);
-        setOrganizationName(data.data.organization_name);
+
+        // ✅ Fallback: Try to get from localStorage
+        const storedOrgId = localStorage.getItem('organizationId');
+        const storedOrgName = localStorage.getItem('org_name');
+        
+        if (storedOrgId) {
+          console.log("✅ Using organization ID from localStorage:", storedOrgId);
+          setOrganizationId(storedOrgId);
+          setOrganizationName(storedOrgName || params.org_name);
+          setIsLoading(false);
+          return;
+        }
+
+        // ✅ Last resort: Fetch using org name (should rarely happen)
+        console.log("🔄 Fetching organization by name:", params.org_name);
+        const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        
+        // Get token from cookie
+        const token = getCookie('accessToken');
+        if (!token) {
+          console.error("❌ No access token found");
+          router.push("/auth");
+          return;
+        }
+
+        // ✅ Use the correct endpoint - maybe your backend has a different endpoint
+        const response = await fetch(
+          `${API_URL}/api/organizations/by-name/${encodeURIComponent(params.org_name)}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("✅ Organization fetched by name:", data);
+          
+          const orgData = data.data || data;
+          const orgId = orgData.id || orgData.organizationId;
+          
+          if (orgId) {
+            console.log("✅ Found organization ID:", orgId);
+            setOrganizationId(orgId);
+            localStorage.setItem('organizationId', orgId);
+            setOrganizationName(orgData.organization_name || params.org_name);
+            localStorage.setItem('org_name', orgData.organization_name || params.org_name);
+          } else {
+            router.push("/notfoundPage");
+          }
+        } else {
+          console.error("❌ Failed to fetch organization:", response.status);
+          router.push("/notfoundPage");
+        }
       } catch (error) {
-        console.error("Error fetching organization:", error);
+        console.error("❌ Error fetching organization:", error);
+        router.push("/notfoundPage");
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchOrganization();
-  }, [organizationId, params.org_name]);
+    initOrgData();
+  }, [organizationId, params.org_name, router, setOrganizationId]);
+
+  // ✅ Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-2 text-gray-500">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubPage = (page: SubPage) => {
     setShowDashboard(false);
@@ -98,7 +167,7 @@ export default function OrgAdminDashboard() {
             className="w-full"
           >
             <h1 className="dashboard_h1 line-clamp-1">
-              Welcome Back <span className="capitalize">{organizationName}</span>
+              Welcome Back <span className="capitalize">{organizationName || params.org_name}</span>
             </h1>
 
             <motion.div
@@ -157,4 +226,15 @@ export default function OrgAdminDashboard() {
       />
     </div>
   );
+}
+
+// ✅ Helper to get cookie
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop()?.split(';').shift() || null;
+  }
+  return null;
 }

@@ -328,7 +328,15 @@ export default function DashboardCourseView({ backFunction, courseId }: Props) {
                               Course Progress
                             </p>
                             <p className="text-green-600 dark:text-green-500 text-sm">
-                              {enrollmentProgress.completed_lessons} of {enrollmentProgress.total_lessons} lessons completed
+                              {enrollmentProgress.completed_lessons} of {enrollmentProgress.total_lessons} lessons
+                              {typeof enrollmentProgress.total_quizzes === "number" &&
+                                enrollmentProgress.total_quizzes > 0 && (
+                                  <>
+                                    {" "}• {enrollmentProgress.completed_quizzes} of{" "}
+                                    {enrollmentProgress.total_quizzes} quizzes
+                                  </>
+                                )}
+                              {" "}completed
                             </p>
                           </div>
                         </div>

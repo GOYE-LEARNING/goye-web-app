@@ -175,7 +175,7 @@ export default function DashboardGrowthAchievement() {
       {achievements.slice(0, 5).map((achievement) => (
         <div
           key={achievement.id}
-          className="bg-[#ffffff] dark:bg-secondaryColors-0 flex justify-between items-start p-[16px] rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          className="bg-[#ffffff] dark:bg-secondaryColors-0 flex justify-between items-center p-[16px] rounded-lg shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="flex items-start gap-4">
             <span className="h-[40px] w-[40px] flex-shrink-0 flex justify-center items-center bg-[#2C7FFF0D] dark:bg-[#2C7FFF1A] rounded-full">
@@ -193,8 +193,14 @@ export default function DashboardGrowthAchievement() {
               </p>
             </div>
           </div>
-          <span className="w-[45px] h-[22px] flex-shrink-0 flex justify-center items-center bg-[#30A46F] text-[#ffffff] rounded-[4px] text-[11px] font-semibold">
-            +{achievement.point}
+          <span>
+            {achievement.point == 0 ? (
+              <div><FaTrophy color="gold" size={20}/></div>
+            ) : (
+              <span className="w-[45px] h-[22px] flex-shrink-0 flex justify-center items-center bg-[#30A46F] text-[#ffffff] rounded-[4px] text-[11px] font-semibold">
+                +{achievement.point}
+              </span>
+            )}
           </span>
         </div>
       ))}

@@ -46,6 +46,11 @@ async function doRefresh(API_URL: string, deviceId: string): Promise<boolean> {
   return refreshPromise;
 }
 
+// ✅ Check if URL is a discussion endpoint that should skip deviceId
+function shouldSkipDeviceId(url: string): boolean {
+  return url.includes('/discussion/');
+}
+
 export function setupGlobalFetchInterceptor() {
   if (typeof window === 'undefined' || !originalFetch || installed) return;
   installed = true;
@@ -72,12 +77,24 @@ export function setupGlobalFetchInterceptor() {
         headers.set('x-refresh-token', tokens.refreshToken);
       }
 
+      // ✅ Start with the original options
       const options: RequestInit = {
         ...init,
         credentials: 'include',
         headers,
       };
 
+      // ✅ Check if we should skip deviceId
+      const skipDeviceId = shouldSkipDeviceId(urlString);
+      
+      if (skipDeviceId) {
+        console.log(`🔍 SKIPPED deviceId for: ${urlString}`);
+        // ✅ For discussion endpoints, DO NOT modify the body at all
+        // Just pass through the original body
+        return originalFetch(input, options);
+      }
+
+      // ✅ ONLY for non-discussion endpoints, modify the body
       if (options.body && typeof options.body === 'string') {
         try {
           const body = JSON.parse(options.body);
@@ -85,9 +102,12 @@ export function setupGlobalFetchInterceptor() {
             body.deviceId = deviceId;
             options.body = JSON.stringify(body);
           }
-        } catch (e) {}
+        } catch (e) {
+          // Body isn't valid JSON, leave as is
+        }
       }
 
+      // ✅ Only add deviceId to empty body for non-discussion endpoints
       if (!options.body && ['POST', 'PUT', 'PATCH'].includes(options.method || 'GET')) {
         options.body = JSON.stringify({ deviceId });
       }
@@ -102,7 +122,6 @@ export function setupGlobalFetchInterceptor() {
         const refreshed = await doRefresh(API_URL, deviceId);
 
         if (refreshed) {
-          // Rebuild headers with the freshly rotated accessToken
           const retryTokens = await getAuthTokens();
           const retryHeaders = new Headers(init?.headers || {});
           retryHeaders.set('X-Device-Id', deviceId);
@@ -138,11 +157,5 @@ export function restoreGlobalFetch() {
   }
 }
 
-// ✅ Install immediately on module load — not inside a component, not
-// inside a useEffect, not gated behind any async auth check. This runs
-// the moment this file is first imported, which we guarantee happens
-// before any other app code by importing it at the very top of the root
-// layout (see instructions below). This closes the timing gap where
-// early fetches (checkAuth, page-load org lookups, etc.) were bypassing
-// the interceptor because it hadn't been installed yet.
+// Install immediately on module load
 setupGlobalFetchInterceptor();

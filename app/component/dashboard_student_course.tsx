@@ -23,6 +23,8 @@ interface Enrollment {
     percentage: number;
     completed_lessons: number;
     total_lessons: number;
+    completed_quizzes?: number; // optional — present once enroll endpoint sends it
+    total_quizzes?: number;
   };
   course: {
     id: string;
@@ -211,7 +213,15 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                       </div>
                       <div className="flex justify-between items-center mt-2">
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {enrollment.course_progress.completed_lessons} {t("of")} {enrollment.course_progress.total_lessons} {t("lessons")}
+                          {enrollment.course_progress.completed_lessons} {t("of")}{" "}
+                          {enrollment.course_progress.total_lessons} {t("lessons")}
+                          {typeof enrollment.course_progress.total_quizzes === "number" &&
+                            enrollment.course_progress.total_quizzes > 0 && (
+                              <>
+                                {" "}• {enrollment.course_progress.completed_quizzes} {t("of")}{" "}
+                                {enrollment.course_progress.total_quizzes} {t("quizzes")}
+                              </>
+                            )}
                         </p>
 
                       </div>

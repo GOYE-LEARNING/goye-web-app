@@ -9,6 +9,7 @@ import { MdClose, MdMenu } from "react-icons/md";
 import ToogleDarkMode from "./toogleDarkMode";
 import { useTheme } from "../context/theme_provider";
 import { useAuthContext } from "../context/AuthContext";
+import { getCookie } from "../utils/getCookie";
 
 /**
  * Where an already-signed-in visitor goes from the landing page. Mirrors
@@ -58,7 +59,7 @@ export default function LandingPageNavBar() {
   // The landing page no longer force-redirects signed-in visitors, so the
   // navbar has to give them a deliberate way back to their dashboard.
   const { authStatus } = useAuthContext();
-  const isSignedIn = !!authStatus?.user;
+  const isSignedIn = getCookie("accessToken");
   const dashboardHref = dashboardHomeForUser(authStatus?.user);
 
   const containerVariants = {

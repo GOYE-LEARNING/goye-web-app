@@ -179,8 +179,8 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                 </div>
                 <div className="flex justify-between items-center mt-2">
                   <p className="text-xs text-gray-500">
-                    {roundedUpNumber(growthData.user.progressToNextLevel)}% {t("to")}
-                    {" "}{t("Level")} {growthData.user.levelNumber + 1}
+                    {roundedUpNumber(growthData.user.progressToNextLevel)}%{" "}
+                    {t("to")} {t("Level")} {growthData.user.levelNumber + 1}
                   </p>
                   <p className="text-xs text-gray-500">
                     {t("Next")}: {growthData.user.nextLevelXP} XP
@@ -245,9 +245,13 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                           <span className="text-xs text-gray-600 dark:text-gray-400">
                             {activity.action}
                           </span>
-                          <span className="text-xs font-semibold text-green-500">
-                            +{activity.points} XP
-                          </span>
+                          {activity.points == 0 ? (
+                            <div></div>
+                          ) : (
+                            <span className="text-xs font-semibold text-green-500">
+                              +{activity.points} XP
+                            </span>
+                          )}
                         </div>
                       ))}
                   </div>
@@ -273,7 +277,9 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                 {t("Start Your Spiritual Growth Journey")}
               </h1>
               <p className="text-gray-500 text-sm text-center max-w-md">
-                {t("Begin your first course to track your progress, earn badges, and grow spiritually.")}
+                {t(
+                  "Begin your first course to track your progress, earn badges, and grow spiritually.",
+                )}
               </p>
             </div>
           </div>

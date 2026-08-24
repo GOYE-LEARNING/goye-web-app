@@ -14,7 +14,7 @@ import { useModal } from "../context/SimpleModalContext";
 interface Props {
   removeFunc: () => void;
   courseId: string;
-  setCheckIfEnrolled: React.Dispatch<React.SetStateAction<boolean>>
+  setCheckIfEnrolled: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface Course {
@@ -57,7 +57,7 @@ interface Lesson {
 export default function DashboardCourseOverView({
   removeFunc,
   courseId,
-  setCheckIfEnrolled
+  setCheckIfEnrolled,
 }: Props) {
   const { showModal } = useModal(); // Add this line
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -135,7 +135,7 @@ export default function DashboardCourseOverView({
         },
       );
 
-      setCheckIfEnrolled(true)
+      setCheckIfEnrolled(true);
 
       console.log(data);
     } catch (error) {
@@ -198,7 +198,7 @@ export default function DashboardCourseOverView({
         "success",
         () => {
           // Refresh the page after modal closes
-          setCheckIfEnrolled(false)
+          setCheckIfEnrolled(false);
         },
       );
     } catch (error) {

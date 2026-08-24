@@ -17,7 +17,7 @@ interface Course {
   organizationName?: string;
   enrollmentStatus: string;
   isEnrolled: boolean;
-  totalEnrollments: number;
+  enrollment: [];
   progress: {
     percentage: number;
     completedLessons: number;
@@ -28,6 +28,14 @@ interface Course {
   };
   totalDuration: number;
   lessonCount: number;
+  module: [
+    {
+      lesson: [{ duration: number }];
+      _count: {
+        lesson: number;
+      };
+    },
+  ];
   moduleCount: number;
   lastAccessed?: string | null;
   completedAt?: string | null;
@@ -59,7 +67,13 @@ export default function CourseList({
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader height={40} width={40} border_width={3} full_border_color="transparent" small_border_color="#30A46F"/>
+        <Loader
+          height={40}
+          width={40}
+          border_width={3}
+          full_border_color="transparent"
+          small_border_color="#30A46F"
+        />
       </div>
     );
   }
@@ -69,7 +83,7 @@ export default function CourseList({
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-16">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primaryColors-0/10 to-green-500/10 rounded-full blur-3xl -z-10 animate-pulse"></div>
-          
+
           <div className="relative">
             <div className="w-28 h-28 mx-auto bg-gradient-to-br from-primaryColors-0/20 to-green-500/20 rounded-3xl flex items-center justify-center">
               <FiCompass className="w-14 h-14 text-primaryColors-0 animate-pulse" />

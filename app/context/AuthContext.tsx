@@ -94,10 +94,6 @@ export default function AuthProvider({ children }: Props) {
     return await getOrCreateDeviceId();
   }, []);
 
-  // Helper — every authenticated fetch in this file goes through this so
-  // headers are never forgotten again. Cookies still ride along via
-  // credentials: 'include' as a fallback, but headers are the primary,
-  // reliable channel across browsers that restrict cross-site cookies.
   const authHeaders = React.useCallback(async (): Promise<HeadersInit> => {
     const deviceId = await getOrCreateDeviceId();
     const tokens = await getAuthTokens();
@@ -150,18 +146,16 @@ export default function AuthProvider({ children }: Props) {
     }
   }, [isPublicRoute]);
 
-const getUserType = React.useCallback(async (): Promise<string> => {
-  const profile = await getUserProfile();
-  const type = profile?.userType || '';
-  const role = profile?.role || '';
+  const getUserType = React.useCallback(async (): Promise<string> => {
+    const profile = await getUserProfile();
+    const type = profile?.userType || '';
+    const role = profile?.role || '';
 
-  if (type === 'admin' || role === 'goye_admin') return 'admin';
-  if (type === 'organization' || type === 'invited_user' || role === 'org_admin') return 'organization';
-  return 'individual';
-}, []);
-  // Extracted so it can be called twice (once normally, once after a
-  // successful refresh) WITHOUT re-entering the isCheckingRef guard that
-  // wraps the public checkAuth() below.
+    if (type === 'admin' || role === 'goye_admin') return 'admin';
+    if (type === 'organization' || type === 'invited_user' || role === 'org_admin') return 'organization';
+    return 'individual';
+  }, []);
+
   const runAuthCheck = React.useCallback(async (): Promise<boolean> => {
     const session = await getSessionState();
     if (!session?.isAuthenticated) {
@@ -179,10 +173,10 @@ const getUserType = React.useCallback(async (): Promise<string> => {
       return false;
     }
 
-    const userType = getUserType();
+    const userType = await getUserType();
 
     // Admin
-    if (userType === 'admin' as any) {
+    if (userType === 'admin') {
       const profile = await getUserProfile();
       setAuthStatus({
         isExistingUser: true,
@@ -197,12 +191,13 @@ const getUserType = React.useCallback(async (): Promise<string> => {
           role: localStorage.getItem('role') || 'goye_admin',
           type: 'admin',
         } as any,
+        organization: undefined,
       });
       return true;
     }
 
     // Individual
-    if (userType === 'individual' as any) {
+    if (userType === 'individual') {
       const headers = await authHeaders();
       const response = await fetch(`${API_URL}/api/user/profile`, {
         credentials: 'include',
@@ -228,11 +223,11 @@ const getUserType = React.useCallback(async (): Promise<string> => {
           requiresProfileCompletion: !userData?.isProfileComplete,
           isLoading: false,
           user: userData,
+          organization: undefined,
         });
         return true;
       }
 
-      // ✅ Don't give up on a 401 — try refreshing once before failing.
       if (response.status === 401) {
         const refreshed = await refreshToken();
         if (refreshed) {
@@ -261,6 +256,7 @@ const getUserType = React.useCallback(async (): Promise<string> => {
               requiresProfileCompletion: !userData?.isProfileComplete,
               isLoading: false,
               user: userData,
+              organization: undefined,
             });
             return true;
           }
@@ -269,7 +265,7 @@ const getUserType = React.useCallback(async (): Promise<string> => {
     }
 
     // Organization
-    if (userType === 'organization' as any) {
+    if (userType === 'organization') {
       const headers = await authHeaders();
       const response = await fetch(`${API_URL}/api/organizations/profile`, {
         credentials: 'include',
@@ -278,30 +274,53 @@ const getUserType = React.useCallback(async (): Promise<string> => {
 
       if (response.ok) {
         const data = await response.json();
-        const orgData = data.organization;
+        const orgData = data.organization || data.data?.organization || data;
+
+        console.log("✅ Organization profile fetched:", orgData);
+
+        // ✅ Extract organization ID from response
+        const orgId = orgData.id || orgData.organizationId;
+        const orgName = orgData.organization_name || orgData.name;
+
+        // ✅ Save to localStorage
+        if (orgId) {
+          localStorage.setItem('organizationId', orgId);
+        }
+        if (orgName) {
+          localStorage.setItem('org_name', orgName);
+        }
 
         await saveUserProfile({
-          userId: orgData?.user?.id,
-          first_name: orgData?.organization_name,
+          userId: orgData?.user?.id || orgData?.userId,
+          first_name: orgData?.organization_name || orgName || '',
           last_name: '',
-          email_address: orgData?.organization_email,
+          email_address: orgData?.organization_email || orgData?.email || '',
           userType: 'organization',
-          role: orgData?.organization_role || 'admin',
-          organizationId: orgData?.id,
+          role: orgData?.organization_role || 'org_admin',
+          organizationId: orgId,
         });
+
+        // ✅ Build user data from organization
+        const userData = {
+          id: orgData?.user?.id || orgData?.userId,
+          first_name: orgData?.user?.first_name || orgData?.organization_name || '',
+          last_name: orgData?.user?.last_name || '',
+          email_address: orgData?.user?.email_address || orgData?.organization_email || '',
+          role: 'org_admin',
+          organizationId: orgId,
+        };
 
         setAuthStatus({
           isExistingUser: true,
           isProfileComplete: true,
           requiresProfileCompletion: false,
           isLoading: false,
-          user: orgData?.user,
+          user: userData,
           organization: orgData,
         });
         return true;
       }
 
-      // ✅ Same retry-after-refresh treatment for the org branch.
       if (response.status === 401) {
         const refreshed = await refreshToken();
         if (refreshed) {
@@ -313,24 +332,43 @@ const getUserType = React.useCallback(async (): Promise<string> => {
 
           if (retryResponse.ok) {
             const data = await retryResponse.json();
-            const orgData = data.organization;
+            const orgData = data.organization || data.data?.organization || data;
+
+            const orgId = orgData.id || orgData.organizationId;
+            const orgName = orgData.organization_name || orgData.name;
+
+            if (orgId) {
+              localStorage.setItem('organizationId', orgId);
+            }
+            if (orgName) {
+              localStorage.setItem('org_name', orgName);
+            }
 
             await saveUserProfile({
-              userId: orgData?.user?.id,
-              first_name: orgData?.organization_name,
+              userId: orgData?.user?.id || orgData?.userId,
+              first_name: orgData?.organization_name || orgName || '',
               last_name: '',
-              email_address: orgData?.organization_email,
+              email_address: orgData?.organization_email || orgData?.email || '',
               userType: 'organization',
-              role: orgData?.organization_role || 'admin',
-              organizationId: orgData?.id,
+              role: orgData?.organization_role || 'org_admin',
+              organizationId: orgId,
             });
+
+            const userData = {
+              id: orgData?.user?.id || orgData?.userId,
+              first_name: orgData?.user?.first_name || orgData?.organization_name || '',
+              last_name: orgData?.user?.last_name || '',
+              email_address: orgData?.user?.email_address || orgData?.organization_email || '',
+              role: 'org_admin',
+              organizationId: orgId,
+            };
 
             setAuthStatus({
               isExistingUser: true,
               isProfileComplete: true,
               requiresProfileCompletion: false,
               isLoading: false,
-              user: orgData?.user,
+              user: userData,
               organization: orgData,
             });
             return true;
@@ -339,7 +377,7 @@ const getUserType = React.useCallback(async (): Promise<string> => {
       }
     }
 
-    // Auth genuinely failed, even after a refresh attempt
+    // Auth failed
     await clearAllData();
     setAuthStatus({
       isExistingUser: false,
@@ -381,57 +419,78 @@ const getUserType = React.useCallback(async (): Promise<string> => {
   }, [isPublicRoute, runAuthCheck, authStatus.isExistingUser]);
 
   const login = React.useCallback(async (userData: any, orgData?: any): Promise<boolean> => {
-  try {
-    console.log("🔐 Login function called with:", { userData, orgData });
+    try {
+      console.log("🔐 Login function called with:", { userData, orgData });
 
-    if (userData) {
-      await saveUserProfile({
-        userId: userData.id,
-        first_name: userData.first_name || '',
-        last_name: userData.last_name || '',
-        email_address: userData.email_address || userData.email || '',
-        userType: userData.type || userData.userType || 'user',
-        role: userData.role || 'student',
-        organizationId: userData.organizationId || null,
-        isProfileComplete: userData.isProfileComplete ?? true,
-        level: userData.level,
-        adminRole: userData.adminRole,
+      // ✅ Extract organization ID from userData if available
+      const orgId = userData?.organizationId || orgData?.id || orgData?.organizationId;
+      const orgName = userData?.organizationName || orgData?.organization_name || orgData?.name;
+
+      if (orgId) {
+        localStorage.setItem('organizationId', orgId);
+        console.log("✅ Stored organizationId:", orgId);
+      }
+      if (orgName) {
+        localStorage.setItem('org_name', orgName);
+        console.log("✅ Stored org_name:", orgName);
+      }
+
+      if (userData) {
+        await saveUserProfile({
+          userId: userData.id,
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          email_address: userData.email_address || userData.email || '',
+          userType: userData.type || userData.userType || 'organization',
+          role: userData.role || 'org_admin',
+          organizationId: orgId || null,
+          isProfileComplete: userData.isProfileComplete ?? true,
+          level: userData.level,
+          adminRole: userData.adminRole,
+          organizationName: orgName || null,
+        });
+      } else if (orgData) {
+        await saveUserProfile({
+          userId: orgData.userId || orgData.id,
+          first_name: orgData.organization_name || '',
+          last_name: '',
+          email_address: orgData.organization_email || '',
+          userType: 'organization',
+          role: orgData.organization_role || 'admin',
+          organizationId: orgData.id,
+          organizationName: orgData.organization_name,
+          isProfileComplete: true,
+        });
+      }
+
+      await updateSessionState({
+        isAuthenticated: true,
+        lastActivity: new Date().toISOString(),
       });
-    } else if (orgData) {
-      await saveUserProfile({
-        userId: orgData.userId || orgData.id,
-        first_name: orgData.organization_name || '',
-        last_name: '',
-        email_address: orgData.organization_email || '',
-        userType: 'organization',
-        role: orgData.organization_role || 'admin',
-        organizationId: orgData.id,
-        organizationName: orgData.organization_name,
-        isProfileComplete: true,
+
+      // ✅ Build organization data for auth status
+      const organizationData = orgData || {
+        id: orgId,
+        organization_name: orgName,
+        organization_email: userData?.email || '',
+      };
+
+      setAuthStatus({
+        isExistingUser: true,
+        isProfileComplete: userData?.isProfileComplete !== undefined ? userData.isProfileComplete : true,
+        requiresProfileCompletion: userData?.isProfileComplete === false,
+        isLoading: false,
+        user: userData,
+        organization: organizationData,
       });
+
+      console.log("✅ Login successful, auth status updated with org:", organizationData);
+      return true;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
     }
-
-    await updateSessionState({
-      isAuthenticated: true,
-      lastActivity: new Date().toISOString(),
-    });
-
-    setAuthStatus({
-      isExistingUser: true,
-      isProfileComplete: userData?.isProfileComplete !== undefined ? userData.isProfileComplete : true,
-      requiresProfileCompletion: userData?.isProfileComplete === false,
-      isLoading: false,
-      user: userData,
-      organization: orgData,
-    });
-
-    console.log("✅ Login successful, auth status updated");
-    return true;
-  } catch (error) {
-    console.error("Login error:", error);
-    return false;
-  }
-}, []);
+  }, []);
 
   React.useEffect(() => {
     if (isPublicRoute()) {
@@ -449,33 +508,39 @@ const getUserType = React.useCallback(async (): Promise<string> => {
     return () => clearTimeout(timer);
   }, [isPublicRoute, checkAuth]);
 
- const logout = React.useCallback(async (): Promise<void> => {
-  try {
-    const headers = await authHeaders();
-    await fetch(`${API_URL}/api/user/logout`, {
-      method: "POST",
-      credentials: "include",
-      headers,
-    });
+  const logout = React.useCallback(async (): Promise<void> => {
+    try {
+      const headers = await authHeaders();
+      await fetch(`${API_URL}/api/user/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+      });
 
-    await clearAllData(); // ✅ this alone is now sufficient
+      await clearAllData();
 
-    setAuthStatus({
-      isExistingUser: false,
-      isProfileComplete: false,
-      requiresProfileCompletion: false,
-      isLoading: false,
-      user: undefined,
-      organization: undefined,
-    });
+      // ✅ Clear localStorage items
+      localStorage.removeItem('organizationId');
+      localStorage.removeItem('org_name');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userId');
 
-    router.push("/login");
-  } catch (error) {
-    console.error("Logout error:", error);
-    await clearAllData();
-    router.push("/login");
-  }
-}, [router, authHeaders]);
+      setAuthStatus({
+        isExistingUser: false,
+        isProfileComplete: false,
+        requiresProfileCompletion: false,
+        isLoading: false,
+        user: undefined,
+        organization: undefined,
+      });
+
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      await clearAllData();
+      router.push("/login");
+    }
+  }, [router, authHeaders]);
 
   const updateAuthStatus = React.useCallback((status: Partial<AuthContextType>) => {
     setAuthStatus((prev) => ({ ...prev, ...status, isLoading: false }));

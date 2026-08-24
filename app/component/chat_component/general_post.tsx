@@ -111,10 +111,12 @@ const CreatePostModal = ({
   const [selectedText, setSelectedText] = useState("");
   const [selectionStart, setSelectionStart] = useState(0);
   const [selectionEnd, setSelectionEnd] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   // Reset form when modal opens
   useEffect(() => {
@@ -165,7 +167,6 @@ const CreatePostModal = ({
     const newContent = applyFormatting(content, selectedText, format);
     setContent(newContent);
     
-    // Focus back on textarea
     setTimeout(() => {
       textareaRef.current?.focus();
       const newCursorPos = selectionStart + (newContent.length - content.length);
@@ -175,30 +176,82 @@ const CreatePostModal = ({
 
   const selectedCategoryInfo = postCategories.find(c => c.id === selectedCategory) || postCategories[0];
 
-  const handleImageUpload = (files: FileList | null) => {
+  // ✅ Upload file to server
+  const uploadFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      return data.url || data.fileUrl || data.data?.url;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  };
+
+  const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
+    setIsUploading(true);
+    
     const allowedVideoCats = ["TESTIMONY", "DISCUSSION", "DEVOTION"];
+    
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const isImage = file.type.startsWith("image/");
       const isVideo = file.type.startsWith("video/");
+      
       if (!isImage && !isVideo) continue;
+      
       if (isVideo && !allowedVideoCats.includes(selectedCategory)) {
         alert("You can only upload videos for Post, Devotion, or Testimony categories.");
         continue;
       }
+
       const preview = URL.createObjectURL(file);
       const newMedia: MediaFile = {
         id: `${Date.now()}-${i}`,
         file,
         preview,
         type: isVideo ? "video" : "image",
-        uploading: false,
-        uploadProgress: 100,
-        uploadedUrl: preview,
+        uploading: true,
+        uploadProgress: 0,
+        uploadedUrl: "",
       };
+      
       setMediaFiles((prev) => [...prev, newMedia]);
+
+      try {
+        const uploadedUrl = await uploadFile(file);
+        
+        setMediaFiles((prev) =>
+          prev.map((m) =>
+            m.id === newMedia.id
+              ? { ...m, uploading: false, uploadProgress: 100, uploadedUrl }
+              : m
+          )
+        );
+      } catch (error) {
+        setMediaFiles((prev) =>
+          prev.map((m) =>
+            m.id === newMedia.id ? { ...m, uploading: false, uploadProgress: 0 } : m
+          )
+        );
+        alert(`Failed to upload ${file.name}`);
+      }
     }
+    
+    setIsUploading(false);
   };
 
   const removeMedia = (id: string) => {
@@ -212,7 +265,16 @@ const CreatePostModal = ({
       alert("Please add some content");
       return;
     }
-    onSubmit({ content, category: selectedCategory, mediaFiles });
+    
+    const hasUploading = mediaFiles.some(m => m.uploading);
+    if (hasUploading) {
+      alert("Please wait for all media to finish uploading");
+      return;
+    }
+    
+    const validMedia = mediaFiles.filter(m => m.uploadedUrl);
+    
+    onSubmit({ content, category: selectedCategory, mediaFiles: validMedia });
   };
 
   // Preview formatted content
@@ -395,10 +457,11 @@ const CreatePostModal = ({
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                disabled={isUploading}
+                className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 title="Upload Image or Video"
               >
-                <FaImage className="text-gray-600 dark:text-gray-400" />
+                {isUploading ? <FaSpinner className="animate-spin" /> : <FaImage className="text-gray-600 dark:text-gray-400" />}
               </button>
             </div>
 
@@ -431,9 +494,14 @@ const CreatePostModal = ({
                 {mediaFiles.map((media) => (
                   <div key={media.id} className="relative group">
                     {media.type === "video" ? (
-                      <video src={media.preview} controls className="h-24 w-full object-cover rounded-lg" />
+                      <video src={media.preview} className="h-24 w-full object-cover rounded-lg" />
                     ) : (
                       <img src={media.preview} alt="preview" className="h-24 w-full object-cover rounded-lg" />
+                    )}
+                    {media.uploading && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                        <FaSpinner className="animate-spin text-white text-2xl" />
+                      </div>
                     )}
                     <button
                       onClick={() => removeMedia(media.id)}
@@ -451,7 +519,7 @@ const CreatePostModal = ({
           <div className="sticky bottom-0 flex justify-end p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-900 rounded-b-2xl">
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting || (!content.trim() && mediaFiles.length === 0)}
+              disabled={isSubmitting || (!content.trim() && mediaFiles.length === 0) || isUploading}
               className="px-6 py-2 bg-primaryColors-0 text-white rounded-full text-sm font-medium disabled:opacity-50 hover:bg-primaryColors-0/90 transition"
             >
               {isSubmitting ? <FaSpinner className="animate-spin" /> : "Post"}
@@ -606,25 +674,58 @@ export default function GeneralPost({
 
   const createPost = async (postData: { content: string; category: string; mediaFiles: MediaFile[] }) => {
     setIsSubmitting(true);
-    const mediaUrls = postData.mediaFiles.map((m) => ({
-      type: m.type,
-      url: m.uploadedUrl,
-      filename: m.file?.name || "media",
-    }));
+    
     try {
+      const mediaUrls = postData.mediaFiles
+        .filter(m => m.uploadedUrl)
+        .map((m) => ({
+          type: m.type,
+          url: m.uploadedUrl,
+          filename: m.file?.name || "media",
+        }));
+
+      const payload = {
+        content: postData.content,
+        isPublic: true,
+        mediaUrls,
+        category: postData.category
+      };
+
+      console.log("📤 Creating post with payload:", payload);
+
       const response = await fetch(`${API_URL}/api/discussion/public`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ 
-          content: postData.content, 
-          isPublic: true, 
-          mediaUrls,
-          category: postData.category
-        }),
+        body: JSON.stringify(payload),
       });
-      const data = await response.json();
-      if (response.ok && data.success !== false) {
+
+      const responseText = await response.text();
+      console.log("📥 Response status:", response.status);
+      console.log("📥 Response body:", responseText);
+
+      if (!response.ok) {
+        let errorMessage = "Failed to create post";
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          if (responseText) errorMessage = responseText;
+        }
+        alert(errorMessage);
+        return;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Failed to parse response:", e);
+        alert("Invalid response from server");
+        return;
+      }
+
+      if (data.success !== false) {
         setShowPost(false);
         setShowPeoplePost(true);
         await fetchDiscussions();
@@ -632,8 +733,8 @@ export default function GeneralPost({
         alert(data.message || "Failed to create post");
       }
     } catch (error) {
-      console.error(error);
-      alert("An error occurred");
+      console.error("Error creating post:", error);
+      alert("An error occurred while creating your post");
     } finally {
       setIsSubmitting(false);
     }
@@ -690,7 +791,9 @@ export default function GeneralPost({
           prev.map((d) => d.id === discussionId ? { ...d, _count: { ...d._count, replies: (d._count?.replies || 0) + 1 } } : d)
         );
         if (showReplies[discussionId]) fetchDiscussionWithReplies(discussionId);
-      } else { alert(data.message || "Failed to add comment"); }
+      } else {
+        alert(data.message || "Failed to add comment");
+      }
     } catch (err) { console.error(err); }
   };
 
@@ -721,7 +824,9 @@ export default function GeneralPost({
         setNestedCommentText((prev) => { const s = { ...prev }; delete s[parentReplyId]; return s; });
         cancelReply(discussionId);
         fetchDiscussionWithReplies(discussionId);
-      } else { alert(data.message || "Failed to add reply"); }
+      } else {
+        alert(data.message || "Failed to add reply");
+      }
     } catch (err) { console.error(err); }
   };
 
@@ -788,8 +893,13 @@ export default function GeneralPost({
       if (response.ok && data.success !== false) {
         setDiscussions((prev) => prev.map((d) => d.id === discussionId ? { ...d, content: newContent, isEdited: true } : d));
         alert("Post updated successfully!");
-      } else { alert(data.message || "Failed to update post"); }
-    } catch (error) { console.error("Error editing post:", error); alert("An error occurred while editing the post"); }
+      } else {
+        alert(data.message || "Failed to update post");
+      }
+    } catch (error) {
+      console.error("Error editing post:", error);
+      alert("An error occurred while editing the post");
+    }
   };
 
   const handleDeletePost = async (discussionId: string) => {
@@ -800,8 +910,13 @@ export default function GeneralPost({
       if (response.ok && data.success !== false) {
         setDiscussions((prev) => prev.filter((d) => d.id !== discussionId));
         alert("Post deleted successfully!");
-      } else { alert(data.message || "Failed to delete post"); }
-    } catch (error) { console.error("Error deleting post:", error); alert("An error occurred while deleting the post"); }
+      } else {
+        alert(data.message || "Failed to delete post");
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert("An error occurred while deleting the post");
+    }
   };
 
   const slideVariants = {

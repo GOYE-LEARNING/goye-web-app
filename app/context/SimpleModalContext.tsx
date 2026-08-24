@@ -123,6 +123,7 @@ function ToastNotification({
 }
 
 // Modal dialog for confirm actions
+// Modal dialog for confirm actions
 function ConfirmModal({
   title,
   message,
@@ -146,16 +147,16 @@ function ConfirmModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex justify-center items-center h-full w-full"
         onClick={onCancel}
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="fixed transform -translate-x-1/2 -translate-y-1/2 z-[9999] w-full"
+        className="fixed inset-0 flex justify-center items-center h-full z-[9999] w-full"
       >
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
+        <div className="bg-white dark:bg-secondaryColors-0 rounded-xl shadow-2xl overflow-hidden w-[300px] lg-[400px]">
           <div className="flex justify-between items-center p-5 pb-0">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-full ${iconBg}`}>
@@ -163,7 +164,10 @@ function ConfirmModal({
               </div>
               <h2 className="text-lg font-semibold dark:text-white">{title}</h2>
             </div>
-            <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+            <button 
+              onClick={onCancel} 
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            >
               <IoClose size={24} />
             </button>
           </div>
@@ -195,7 +199,6 @@ function ConfirmModal({
     </>
   );
 }
-
 export function ModalProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<{
     isOpen: boolean;

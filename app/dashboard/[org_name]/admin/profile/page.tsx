@@ -237,7 +237,6 @@ export default function OrgAdminProfile() {
       setLoading(false);
     }
   };
-
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -261,7 +260,7 @@ export default function OrgAdminProfile() {
       )}
 
       {showProfile && (
-        <>
+        <div className="flex flex-col w-full">
           <h1 className="dashboard_h1">Profile</h1>
           <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] w-full my-5">
             <div className="flex justify-center items-center flex-col">
@@ -430,13 +429,13 @@ export default function OrgAdminProfile() {
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {showActivePages && (
-        <div>
+        <div className="w-full">
           {activePages && (
-            <div>
+            <div className="w-full">
               {activePages === "edit" ? (
                 <DashboardEditProfile
                   isOnline={details.isOnline}
