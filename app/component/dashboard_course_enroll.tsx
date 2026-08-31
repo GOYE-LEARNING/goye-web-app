@@ -171,13 +171,13 @@ export default function DashboardCourseEnrolled({
       {filterCourse.map((item: any) => (
         <div
           key={item.enrollment_id}
-          className="md:bg-white dark:md:bg-secondaryColors-0 md:drop-shadow-sm w-full md:p-[24px] my-5 flex flex-col gap-2 hover:border-2 hover:border-dashed hover:border-primaryColors-0/50 transition-all duration-200 cursor-pointer"
+          className="bg-white dark:bg-secondaryColors-0 px-10 py-5 rounded-[15px] md:drop-shadow-sm w-full md:p-[24px] my-5 flex flex-col gap-2 hover:border-2 hover:border-dashed hover:border-primaryColors-0/50 transition-all duration-200 cursor-pointer"
         >
           <div className="flex gap-4">
             <img
               src={item.course.course_image || logo.src}
               alt={item.course.course_title}
-              className="h-[89.16px] w-[130px] object-cover rounded"
+              className="md:h-[89.16px] h-[100px] w-[130px] object-cover rounded"
             />
             <div className="flex-1">
               <h1 className="text-lg font-semibold">

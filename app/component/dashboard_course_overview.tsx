@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { CiGlobe } from "react-icons/ci";
 import { GoPeople, GoTrophy, GoVideo } from "react-icons/go";
 import { HiOutlineBookOpen } from "react-icons/hi";
@@ -14,7 +14,7 @@ import { useModal } from "../context/SimpleModalContext";
 interface Props {
   removeFunc: () => void;
   courseId: string;
-  setCheckIfEnrolled: React.Dispatch<React.SetStateAction<boolean>>;
+  setCheckIfEnrolled: (value: boolean) => void; // ✅ Changed to function type
 }
 
 interface Course {
@@ -59,22 +59,27 @@ export default function DashboardCourseOverView({
   courseId,
   setCheckIfEnrolled,
 }: Props) {
-  const { showModal } = useModal(); // Add this line
+  const { showModal } = useModal();
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [course, setCourse] = useState<boolean>(true);
   const [coursesPlace, setCoursesPlace] = useState<boolean>(true);
   const [courseList, setCourseList] = useState<boolean>(false);
   const [courseVideo, setCourseVideo] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isLoading2, setIsLoading2] = useState<boolean>(false);
   const [startIsLoading, setIsStartLoading] = useState<boolean>(false);
   const [exitIsLoading, setExitIsLoading] = useState<boolean>(false);
   const [courseDetails, setCourseDetails] = useState<Course | null>(null);
   const [checkEnroll, setCheckEnroll] = useState<boolean | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const isMounted = useRef<boolean>(true);
+  const hasFetched = useRef<boolean>(false);
 
-  const checkIfEnrolled = async () => {
+  // ✅ Check if enrolled - only once
+  const checkIfEnrolled = useCallback(async () => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    
     try {
       const res = await fetch(
         `${API_URL}/api/enroll/check-if-enrolled/${courseId}`,
@@ -92,13 +97,18 @@ export default function DashboardCourseOverView({
       }
 
       console.log("Check if enrolled from overview tabs", data);
-      setCheckEnroll(data.data.is_enrolled);
+      if (isMounted.current) {
+        setCheckEnroll(data.data.is_enrolled);
+        // ✅ Update parent state only once
+        setCheckIfEnrolled(data.data.is_enrolled);
+      }
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [courseId, API_URL, setCheckIfEnrolled]);
 
-  const startCourse = async () => {
+  // ✅ Start course
+  const startCourse = useCallback(async () => {
     setIsStartLoading(true);
     try {
       const res = await fetch(
@@ -113,7 +123,6 @@ export default function DashboardCourseOverView({
 
       if (!res.ok) {
         console.log(data);
-        // Replace alert with modal
         showModal(
           "Enrollment Failed",
           data.message || "Unable to enroll in this course. Please try again.",
@@ -122,7 +131,6 @@ export default function DashboardCourseOverView({
         return;
       }
 
-      // Show success modal
       showModal(
         "Enrollment Successful! 🎉",
         "You have successfully enrolled in this course. Start your learning journey now!",
@@ -131,13 +139,14 @@ export default function DashboardCourseOverView({
           setCourse(false);
           setCourseList(true);
           setCoursesPlace(false);
+          // ✅ Update parent state
+          setCheckIfEnrolled(true);
           removeFunc();
         },
       );
 
-      setCheckIfEnrolled(true);
-
-      console.log(data);
+      // ✅ Update local state
+      setCheckEnroll(true);
     } catch (error) {
       console.error(error);
       showModal(
@@ -148,21 +157,22 @@ export default function DashboardCourseOverView({
     } finally {
       setIsStartLoading(false);
     }
-  };
+  }, [courseId, API_URL, showModal, setCheckIfEnrolled, removeFunc]);
 
-  const openCourse = () => {
+  const openCourse = useCallback(() => {
     startCourse();
-  };
+  }, [startCourse]);
 
-  const showVideoLessonsCourse = () => {
+  const showVideoLessonsCourse = useCallback(() => {
     setCourse(false);
     setCourseList(true);
     setCoursesPlace(false);
     setIsStartLoading(false);
     removeFunc();
-  };
+  }, [removeFunc]);
 
-  const exitCourse = async () => {
+  // ✅ Exit course
+  const exitCourse = useCallback(async () => {
     setExitIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/enroll/exit-course/${courseId}`, {
@@ -187,18 +197,19 @@ export default function DashboardCourseOverView({
 
       console.log("Exit course response:", data);
 
-      // Update enrollment status
-      setCheckEnroll(false);
+      if (isMounted.current) {
+        setCheckEnroll(false);
+        // ✅ Update parent state
+        setCheckIfEnrolled(false);
+      }
 
-      // Show success modal
       showModal(
         "Course Exited Successfully",
         data.message ||
           "You have successfully exited the course. Your progress has been saved.",
         "success",
         () => {
-          // Refresh the page after modal closes
-          setCheckIfEnrolled(false);
+          // Refresh after modal closes
         },
       );
     } catch (error) {
@@ -211,18 +222,19 @@ export default function DashboardCourseOverView({
     } finally {
       setExitIsLoading(false);
     }
-  };
+  }, [courseId, API_URL, showModal, setCheckIfEnrolled]);
 
-  const handleExitClick = () => {
+  const handleExitClick = useCallback(() => {
     showModal(
       "Exit Course?",
       "Are you sure you want to exit this course? Your progress will be saved, and you can re-enroll later to continue from where you left off.",
       "confirm",
       exitCourse,
     );
-  };
+  }, [showModal, exitCourse]);
 
-  const fetchCourse = async () => {
+  // ✅ Fetch course - only once
+  const fetchCourse = useCallback(async () => {
     if (!courseId) {
       console.error("No courseId provided");
       return;
@@ -241,7 +253,9 @@ export default function DashboardCourseOverView({
 
       const data = await res.json();
       console.log("Fetched course details Innit:", data);
-      setCourseDetails(data.data);
+      if (isMounted.current) {
+        setCourseDetails(data.data);
+      }
     } catch (error) {
       console.error("Error fetching course:", error);
       showModal(
@@ -250,28 +264,51 @@ export default function DashboardCourseOverView({
         "error",
       );
     } finally {
-      setIsLoading(false);
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
-  };
+  }, [courseId, API_URL, showModal]);
 
+  // ✅ Only fetch on initial mount
   useEffect(() => {
-    checkIfEnrolled();
+    isMounted.current = true;
+    
     fetchCourse();
-  }, [courseId]);
+    checkIfEnrolled();
 
-  const toggleAccordion = (i: number) => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, [fetchCourse, checkIfEnrolled]);
+
+  const toggleAccordion = useCallback((i: number) => {
     if (activeIndex === i) {
       setActiveIndex(0);
       setCourseVideo(false);
     } else {
-      setActiveIndex((prev) => (prev === i ? -1 : i));
+      setActiveIndex(i);
       setCourseVideo(true);
     }
-  };
+  }, [activeIndex]);
+
+  if (isLoading) {
+    return (
+      <div className="mt-10 flex justify-center">
+        <Loader
+          height={40}
+          width={40}
+          border_width={3}
+          full_border_color="#FFA500"
+          small_border_color="transparent"
+        />
+      </div>
+    );
+  }
 
   return (
     <>
-      {!isLoading && course ? (
+      {course ? (
         <div>
           <div className="cr_box">
             <div className="cr_p">
@@ -297,7 +334,6 @@ export default function DashboardCourseOverView({
               </h1>
               <ul className="pl-[24px] flex flex-col gap-1">
                 <div>
-                  {" "}
                   {courseDetails?.objectives?.map((obj, i) => (
                     <div key={i}>
                       <li className="cr_list">{obj.objective_title1}</li>
@@ -355,9 +391,7 @@ export default function DashboardCourseOverView({
                 )}
               </div>
 
-              {checkEnroll == false ? (
-                ""
-              ) : (
+              {checkEnroll == true && (
                 <button
                   className="h-[48px] bg-primaryColors-0 w-full text-center text-white rounded-md hover:bg-primaryColors-0/90 transition-colors"
                   onClick={showVideoLessonsCourse}
@@ -388,7 +422,7 @@ export default function DashboardCourseOverView({
                           <div
                             className={`${activeIndex === i ? "rotate-90" : ""} transition-transform duration-200`}
                           >
-                            <MdChevronRight />{" "}
+                            <MdChevronRight />
                           </div>
                         </span>
                       </h2>
@@ -431,7 +465,6 @@ export default function DashboardCourseOverView({
 
           {course && (
             <>
-              {" "}
               <div className="cr_box">
                 <h1 className="font-[700] text-[16px]">Instructor</h1>
                 <div className="flex gap-2 items-center my-4">

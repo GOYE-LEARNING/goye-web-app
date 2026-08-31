@@ -168,13 +168,13 @@ export default function DashboardCourseDone({ openCourse, search, isRefreshing }
       {filterCourse.map((item: any) => (
         <div
           key={item.enrollment_id}
-          className="md:bg-white dark:md:bg-secondaryColors-0 md:drop-shadow-sm w-full md:p-[24px] my-5 flex flex-col gap-2"
+          className="bg-white dark:bg-secondaryColors-0 px-10 py-5 rounded-[15px] md:drop-shadow-sm w-full md:p-[24px] my-5 flex flex-col gap-2"
         >
           <div className="flex justify-start items-start w-full gap-3">
             <img
               src={item.course.course_image || logo.src}
               alt="course"
-              className="h-[89.16px] w-[130px] object-cover rounded"
+              className="md:h-[89.16px] h-[100px] w-[130px] object-cover rounded"
             />
             <div className="w-full flex flex-col gap-2">
               <div className="flex justify-between items-center w-full">
@@ -220,7 +220,7 @@ export default function DashboardCourseDone({ openCourse, search, isRefreshing }
           >
             View Course
           </button>
-          <div className="h-[1px] w-full dark:bg-[#EFEFF2]/20 bg-[#ccc]/20"></div>
+          <div className="hidden md:block h-[1px] w-full dark:bg-[#EFEFF2]/20 bg-[#ccc]/20"></div>
         </div>
       ))}
     </div>

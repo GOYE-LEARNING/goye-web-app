@@ -92,7 +92,7 @@ export default function GeneralLeaderboard({ search }: Props) {
     if (rank === 1) return "bg-[#FFA82F]"; // Gold
     if (rank === 2) return "bg-[#C7C8C7]"; // Silver
     if (rank === 3) return "bg-[#C8936E]"; // Bronze
-    return "bg-gray-300";
+    return "bg-shadyColor-0";
   };
 
   // Helper function to get medal label
@@ -184,7 +184,7 @@ export default function GeneralLeaderboard({ search }: Props) {
                     >
                       {getMedalLabel(user.rank)}
                     </div>
-                    <div className="h-[40px] w-[40px] rounded-full overflow-hidden bg-gray-200 -ml-4">
+                    <div className=" h-[40px] w-[40px] rounded-full overflow-hidden bg-shadyColor-0 -ml-4">
                       {user.avatar ? (
                         <img
                           src={user.avatar}
@@ -246,8 +246,8 @@ export default function GeneralLeaderboard({ search }: Props) {
 
       {/* Empty state */}
       {leaderboardData.length === 0 && !isLoading && (
-        <div className="text-center py-12">
-          <BiTrophy size={48} className="mx-auto text-gray-300 mb-3" />
+        <div className=" text-center py-12">
+          <BiTrophy size={48} className="mx-auto text-lightBoldText-0 mb-3" />
           <p className="text-textGrey-0">No users on the leaderboard yet</p>
           <p className="text-sm text-textGrey-0/60">
             Complete activities to earn XP and appear here!
@@ -257,7 +257,7 @@ export default function GeneralLeaderboard({ search }: Props) {
 
       {filterStudent.length === 0 && !isLoading && (
         <div className="text-center py-12">
-          <BiTrophy size={48} className="mx-auto text-gray-300 mb-3" />
+          <BiTrophy size={48} className="mx-auto text-lightBoldText-0 mb-3" />
           <p className="text-textGrey-0">No users matches your search</p>
         </div>
       )}

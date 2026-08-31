@@ -1,4 +1,5 @@
 "use client";
+
 import React, {
   useEffect,
   useState,
@@ -10,7 +11,7 @@ import React, {
   memo as reactMemo,
 } from "react";
 import { FaRegClock } from "react-icons/fa";
-import { RiGroupLine } from "react-icons/ri";
+import { RiGroupLine as GroupIcon } from "react-icons/ri";
 import { MdAdd } from "react-icons/md";
 import DashboardSearch from "@/app/component/dashboard_search";
 import { formatDistanceToNow } from "date-fns";
@@ -26,26 +27,24 @@ import { FaMessage, FaPeopleGroup } from "react-icons/fa6";
 import { IoExtensionPuzzle } from "react-icons/io5";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// Lazy load heavy components
 const SocialMode = lazy(() => import("@/app/component/dashboard_social_feed"));
 
 interface GroupData {
   id: string;
   group_title: string;
-  group_short_description: string;
-  group_description: string;
-  group_image: string;
-  createdBy: {
-    first_name: string;
-    last_name: string;
-    user_pic: string;
+  group_short_description?: string;
+  group_description?: string;
+  group_image?: string;
+  createdBy?: {
+    first_name?: string;
+    last_name?: string;
+    user_pic?: string;
   };
-  _count: { member: number };
-  hasJoined: boolean; // Now comes from API directly
+  _count?: { member?: number };
+  hasJoined?: boolean;
   updatedAt?: string;
 }
 
-// Helper function to get loader props
 const getLoaderProps = () => ({
   full_border_color: "transparent",
   small_border_color: "orange",
@@ -62,7 +61,6 @@ const getSmallLoaderProps = () => ({
   border_width: 2,
 });
 
-// Separate component for group card to isolate re-renders
 const GroupCard = reactMemo(
   ({
     data,
@@ -75,7 +73,7 @@ const GroupCard = reactMemo(
     isJoining: boolean;
     onJoin: (e: React.MouseEvent) => void;
     onClick: () => void;
-    formatDate: (date: string) => string;
+    formatDate: (date?: string) => string;
   }) => (
     <div
       className="cursor-pointer border border-[#ccc]/10 bg-white dark:bg-secondaryColors-0 py-4 px-4 rounded-xl my-3 transition-all hover:shadow-md"
@@ -108,15 +106,15 @@ const GroupCard = reactMemo(
       </div>
 
       <p className="text-[#71748C] dark:text-gray-400 text-sm my-1 line-clamp-2">
-        {data.group_short_description}
+        {data.group_short_description || data.group_description || "No description provided."}
       </p>
 
       <div className="flex items-center gap-4 text-[#71748C] text-xs">
         <span className="flex items-center gap-1">
-          <RiGroupLine size={14} /> {data._count?.member || 0} members
+          <GroupIcon size={14} /> {data._count?.member ?? 0} members
         </span>
         <span className="flex items-center gap-1">
-          <FaRegClock size={12} /> {formatDate(data.updatedAt || "")}
+          <FaRegClock size={12} /> {formatDate(data.updatedAt)}
         </span>
       </div>
 
@@ -128,22 +126,26 @@ const GroupCard = reactMemo(
             <img
               src={data.createdBy.user_pic}
               className="h-full w-full object-cover"
-              alt=""
+              alt="creator"
               loading="lazy"
             />
           ) : (
-            <div className="h-full w-full flex items-center justify-center text-gray-500 text-xs">
+            <div className="h-full w-full flex items-center justify-center text-gray-500 text-xs font-bold">
               {data.createdBy?.first_name?.[0] || "G"}
             </div>
           )}
         </div>
         <p className="text-[#71748C] dark:text-gray-400 text-xs truncate">
-          {data.createdBy?.first_name || ""} {data.createdBy?.last_name || ""}
+          {data.createdBy?.first_name || data.createdBy?.last_name
+            ? `${data.createdBy?.first_name || ""} ${data.createdBy?.last_name || ""}`
+            : "Community Admin"}
         </p>
       </div>
     </div>
-  ),
+  )
 );
+
+GroupCard.displayName = "GroupCard";
 
 export default function StudentCommunity() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -156,13 +158,12 @@ export default function StudentCommunity() {
   const [showCommunity, setShowCommunity] = useState(true);
   const [search, setSearch] = useState("");
   const [joiningId, setJoiningId] = useState<string | null>(null);
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Lets a group card clicked elsewhere (e.g. the ShekiAI assistant panel)
-  // deep-link straight to a specific group via
-  // /dashboard/student/community?groupId=... — mirrors the same pattern
-  // added to the course page for the same reason.
+  const isMounted = useRef(true);
+
   useEffect(() => {
     const linkedGroupId = searchParams.get("groupId");
     if (!linkedGroupId) return;
@@ -171,25 +172,21 @@ export default function StudentCommunity() {
     setShowCommunityGroup(true);
     setGroupId(linkedGroupId);
     router.replace("/dashboard/student/community");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, router]);
 
-  // Use refs to prevent unnecessary re-renders
-  const isMounted = useRef(true);
-  const initialFetchDone = useRef(false);
-
-  const formatDate = useCallback((dateString: string) => {
-    if (!dateString) return "Invalid Date";
+  const formatDate = useCallback((dateString?: string) => {
+    if (!dateString) return "N/A";
     try {
       const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "N/A";
       return formatDistanceToNow(date, { addSuffix: true });
     } catch {
-      return "Invalid Date";
+      return "N/A";
     }
   }, []);
 
-  // OPTIMIZED: Single fetch function - NO extra API calls
   const fetchGroups = useCallback(async () => {
+    if (!API_URL) return;
     setIsLoading(true);
 
     try {
@@ -211,20 +208,15 @@ export default function StudentCommunity() {
       }
 
       const data = await res.json();
-      
-      // The API already returns groups with hasJoined field!
-      let groupsArray = Array.isArray(data?.data) 
-        ? data.data 
-        : Array.isArray(data) 
-          ? data 
-          : [];
+      const groupsArray = Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data)
+        ? data
+        : [];
 
       if (isMounted.current) {
         setGroup(groupsArray);
       }
-      
-      console.log(`✅ Loaded ${groupsArray.length} groups with join status from API`);
-      
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -234,33 +226,33 @@ export default function StudentCommunity() {
     }
   }, [API_URL]);
 
-  // Initial fetch only once
   useEffect(() => {
-    if (!initialFetchDone.current) {
-      initialFetchDone.current = true;
-      fetchGroups();
-    }
+    isMounted.current = true;
+    fetchGroups();
 
     return () => {
       isMounted.current = false;
     };
   }, [fetchGroups]);
 
-  // Handle join with optimistic update
   const handleJoin = useCallback(
     async (e: React.MouseEvent, groupItem: GroupData) => {
       e.stopPropagation();
-      if (joiningId) return;
+      if (joiningId || !API_URL) return;
 
       setJoiningId(groupItem.id);
 
-      // Optimistic update
+      // Optimistic state update
       setGroup((prev) =>
         prev.map((g) =>
           g.id === groupItem.id
-            ? { ...g, hasJoined: true, _count: { member: g._count.member + 1 } }
-            : g,
-        ),
+            ? {
+                ...g,
+                hasJoined: true,
+                _count: { member: (g._count?.member || 0) + 1 },
+              }
+            : g
+        )
       );
 
       try {
@@ -269,24 +261,24 @@ export default function StudentCommunity() {
           {
             method: "POST",
             credentials: "include",
-          },
+          }
         );
 
         if (!res.ok) {
-          // Rollback on error
+          // Rollback on failure
           setGroup((prev) =>
             prev.map((g) =>
               g.id === groupItem.id
                 ? {
                     ...g,
                     hasJoined: false,
-                    _count: { member: Math.max(0, g._count.member - 1) },
+                    _count: { member: Math.max(0, (g._count?.member || 1) - 1) },
                   }
-                : g,
-            ),
+                : g
+            )
           );
         }
-      } catch (error) {
+      } catch {
         // Rollback on error
         setGroup((prev) =>
           prev.map((g) =>
@@ -294,127 +286,27 @@ export default function StudentCommunity() {
               ? {
                   ...g,
                   hasJoined: false,
-                  _count: { member: Math.max(0, g._count.member - 1) },
+                  _count: { member: Math.max(0, (g._count?.member || 1) - 1) },
                 }
-              : g,
-          ),
+              : g
+          )
         );
       } finally {
-        setJoiningId(null);
+        if (isMounted.current) {
+          setJoiningId(null);
+        }
       }
     },
-    [API_URL, joiningId],
+    [API_URL, joiningId]
   );
 
-  // Memoized filtered groups
   const filteredGroups = useMemo(() => {
     if (!search.trim()) return group;
     const searchLower = search.toLowerCase();
     return group.filter((g) =>
-      g.group_title.toLowerCase().includes(searchLower),
+      g.group_title.toLowerCase().includes(searchLower)
     );
   }, [group, search]);
-
-  // Memoized tab content
-  const tabContent = useMemo(() => {
-    if (activeTab === "live") {
-      return (
-        <Suspense
-          fallback={
-            <div className="flex justify-center py-20">
-              <Loader {...getLoaderProps()} />
-            </div>
-          }
-        >
-          <SocialMode />
-        </Suspense>
-      );
-    }
-
-    if (activeTab === "messages") {
-      return (
-        <div className="flex justify-center items-center h-96 bg-white/50 dark:bg-secondaryColors-0/50 backdrop-blur-md rounded-xl">
-          <div className="text-center">
-            <FaMessage className="text-6xl text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              Messages
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mt-2">
-              Open your message inbox
-            </p>
-            <button
-              onClick={() => setShowMessagesModal(true)}
-              className="mt-6 px-6 py-2 bg-primaryColors-0 text-white rounded-full hover:bg-primaryColors-600 transition-colors font-semibold"
-            >
-              Open Messages
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    // Groups tab
-    return (
-      <>
-        <div className="flex justify-between items-center gap-4 mb-4">
-          <div className="w-full">
-            <DashboardSearch
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search groups..."
-            />
-          </div>
-          <button
-            onClick={() => fetchGroups()}
-            className="h-9 w-9 bg-primaryColors-0 rounded-full flex items-center justify-center cursor-pointer hover:bg-primaryColors-600 transition-colors flex-shrink-0"
-            aria-label="Refresh groups"
-          >
-            <IoMdRefresh className="text-white" size={18} />
-          </button>
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader {...getLoaderProps()} />
-          </div>
-        ) : filteredGroups.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-20">
-            <Image src={pic2} alt="No groups" height={100} width={100} />
-            <h1 className="text-textSlightDark-0 font-semibold">
-              No Groups Found
-            </h1>
-            <p className="text-textGrey-0">Join or Create a Group</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredGroups.map((data) => (
-              <GroupCard
-                key={data.id}
-                data={data}
-                isJoining={joiningId === data.id}
-                onJoin={(e) => handleJoin(e, data)}
-                onClick={() => {
-                  setShowCommunity(false);
-                  setShowCommunityGroup(true);
-                  setGroupId(data.id);
-                }}
-                formatDate={formatDate}
-              />
-            ))}
-          </div>
-        )}
-      </>
-    );
-  }, [
-    activeTab,
-    search,
-    isLoading,
-    filteredGroups,
-    joiningId,
-    handleJoin,
-    formatDate,
-    fetchGroups,
-  ]);
 
   return (
     <AnimatePresence mode="wait">
@@ -467,7 +359,92 @@ export default function StudentCommunity() {
             </div>
           </div>
 
-          <div className="mt-6">{tabContent}</div>
+          {/* Dynamic Tab Rendering */}
+          <div className="mt-6">
+            {activeTab === "live" && (
+              <Suspense
+                fallback={
+                  <div className="flex justify-center py-20">
+                    <Loader {...getLoaderProps()} />
+                  </div>
+                }
+              >
+                <SocialMode />
+              </Suspense>
+            )}
+
+            {activeTab === "messages" && (
+              <div className="flex justify-center items-center h-96 bg-white/50 dark:bg-secondaryColors-0/50 backdrop-blur-md rounded-xl">
+                <div className="text-center">
+                  <FaMessage className="text-6xl text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                    Messages
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">
+                    Open your message inbox
+                  </p>
+                  <button
+                    onClick={() => setShowMessagesModal(true)}
+                    className="mt-6 px-6 py-2 bg-primaryColors-0 text-white rounded-full hover:bg-primaryColors-600 transition-colors font-semibold"
+                  >
+                    Open Messages
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "groups" && (
+              <>
+                <div className="flex justify-between items-center gap-4 mb-4">
+                  <div className="w-full">
+                    <DashboardSearch
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search groups..."
+                    />
+                  </div>
+                  <button
+                    onClick={() => fetchGroups()}
+                    className="h-9 w-9 bg-primaryColors-0 rounded-full flex items-center justify-center cursor-pointer hover:bg-primaryColors-600 transition-colors flex-shrink-0"
+                    aria-label="Refresh groups"
+                  >
+                    <IoMdRefresh className="text-white" size={18} />
+                  </button>
+                </div>
+
+                {isLoading ? (
+                  <div className="flex justify-center py-20">
+                    <Loader {...getLoaderProps()} />
+                  </div>
+                ) : filteredGroups.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 py-20">
+                    <Image src={pic2} alt="No groups" height={100} width={100} />
+                    <h1 className="text-textSlightDark-0 font-semibold">
+                      No Groups Found
+                    </h1>
+                    <p className="text-textGrey-0">Join or Create a Group</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredGroups.map((data) => (
+                      <GroupCard
+                        key={data.id}
+                        data={data}
+                        isJoining={joiningId === data.id}
+                        onJoin={(e) => handleJoin(e, data)}
+                        onClick={() => {
+                          setShowCommunity(false);
+                          setShowCommunityGroup(true);
+                          setGroupId(data.id);
+                        }}
+                        formatDate={formatDate}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </motion.div>
       ) : (
         <motion.div
@@ -482,13 +459,13 @@ export default function StudentCommunity() {
               setShowCommunity(true);
               setShowCommunityGroup(false);
               setGroupId("");
-              // Refresh groups when coming back to update join status
               fetchGroups();
             }}
             groupId={groupId}
           />
         </motion.div>
       )}
+
       <MessagesModal
         isOpen={showMessagesModal}
         onClose={() => setShowMessagesModal(false)}

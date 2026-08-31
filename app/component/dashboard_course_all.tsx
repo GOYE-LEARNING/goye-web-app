@@ -1,9 +1,11 @@
+// components/dashboard_course_all.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useModal } from "../context/SimpleModalContext";
 import CourseList from "./dashboard_courselist_component";
+import Loader from "./loader";
 
 interface Props {
   openCourse: (id: string) => void;
@@ -11,80 +13,114 @@ interface Props {
   isRefreshing: boolean;
 }
 
-export default function DashboardCourseAllProvider({
-  openCourse,
-  search,
-  isRefreshing,
-}: Props) {
+export default function DashboardCourseAllProvider({ openCourse, search, isRefreshing }: Props) {
+  const [courses, setCourses] = useState<any[]>([]);
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
-  const [courseDetails, setCourseDetails] = useState<any[]>([]);
   const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [isToggling, setIsToggling] = useState<string | null>(null);
   const { showModal } = useModal();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
-  const pathname = usePathname();
+  const router = useRouter();
 
-  // ✅ Check if we're in an organization route
-  const isOrganizationRoute = pathname?.includes("/organization/");
-
-  // Fetch all courses - uses different endpoint based on route
   const fetchCourses = async () => {
     try {
       setInitialLoading(true);
-
-      // ✅ Use organization-specific endpoint if in organization route
-      const endpoint = isOrganizationRoute
-        ? `${API_URL}/api/organizations/get-courses-by-organization`
-        : `${API_URL}/api/course/get-all-courses-level`;
-
-      console.log(`📡 Fetching courses from: ${endpoint}`);
-
-      const res = await fetch(endpoint, {
+      
+      const res = await fetch(`${API_URL}/api/course/get-all-courses-level`, {
         method: "GET",
         credentials: "include",
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
       });
-
+      
       const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Failed to fetch courses");
-      console.log("CHECK THE COURSES AND THEIR RETURNED VALUES ", data);
-      // ✅ Handle different response structures
-      let courses = [];
-      if (isOrganizationRoute) {
-        // Organization endpoint returns { data: { courses: [...] } }
-        courses = data.data?.courses || [];
-        console.log(`🏢 Organization courses found: ${courses.length}`);
-      } else {
-        // Global endpoint returns { data: { getAllCourses: [...] } }
-        courses = data.data?.getAllCourses || [];
-        console.log(`🌐 Global courses found: ${courses.length}`);
+      
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to fetch courses");
       }
+      
+      console.log("Courses data:", data);
+      
+      const coursesData = data.data?.getAllCourses || [];
+      
+      // Transform the data to match the CourseCard interface
+      const transformedCourses = coursesData.map((course: any) => {
+        const rawProgress = course.progress || null;
+        const enrollmentStatus = course.enrollmentStatus || "NOT_ENROLLED";
 
-      setCourseDetails(courses);
+        // Trust enrollmentStatus as the source of truth for "is this user
+        // actually enrolled" — both signals must agree. Prevents a stray
+        // isEnrolled flag from ever driving a progress bar / "Continue
+        // Learning" on a course the user hasn't joined.
+        const isEnrolled = Boolean(course.isEnrolled) && enrollmentStatus !== "NOT_ENROLLED";
+        
+        return {
+          id: course.id,
+          course_title: course.course_title,
+          course_description: course.course_description,
+          course_short_description: course.course_short_description,
+          course_image: course.course_image,
+          course_level: course.course_level,
+          createdBy: course.createdBy,
+          organizationName: course.organizationName,
+          enrollmentStatus,
+          isEnrolled,
+          enrollment: course.enrollment || [],
+          progress: (isEnrolled && rawProgress) ? {
+            percentage: rawProgress.percentage || 0,
+            completedLessons: rawProgress.completed_lessons || 0,
+            totalLessons: rawProgress.total_lessons || 0,
+            totalDurationMinutes: rawProgress.total_duration_minutes || 0,
+            watchedDurationMinutes: rawProgress.watched_duration_minutes || 0,
+            isCompleted: rawProgress.is_completed || false,
+          } : null,
+          totalDuration: course.totalDuration || 0,
+          lessonCount: course.totalLessons || 0,
+          module: course.module || [],
+          moduleCount: course.moduleCount || 0,
+          createdByDetails: course.createdByDetails || null,
+          enrollmentCount: course.enrollmentCount || 0,
+        };
+      });
+      
+      console.log("Transformed courses:", transformedCourses);
+      
+      setCourses(transformedCourses);
+      
+      // Fetch bookmarked IDs
+      await fetchSavedIds();
+      
     } catch (error) {
-      console.error("Error fetching courses:", error);
+      console.error(error);
       showModal("Error", "Could not load courses", "error");
     } finally {
       setInitialLoading(false);
     }
   };
 
-  // Fetch saved course IDs for the user
-  const fetchSavedCourseIds = async () => {
+  const fetchSavedIds = async () => {
     try {
       const res = await fetch(`${API_URL}/api/course/fetch-saved-courses`, {
         method: "GET",
         credentials: "include",
       });
       const data = await res.json();
+      
       if (!res.ok) throw new Error("Failed to fetch saved courses");
-
+      
       const savedItems = data.data || [];
-      const savedIds = savedItems
-        .filter((item: any) => item.courses !== null)
-        .map((item: any) => item.courses.id);
 
+      // FIX: the previous filter (`item.courses !== null`) only excluded
+      // explicit nulls — if item.courses was ever undefined instead, it
+      // slipped through and crashed on `.id`. Using optional chaining and
+      // filtering on the resolved id itself is safe against null,
+      // undefined, or a missing id, regardless of the cause upstream.
+      const savedIds: string[] = savedItems
+        .map((item: any) => item?.courses?.id)
+        .filter((id: unknown): id is string => typeof id === "string" && id.length > 0);
+      
       setBookmarkedIds(savedIds);
     } catch (error) {
       console.error("Could not load saved courses", error);
@@ -92,65 +128,39 @@ export default function DashboardCourseAllProvider({
   };
 
   useEffect(() => {
-    const load = async () => {
-      await fetchCourses();
-      await fetchSavedCourseIds();
-    };
-    load();
-  }, [isOrganizationRoute]); // ✅ Re-fetch when route changes
+    fetchCourses();
+  }, []);
 
-  // Refresh when isRefreshing changes
   useEffect(() => {
     if (isRefreshing) {
       fetchCourses();
-      fetchSavedCourseIds();
     }
   }, [isRefreshing]);
 
   const toggleBookmark = async (id: string) => {
-    if (isToggling === id) return;
-
-    setIsToggling(id);
-    const isCurrentlySaved = bookmarkedIds.includes(id);
-
     try {
-      const endpoint = isCurrentlySaved
-        ? `${API_URL}/api/course/unsave-course/${id}`
-        : `${API_URL}/api/course/save-course/${id}`;
-      const method = isCurrentlySaved ? "DELETE" : "POST";
-
-      const res = await fetch(endpoint, {
-        method,
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(
-          errorData.message ||
-            `Failed to ${isCurrentlySaved ? "unsave" : "save"} course`,
-        );
+      const isBookmarked = bookmarkedIds.includes(id);
+      
+      if (isBookmarked) {
+        const res = await fetch(`${API_URL}/api/course/unsave-course/${id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to unsave course");
+        setBookmarkedIds((prev) => prev.filter((i) => i !== id));
+        showModal("Success", "Course removed from saved", "success");
+      } else {
+        const res = await fetch(`${API_URL}/api/course/save-course/${id}`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to save course");
+        setBookmarkedIds((prev) => [...prev, id]);
+        showModal("Success", "Course saved successfully", "success");
       }
-
-      setBookmarkedIds((prev) =>
-        isCurrentlySaved ? prev.filter((i) => i !== id) : [...prev, id],
-      );
-
-      showModal(
-        "Success",
-        isCurrentlySaved ? "Course removed from saved" : "Course saved",
-        "success",
-      );
     } catch (error) {
       console.error(error);
-      showModal(
-        "Error",
-        `Could not ${isCurrentlySaved ? "unsave" : "save"} course`,
-        "error",
-      );
-      await fetchSavedCourseIds();
-    } finally {
-      setIsToggling(null);
+      showModal("Error", "Could not update saved status", "error");
     }
   };
 
@@ -164,10 +174,10 @@ export default function DashboardCourseAllProvider({
     }
   };
 
-  const filteredCourses = courseDetails.filter(
+  const filteredCourses = courses.filter(
     (course) =>
-      course.course_title?.toLowerCase().includes(search.toLowerCase()) ||
-      course.course_description?.toLowerCase().includes(search.toLowerCase()),
+      course?.course_title?.toLowerCase().includes(search.toLowerCase()) ||
+      course?.course_description?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -178,12 +188,7 @@ export default function DashboardCourseAllProvider({
       onViewCourse={handleViewCourse}
       loadingCourseId={loadingCourseId}
       isLoading={initialLoading || isRefreshing}
-      emptyMessage={
-        isOrganizationRoute
-          ? "No courses found in this organization"
-          : "No Course Found"
-      }
-      isToggling={isToggling}
+      emptyMessage="No courses found"
     />
   );
 }

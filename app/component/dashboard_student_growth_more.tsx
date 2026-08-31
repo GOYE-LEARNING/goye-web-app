@@ -10,6 +10,9 @@ interface GrowthData {
     currentLevel: string;
     levelNumber: number;
     nextLevelXP: number;
+    nextLevelName: string;
+    currentLevelXP: number;
+    xpForCurrentLevel: number;
     progressToNextLevel: number;
   };
   stats: {
@@ -102,8 +105,11 @@ export default function DashboardStudentGrowthMore() {
 
   const { user, stats } = growthData;
   const currentLevel = user.currentLevel || "Seeker";
-  const currentXP = user.totalXP || 0;
+  const totalXP = user.totalXP || 0;
+  const currentLevelXP = user.currentLevelXP || 0;
+  const xpForCurrentLevel = user.xpForCurrentLevel || 0;
   const nextLevelXP = user.nextLevelXP || 0;
+  const nextLevelName = user.nextLevelName || "Max Level";
   const progressToNext = user.progressToNextLevel || 0;
 
   return (
@@ -116,7 +122,11 @@ export default function DashboardStudentGrowthMore() {
               {currentLevel}
             </h1>
             <span className="font-[500] text-[12px] text-[#71748C] dark:text-gray-400">
-              {currentXP} XP
+              {xpForCurrentLevel > 0 ? (
+                <>{totalXP} / {xpForCurrentLevel} XP</>
+              ) : (
+                <>Max level</>
+              )}
             </span>
           </div>
           
@@ -130,10 +140,7 @@ export default function DashboardStudentGrowthMore() {
           
           {/* Next Level Info */}
           <div className="text-[#41415A] dark:text-white font-[600] text-center my-3">
-            {nextLevelXP > 0 ? `${nextLevelXP} XP to ${user.currentLevel === "Seeker" ? "Learner" : 
-              user.currentLevel === "Learner" ? "Disciple" :
-              user.currentLevel === "Disciple" ? "Ambassador" :
-              user.currentLevel === "Ambassador" ? "Mentor" : "Max Level"}` : "Maximum Level Reached! 🎉"}
+            {nextLevelXP > 0 ? `${nextLevelXP} XP to ${nextLevelName}` : "Maximum Level Reached! 🎉"}
           </div>
           
           <div className="bg-[#EFEFF2] dark:bg-[#ccc]/20 h-[1px] w-full"></div>
@@ -170,7 +177,7 @@ export default function DashboardStudentGrowthMore() {
           
           <div className="flex flex-col justify-center items-center gap-2 min-w-[70px]">
             <span className="font-[700] text-xl text-primaryColors-0">
-              {stats.totalPoints || currentXP}
+              {totalXP}
             </span>
             <p className="font-[400] text-[#71748C] dark:text-gray-400 text-sm">
               Total XP

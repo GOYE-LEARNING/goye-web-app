@@ -21,16 +21,13 @@ export default function DashboardCourseSaved({ openCourse, search, isRefreshing 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const pathname = usePathname();
 
-  // ✅ Check if we're in an organization route
   const isOrganizationRoute = pathname?.includes('/organization/');
 
   const fetchSavedCourses = async () => {
     try {
       setInitialLoading(true);
       
-      // ✅ Use different endpoints based on route
       if (isOrganizationRoute) {
-        // ✅ For organization route - fetch organization courses
         const res = await fetch(`${API_URL}/api/organizations/get-courses-by-organization`, {
           method: "GET",
           credentials: "include",
@@ -40,24 +37,49 @@ export default function DashboardCourseSaved({ openCourse, search, isRefreshing 
         if (!res.ok) throw new Error(data.message || "Failed to fetch organization courses");
         
         const courses = data.data?.courses || [];
-        setSavedCourses(courses);
-        // For organization courses, we don't have saved status from this endpoint
-        // We'll fetch saved IDs separately
+        
+        // ✅ Transform organization courses to include required fields
+        const transformedCourses = courses.map((course: any) => ({
+          id: course.id,
+          course_title: course.course_title,
+          course_description: course.course_description,
+          course_short_description: course.course_short_description,
+          course_image: course.course_image,
+          course_level: course.course_level,
+          createdBy: course.createdBy,
+          organizationName: course.organizationName,
+          isEnrolled: false,
+          enrollmentStatus: "NOT_ENROLLED",
+          enrollment: [],
+          enrollmentCount: course.enrollment?.length || 0,
+          progress: null,
+          totalDuration: course.totalDuration || 0,
+          totalDurationMinutes: course.totalDuration || 0,
+          lessonCount: course.lessonCount || 0,
+          totalLessons: course.lessonCount || 0,
+          module: course.module || [],
+          moduleCount: course.module?.length || 0,
+          createdByDetails: course.createdByDetails || null,
+        }));
+        
+        setSavedCourses(transformedCourses);
         await fetchSavedIds();
       } else {
-        // ✅ For regular route - fetch saved courses
+        // ✅ For regular route - fetch saved courses with the new endpoint
         const res = await fetch(`${API_URL}/api/course/fetch-saved-courses`, {
           method: "GET",
           credentials: "include",
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
         });
         const data = await res.json();
         
         if (!res.ok) throw new Error(data.message || "Failed to fetch saved courses");
         
-        const savedItems = data.data || [];
-        const courses = savedItems
-          .filter((item: any) => item.courses !== null)
-          .map((item: any) => item.courses);
+        // ✅ The data is already transformed with enrollment status and total minutes
+        const courses = data.data || [];
         
         setSavedCourses(courses);
         setBookmarkedIds(courses.map((c: any) => c.id));
@@ -70,7 +92,6 @@ export default function DashboardCourseSaved({ openCourse, search, isRefreshing 
     }
   };
 
-  // ✅ Helper to fetch saved course IDs (for organization route)
   const fetchSavedIds = async () => {
     try {
       const res = await fetch(`${API_URL}/api/course/fetch-saved-courses`, {
@@ -82,9 +103,7 @@ export default function DashboardCourseSaved({ openCourse, search, isRefreshing 
       if (!res.ok) throw new Error("Failed to fetch saved courses");
       
       const savedItems = data.data || [];
-      const savedIds = savedItems
-        .filter((item: any) => item.courses !== null)
-        .map((item: any) => item.courses.id);
+      const savedIds = savedItems.map((item: any) => item.id);
       
       setBookmarkedIds(savedIds);
     } catch (error) {
@@ -94,9 +113,8 @@ export default function DashboardCourseSaved({ openCourse, search, isRefreshing 
 
   useEffect(() => {
     fetchSavedCourses();
-  }, [isOrganizationRoute]); // ✅ Re-fetch when route changes
+  }, [isOrganizationRoute]);
 
-  // ✅ Refresh when isRefreshing changes
   useEffect(() => {
     if (isRefreshing) {
       fetchSavedCourses();

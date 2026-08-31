@@ -492,7 +492,7 @@ body.chat-page-desktop {
 }
 
 .dashboard_course_btns {
-  @apply w-[170.75px] p-[10px] text-[14px] font-[500];
+  @apply lg:w-[170.75px] grid w-full p-[10px] text-[14px] font-[500];
 }
 
 .cr_p {

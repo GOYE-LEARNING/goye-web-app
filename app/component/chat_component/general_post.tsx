@@ -19,6 +19,10 @@ import {
   FaRegNewspaper,
   FaClipboardList,
   FaSync,
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaInfoCircle,
+  FaTrashAlt,
 } from "react-icons/fa";
 import { MdAdd, MdClose } from "react-icons/md";
 import { AnimatePresence, motion } from "framer-motion";
@@ -32,6 +36,13 @@ interface Props {
   openPrivateMessages: () => void;
   triggerCreatePost?: boolean;
   onTriggerClose?: () => void;
+}
+
+type ToastType = "success" | "error" | "info";
+interface ToastMsg {
+  id: string;
+  message: string;
+  type: ToastType;
 }
 
 // Post Categories for creating posts (IDs are uppercase to match backend enum)
@@ -95,6 +106,7 @@ const CreatePostModal = ({
   userName,
   userRole,
   isSubmitting,
+  showToast,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -103,6 +115,7 @@ const CreatePostModal = ({
   userName: string;
   userRole: string;
   isSubmitting: boolean;
+  showToast: (message: string, type?: ToastType) => void;
 }) => {
   const [content, setContent] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("DISCUSSION");
@@ -214,7 +227,7 @@ const CreatePostModal = ({
       if (!isImage && !isVideo) continue;
       
       if (isVideo && !allowedVideoCats.includes(selectedCategory)) {
-        alert("You can only upload videos for Post, Devotion, or Testimony categories.");
+        showToast("You can only upload videos for Post, Devotion, or Testimony categories.", "error");
         continue;
       }
 
@@ -247,7 +260,7 @@ const CreatePostModal = ({
             m.id === newMedia.id ? { ...m, uploading: false, uploadProgress: 0 } : m
           )
         );
-        alert(`Failed to upload ${file.name}`);
+        showToast(`Failed to upload ${file.name}`, "error");
       }
     }
     
@@ -262,13 +275,13 @@ const CreatePostModal = ({
 
   const handleSubmit = () => {
     if (!content.trim() && mediaFiles.length === 0) {
-      alert("Please add some content");
+      showToast("Please add some content", "error");
       return;
     }
     
     const hasUploading = mediaFiles.some(m => m.uploading);
     if (hasUploading) {
-      alert("Please wait for all media to finish uploading");
+      showToast("Please wait for all media to finish uploading", "error");
       return;
     }
     
@@ -531,6 +544,113 @@ const CreatePostModal = ({
   );
 };
 
+// ==================== TOAST STACK ====================
+const ToastStack = ({
+  toasts,
+  onDismiss,
+}: {
+  toasts: ToastMsg[];
+  onDismiss: (id: string) => void;
+}) => (
+  <Portal containerId="toast-stack-root">
+    <div className="fixed bottom-4 right-4 left-4 sm:left-auto z-[200] flex flex-col gap-2 sm:max-w-sm sm:w-full">
+      <AnimatePresence>
+        {toasts.map((toast) => (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 60 }}
+            transition={{ duration: 0.2 }}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg backdrop-blur-md border text-sm font-medium
+              ${toast.type === "success"
+                ? "bg-green-50/95 dark:bg-green-950/90 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300"
+                : toast.type === "error"
+                ? "bg-red-50/95 dark:bg-red-950/90 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
+                : "bg-white/95 dark:bg-gray-800/95 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+              }`}
+          >
+            {toast.type === "success" && <FaCheckCircle className="flex-shrink-0" />}
+            {toast.type === "error" && <FaExclamationCircle className="flex-shrink-0" />}
+            {toast.type === "info" && <FaInfoCircle className="flex-shrink-0" />}
+            <span className="flex-1">{toast.message}</span>
+            <button
+              onClick={() => onDismiss(toast.id)}
+              className="opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
+              aria-label="Dismiss"
+            >
+              <MdClose size={16} />
+            </button>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  </Portal>
+);
+
+// ==================== CONFIRM DELETE MODAL ====================
+const ConfirmDeleteModal = ({
+  isOpen,
+  isDeleting,
+  onCancel,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  isDeleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <Portal containerId="confirm-delete-modal-root">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+        onClick={onCancel}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 10 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/50 mx-auto mb-4">
+            <FaTrashAlt className="text-red-500 text-lg" />
+          </div>
+          <h3 className="text-lg font-semibold text-center text-gray-800 dark:text-white mb-2">
+            Delete this post?
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
+            This can't be undone. The post and all its comments will be permanently removed.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              disabled={isDeleting}
+              className="flex-1 py-2.5 rounded-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isDeleting}
+              className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-medium hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center"
+            >
+              {isDeleting ? <FaSpinner className="animate-spin" /> : "Delete"}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </Portal>
+  );
+};
+
 export default function GeneralPost({
   openPrivateMessages,
   triggerCreatePost = false,
@@ -538,6 +658,8 @@ export default function GeneralPost({
 }: Props) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const selectionButtonRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const backendSortRef = useRef<"latest" | "popular">("latest");
 
   const [showPost, setShowPost] = useState(false);
   const [showPeoplePost, setShowPeoplePost] = useState(true);
@@ -550,6 +672,18 @@ export default function GeneralPost({
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState("");
   const [openSelections, setOpenSelections] = useState<boolean>(false);
+
+  // Pagination / infinite scroll state
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Toast state
+  const [toasts, setToasts] = useState<ToastMsg[]>([]);
+
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Filter state for viewing posts
   const [activeFilter, setActiveFilter] = useState("latest");
@@ -562,6 +696,18 @@ export default function GeneralPost({
   const [nestedCommentText, setNestedCommentText] = useState<{ [replyId: string]: string }>({});
   const [replyingTo, setReplyingTo] = useState<{ [discussionId: string]: { replyId: string; authorName: string } }>({});
 
+  const showToast = (message: string, type: ToastType = "info") => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3500);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   useEffect(() => {
     if (triggerCreatePost) {
       setShowPost(true);
@@ -572,8 +718,22 @@ export default function GeneralPost({
 
   useEffect(() => {
     fetchProfile();
-    fetchDiscussions();
+    fetchDiscussions(1, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-fetch from page 1 only when the backend-relevant sort actually
+  // changes (latest vs popular) — category tabs filter client-side over
+  // whatever's already loaded, so they don't need a refetch.
+  useEffect(() => {
+    const newSort = activeFilter === "popular" ? "popular" : "latest";
+    if (newSort !== backendSortRef.current) {
+      setDiscussions([]);
+      setHasMore(true);
+      fetchDiscussions(1, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter]);
 
   const fetchProfile = async () => {
     try {
@@ -595,32 +755,74 @@ export default function GeneralPost({
     }
   };
 
-  const fetchDiscussions = async (showRefreshAnimation = false) => {
-    if (showRefreshAnimation) {
+  const fetchDiscussions = async (
+    pageNum: number = 1,
+    append: boolean = false,
+    showRefreshAnimation = false,
+  ) => {
+    if (append) {
+      setIsLoadingMore(true);
+    } else if (showRefreshAnimation) {
       setIsRefreshing(true);
     } else {
       setIsLoading(true);
     }
-    
+
+    const backendSort = activeFilter === "popular" ? "popular" : "latest";
+
     try {
-      const res = await fetch(`${API_URL}/api/discussion/public`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${API_URL}/api/discussion/public?sort=${backendSort}&page=${pageNum}&limit=10`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
       const data = await res.json();
-      if (res.ok) setDiscussions(data.data?.discussions || data.data || []);
+      if (res.ok) {
+        const newDiscussions: Discussion[] = data.data?.discussions || [];
+        setDiscussions((prev) => (append ? [...prev, ...newDiscussions] : newDiscussions));
+        setHasMore(!!data.data?.pagination?.hasMore);
+        setPage(pageNum);
+        backendSortRef.current = backendSort;
+      } else {
+        showToast(data.message || "Failed to load posts", "error");
+      }
     } catch (err) {
       console.error(err);
+      showToast("Something went wrong while loading posts", "error");
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
+      setIsLoadingMore(false);
     }
   };
 
   // Handle refresh with animation
   const handleRefresh = async () => {
-    await fetchDiscussions(true);
+    await fetchDiscussions(1, false, true);
   };
+
+  // Infinite scroll: observe a sentinel at the bottom of the feed and
+  // fetch the next page when it comes into view, instead of loading
+  // everything up front.
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const node = loadMoreRef.current;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
+          fetchDiscussions(page + 1, true);
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, isLoadingMore, isLoading, page, activeFilter]);
 
   // Filter discussions based on active filter
   const getFilteredDiscussions = () => {
@@ -712,7 +914,7 @@ export default function GeneralPost({
         } catch (e) {
           if (responseText) errorMessage = responseText;
         }
-        alert(errorMessage);
+        showToast(errorMessage, "error");
         return;
       }
 
@@ -721,20 +923,23 @@ export default function GeneralPost({
         data = JSON.parse(responseText);
       } catch (e) {
         console.error("Failed to parse response:", e);
-        alert("Invalid response from server");
+        showToast("Invalid response from server", "error");
         return;
       }
 
       if (data.success !== false) {
         setShowPost(false);
         setShowPeoplePost(true);
-        await fetchDiscussions();
+        showToast("Post shared successfully!", "success");
+        setDiscussions([]);
+        setHasMore(true);
+        await fetchDiscussions(1, false);
       } else {
-        alert(data.message || "Failed to create post");
+        showToast(data.message || "Failed to create post", "error");
       }
     } catch (error) {
       console.error("Error creating post:", error);
-      alert("An error occurred while creating your post");
+      showToast("An error occurred while creating your post", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -792,7 +997,7 @@ export default function GeneralPost({
         );
         if (showReplies[discussionId]) fetchDiscussionWithReplies(discussionId);
       } else {
-        alert(data.message || "Failed to add comment");
+        showToast(data.message || "Failed to add comment", "error");
       }
     } catch (err) { console.error(err); }
   };
@@ -825,7 +1030,7 @@ export default function GeneralPost({
         cancelReply(discussionId);
         fetchDiscussionWithReplies(discussionId);
       } else {
-        alert(data.message || "Failed to add reply");
+        showToast(data.message || "Failed to add reply", "error");
       }
     } catch (err) { console.error(err); }
   };
@@ -892,30 +1097,39 @@ export default function GeneralPost({
       const data = await response.json();
       if (response.ok && data.success !== false) {
         setDiscussions((prev) => prev.map((d) => d.id === discussionId ? { ...d, content: newContent, isEdited: true } : d));
-        alert("Post updated successfully!");
+        showToast("Post updated successfully!", "success");
       } else {
-        alert(data.message || "Failed to update post");
+        showToast(data.message || "Failed to update post", "error");
       }
     } catch (error) {
       console.error("Error editing post:", error);
-      alert("An error occurred while editing the post");
+      showToast("An error occurred while editing the post", "error");
     }
   };
 
-  const handleDeletePost = async (discussionId: string) => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
+  // Opens the confirm modal instead of deleting immediately
+  const confirmDeletePost = (discussionId: string) => {
+    setDeleteTarget(discussionId);
+  };
+
+  const performDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      const response = await fetch(`${API_URL}/api/discussion/${discussionId}`, { method: "DELETE", credentials: "include" });
+      const response = await fetch(`${API_URL}/api/discussion/${deleteTarget}`, { method: "DELETE", credentials: "include" });
       const data = await response.json();
       if (response.ok && data.success !== false) {
-        setDiscussions((prev) => prev.filter((d) => d.id !== discussionId));
-        alert("Post deleted successfully!");
+        setDiscussions((prev) => prev.filter((d) => d.id !== deleteTarget));
+        showToast("Post deleted successfully", "success");
       } else {
-        alert(data.message || "Failed to delete post");
+        showToast(data.message || "Failed to delete post", "error");
       }
     } catch (error) {
       console.error("Error deleting post:", error);
-      alert("An error occurred while deleting the post");
+      showToast("An error occurred while deleting the post", "error");
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -1031,11 +1245,26 @@ export default function GeneralPost({
                 onToggleNestedReplies={toggleNestedReplies}
                 renderFormattedText={renderFormattedText}
                 currentUserId={currentUserId}
-                onDelete={handleDeletePost}
+                onDelete={confirmDeletePost}
                 onEdit={handleEditPost}
               />
             ));
           })()}
+
+          {/* Infinite scroll sentinel + bottom loader */}
+          {!isLoading && filteredDiscussions.length > 0 && (
+            <div ref={loadMoreRef} className="flex justify-center py-6">
+              {isLoadingMore && (
+                <div className="flex items-center gap-2 text-primaryColors-0">
+                  <FaSpinner className="animate-spin text-lg" />
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Loading more...</span>
+                </div>
+              )}
+              {!hasMore && !isLoadingMore && (
+                <span className="text-xs text-gray-400 dark:text-gray-500">You're all caught up 🎉</span>
+              )}
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -1051,7 +1280,19 @@ export default function GeneralPost({
         userName={userName}
         userRole={userRole}
         isSubmitting={isSubmitting}
+        showToast={showToast}
       />
+
+      {/* Delete confirmation modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        isDeleting={isDeleting}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={performDelete}
+      />
+
+      {/* Toast notifications */}
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

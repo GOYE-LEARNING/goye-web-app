@@ -43,9 +43,7 @@ class UnifiedAPIClient {
     try {
       const urlObj = new URL(url);
       const pathname = urlObj.pathname;
-      // Remove IDs and dynamic segments for rate limiting
       const segments = pathname.split("/").filter(Boolean);
-      // Keep only the first 2 segments (e.g., /api/user, /api/organizations)
       return segments.slice(0, 3).join("/") || "default";
     } catch {
       return "default";
@@ -57,10 +55,8 @@ class UnifiedAPIClient {
     const now = Date.now();
     const timestamps = this.requestTimestamps.get(endpointKey) || [];
 
-    // Clean old timestamps (keep last 5 seconds)
     const validTimestamps = timestamps.filter((ts) => now - ts < 5000);
 
-    // Allow 5 requests per 5 seconds per endpoint
     if (validTimestamps.length >= 5) {
       const waitTime = 5000 - (now - validTimestamps[0]);
       if (waitTime > 0) {
@@ -68,7 +64,6 @@ class UnifiedAPIClient {
           `⏳ Rate limiting: waiting ${waitTime}ms for ${endpointKey}`,
         );
         await new Promise((resolve) => setTimeout(resolve, waitTime));
-        // Retry check after waiting
         return this.checkRateLimit(url);
       }
     }
@@ -137,14 +132,12 @@ class UnifiedAPIClient {
     const fullUrl = url.startsWith("http") ? url : `${this.getBaseURL()}${url}`;
     const requestKey = `${options.method || "GET"}-${fullUrl}`;
 
-    // Check for duplicate requests
     if (this.requestQueue.has(requestKey)) {
       console.log(`⏳ Waiting for pending request: ${requestKey}`);
       return this.requestQueue.get(requestKey);
     }
 
     try {
-      // Rate limiting (skip for auth endpoints)
       const isAuthEndpoint =
         fullUrl.includes("/login") ||
         fullUrl.includes("/signup") ||
@@ -171,38 +164,20 @@ class UnifiedAPIClient {
           ...options.headers,
         },
       };
-      // For POST/PUT/PATCH, add deviceId to body
-      const method = options.method?.toUpperCase() || "GET";
-      if (["POST", "PUT", "PATCH"].includes(method) && options.body) {
-        try {
-          const body =
-            typeof options.body === "string"
-              ? JSON.parse(options.body)
-              : options.body;
 
-          if (body && typeof body === "object" && !body.deviceId) {
-            body.deviceId = deviceId;
-            requestOptions.body = JSON.stringify(body);
-          }
-        } catch (e) {
-          // Body is not JSON or already stringified
-        }
-      }
+      // ❌ REMOVED: Injected deviceId inside the body was causing excess property validation failure.
 
-      // Execute request
       const requestPromise = fetch(fullUrl, requestOptions);
       this.requestQueue.set(requestKey, requestPromise);
 
       const response = await requestPromise;
 
-      // Handle 401 - Unauthorized
       if (response.status === 401 && retryCount < this.MAX_RETRIES) {
         console.log(
           `🔑 Unauthorized, attempting refresh... (Attempt ${retryCount + 1})`,
         );
 
         if (this.isRefreshing) {
-          // Queue the request
           return new Promise((resolve, reject) => {
             this.failedQueue.push({ resolve, reject, url: fullUrl, options });
           });
@@ -215,7 +190,6 @@ class UnifiedAPIClient {
 
           if (refreshed) {
             this.processQueue(null);
-            // Retry with incremented retry count
             return this.executeRequest(
               fullUrl,
               { ...options, retryCount: retryCount + 1 },
@@ -226,7 +200,6 @@ class UnifiedAPIClient {
           }
         } catch (refreshError) {
           this.processQueue(refreshError);
-          // Redirect to login
           if (
             typeof window !== "undefined" &&
             !window.location.pathname.includes("/login")
@@ -239,7 +212,6 @@ class UnifiedAPIClient {
         }
       }
 
-      // Handle 429 - Rate limit
       if (response.status === 429 && retryCount < this.MAX_RETRIES) {
         const retryAfter = response.headers.get("retry-after") || "5";
         const waitTime = parseInt(retryAfter) * 1000;
@@ -256,7 +228,6 @@ class UnifiedAPIClient {
         );
       }
 
-      // Handle other errors
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const error = {
@@ -273,7 +244,6 @@ class UnifiedAPIClient {
         throw error;
       }
 
-      // Parse response
       const contentType = response.headers.get("content-type");
       if (contentType?.includes("application/json")) {
         return await response.json();
@@ -281,12 +251,10 @@ class UnifiedAPIClient {
 
       return await response.text();
     } catch (error: any) {
-      // Don't retry on auth errors
       if (error.status === 401) {
         throw error;
       }
 
-      // Retry on network errors
       if (
         error.name === "TypeError" &&
         error.message.includes("fetch") &&
@@ -311,7 +279,6 @@ class UnifiedAPIClient {
     }
   }
 
-  // Public API methods
   async request(url: string, options: RequestOptions = {}): Promise<any> {
     return this.executeRequest(url, options, options.retryCount || 0);
   }

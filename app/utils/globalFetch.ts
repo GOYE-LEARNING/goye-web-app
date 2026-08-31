@@ -1,161 +1,190 @@
 // app/utils/globalFetch.ts
-import { getOrCreateDeviceId, getAuthTokens, saveAuthTokens } from "./database/db";
+import { getAuthTokens, saveAuthTokens, getOrCreateDeviceId } from "./database/db";
 
-const originalFetch = typeof window !== 'undefined' ? window.fetch : null;
+const originalFetch = typeof window !== "undefined" ? window.fetch : null;
 let installed = false;
 
 function getUrlString(input: RequestInfo | URL): string {
-  if (typeof input === 'string') return input;
+  if (typeof input === "string") return input;
   if (input instanceof URL) return input.toString();
   return input.url;
 }
 
 let refreshPromise: Promise<boolean> | null = null;
+let refreshAttempts = 0;
+const MAX_REFRESH_ATTEMPTS = 2;
 
-async function doRefresh(API_URL: string, deviceId: string): Promise<boolean> {
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const exp = payload.exp * 1000;
+    return exp - Date.now() < 300000;
+  } catch {
+    return true;
+  }
+}
+
+async function clearAuthTokens() {
+  try {
+    await saveAuthTokens({ accessToken: "", refreshToken: "" });
+    localStorage.removeItem("authTokens");
+  } catch (error) {
+    console.error("❌ Failed to clear tokens:", error);
+  }
+}
+
+async function doRefresh(API_URL: string): Promise<boolean> {
   if (refreshPromise) return refreshPromise;
+  if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+    refreshAttempts = 0;
+    return false;
+  }
 
+  refreshAttempts++;
   refreshPromise = (async () => {
     try {
       const tokens = await getAuthTokens();
+      const deviceId = await getOrCreateDeviceId();
+
+      if (!tokens?.refreshToken) {
+        refreshAttempts = 0;
+        refreshPromise = null;
+        return false;
+      }
+
       const res = await originalFetch!(`${API_URL}/api/verify/refresh-token`, {
-        method: 'POST',
-        credentials: 'include',
+        method: "POST",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
-          'X-Device-Id': deviceId,
-          ...(tokens?.refreshToken && { 'x-refresh-token': tokens.refreshToken }),
+          "Content-Type": "application/json",
+          "x-refresh-token": tokens.refreshToken,
+          "x-device-id": deviceId,
+          "X-Device-Id": deviceId,
         },
       });
 
-      if (!res.ok) return false;
-
-      const data = await res.json().catch(() => ({}));
-      if (data.accessToken) {
-        await saveAuthTokens({ accessToken: data.accessToken });
+      if (res.status === 401 || res.status === 403 || !res.ok) {
+        if (res.status === 401 || res.status === 403) await clearAuthTokens();
+        refreshAttempts = 0;
+        refreshPromise = null;
+        return false;
       }
-      return true;
-    } catch (e) {
-      console.error('Refresh failed:', e);
+
+      const data = await res.json();
+      if (data.success && data.accessToken) {
+        await saveAuthTokens({
+          accessToken: data.accessToken,
+          refreshToken: tokens.refreshToken,
+        });
+        refreshAttempts = 0;
+        refreshPromise = null;
+        return true;
+      }
+      refreshAttempts = 0;
+      refreshPromise = null;
       return false;
-    } finally {
-      setTimeout(() => { refreshPromise = null; }, 100);
+    } catch {
+      refreshAttempts = 0;
+      refreshPromise = null;
+      return false;
     }
   })();
 
   return refreshPromise;
 }
 
-// ✅ Check if URL is a discussion endpoint that should skip deviceId
-function shouldSkipDeviceId(url: string): boolean {
-  return url.includes('/discussion/');
-}
-
 export function setupGlobalFetchInterceptor() {
-  if (typeof window === 'undefined' || !originalFetch || installed) return;
+  if (typeof window === "undefined" || !originalFetch || installed) return;
   installed = true;
 
-  window.fetch = async function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  window.fetch = async function (
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ): Promise<Response> {
     const urlString = getUrlString(input);
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://goye-platform-backend.onrender.com";
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-    // Only intercept calls to our own backend
-    if (!urlString.includes(API_URL) && !urlString.includes('/api/')) {
+    if (!urlString.includes(API_URL as any) && !urlString.includes("/api/")) {
       return originalFetch(input, init);
     }
 
     try {
+      let tokens = await getAuthTokens();
       const deviceId = await getOrCreateDeviceId();
-      const tokens = await getAuthTokens();
+
+      if (urlString.includes("/refresh-token")) {
+        return originalFetch(input, init);
+      }
+
+      if (tokens?.accessToken && isTokenExpired(tokens.accessToken)) {
+        const refreshed = await doRefresh(API_URL as any);
+        if (refreshed) tokens = await getAuthTokens();
+      }
 
       const headers = new Headers(init?.headers || {});
-      headers.set('X-Device-Id', deviceId);
-      if (tokens?.accessToken && !headers.has('Authorization')) {
-        headers.set('Authorization', `Bearer ${tokens.accessToken}`);
-      }
-      if (tokens?.refreshToken && !headers.has('x-refresh-token')) {
-        headers.set('x-refresh-token', tokens.refreshToken);
-      }
-
-      // ✅ Start with the original options
-      const options: RequestInit = {
-        ...init,
-        credentials: 'include',
-        headers,
-      };
-
-      // ✅ Check if we should skip deviceId
-      const skipDeviceId = shouldSkipDeviceId(urlString);
       
-      if (skipDeviceId) {
-        console.log(`🔍 SKIPPED deviceId for: ${urlString}`);
-        // ✅ For discussion endpoints, DO NOT modify the body at all
-        // Just pass through the original body
-        return originalFetch(input, options);
+      // ✅ Always attach device ID to headers
+      if (deviceId) {
+        headers.set("x-device-id", deviceId);
+        headers.set("X-Device-Id", deviceId);
       }
 
-      // ✅ ONLY for non-discussion endpoints, modify the body
-      if (options.body && typeof options.body === 'string') {
+      if (tokens?.accessToken) {
+        headers.set("Authorization", `Bearer ${tokens.accessToken}`);
+      }
+
+      if (tokens?.refreshToken && !headers.has("x-refresh-token")) {
+        headers.set("x-refresh-token", tokens.refreshToken);
+      }
+
+      let sanitizedBody = init?.body;
+
+      // 🧹 Strip deviceId out of JSON request bodies so validation schemas pass
+      if (init?.body && typeof init.body === "string") {
         try {
-          const body = JSON.parse(options.body);
-          if (!body.deviceId) {
-            body.deviceId = deviceId;
-            options.body = JSON.stringify(body);
+          const parsedBody = JSON.parse(init.body);
+          if (parsedBody && typeof parsedBody === "object" && "deviceId" in parsedBody) {
+            delete parsedBody.deviceId;
+            sanitizedBody = JSON.stringify(parsedBody);
           }
-        } catch (e) {
-          // Body isn't valid JSON, leave as is
+        } catch {
+          // Non-JSON body
         }
       }
 
-      // ✅ Only add deviceId to empty body for non-discussion endpoints
-      if (!options.body && ['POST', 'PUT', 'PATCH'].includes(options.method || 'GET')) {
-        options.body = JSON.stringify({ deviceId });
-      }
+      const options: RequestInit = {
+        ...init,
+        body: sanitizedBody,
+        credentials: "include",
+        headers,
+      };
 
       let response = await originalFetch(input, options);
 
-      const isAuthEndpoint = urlString.includes('/login') ||
-                              urlString.includes('/signup') ||
-                              urlString.includes('/refresh-token');
+      const isAuthEndpoint =
+        urlString.includes("/login") ||
+        urlString.includes("/signup") ||
+        urlString.includes("/refresh-token");
 
       if (response.status === 401 && !isAuthEndpoint) {
-        const refreshed = await doRefresh(API_URL, deviceId);
-
+        const refreshed = await doRefresh(API_URL as any);
         if (refreshed) {
           const retryTokens = await getAuthTokens();
-          const retryHeaders = new Headers(init?.headers || {});
-          retryHeaders.set('X-Device-Id', deviceId);
-          if (retryTokens?.accessToken) {
-            retryHeaders.set('Authorization', `Bearer ${retryTokens.accessToken}`);
-          }
-          if (retryTokens?.refreshToken) {
-            retryHeaders.set('x-refresh-token', retryTokens.refreshToken);
-          }
+          const retryHeaders = new Headers(options.headers);
+          retryHeaders.set("Authorization", `Bearer ${retryTokens?.accessToken}`);
 
-          response = await originalFetch(input, { ...options, headers: retryHeaders });
-        } else {
-          if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth')) {
-            window.location.href = '/auth';
-          }
+          response = await originalFetch(input, {
+            ...options,
+            headers: retryHeaders,
+          });
         }
       }
 
       return response;
     } catch (error) {
-      console.error('Global fetch interceptor error:', error);
       return originalFetch(input, init);
     }
   };
-
-  console.log('✅ Global fetch interceptor installed (device + auth headers, refresh deduped)');
 }
 
-export function restoreGlobalFetch() {
-  if (typeof window !== 'undefined' && originalFetch) {
-    window.fetch = originalFetch;
-    installed = false;
-  }
-}
-
-// Install immediately on module load
 setupGlobalFetchInterceptor();

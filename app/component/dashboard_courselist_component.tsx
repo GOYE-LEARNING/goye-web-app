@@ -1,11 +1,11 @@
 // components/CourseList.tsx
 "use client";
 
+import { memo } from "react";
 import Loader from "./loader";
 import CourseCard from "./dashboard_course_card_component";
 import { FiBookOpen, FiSearch, FiCompass } from "react-icons/fi";
 
-// ✅ Updated Course interface to match CourseCard expectations
 interface Course {
   id: string;
   course_image: string | null;
@@ -25,7 +25,7 @@ interface Course {
     totalDurationMinutes: number;
     watchedDurationMinutes: number;
     isCompleted: boolean;
-  };
+  } | null;
   totalDuration: number;
   lessonCount: number;
   module: [
@@ -53,7 +53,8 @@ interface CourseListProps {
   isToggling?: string | null;
 }
 
-export default function CourseList({
+// ✅ Memoize CourseList with custom comparison
+export default memo(function CourseList({
   courses,
   bookmarkedIds,
   onBookmarkToggle,
@@ -146,4 +147,26 @@ export default function CourseList({
       ))}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // ✅ Only re-render if courses or important state changes
+  if (prevProps.isLoading !== nextProps.isLoading) return false;
+  if (prevProps.loadingCourseId !== nextProps.loadingCourseId) return false;
+  if (prevProps.isToggling !== nextProps.isToggling) return false;
+  
+  // Check if course list length changed
+  if (prevProps.courses.length !== nextProps.courses.length) return false;
+  
+  // Check if any course data changed
+  for (let i = 0; i < prevProps.courses.length; i++) {
+    const prevCourse = prevProps.courses[i];
+    const nextCourse = nextProps.courses[i];
+    
+    if (prevCourse.id !== nextCourse.id) return false;
+    if (prevCourse.progress?.percentage !== nextCourse.progress?.percentage) return false;
+    if (prevCourse.enrollmentStatus !== nextCourse.enrollmentStatus) return false;
+    if (prevCourse.isEnrolled !== nextCourse.isEnrolled) return false;
+    if (prevCourse.course_title !== nextCourse.course_title) return false;
+  }
+  
+  return true;
+});

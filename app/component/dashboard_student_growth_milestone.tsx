@@ -18,6 +18,8 @@ interface GrowthData {
     currentLevel: string;
     levelNumber: number;
     nextLevelXP: number;
+    currentLevelXP: number
+    xpForCurrentLevel:number
     progressToNextLevel: number;
   };
   journey: {
@@ -168,7 +170,14 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="text-sm font-medium">{t("XP Progress")}</h3>
                   <span className="text-xs font-semibold text-primaryColors-0">
-                    {growthData.user.totalXP} / {growthData.user.nextLevelXP} XP
+                    {growthData.user.xpForCurrentLevel > 0 ? (
+                      <>
+                        {growthData.user.totalXP} /{" "}
+                        {growthData.user.xpForCurrentLevel} XP
+                      </>
+                    ) : (
+                      <>{t("Max level reached")}</>
+                    )}{" "}
                   </span>
                 </div>
                 <div className="w-full h-[8px] bg-[#E8E1E2] dark:bg-gray-700 rounded-full overflow-hidden">
@@ -183,7 +192,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                     {t("to")} {t("Level")} {growthData.user.levelNumber + 1}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {t("Next")}: {growthData.user.nextLevelXP} XP
+                    {t("XP LEFT")}: {growthData.user.nextLevelXP} XP
                   </p>
                 </div>
                 <div className="dark:bg-[#EFEFF2]/10 bg-[#ccc]/20 h-[1px] w-full my-3"></div>

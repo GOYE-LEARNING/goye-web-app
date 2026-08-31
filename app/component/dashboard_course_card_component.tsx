@@ -1,7 +1,7 @@
 // components/dashboard_course_card_component.tsx
 "use client";
 
-import Image from "next/image";
+import { memo, useState } from "react";
 import { CiBookmark } from "react-icons/ci";
 import { IoBookmark } from "react-icons/io5";
 import { LuUser } from "react-icons/lu";
@@ -23,6 +23,7 @@ interface Course {
   enrollmentStatus: string;
   isEnrolled: boolean;
   enrollment: [];
+  enrollmentCount?: number;
   progress: {
     percentage: number;
     completedLessons: number;
@@ -30,10 +31,10 @@ interface Course {
     totalDurationMinutes: number;
     watchedDurationMinutes: number;
     isCompleted: boolean;
-  };
+  } | null;
   totalDuration: number;
   lessonCount: number;
-  module: [
+  module?: [
     {
       lesson: [{ duration: number }];
       _count: {
@@ -44,6 +45,9 @@ interface Course {
   moduleCount: number;
   lastAccessed?: string | null;
   completedAt?: string | null;
+  createdByDetails?: {
+    user_pic: string;
+  };
 }
 
 interface CourseCardProps {
@@ -55,7 +59,8 @@ interface CourseCardProps {
   isToggling?: boolean;
 }
 
-export default function CourseCard({
+// ✅ Memoized CourseCard with custom comparison
+const CourseCard = memo(function CourseCard({
   course,
   isBookmarked,
   onBookmarkToggle,
@@ -63,12 +68,14 @@ export default function CourseCard({
   isViewLoading = false,
   isToggling = false,
 }: CourseCardProps) {
-  // Get status color and icon
+  const enrollmentStatus = course.enrollmentStatus || "NOT_ENROLLED";
+  const isActuallyEnrolled = Boolean(course.isEnrolled) && enrollmentStatus !== "NOT_ENROLLED";
+
   const getStatusInfo = () => {
     switch (course.enrollmentStatus) {
       case "COMPLETED":
         return {
-          color: "text-green-600 bg-green-50 dark:bg-green-900/20",
+          color: "text-green-700 bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800",
           icon: <MdCheckCircle className="w-4 h-4" />,
           label: "Completed",
         };
@@ -94,34 +101,44 @@ export default function CourseCard({
   };
 
   const statusInfo = getStatusInfo();
-  const progressPercentage = course.progress?.percentage || 0;
-  const isCompleted = course.progress?.isCompleted || false;
-  const totalLesssons = course.module.reduce((sum, item) => sum += item._count.lesson, 0)
-  const totalDuration = Number(course.module.map((m) =>
-    m.lesson.reduce((sum, item) => (sum += item.duration), 0),
-  ))
+  const progress = course.progress;
+  const progressPercentage = progress?.percentage || 0;
+  const isCompleted = progress?.isCompleted || false;
+  
+  const totalLessons = course.module?.reduce((sum, item) => sum + item._count.lesson, 0) || course.lessonCount || 0;
+  
+  const totalDuration = course.module?.reduce((total, module) => {
+    const moduleDuration = module.lesson?.reduce((sum, lesson) => sum + (lesson.duration || 0), 0) || 0;
+    return total + moduleDuration;
+  }, 0) || course.totalDuration || 0;
 
   const formatDuration = (duration: number) => {
-    if (duration > 60) {
-      return (
-        <span>
-          {Math.floor(duration / 60)}hr {duration % 60}min
-        </span>
-      );
-    } else if (duration < 60) {
-      return (<span>{duration}min</span>)
+    if (duration === 0) return <span>0min</span>;
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+    if (hours > 0 && minutes > 0) {
+      return <span>{hours}hr {minutes}min</span>;
+    } else if (hours > 0) {
+      return <span>{hours}hr</span>;
     } else {
-      return <div>0</div>
+      return <span>{minutes}min</span>;
     }
   };
+
+  const enrollmentCount = course.enrollmentCount || course.enrollment?.length || 0;
+  const showProgressBar = isActuallyEnrolled && progress !== null;
+
   return (
-    <div className="md:bg-white dark:md:bg-secondaryColors-0 md:drop-shadow-sm w-full md:p-[24px] my-5 flex flex-col gap-2 hover:border-2 hover:border-dashed hover:border-primaryColors-0/50 transition-all duration-200 cursor-pointer">
+    <div className="bg-white dark:bg-secondaryColors-0 p-5 rounded-[10px] md:drop-shadow-sm w-full md:p-[24px] my-5 flex flex-col gap-2 hover:border-2 hover:border-dashed hover:border-primaryColors-0/50 transition-all duration-200 cursor-pointer">
       <div className="flex justify-start items-start w-full gap-3">
         <div className="relative flex-shrink-0">
           <img
             src={course.course_image || logo.src}
             alt={course.course_title}
             className="h-[89.16px] w-[130px] object-cover rounded-[15px]"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = logo.src;
+            }}
           />
           <span
             className={`absolute top-1 right-1 cursor-pointer transition-opacity ${isToggling ? "opacity-50 pointer-events-none" : "hover:scale-110"}`}
@@ -137,9 +154,8 @@ export default function CourseCard({
             )}
           </span>
 
-          {/* Progress badge on image */}
           {isCompleted && (
-            <div className="absolute bottom-1 left-1 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+            <div className="absolute bottom-1 left-1 z-10 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
               <MdCheckCircle className="w-3 h-3" />
               Complete
             </div>
@@ -152,7 +168,7 @@ export default function CourseCard({
               {course.course_title}
             </h1>
             <span className="text-[10px] text-[#41415A] bg-[#F1F1F4] dark:bg-gray-700 dark:text-white px-[4px] rounded whitespace-nowrap">
-              {course.enrollment.length || 0} students
+              {enrollmentCount} students
             </span>
           </div>
 
@@ -160,12 +176,11 @@ export default function CourseCard({
             {course.course_short_description || course.course_description}
           </p>
 
-          {/* Progress Bar */}
-          {course.isEnrolled && (
+          {showProgressBar && (
             <div className="w-full" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center text-[11px] text-gray-600 dark:text-gray-300 mb-0.5">
                 <span>Progress</span>
-                <span>{progressPercentage}%</span>
+                <span>{Math.round(progressPercentage)}%</span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
                 <div
@@ -184,13 +199,13 @@ export default function CourseCard({
               {course.organizationName ? (
                 <div>{course.organizationName}</div>
               ) : (
-                <div>{course.createdBy}</div>
+                <div>{course.createdBy || "Unknown"}</div>
               )}
             </span>
 
             <span className="flex items-center gap-2 text-[#30A46F] text-[13px]">
               <FaAngleDoubleUp className="w-3 h-3" />
-              {course.course_level}
+              {course.course_level || "Beginner"}
             </span>
 
             <span className="flex items-center gap-2 text-gray-500 text-[12px]">
@@ -199,11 +214,10 @@ export default function CourseCard({
             </span>
 
             <span className="flex items-center gap-2 text-gray-500 text-[12px]">
-              {totalLesssons || 0} lessons
+              {totalLessons} lessons
             </span>
           </div>
 
-          {/* Status Badge */}
           <div className="flex items-center gap-2 mt-1">
             <span
               className={`text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 ${statusInfo.color}`}
@@ -212,10 +226,10 @@ export default function CourseCard({
               {statusInfo.label}
             </span>
 
-            {course.isEnrolled && course.progress && (
+            {isActuallyEnrolled && progress && (
               <span className="text-[10px] text-gray-500">
-                {course.progress.completedLessons || 0}/
-                {course.progress.totalLessons || 0} lessons
+                {progress.completedLessons || 0}/
+                {progress.totalLessons || totalLessons || 0} lessons
               </span>
             )}
           </div>
@@ -238,14 +252,27 @@ export default function CourseCard({
             full_border_color="transparent"
             small_border_color="white"
           />
-        ) : course.isEnrolled ? (
-          "Continue Learning"
+        ) : isActuallyEnrolled ? (
+          isCompleted ? "Review Course" : "Continue Learning"
         ) : (
           "View Course"
         )}
       </button>
 
-      <div className="h-[1px] w-full dark:bg-[#EFEFF2]/20 bg-[#ccc]/20"></div>
+      <div className="h-[1px] hidden md:block w-full dark:bg-[#EFEFF2]/20 bg-[#ccc]/20"></div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // ✅ Only re-render if these specific props change
+  return (
+    prevProps.course.id === nextProps.course.id &&
+    prevProps.isBookmarked === nextProps.isBookmarked &&
+    prevProps.isViewLoading === nextProps.isViewLoading &&
+    prevProps.isToggling === nextProps.isToggling &&
+    prevProps.course.progress?.percentage === nextProps.course.progress?.percentage &&
+    prevProps.course.enrollmentStatus === nextProps.course.enrollmentStatus &&
+    prevProps.course.isEnrolled === nextProps.course.isEnrolled
+  );
+});
+
+export default CourseCard;

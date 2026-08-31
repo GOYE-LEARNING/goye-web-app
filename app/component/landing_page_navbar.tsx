@@ -12,33 +12,70 @@ import { useAuthContext } from "../context/AuthContext";
 import { getCookie } from "../utils/getCookie";
 
 /**
- * Where an already-signed-in visitor goes from the landing page. Mirrors
- * AuthContext's own classification rather than importing it, since that
- * helper isn't exported.
+ * Get the correct dashboard redirect path based on user role
+ * Uses localStorage values set during login
  */
-function dashboardHomeForUser(user: { role?: string; type?: string; userType?: string } | undefined): string {
+export function getRoleRedirectPath(): string {
+  // Only run on client-side
   if (typeof window === "undefined") return "/auth";
-  const type = (localStorage.getItem("type") || user?.type || "").toLowerCase();
-  const role = localStorage.getItem("role") || user?.role;
-  const userType = user?.userType;
-
-  if (type === "admin" || role === "goye_admin") return "/dashboard/admin";
-
-  if (
-    type === "organization" ||
-    type === "invited_user" ||
-    userType === "INVITED_MEMBER" ||
-    userType === "ORGANIZATION_OWNER" ||
-    role === "org_admin"
-  ) {
-    const orgName = localStorage.getItem("org_name");
-    if (!orgName) return "/auth";
-    return role === "org_admin"
-      ? `/dashboard/${orgName}/admin`
-      : `/dashboard/${orgName}/organization`;
+  
+  const role = localStorage.getItem("role");
+  const org_name = localStorage.getItem("org_name");
+  const type = localStorage.getItem("type")?.toLowerCase();
+  
+  // Admin check (highest priority)
+  if (role === "goye_admin" || type === "admin") {
+    return "/dashboard/admin";
   }
+  
+  // Organization admin
+  if (role === "org_admin") {
+    if (!org_name) return "/auth";
+    return `/dashboard/${org_name}/admin`;
+  }
+  
+  // Invited user (organization member)
+  if (role === "invited_user" || type === "invited_user") {
+    if (!org_name) return "/auth";
+    return `/dashboard/${org_name}/organization`;
+  }
+  
+  // Instructor/Tutor
+  if (role === "instructor" || role === "tutor") {
+    return "/dashboard/tutor";
+  }
+  
+  // Default: Student
+  if (role === "student") {
+    return "/dashboard/student";
+  }
+  
+  // Fallback for any other role or no role
+  return "/auth";
+}
 
-  return role === "instructor" || role === "tutor" ? "/dashboard/tutor" : "/dashboard/student";
+/**
+ * Get profile-specific redirect path (more granular)
+ */
+export function getProfileRedirectPath(): string {
+  if (typeof window === "undefined") return "/auth";
+  
+  const role = localStorage.getItem("role");
+  const org_name = localStorage.getItem("org_name");
+  
+  if (role === "student") {
+    return "/dashboard/student/profile";
+  } else if (role === "instructor" || role === "tutor") {
+    return "/dashboard/tutor/profile";
+  } else if (role === "invited_user") {
+    return org_name ? `/dashboard/${org_name}/organization/profile` : "/auth";
+  } else if (role === "org_admin") {
+    return org_name ? `/dashboard/${org_name}/admin/profile` : "/auth";
+  } else if (role === "goye_admin") {
+    return "/dashboard/admin/profile";
+  }
+  
+  return "/auth";
 }
 
 const NAV_LINKS = [
@@ -56,11 +93,23 @@ export default function LandingPageNavBar() {
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [activeSection, setActiveSection] = useState<string>("#home");
   const [scrolled, setScrolled] = useState(false);
-  // The landing page no longer force-redirects signed-in visitors, so the
-  // navbar has to give them a deliberate way back to their dashboard.
+  const [dashboardHref, setDashboardHref] = useState<string>("/auth");
+  
   const { authStatus } = useAuthContext();
-  const isSignedIn = getCookie("accessToken");
-  const dashboardHref = dashboardHomeForUser(authStatus?.user);
+  const router = useRouter();
+  
+  // Check if user is signed in by checking for accessToken cookie
+  const isSignedIn = !!getCookie("accessToken");
+
+  // Update dashboard href when auth status changes or component mounts
+  useEffect(() => {
+    if (isSignedIn) {
+      const path = getRoleRedirectPath();
+      setDashboardHref(path);
+    } else {
+      setDashboardHref("/auth");
+    }
+  }, [isSignedIn, authStatus]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -80,7 +129,7 @@ export default function LandingPageNavBar() {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for smoother motion
+        ease: [0.25, 0.46, 0.45, 0.94],
       },
     },
   };
@@ -88,8 +137,6 @@ export default function LandingPageNavBar() {
   const toggleDropdown = () => {
     showBox((prev) => !prev);
   };
-
-  const router = useRouter();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -102,8 +149,7 @@ export default function LandingPageNavBar() {
     return () => document.removeEventListener("mousedown", removeDropdown);
   }, []);
 
-  // Lightweight scroll-spy — highlights whichever section is currently in
-  // view so the nav reflects scroll position, not just click state.
+  // Lightweight scroll-spy — highlights whichever section is currently in view
   useEffect(() => {
     const sections = NAV_LINKS.map((l) => document.getElementById(l.href.slice(1))).filter(
       (el): el is HTMLElement => !!el,
@@ -125,8 +171,7 @@ export default function LandingPageNavBar() {
   }, []);
 
   // Transparent over the hero so the globe reads uninterrupted; a soft
-  // blurred surface fades in once the page scrolls past it, for legibility
-  // over the busier sections below.
+  // blurred surface fades in once the page scrolls past it
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     onScroll();
@@ -137,6 +182,12 @@ export default function LandingPageNavBar() {
   const goTo = (href: string) => {
     showBox(false);
     document.getElementById(href.slice(1))?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Handle dashboard navigation with role-based routing
+  const handleDashboardNavigation = () => {
+    const path = getRoleRedirectPath();
+    router.push(path);
   };
 
   return (
@@ -189,7 +240,7 @@ export default function LandingPageNavBar() {
             <motion.button
               variants={itemVariants as any}
               className="nav_btn md:w-[160px] w-full md:bg-primaryColors-0 md:text-white text-primaryColors-0"
-              onClick={() => router.push(dashboardHref)}
+              onClick={handleDashboardNavigation}
             >
               Go to Dashboard
             </motion.button>
@@ -197,7 +248,7 @@ export default function LandingPageNavBar() {
             <>
               <motion.button
                 variants={itemVariants as any}
-                className="nav_btn md:w-[93px] w-full md:border md:border-primaryColors-0 dark:text-white  text-lightBoldText-0"
+                className="nav_btn md:w-[93px] w-full md:border md:border-primaryColors-0 dark:text-white text-lightBoldText-0"
                 onClick={() => {
                   router.push("/auth");
                 }}
@@ -253,7 +304,7 @@ export default function LandingPageNavBar() {
                 {isSignedIn ? (
                   <button
                     className="nav_btn w-full bg-primaryColors-0 text-white"
-                    onClick={() => router.push(dashboardHref)}
+                    onClick={handleDashboardNavigation}
                   >
                     Go to Dashboard
                   </button>

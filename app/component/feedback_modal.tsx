@@ -1,7 +1,9 @@
+// feedback_modal.tsx
 "use client";
 
 import { useState } from "react";
 import { HiOutlineBookOpen, HiOutlineUserGroup, HiOutlineChatAlt2, HiX } from "react-icons/hi";
+import api from "../lib/unified-api-client";
 
 type FeedbackType = "COURSE" | "GROUP" | "OTHER";
 
@@ -30,18 +32,55 @@ export default function FeedbackModal({ onClose }: Props) {
     setError("");
     setSubmitting(true);
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    
+    const requestBody = { 
+      message: message.trim(), 
+      type: type 
+    };
+    
+    console.log("📤 Sending feedback:", requestBody);
+    
     try {
       const res = await fetch(`${API_URL}/api/feedback/feedback`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: message.trim(), type }),
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       });
+
+      // ✅ Log the full response for debugging
+      console.log("📥 Response status:", res.status);
+      console.log("📥 Response headers:", Object.fromEntries(res.headers.entries()));
+      
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to send feedback");
+      console.log("📥 Response data:", data);
+      
+      if (!res.ok) {
+        // ✅ Better error handling with specific messages
+        if (res.status === 401) {
+          throw new Error("Please log in to send feedback. Redirecting to login...");
+        } else if (res.status === 400) {
+          throw new Error(data.message || "Invalid feedback. Please check your message.");
+        } else if (res.status === 403) {
+          throw new Error("You don't have permission to send feedback.");
+        } else {
+          throw new Error(data.message || `Failed to send feedback (${res.status})`);
+        }
+      }
+      
       setSent(true);
     } catch (err: any) {
+      console.error("❌ Error:", err);
       setError(err.message || "Could not send feedback. Please try again.");
+      
+      // ✅ Redirect to login if unauthorized
+      if (err.message.includes("log in") || err.message.includes("401")) {
+        setTimeout(() => {
+          window.location.href = "/auth";
+        }, 2000);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -104,12 +143,16 @@ export default function FeedbackModal({ onClose }: Props) {
               className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent p-3 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primaryColors-0/50 resize-none"
             />
 
-            {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+            {error && (
+              <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            )}
 
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="mt-4 w-full rounded-lg bg-primaryColors-0 text-white py-2.5 text-sm font-medium disabled:opacity-60"
+              className="mt-4 w-full rounded-lg bg-primaryColors-0 text-white py-2.5 text-sm font-medium disabled:opacity-60 hover:bg-primaryColors-0/90 transition-colors"
             >
               {submitting ? "Sending…" : "Submit Feedback"}
             </button>

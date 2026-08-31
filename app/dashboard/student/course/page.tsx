@@ -8,7 +8,7 @@ import DashboardSearch from "@/app/component/dashboard_search";
 import DashboardCourseView from "@/app/component/dashboard_student_courseview";
 import DashboardTabSelection from "@/app/component/dashboard_tab_selection";
 import Loader from "@/app/component/loader";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IoMdRefresh } from "react-icons/io";
 
@@ -23,13 +23,44 @@ export default function MainContainer() {
   const [courseId, setCourseId] = useState<string>("");
   const [isLoadingCourse, setIsLoadingCourse] = useState<boolean>(false);
 
-  // Store the previous tab before opening a course
   const previousTabRef = useRef<TabType>("all");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  const openCourse = async (selectedCourseId: string) => {
-    // Store which tab is currently active before navigating
+  // ✅ Memoize fetchCourseById
+  const fetchCourseById = useCallback(async (selectedCourseId: string) => {
+    try {
+      const res = await fetch(
+        `${API_URL}/api/course/get-course/${selectedCourseId}`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log(data);
+        throw new Error(`Failed to fetch course: ${res.status}`);
+      }
+      console.log("Course data:", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching course by ID:", error);
+      throw error;
+    }
+  }, [API_URL]);
+
+  // ✅ Memoize openCourse
+  const openCourse = useCallback(async (selectedCourseId: string) => {
+    // ✅ Prevent re-opening the same course
+    if (courseId === selectedCourseId && showCourse) {
+      console.log('⏭️ Same course, skipping');
+      return;
+    }
+    
     previousTabRef.current = activeTab;
     
     setIsLoadingCourse(true);
@@ -43,32 +74,34 @@ export default function MainContainer() {
     } finally {
       setIsLoadingCourse(false);
     }
-  };
+  }, [activeTab, courseId, showCourse, fetchCourseById]);
 
-  // Lets a course card clicked elsewhere (e.g. the ShekiAI assistant panel)
-  // deep-link straight to a specific course via /dashboard/student/course?courseId=...
-  // instead of needing a real dynamic route just for this one entry point.
+  // Always-current ref to openCourse. Its own identity changes every time
+  // a course opens (it depends on courseId/showCourse), which was making
+  // the deep-link effect below re-run mid-navigation and race against
+  // router.replace(). Reading through a ref decouples the effect from
+  // that changing identity entirely.
+  const openCourseRef = useRef(openCourse);
   useEffect(() => {
-    const linkedCourseId = searchParams.get("courseId");
-    if (!linkedCourseId) return;
-    openCourse(linkedCourseId);
-    router.replace("/dashboard/student/course");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+    openCourseRef.current = openCourse;
+  }, [openCourse]);
 
-  const backFunction = () => {
-    // Restore the previous tab that was active before opening the course
+  // Tracks which linked courseId (from ?courseId=... deep links) has
+  // already been opened, so this can only ever fire once per link —
+  // independent of searchParams/router timing.
+  const openedFromLinkRef = useRef<string | null>(null);
+
+  // ✅ Memoize backFunction
+  const backFunction = useCallback(() => {
     setActiveTab(previousTabRef.current);
-    
-    // Navigate back to course list
     setShowCourse(false);
     setShowCoursePage(true);
     setCourseId("");
-  };
+  }, []);
 
-  const refreshCourse = () => {
+  // ✅ Memoize refreshCourse
+  const refreshCourse = useCallback(() => {
     setRefresh(true);
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     const fetchCourse = async () => {
       try {
@@ -106,32 +139,64 @@ export default function MainContainer() {
     };
 
     fetchCourse();
-  };
+  }, [API_URL]);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
-  const fetchCourseById = async (selectedCourseId: string) => {
-    try {
-      const res = await fetch(
-        `${API_URL}/api/course/get-course/${selectedCourseId}`,
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
+  // ✅ Memoize search handler
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  }, []);
 
-      const data = await res.json();
+  // ✅ Memoize tab change handler
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+  }, []);
 
-      if (!res.ok) {
-        console.log(data);
-        throw new Error(`Failed to fetch course: ${res.status}`);
-      }
-      console.log("Course data:", data);
-      return data;
-    } catch (error) {
-      console.error("Error fetching course by ID:", error);
-      throw error;
-    }
-  };
+  // ✅ Deep-link effect — now only depends on searchParams/router, never
+  // on openCourse, so it can't re-fire just because opening a course
+  // changed openCourse's identity. The ref guard also makes it a
+  // one-shot per linked ID regardless of how fast the URL actually updates.
+  useEffect(() => {
+    const linkedCourseId = searchParams.get("courseId");
+    if (!linkedCourseId || openedFromLinkRef.current === linkedCourseId) return;
+    openedFromLinkRef.current = linkedCourseId;
+    openCourseRef.current(linkedCourseId);
+    router.replace("/dashboard/student/course");
+  }, [searchParams, router]);
+
+  // ✅ Memoize refresh button
+  const RefreshButton = useMemo(() => (
+    <span
+      className="text-white h-[35px] w-[35px] bg-primaryColors-0 rounded-full font-semibold flex items-center justify-center gap-2 cursor-pointer hover:bg-primaryColors-0/90 transition-colors"
+      onClick={refreshCourse}
+    >
+      <IoMdRefresh className={refresh ? "animate-spin" : ""} />
+    </span>
+  ), [refreshCourse, refresh]);
+
+  // ✅ Memoize props for child components to prevent unnecessary re-renders
+  const allProviderProps = useMemo(() => ({
+    isRefreshing: refresh,
+    search,
+    openCourse,
+  }), [refresh, search, openCourse]);
+
+  const enrolledProps = useMemo(() => ({
+    openCourse,
+    search,
+    isRefreshing: refresh,
+  }), [openCourse, search, refresh]);
+
+  const savedProps = useMemo(() => ({
+    search,
+    openCourse,
+    isRefreshing: refresh,
+  }), [search, openCourse, refresh]);
+
+  const doneProps = useMemo(() => ({
+    search,
+    openCourse,
+    isRefreshing: refresh,
+  }), [search, openCourse, refresh]);
 
   return (
     <>
@@ -140,63 +205,45 @@ export default function MainContainer() {
         <div>
           <div className="flex justify-between items-center">
             <h1 className="dashboard_h1">Course</h1>
-            <div className="flex items-center gap-3">
-              <span
-                className="text-white h-[35px] w-[35px] bg-primaryColors-0 rounded-full font-semibold flex items-center justify-center gap-2 md:hidden cursor-pointer hover:bg-primaryColors-0/90 transition-colors"
-                onClick={refreshCourse}
-              >
-                <IoMdRefresh className={refresh ? "animate-spin" : ""} />
-              </span>
-            </div>
           </div>
           <div className="flex justify-between items-center gap-4">
             <div className="md:w-[75%] w-full">
               <DashboardSearch
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                }}
+                onChange={handleSearchChange}
                 placeholder="Search courses..."
               />
             </div>
             <div className="flex items-center gap-2">
-              <span
-                className="text-white h-[35px] w-[35px] bg-primaryColors-0 rounded-full font-semibold md:flex items-center justify-center gap-2 hidden cursor-pointer hover:bg-primaryColors-0/90 transition-colors"
-                onClick={refreshCourse}
-              >
-                <IoMdRefresh className={refresh ? "animate-spin" : ""} />
-              </span>
+              {RefreshButton}
             </div>
           </div>
 
-          {/* Tab Selection Component */}
           <DashboardTabSelection
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={handleTabChange as any}
           />
 
-          {/* Render content based on active tab */}
           {activeTab === "all" && (
-            <DashboardCourseAllProvider
-              isRefreshing={refresh}
-              search={search}
-              openCourse={openCourse}
-            />
+            <DashboardCourseAllProvider {...allProviderProps} />
           )}
           {activeTab === "enrolled" && (
-            <DashboardCourseEnrolled
-              openCourse={openCourse}
-              search={search}
-              isRefreshing={refresh}
-            />
+            <DashboardCourseEnrolled {...enrolledProps} />
           )}
-          {activeTab === "saved" && <DashboardCourseSaved search={search} openCourse={openCourse} isRefreshing={refresh}/>}
-          {activeTab === "done" && <DashboardCourseDone search={search} openCourse={openCourse} isRefreshing={refresh}/>}
+          {activeTab === "saved" && (
+            <DashboardCourseSaved {...savedProps} />
+          )}
+          {activeTab === "done" && (
+            <DashboardCourseDone {...doneProps} />
+          )}
         </div>
       )}
 
       {showCourse && courseId && (
-        <DashboardCourseView backFunction={backFunction} courseId={courseId} />
+        <DashboardCourseView 
+          backFunction={backFunction} 
+          courseId={courseId} 
+        />
       )}
 
       {isLoadingCourse && (

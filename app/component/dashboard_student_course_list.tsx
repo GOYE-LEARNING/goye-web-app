@@ -28,12 +28,14 @@ interface Props {
   courseId: string;
   backFunction: () => void;
   course_title: string;
+  onCourseCompleted?: () => void; // ✅ Added this prop
 }
 
 export default function DashboardStudentCourseList({
   courseId,
   backFunction,
   course_title,
+  onCourseCompleted, // ✅ Added this prop
 }: Props) {
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -97,6 +99,11 @@ export default function DashboardStudentCourseList({
       newLevel: data.gamification?.newLevel,
       certificateUrl: data.certificateUrl,
     });
+    
+    // ✅ Notify parent that course is completed
+    if (onCourseCompleted) {
+      onCourseCompleted();
+    }
   };
 
   // Core tracking function (create or update)

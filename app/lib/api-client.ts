@@ -3,6 +3,7 @@
 
 import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
 import { getOrCreateDeviceId } from "@/app/utils/database/db";
+
 interface QueuedRequest {
   resolve: (value: any) => void;
   reject: (reason?: any) => void;
@@ -40,44 +41,63 @@ class APIClient {
   }
 
   private async refreshToken(): Promise<boolean> {
-  try {
-    const deviceId = await getOrCreateDeviceId();
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/verify/refresh-token`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Device-Id": deviceId,
-        },
+    try {
+      const deviceId = await getOrCreateDeviceId();
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/verify/refresh-token`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Device-Id": deviceId,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Refresh token failed");
       }
-    );
 
-    if (!response.ok) {
-      throw new Error("Refresh token failed");
+      const data = await response.json();
+      return data.success === true;
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      return false;
     }
-
-    const data = await response.json();
-    return data.success === true;
-  } catch (error) {
-    console.error("Token refresh failed:", error);
-    return false;
   }
-}
 
   private async executeRequest(url: string, options: RequestInit, retryCount = 0): Promise<any> {
     try {
-        const deviceId = await getOrCreateDeviceId();
-    const response = await fetch(url, {
-      ...options,
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Device-Id": deviceId,
-        ...options.headers,
-      },
-    });
+      const deviceId = await getOrCreateDeviceId();
+      
+      // ✅ Skip deviceId for feedback endpoints
+      const shouldSkipDeviceId = url.includes("/feedback/");
+      
+      // ✅ Only add deviceId to body if NOT a feedback request
+      let body = options.body;
+      if (!shouldSkipDeviceId && body && typeof body === 'string') {
+        try {
+          const parsedBody = JSON.parse(body);
+          if (!parsedBody.deviceId) {
+            parsedBody.deviceId = deviceId;
+            body = JSON.stringify(parsedBody);
+          }
+        } catch (e) {
+          // Not JSON, leave as is
+        }
+      }
+
+      const response = await fetch(url, {
+        ...options,
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Device-Id": deviceId, // ✅ Keep this in headers
+          ...options.headers,
+        },
+        body: body, // ✅ Use the body WITHOUT deviceId for feedback
+      });
 
       // Handle 401 - Unauthorized (token expired)
       if (response.status === 401 && retryCount < this.MAX_RETRY) {
