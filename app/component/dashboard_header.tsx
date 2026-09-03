@@ -18,24 +18,19 @@ import { useSocket } from "@/app/context/SocketContext";
 import { useAuthContext } from "@/app/context/AuthContext";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { useI18n } from "@/app/context/I18nContext";
+import {
+  getUserProfile,
+  getSessionState,
+  getAuthTokens,
+} from "@/app/utils/database/db";
 
 // ── Role resolution ───────────────────────────────────────────
-// Priority order:
-// 1. ADMIN
-// 2. ORGANIZATION_OWNER (resolved by org type)
-// 3. INVITED_MEMBER
-// 4. Tutor (role field)
-// 5. Student / INDIVIDUAL (default)
-
 type ResolvedRole = {
-  label: string; // shown in the UI
-}
+  label: string;
+};
 
 function resolveRole(user: any, organization: any): ResolvedRole {
-
-  // 1. Platform admin (goye_admin). The DB userType for these accounts is
-  // often INDIVIDUAL, so we key off the role + adminRole the profile
-  // endpoint returns, not userType. Label reflects the specific admin tier.
+  // 1. Platform admin
   if (user?.role === "goye_admin" || user?.userType === "ADMIN") {
     const adminLabelMap: Record<string, string> = {
       super_admin: "Super Admin",
@@ -45,37 +40,72 @@ function resolveRole(user: any, organization: any): ResolvedRole {
     return { label: adminLabelMap[user?.adminRole] ?? "Admin" };
   }
 
-  // 2. Organisation owner — label depends on org type
-  if (user?.userType === "ORGANIZATION_OWNER" && organization) {
-    const orgType = organization?.organization_type;
+  // 2. Organisation owner
+  const isOrgAdmin =
+    user?.userType === "ORGANIZATION_OWNER" ||
+    user?.role === "org_admin" ||
+    user?.role === "org_owner" ||
+    organization?.userType === "ORGANIZATION_OWNER";
+
+  if (isOrgAdmin) {
+    const rawOrgType =
+      organization?.organization_type ??
+      organization?.organizationType ??
+      organization?.type ??
+      "";
+    const orgType = rawOrgType.toString().toUpperCase();
 
     const labelMap: Record<string, string> = {
       CHURCH: "Church Admin",
       SCHOOL: "School Admin",
-      CLUB:   "Club Admin",
+      CLUB: "Club Admin",
     };
 
     return { label: labelMap[orgType] ?? "Organisation Admin" };
   }
 
-  // 3. Invited member — belongs to an org but is not the owner
-  if (user?.userType === "INVITED_MEMBER") {
+  // 3. Invited member
+  if (
+    user?.userType === "INVITED_MEMBER" ||
+    organization?.userType === "INVITED_MEMBER"
+  ) {
     return { label: "Invited Member" };
   }
 
-  // 4. Tutor — individual account with tutor role. Signup sets role to
-  // "instructor" (see auth/welcome/auth/step2.tsx); "tutor" is kept as a
-  // legacy alias other checks in this codebase also accept.
+  // 4. Tutor
   if (user?.role === "instructor" || user?.role === "tutor") {
     return { label: "Tutor" };
   }
 
-  // 5. Default — student / individual
+  // 5. Default
   return { label: "Student" };
 }
 
-// ─────────────────────────────────────────────────────────────
+// ── Loading Skeleton ──────────────────────────────────────────
+function HeaderSkeleton() {
+  return (
+    <div className="fixed top-0 left-0 right-0 z-50 w-full">
+      <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 border-b border-white/20">
+        <div className="md:px-8 md:py-2 py-[25px] px-[16px] flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-[45px] h-[45px] rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
+            <div className="flex flex-col gap-2">
+              <div className="w-[100px] h-[10px] bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="w-[140px] h-[14px] bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-[35px] h-[35px] rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
+            <div className="w-[35px] h-[35px] rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
+            <div className="w-[35px] h-[35px] rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
+// ── Main Component ──────────────────────────────────────────
 export default function DashboardHeader() {
   const { darkMode, setDarkMode } = useTheme();
   const { isConnected, unreadCount, connect } = useSocket();
@@ -84,48 +114,279 @@ export default function DashboardHeader() {
   const { t } = useI18n();
 
   const [showNotification, setShowNotification] = useState(false);
-  const [showProfileBox, setShowProfileBox]     = useState(false);
-  const [showFeedback, setShowFeedback]         = useState(false);
-  const [getHours, setGetHours]                 = useState("");
-  const [isLoading, setIsLoading]               = useState(true);
+  const [showProfileBox, setShowProfileBox] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [getHours, setGetHours] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ✅ Auth state
+  const [authUser, setAuthUser] = useState<any>(null);
+  const [authOrg, setAuthOrg] = useState<any>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   const router = useRouter();
 
-  const profileBoxRef              = useRef<HTMLDivElement | null>(null);
-  const desktopNotificationBtnRef  = useRef<HTMLButtonElement | null>(null);
-  const mobileNotificationBtnRef   = useRef<HTMLButtonElement | null>(null);
-  const desktopNotificationRef     = useRef<HTMLDivElement | null>(null);
-  const mobileNotificationRef      = useRef<HTMLDivElement | null>(null);
+  const profileBoxRef = useRef<HTMLDivElement | null>(null);
+  const desktopNotificationBtnRef = useRef<HTMLButtonElement | null>(null);
+  const mobileNotificationBtnRef = useRef<HTMLButtonElement | null>(null);
+  const desktopNotificationRef = useRef<HTMLDivElement | null>(null);
+  const mobileNotificationRef = useRef<HTMLDivElement | null>(null);
 
-  const user         = authStatus?.user;
-  const organization = authStatus?.organization;
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL
 
-  // ── Resolved display values ───────────────────────────────
-  const userId          = user?.id;
-  const userDisplayName = user?.first_name
-    ? `${user.first_name} ${user.last_name || ""}`.trim()
-    : organization?.organization_name || "User";
-  const userEmail = user?.email_address
-    || organization?.organization_email
-    || "";
-  const userPic   = user?.user_pic
-    || organization?.organization_image
-    || "";
+  // ✅ Fetch organization profile from API
+  const fetchOrganizationProfile = async () => {
+    try {
+      const tokens = await getAuthTokens();
+      const orgId = localStorage.getItem("organizationId");
+
+      if (!orgId || !tokens?.accessToken) {
+        console.log("⚠️ No orgId or token found");
+        return null;
+      }
+
+      console.log("🔄 Fetching organization profile for:", orgId);
+
+      const response = await fetch(`${API_URL}/api/organizations/profile`, {
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const orgData = data.organization || data.data?.organization || data;
+        console.log("✅ Organization profile fetched:", orgData);
+        return orgData;
+      } else {
+        console.log(
+          "❌ Failed to fetch organization profile:",
+          response.status,
+        );
+        return null;
+      }
+    } catch (error) {
+      console.error("❌ Error fetching organization profile:", error);
+      return null;
+    }
+  };
+
+  // ✅ Load auth data - PRIORITIZE ORGANIZATION
+  const loadAuthData = async () => {
+    try {
+      console.log("🔄 DashboardHeader: Loading auth data...");
+
+      // 1️⃣ First, try to get organization data from API
+      const orgData = await fetchOrganizationProfile();
+
+      if (orgData) {
+        console.log("✅ Using organization data from API:", orgData);
+
+        const orgId = orgData.id || orgData.organizationId;
+        const orgName = orgData.organization_name || orgData.name;
+        const orgEmail = orgData.organization_email || orgData.email;
+        const orgImage = orgData.organization_image || orgData.image;
+        const userType = orgData.userType || "ORGANIZATION_OWNER";
+
+        // Build user data from organization
+        const userData = {
+          id: orgData.user?.id || orgData.userId || orgId,
+          first_name: orgData.user?.first_name || orgName || "",
+          last_name: orgData.user?.last_name || "",
+          email_address: orgData.user?.email_address || orgEmail || "",
+          role: "org_admin",
+          userType: userType,
+          organizationId: orgId,
+          user_pic: orgData.user?.user_pic || orgImage || "",
+        };
+
+        const organizationData = {
+          id: orgId,
+          organization_name: orgName || "",
+          organization_email: orgEmail || "",
+          organization_image: orgImage || "",
+          organization_type: orgData.organization_type || orgData.type || "",
+          userType: userType,
+        };
+
+        // ✅ Save to localStorage for fallback
+        if (orgId) localStorage.setItem("organizationId", orgId);
+        if (orgName) localStorage.setItem("org_name", orgName);
+        if (orgEmail) localStorage.setItem("org_email", orgEmail);
+        if (userType) localStorage.setItem("userType", userType);
+
+        setAuthUser(userData);
+        setAuthOrg(organizationData);
+        setIsAuthReady(true);
+        setIsChecking(false);
+        return;
+      }
+
+      // 2️⃣ Fallback: Try IndexedDB
+      console.log("🔄 Fallback: Loading from IndexedDB...");
+      const session = await getSessionState();
+      const profile = await getUserProfile();
+
+      if (session?.isAuthenticated && profile) {
+        const orgId =
+          profile.organizationId || localStorage.getItem("organizationId");
+        const orgName =
+          profile.organizationName || localStorage.getItem("org_name");
+        const orgEmail =
+          localStorage.getItem("org_email") || profile.email_address || "";
+        const userType =
+          profile.userType ||
+          localStorage.getItem("userType") ||
+          "ORGANIZATION_OWNER";
+        const role =
+          profile.role || localStorage.getItem("role") || "org_admin";
+
+        const userData = {
+          id: profile.userId || "",
+          first_name: profile.first_name || "",
+          last_name: profile.last_name || "",
+          email_address: profile.email_address || orgEmail,
+          role: role,
+          userType: userType,
+          organizationId: orgId || undefined,
+        };
+
+        const organizationData = orgId
+          ? {
+              id: orgId,
+              organization_name: orgName || "",
+              organization_email: orgEmail,
+              userType: userType,
+            }
+          : undefined;
+
+        console.log("✅ Loaded from IndexedDB:", {
+          userData,
+          organizationData,
+        });
+
+        setAuthUser(userData);
+        setAuthOrg(organizationData);
+        setIsAuthReady(true);
+        setIsChecking(false);
+        return;
+      }
+
+      // 3️⃣ Last resort: localStorage only
+      console.log("🔄 Last resort: Loading from localStorage...");
+      const localOrgId = localStorage.getItem("organizationId");
+      const localOrgName = localStorage.getItem("org_name");
+      const localOrgEmail = localStorage.getItem("org_email");
+      const localUserType =
+        localStorage.getItem("userType") || "ORGANIZATION_OWNER";
+      const localRole = localStorage.getItem("role") || "org_admin";
+
+      if (localOrgId) {
+        const userData = {
+          id: localOrgId,
+          first_name: localOrgName || "",
+          last_name: "",
+          email_address: localOrgEmail || "",
+          role: localRole,
+          userType: localUserType,
+          organizationId: localOrgId,
+        };
+
+        const organizationData = {
+          id: localOrgId,
+          organization_name: localOrgName || "",
+          organization_email: localOrgEmail || "",
+          userType: localUserType,
+        };
+
+        console.log("✅ Loaded from localStorage:", {
+          userData,
+          organizationData,
+        });
+
+        setAuthUser(userData);
+        setAuthOrg(organizationData);
+        setIsAuthReady(true);
+      }
+
+      setIsChecking(false);
+    } catch (error) {
+      console.error("❌ DashboardHeader: Failed to load auth data:", error);
+      setIsChecking(false);
+    }
+  };
+
+  // ✅ Load auth data on mount
+  useEffect(() => {
+    loadAuthData();
+  }, []);
+
+  // ✅ Sync when authStatus changes from context
+  useEffect(() => {
+    if (authStatus && authStatus.user) {
+      console.log("🔄 DashboardHeader: authStatus updated via context");
+
+      // Only use context if we don't have better data
+      if (!authUser || !authUser.email_address) {
+        setAuthUser(authStatus.user);
+        setAuthOrg(authStatus.organization);
+        setIsAuthReady(true);
+        setIsChecking(false);
+      }
+    }
+  }, [authStatus]);
+
+  // ── Use local state for display ──────────────────────────
+  const user = authUser;
+  const organization = authOrg;
+
+  // ── Resolved display values ──────────────────────────────
+  // ✅ PRIORITIZE ORGANIZATION DATA OVER USER DATA
+  const userId = user?.id || organization?.id;
+
+  // ✅ Display name: Organization name > User name
+  const userDisplayName =
+    organization?.organization_name || user?.first_name
+      ? `${user?.first_name || ""} ${user?.last_name || ""}`.trim()
+      : "User";
+
+  // ✅ Email: Organization email > User email
+  const userEmail =
+    organization?.organization_email || user?.email_address || "";
+
+  // ✅ Profile picture: Organization image > User picture
+  const userPic = organization?.organization_image || user?.user_pic || "";
 
   const { label: displayRole } = resolveRole(user, organization);
+
+  // 🔍 Debug final display values
+  console.log("📊 DashboardHeader final display:", {
+    user,
+    organization,
+    displayRole,
+    userType: user?.userType,
+    role: user?.role,
+    userDisplayName,
+    userEmail,
+    userPic,
+    isAuthReady,
+    isChecking,
+  });
 
   // ── Greeting ──────────────────────────────────────────────
   useEffect(() => {
     const h = new Date().getHours();
     setGetHours(
-      h < 12 ? "Good morning"
-      : h < 17 ? "Good afternoon"
-      : "Good evening"
+      h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening",
     );
     setIsLoading(false);
   }, []);
 
-  // ── Socket reconnect on refresh ───────────────────────────
+  // ── Socket reconnect on refresh ──────────────────────────
   useEffect(() => {
     if (userId) {
       const timer = setTimeout(() => {
@@ -135,16 +396,16 @@ export default function DashboardHeader() {
     }
   }, [userId, connect]);
 
-  // ── Outside click handler ─────────────────────────────────
+  // ── Outside click handler ────────────────────────────────
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const t = e.target as Node;
 
-      const clickedDesktopBtn   = desktopNotificationBtnRef.current?.contains(t);
-      const clickedMobileBtn    = mobileNotificationBtnRef.current?.contains(t);
+      const clickedDesktopBtn = desktopNotificationBtnRef.current?.contains(t);
+      const clickedMobileBtn = mobileNotificationBtnRef.current?.contains(t);
       const clickedDesktopPanel = desktopNotificationRef.current?.contains(t);
-      const clickedMobilePanel  = mobileNotificationRef.current?.contains(t);
-      const clickedProfile      = profileBoxRef.current?.contains(t);
+      const clickedMobilePanel = mobileNotificationRef.current?.contains(t);
+      const clickedProfile = profileBoxRef.current?.contains(t);
 
       if (
         showNotification &&
@@ -175,28 +436,18 @@ export default function DashboardHeader() {
     setShowNotification(false);
   };
 
-  // ── Loading skeleton ──────────────────────────────────────
+  // ── Loading states ────────────────────────────────────────
+  if (isChecking || !isAuthReady || !user) {
+    console.log("⏳ DashboardHeader: Rendering skeleton", {
+      isChecking,
+      isAuthReady,
+      hasUser: !!user,
+    });
+    return <HeaderSkeleton />;
+  }
+
   if (isLoading) {
-    return (
-      <div className="fixed top-0 left-0 right-0 z-50 w-full">
-        <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 border-b border-white/20">
-          <div className="md:px-8 md:py-2 py-[25px] px-[16px] flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-[45px] h-[45px] rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
-              <div className="flex flex-col gap-2">
-                <div className="w-[100px] h-[10px] bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
-                <div className="w-[140px] h-[14px] bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-[35px] h-[35px] rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
-              <div className="w-[35px] h-[35px] rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
-              <div className="w-[35px] h-[35px] rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <HeaderSkeleton />;
   }
 
   // ── UI ────────────────────────────────────────────────────
@@ -213,7 +464,6 @@ export default function DashboardHeader() {
         <div className="hidden md:flex justify-end items-center gap-5 px-8 py-3 relative">
           <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
 
-          {/* Language selector — globally reachable from any dashboard */}
           <button
             onClick={openLanguageSelector}
             title="Change language"
@@ -223,7 +473,6 @@ export default function DashboardHeader() {
             <IoLanguage size={22} />
           </button>
 
-          {/* Feedback — reachable from any dashboard */}
           <button
             onClick={() => setShowFeedback(true)}
             title="Send feedback"
@@ -233,17 +482,17 @@ export default function DashboardHeader() {
             <HiOutlineChatAlt2 size={22} />
           </button>
 
-          {/* Connection status */}
           <div className="flex items-center justify-center gap-1">
-            <span className={`w-2 h-2 rounded-full ${
-              isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
-            }`} />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+              }`}
+            />
             <span className="text-sm text-gray-700 dark:text-gray-200">
               {isConnected ? t("Online") : t("Offline")}
             </span>
           </div>
 
-          {/* Notification */}
           <div className="relative">
             <button
               ref={desktopNotificationBtnRef}
@@ -258,13 +507,17 @@ export default function DashboardHeader() {
               )}
             </button>
             {showNotification && (
-              <div ref={desktopNotificationRef} className="absolute right-0 top-12 z-[99999]">
-                <DashboardNotification onClose={() => setShowNotification(false)} />
+              <div
+                ref={desktopNotificationRef}
+                className="absolute right-0 top-12 z-[99999]"
+              >
+                <DashboardNotification
+                  onClose={() => setShowNotification(false)}
+                />
               </div>
             )}
           </div>
 
-          {/* Profile */}
           <div ref={profileBoxRef} className="relative">
             <div
               className="flex items-center gap-3 cursor-pointer group"
@@ -272,7 +525,11 @@ export default function DashboardHeader() {
             >
               <div className="w-[45px] h-[45px] rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 ring-2 ring-transparent group-hover:ring-primaryColors-0 transition-all">
                 {userPic ? (
-                  <img src={userPic} className="w-full h-full object-cover" alt="Profile" />
+                  <img
+                    src={userPic}
+                    className="w-full h-full object-cover"
+                    alt="Profile"
+                  />
                 ) : (
                   <HiUserCircle size={45} className="text-gray-400" />
                 )}
@@ -288,7 +545,6 @@ export default function DashboardHeader() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-words">
                   {userEmail}
                 </p>
-                {/* Role badge */}
                 <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-primaryColors-0/10 text-primaryColors-0">
                   {t(displayRole)}
                 </span>
@@ -310,14 +566,20 @@ export default function DashboardHeader() {
           <div className="flex items-center gap-2">
             <div className="w-[45px] h-[45px] rounded-full overflow-hidden bg-gray-200 ring-2 ring-white/30">
               {userPic ? (
-                <img src={userPic} className="w-full h-full object-cover" alt="Profile" />
+                <img
+                  src={userPic}
+                  className="w-full h-full object-cover"
+                  alt="Profile"
+                />
               ) : (
                 <HiUserCircle size={45} className="text-gray-400" />
               )}
             </div>
             <div>
               <p className="text-[10px] text-white/70">{t(getHours)}</p>
-              <p className="text-[16px] font-semibold text-white">{userDisplayName}</p>
+              <p className="text-[16px] font-semibold text-white">
+                {userDisplayName}
+              </p>
               <p className="text-[10px] text-white/60">{t(displayRole)}</p>
             </div>
           </div>
@@ -330,7 +592,6 @@ export default function DashboardHeader() {
               {darkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
             </button>
 
-            {/* Language selector — globally reachable from any dashboard */}
             <button
               onClick={openLanguageSelector}
               title="Change language"
@@ -340,7 +601,6 @@ export default function DashboardHeader() {
               <IoLanguage size={18} />
             </button>
 
-            {/* Feedback — reachable from any dashboard */}
             <button
               onClick={() => setShowFeedback(true)}
               title="Send feedback"
@@ -364,12 +624,16 @@ export default function DashboardHeader() {
                 )}
               </button>
               {showNotification && (
-                <div ref={mobileNotificationRef} className="absolute right-0 top-10 z-[99999]">
-                  <DashboardNotification onClose={() => setShowNotification(false)} />
+                <div
+                  ref={mobileNotificationRef}
+                  className="absolute right-0 top-10 z-[99999]"
+                >
+                  <DashboardNotification
+                    onClose={() => setShowNotification(false)}
+                  />
                 </div>
               )}
             </div>
-
           </div>
         </div>
       </header>

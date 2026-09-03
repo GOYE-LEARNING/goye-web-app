@@ -34,8 +34,7 @@ class UnifiedAPIClient {
 
   private getBaseURL(): string {
     return (
-      process.env.NEXT_PUBLIC_API_URL ||
-      "https://goye-platform-backend.onrender.com"
+      process.env.NEXT_PUBLIC_API_URL as string
     );
   }
 

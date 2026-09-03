@@ -90,11 +90,12 @@ export default function Login({
     setShowLoginPage(true);
   };
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://goye-platform-backend.onrender.com";
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL
   const { setOrganizationId } = useOrganizationContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  // ✅ FIXED: Use ORGANIZATION ID, not name
+  // ✅ Get profile path based on role and organization ID
   function getProfilePath(role?: string | null, orgId?: string | null) {
     if (role === "student") {
       return "/dashboard/student";
@@ -102,8 +103,8 @@ export default function Login({
       return "/dashboard/tutor";
     } else if (role === "invited_user") {
       return `/dashboard/${orgId}/organization`;
-    } else if (role === "org_admin") {
-      return `/dashboard/${orgId}/admin`; // ✅ Use ID, not name
+    } else if (role === "org_admin" || role === "org_owner") {
+      return `/dashboard/${orgId}/admin`;
     }
     return "/dashboard";
   }
@@ -111,17 +112,17 @@ export default function Login({
   // ✅ Helper to decode JWT
   function decodeJWT(token: string) {
     try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
       const jsonPayload = decodeURIComponent(
         atob(base64)
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join(""),
       );
       return JSON.parse(jsonPayload);
     } catch (error) {
-      console.error('Failed to decode JWT:', error);
+      console.error("Failed to decode JWT:", error);
       return null;
     }
   }
@@ -141,7 +142,9 @@ export default function Login({
     loginTimeoutRef.current = setTimeout(() => {
       setLoginTimeout(true);
       setError(true);
-      setMessage("Login is taking too long. Please check your internet connection and try again.");
+      setMessage(
+        "Login is taking too long. Please check your internet connection and try again.",
+      );
       setShowMessage(true);
       setIsLoading(false);
     }, 15000);
@@ -208,28 +211,35 @@ export default function Login({
         console.log("Full decoded:", decoded);
         console.log("Organization ID:", decoded.organizationId);
         console.log("===================");
-        
+
         if (decoded) {
-          const fullName = decoded.full_name || '';
-          const nameParts = fullName.split(' ');
-          const firstName = nameParts[0] || '';
-          const lastName = nameParts.slice(1).join(' ') || '';
+          const fullName = decoded.full_name || "";
+          const nameParts = fullName.split(" ");
+          const firstName = nameParts[0] || "";
+          const lastName = nameParts.slice(1).join(" ") || "";
 
           // ✅ Store organization ID from JWT
           organizationId = decoded.organizationId;
+
+          // ✅ CRITICAL FIX: Get userType from organization object
+          // The JWT does NOT contain userType - it's only in the organization object
+          const userTypeFromOrg = responseData.organization?.userType || 'ORGANIZATION_OWNER';
+          const orgName = responseData.organization?.organization_name || '';
 
           userData = {
             id: decoded.userId || decoded.id,
             email: decoded.email,
             first_name: firstName,
             last_name: lastName,
-            role: decoded.role || 'org_admin',
+            role: decoded.role || "org_admin",
+            userType: userTypeFromOrg, // ✅ NOW PROPERLY SET
             organizationId: decoded.organizationId,
-            organizationName: responseData.organization?.organization_name || '',
+            organizationName: orgName,
             isProfileComplete: true,
           };
-          
-          console.log("Built user data from JWT:", userData);
+
+          console.log("✅ Built user data from JWT with userType:", userData);
+          console.log("✅ userType set to:", userTypeFromOrg);
         }
       }
 
@@ -253,11 +263,12 @@ export default function Login({
         userData = {
           id: org.id || org.organizationId,
           email: org.organization_email || formData.email,
-          first_name: org.organization_name || '',
-          last_name: '',
-          role: 'org_admin',
+          first_name: org.organization_name || "",
+          last_name: "",
+          role: "org_admin",
+          userType: org.userType || "ORGANIZATION_OWNER", // ✅ Get from organization
           organizationId: organizationId,
-          organizationName: org.organization_name || '',
+          organizationName: org.organization_name || "",
           isProfileComplete: true,
         };
         console.log("Built user data from organization:", userData);
@@ -265,30 +276,39 @@ export default function Login({
 
       // ✅ If still no user data, show error
       if (!userData) {
-        console.error("No user data could be extracted from response:", responseData);
+        console.error(
+          "No user data could be extracted from response:",
+          responseData,
+        );
         setError(true);
-        setMessage("Could not extract user data from login response. Please contact support.");
+        setMessage(
+          "Could not extract user data from login response. Please contact support.",
+        );
         setShowMessage(true);
         setIsLoading(false);
         return;
       }
 
-      // ✅ Save to localStorage - use ID for organizationId
+      // ✅ Save to localStorage
       if (organizationId) {
-        localStorage.setItem('organizationId', organizationId);
+        localStorage.setItem("organizationId", organizationId);
       }
       if (userData.role) {
-        localStorage.setItem('role', userData.role);
+        localStorage.setItem("role", userData.role);
       }
       if (userData.organizationName) {
-        localStorage.setItem('org_name', userData.organizationName);
+        localStorage.setItem("org_name", userData.organizationName);
       }
       if (userData.id) {
-        localStorage.setItem('userId', userData.id);
+        localStorage.setItem("userId", userData.id);
+      }
+      if (userData.userType) {
+        localStorage.setItem("userType", userData.userType);
       }
 
       console.log("✅ Stored organizationId:", organizationId);
       console.log("✅ Stored org_name:", userData.organizationName);
+      console.log("✅ Stored userType:", userData.userType);
 
       // ✅ Login the user
       const loginSuccess = await login(userData, orgData);
@@ -306,30 +326,33 @@ export default function Login({
       if (!isProfileComplete && setRequireProfileCompletion) {
         setRequireProfileCompletion(true);
         setIsLoading(false);
-        sessionStorage.setItem('profileCompletionData', JSON.stringify({
-          firstname: userData.first_name || '',
-          lastname: userData.last_name || '',
-          email: userData.email || '',
-        }));
+        sessionStorage.setItem(
+          "profileCompletionData",
+          JSON.stringify({
+            firstname: userData.first_name || "",
+            lastname: userData.last_name || "",
+            email: userData.email || "",
+          }),
+        );
         changeContentSignin();
         return;
       }
 
-      // ✅ FIXED: Redirect using ORGANIZATION ID
-      const role = userData.role || localStorage.getItem('role');
-      const orgId = organizationId || localStorage.getItem('organizationId');
-      const profilePath = getProfilePath(role, orgId); // ← Pass ID, not name
-      
+      // ✅ Redirect using ORGANIZATION ID
+      const role = userData.role || localStorage.getItem("role");
+      const orgId = organizationId || localStorage.getItem("organizationId");
+      const profilePath = getProfilePath(role, orgId);
+
       console.log("✅ Redirecting to:", profilePath);
       console.log("✅ User role:", role);
       console.log("✅ Organization ID:", orgId);
-      
+      console.log("✅ UserType:", userData.userType);
+
       setTimeout(() => {
         router.replace(profilePath);
       }, 100);
-      
-      setIsLoading(false);
 
+      setIsLoading(false);
     } catch (error: any) {
       console.error("Login error:", error);
       if (loginTimeoutRef.current) {
@@ -348,7 +371,7 @@ export default function Login({
     }
   };
 
-  // ✅ Handle Google auth - also use ID
+  // ✅ Handle Google auth
   const handleGoogleSuccess = async (data: any) => {
     if (isProcessingGoogleRef.current) {
       console.log("Already processing Google auth, ignoring duplicate call");
@@ -378,25 +401,28 @@ export default function Login({
       if (setRequireProfileCompletion) {
         setRequireProfileCompletion(true);
       }
-      
+
       if (userData) {
-        sessionStorage.setItem('profileCompletionData', JSON.stringify({
-          firstname: userData.first_name || '',
-          lastname: userData.last_name || '',
-          email: userData.email || '',
-        }));
-        
+        sessionStorage.setItem(
+          "profileCompletionData",
+          JSON.stringify({
+            firstname: userData.first_name || "",
+            lastname: userData.last_name || "",
+            email: userData.email || "",
+          }),
+        );
+
         if (userData.role) {
-          localStorage.setItem('role', userData.role);
+          localStorage.setItem("role", userData.role);
         }
         if (userData.organizationName) {
-          localStorage.setItem('org_name', userData.organizationName);
+          localStorage.setItem("org_name", userData.organizationName);
         }
         if (userData.organizationId) {
-          localStorage.setItem('organizationId', userData.organizationId);
+          localStorage.setItem("organizationId", userData.organizationId);
         }
       }
-      
+
       changeContentSignin();
       isProcessingGoogleRef.current = false;
       return;
@@ -407,21 +433,21 @@ export default function Login({
       if (success) {
         if (userData.organizationId) {
           setOrganizationId(userData.organizationId);
-          localStorage.setItem('organizationId', userData.organizationId);
+          localStorage.setItem("organizationId", userData.organizationId);
         }
-        
+
         if (userData.role) {
-          localStorage.setItem('role', userData.role);
+          localStorage.setItem("role", userData.role);
         }
         if (userData.organizationName) {
-          localStorage.setItem('org_name', userData.organizationName);
+          localStorage.setItem("org_name", userData.organizationName);
         }
-        
-        // ✅ Use ID, not name
-        const role = userData.role || localStorage.getItem('role');
-        const orgId = userData.organizationId || localStorage.getItem('organizationId');
+
+        const role = userData.role || localStorage.getItem("role");
+        const orgId =
+          userData.organizationId || localStorage.getItem("organizationId");
         const profilePath = getProfilePath(role, orgId);
-        
+
         setTimeout(() => {
           router.replace(profilePath);
         }, 100);

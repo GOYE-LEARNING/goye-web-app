@@ -66,9 +66,17 @@ interface AuthState {
 
 const AuthContext = React.createContext<AuthState | undefined>(undefined);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://goye-platform-backend.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const PUBLIC_ROUTES = ['/login', '/signup', '/auth', '/', '/about', '/contact', '/forgot-password'];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/signup",
+  "/auth",
+  "/",
+  "/about",
+  "/contact",
+  "/forgot-password",
+];
 
 export default function AuthProvider({ children }: Props) {
   const router = useRouter();
@@ -87,7 +95,7 @@ export default function AuthProvider({ children }: Props) {
 
   const isPublicRoute = React.useCallback(() => {
     if (!pathname) return true;
-    return PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+    return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
   }, [pathname]);
 
   const getDeviceId = React.useCallback(async (): Promise<string> => {
@@ -98,10 +106,12 @@ export default function AuthProvider({ children }: Props) {
     const deviceId = await getOrCreateDeviceId();
     const tokens = await getAuthTokens();
     return {
-      'Content-Type': 'application/json',
-      'X-Device-Id': deviceId,
-      ...(tokens?.accessToken && { 'Authorization': `Bearer ${tokens.accessToken}` }),
-      ...(tokens?.refreshToken && { 'x-refresh-token': tokens.refreshToken }),
+      "Content-Type": "application/json",
+      "X-Device-Id": deviceId,
+      ...(tokens?.accessToken && {
+        Authorization: `Bearer ${tokens.accessToken}`,
+      }),
+      ...(tokens?.refreshToken && { "x-refresh-token": tokens.refreshToken }),
     };
   }, []);
 
@@ -118,10 +128,12 @@ export default function AuthProvider({ children }: Props) {
         method: "POST",
         credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
-          'X-Device-Id': deviceId,
-          ...(tokens?.refreshToken && { 'x-refresh-token': tokens.refreshToken }),
-        }
+          "Content-Type": "application/json",
+          "X-Device-Id": deviceId,
+          ...(tokens?.refreshToken && {
+            "x-refresh-token": tokens.refreshToken,
+          }),
+        },
       });
 
       if (response.ok) {
@@ -148,12 +160,17 @@ export default function AuthProvider({ children }: Props) {
 
   const getUserType = React.useCallback(async (): Promise<string> => {
     const profile = await getUserProfile();
-    const type = profile?.userType || '';
-    const role = profile?.role || '';
+    const type = profile?.userType || "";
+    const role = profile?.role || "";
 
-    if (type === 'admin' || role === 'goye_admin') return 'admin';
-    if (type === 'organization' || type === 'invited_user' || role === 'org_admin') return 'organization';
-    return 'individual';
+    if (type === "admin" || role === "goye_admin") return "admin";
+    if (
+      type === "organization" ||
+      type === "invited_user" ||
+      role === "org_admin"
+    )
+      return "organization";
+    return "individual";
   }, []);
 
   const runAuthCheck = React.useCallback(async (): Promise<boolean> => {
@@ -168,7 +185,7 @@ export default function AuthProvider({ children }: Props) {
         organization: undefined,
       });
       if (!isPublicRoute()) {
-        router.push('/login');
+        router.push("/login");
       }
       return false;
     }
@@ -176,7 +193,7 @@ export default function AuthProvider({ children }: Props) {
     const userType = await getUserType();
 
     // Admin
-    if (userType === 'admin') {
+    if (userType === "admin") {
       const profile = await getUserProfile();
       setAuthStatus({
         isExistingUser: true,
@@ -184,12 +201,12 @@ export default function AuthProvider({ children }: Props) {
         requiresProfileCompletion: false,
         isLoading: false,
         user: {
-          id: profile?.userId || '',
-          first_name: profile?.first_name || '',
-          last_name: profile?.last_name || '',
-          email_address: profile?.email_address || '',
-          role: localStorage.getItem('role') || 'goye_admin',
-          type: 'admin',
+          id: profile?.userId || "",
+          first_name: profile?.first_name || "",
+          last_name: profile?.last_name || "",
+          email_address: profile?.email_address || "",
+          role: localStorage.getItem("role") || "goye_admin",
+          type: "admin",
         } as any,
         organization: undefined,
       });
@@ -197,10 +214,10 @@ export default function AuthProvider({ children }: Props) {
     }
 
     // Individual
-    if (userType === 'individual') {
+    if (userType === "individual") {
       const headers = await authHeaders();
       const response = await fetch(`${API_URL}/api/user/profile`, {
-        credentials: 'include',
+        credentials: "include",
         headers,
       });
 
@@ -213,8 +230,8 @@ export default function AuthProvider({ children }: Props) {
           first_name: userData?.first_name,
           last_name: userData?.last_name,
           email_address: userData?.email_address,
-          userType: 'user',
-          role: userData?.role || 'student',
+          userType: "user",
+          role: userData?.role || "student",
         });
 
         setAuthStatus({
@@ -233,7 +250,7 @@ export default function AuthProvider({ children }: Props) {
         if (refreshed) {
           const retryHeaders = await authHeaders();
           const retryResponse = await fetch(`${API_URL}/api/user/profile`, {
-            credentials: 'include',
+            credentials: "include",
             headers: retryHeaders,
           });
 
@@ -246,8 +263,8 @@ export default function AuthProvider({ children }: Props) {
               first_name: userData?.first_name,
               last_name: userData?.last_name,
               email_address: userData?.email_address,
-              userType: 'user',
-              role: userData?.role || 'student',
+              userType: "user",
+              role: userData?.role || "student",
             });
 
             setAuthStatus({
@@ -265,10 +282,10 @@ export default function AuthProvider({ children }: Props) {
     }
 
     // Organization
-    if (userType === 'organization') {
+    if (userType === "organization") {
       const headers = await authHeaders();
       const response = await fetch(`${API_URL}/api/organizations/profile`, {
-        credentials: 'include',
+        credentials: "include",
         headers,
       });
 
@@ -278,36 +295,37 @@ export default function AuthProvider({ children }: Props) {
 
         console.log("✅ Organization profile fetched:", orgData);
 
-        // ✅ Extract organization ID from response
         const orgId = orgData.id || orgData.organizationId;
         const orgName = orgData.organization_name || orgData.name;
 
-        // ✅ Save to localStorage
         if (orgId) {
-          localStorage.setItem('organizationId', orgId);
+          localStorage.setItem("organizationId", orgId);
         }
         if (orgName) {
-          localStorage.setItem('org_name', orgName);
+          localStorage.setItem("org_name", orgName);
         }
 
         await saveUserProfile({
           userId: orgData?.user?.id || orgData?.userId,
-          first_name: orgData?.organization_name || orgName || '',
-          last_name: '',
-          email_address: orgData?.organization_email || orgData?.email || '',
-          userType: 'organization',
-          role: orgData?.organization_role || 'org_admin',
+          first_name: orgData?.organization_name || orgName || "",
+          last_name: "",
+          email_address: orgData?.organization_email || orgData?.email || "",
+          userType: orgData?.userType || "ORGANIZATION_OWNER", // ✅ ADD THIS
+          role: orgData?.organization_role || "org_admin",
           organizationId: orgId,
         });
 
-        // ✅ Build user data from organization
+        // ✅ Build user data from organization with userType
         const userData = {
           id: orgData?.user?.id || orgData?.userId,
-          first_name: orgData?.user?.first_name || orgData?.organization_name || '',
-          last_name: orgData?.user?.last_name || '',
-          email_address: orgData?.user?.email_address || orgData?.organization_email || '',
-          role: 'org_admin',
+          first_name:
+            orgData?.user?.first_name || orgData?.organization_name || "",
+          last_name: orgData?.user?.last_name || "",
+          email_address:
+            orgData?.user?.email_address || orgData?.organization_email || "",
+          role: "org_admin",
           organizationId: orgId,
+          userType: orgData?.userType || "ORGANIZATION_OWNER", // ✅ ADD THIS
         };
 
         setAuthStatus({
@@ -325,41 +343,50 @@ export default function AuthProvider({ children }: Props) {
         const refreshed = await refreshToken();
         if (refreshed) {
           const retryHeaders = await authHeaders();
-          const retryResponse = await fetch(`${API_URL}/api/organizations/profile`, {
-            credentials: 'include',
-            headers: retryHeaders,
-          });
+          const retryResponse = await fetch(
+            `${API_URL}/api/organizations/profile`,
+            {
+              credentials: "include",
+              headers: retryHeaders,
+            },
+          );
 
           if (retryResponse.ok) {
             const data = await retryResponse.json();
-            const orgData = data.organization || data.data?.organization || data;
+            const orgData =
+              data.organization || data.data?.organization || data;
 
             const orgId = orgData.id || orgData.organizationId;
             const orgName = orgData.organization_name || orgData.name;
 
             if (orgId) {
-              localStorage.setItem('organizationId', orgId);
+              localStorage.setItem("organizationId", orgId);
             }
             if (orgName) {
-              localStorage.setItem('org_name', orgName);
+              localStorage.setItem("org_name", orgName);
             }
 
             await saveUserProfile({
               userId: orgData?.user?.id || orgData?.userId,
-              first_name: orgData?.organization_name || orgName || '',
-              last_name: '',
-              email_address: orgData?.organization_email || orgData?.email || '',
-              userType: 'organization',
-              role: orgData?.organization_role || 'org_admin',
+              first_name: orgData?.organization_name || orgName || "",
+              last_name: "",
+              email_address:
+                orgData?.organization_email || orgData?.email || "",
+              userType: "organization",
+              role: orgData?.organization_role || "org_admin",
               organizationId: orgId,
             });
 
             const userData = {
               id: orgData?.user?.id || orgData?.userId,
-              first_name: orgData?.user?.first_name || orgData?.organization_name || '',
-              last_name: orgData?.user?.last_name || '',
-              email_address: orgData?.user?.email_address || orgData?.organization_email || '',
-              role: 'org_admin',
+              first_name:
+                orgData?.user?.first_name || orgData?.organization_name || "",
+              last_name: orgData?.user?.last_name || "",
+              email_address:
+                orgData?.user?.email_address ||
+                orgData?.organization_email ||
+                "",
+              role: "org_admin",
               organizationId: orgId,
             };
 
@@ -388,14 +415,14 @@ export default function AuthProvider({ children }: Props) {
       organization: undefined,
     });
     if (!isPublicRoute()) {
-      router.push('/login');
+      router.push("/login");
     }
     return false;
   }, [isPublicRoute, getUserType, router, authHeaders, refreshToken]);
 
   const checkAuth = React.useCallback(async (): Promise<boolean> => {
     if (isPublicRoute()) {
-      setAuthStatus(prev => ({ ...prev, isLoading: false }));
+      setAuthStatus((prev) => ({ ...prev, isLoading: false }));
       return false;
     }
 
@@ -404,7 +431,7 @@ export default function AuthProvider({ children }: Props) {
     }
 
     isCheckingRef.current = true;
-    setAuthStatus(prev => ({ ...prev, isLoading: true }));
+    setAuthStatus((prev) => ({ ...prev, isLoading: true }));
 
     try {
       const result = await runAuthCheck();
@@ -412,89 +439,110 @@ export default function AuthProvider({ children }: Props) {
       return result;
     } catch (error) {
       console.error("Auth check error:", error);
-      setAuthStatus(prev => ({ ...prev, isLoading: false }));
+      setAuthStatus((prev) => ({ ...prev, isLoading: false }));
       isCheckingRef.current = false;
       return false;
     }
   }, [isPublicRoute, runAuthCheck, authStatus.isExistingUser]);
 
-  const login = React.useCallback(async (userData: any, orgData?: any): Promise<boolean> => {
-    try {
-      console.log("🔐 Login function called with:", { userData, orgData });
+  const login = React.useCallback(
+    async (userData: any, orgData?: any): Promise<boolean> => {
+      try {
+        console.log("🔐 Login function called with:", { userData, orgData });
+        userData.userType =
+          userData.userType || userData.type || "ORGANIZATION_OWNER";
+        // ✅ Extract organization ID from userData if available
+        const orgId =
+          userData?.organizationId || orgData?.id || orgData?.organizationId;
+        const orgName =
+          userData?.organizationName ||
+          orgData?.organization_name ||
+          orgData?.name;
 
-      // ✅ Extract organization ID from userData if available
-      const orgId = userData?.organizationId || orgData?.id || orgData?.organizationId;
-      const orgName = userData?.organizationName || orgData?.organization_name || orgData?.name;
+        if (orgId) {
+          localStorage.setItem("organizationId", orgId);
+          console.log("✅ Stored organizationId:", orgId);
+        }
+        if (orgName) {
+          localStorage.setItem("org_name", orgName);
+          console.log("✅ Stored org_name:", orgName);
+        }
 
-      if (orgId) {
-        localStorage.setItem('organizationId', orgId);
-        console.log("✅ Stored organizationId:", orgId);
-      }
-      if (orgName) {
-        localStorage.setItem('org_name', orgName);
-        console.log("✅ Stored org_name:", orgName);
-      }
+        if (userData) {
+          await saveUserProfile({
+            userId: userData.id,
+            first_name: userData.first_name || "",
+            last_name: userData.last_name || "",
+            email_address: userData.email_address || userData.email || "",
+            userType:
+              userData.userType || userData.type || "ORGANIZATION_OWNER",
+            role: userData.role || "org_admin",
+            organizationId: orgId || null,
+            level: userData.level,
+            adminRole: userData.adminRole,
+            organizationName: orgName || null,
+          });
+        } else if (orgData) {
+          await saveUserProfile({
+            userId: orgData.userId || orgData.id,
+            first_name: orgData.organization_name || "",
+            last_name: "",
+            email_address: orgData.organization_email || "",
+            userType: "organization",
+            role: orgData.organization_role || "admin",
+            organizationId: orgData.id,
+            organizationName: orgData.organization_name,
+            isProfileComplete: true,
+          });
+        }
 
-      if (userData) {
-        await saveUserProfile({
-          userId: userData.id,
-          first_name: userData.first_name || '',
-          last_name: userData.last_name || '',
-          email_address: userData.email_address || userData.email || '',
-          userType: userData.type || userData.userType || 'organization',
-          role: userData.role || 'org_admin',
-          organizationId: orgId || null,
-          isProfileComplete: userData.isProfileComplete ?? true,
-          level: userData.level,
-          adminRole: userData.adminRole,
-          organizationName: orgName || null,
+        await updateSessionState({
+          isAuthenticated: true,
+          lastActivity: new Date().toISOString(),
         });
-      } else if (orgData) {
-        await saveUserProfile({
-          userId: orgData.userId || orgData.id,
-          first_name: orgData.organization_name || '',
-          last_name: '',
-          email_address: orgData.organization_email || '',
-          userType: 'organization',
-          role: orgData.organization_role || 'admin',
-          organizationId: orgData.id,
-          organizationName: orgData.organization_name,
-          isProfileComplete: true,
+
+        // ✅ Build organization data for auth status
+        const organizationData = orgData || {
+          id: orgId,
+          organization_name: orgName,
+          organization_email: userData?.email || "",
+        };
+
+        // ✅ CRITICAL FIX: Explicitly ensure userType is in the user object
+        const userWithType = {
+          ...userData,
+          userType:
+            userData?.userType || userData?.type || "ORGANIZATION_OWNER",
+        };
+
+        setAuthStatus({
+          isExistingUser: true,
+          isProfileComplete:
+            userData?.isProfileComplete !== undefined
+              ? userData.isProfileComplete
+              : true,
+          requiresProfileCompletion: userData?.isProfileComplete === false,
+          isLoading: false,
+          user: userWithType, // ✅ Use the user with explicit userType
+          organization: organizationData,
         });
+
+        console.log(
+          "✅ Login successful, auth status updated with userType:",
+          userWithType.userType,
+        );
+        console.log("✅ Auth status user:", userWithType);
+        return true;
+      } catch (error) {
+        console.error("Login error:", error);
+        return false;
       }
-
-      await updateSessionState({
-        isAuthenticated: true,
-        lastActivity: new Date().toISOString(),
-      });
-
-      // ✅ Build organization data for auth status
-      const organizationData = orgData || {
-        id: orgId,
-        organization_name: orgName,
-        organization_email: userData?.email || '',
-      };
-
-      setAuthStatus({
-        isExistingUser: true,
-        isProfileComplete: userData?.isProfileComplete !== undefined ? userData.isProfileComplete : true,
-        requiresProfileCompletion: userData?.isProfileComplete === false,
-        isLoading: false,
-        user: userData,
-        organization: organizationData,
-      });
-
-      console.log("✅ Login successful, auth status updated with org:", organizationData);
-      return true;
-    } catch (error) {
-      console.error("Login error:", error);
-      return false;
-    }
-  }, []);
-
+    },
+    [],
+  );
   React.useEffect(() => {
     if (isPublicRoute()) {
-      setAuthStatus(prev => ({ ...prev, isLoading: false }));
+      setAuthStatus((prev) => ({ ...prev, isLoading: false }));
       return;
     }
 
@@ -520,10 +568,10 @@ export default function AuthProvider({ children }: Props) {
       await clearAllData();
 
       // ✅ Clear localStorage items
-      localStorage.removeItem('organizationId');
-      localStorage.removeItem('org_name');
-      localStorage.removeItem('role');
-      localStorage.removeItem('userId');
+      localStorage.removeItem("organizationId");
+      localStorage.removeItem("org_name");
+      localStorage.removeItem("role");
+      localStorage.removeItem("userId");
 
       setAuthStatus({
         isExistingUser: false,
@@ -542,9 +590,12 @@ export default function AuthProvider({ children }: Props) {
     }
   }, [router, authHeaders]);
 
-  const updateAuthStatus = React.useCallback((status: Partial<AuthContextType>) => {
-    setAuthStatus((prev) => ({ ...prev, ...status, isLoading: false }));
-  }, []);
+  const updateAuthStatus = React.useCallback(
+    (status: Partial<AuthContextType>) => {
+      setAuthStatus((prev) => ({ ...prev, ...status, isLoading: false }));
+    },
+    [],
+  );
 
   const clearAuth = React.useCallback(() => {
     setAuthStatus({
@@ -570,9 +621,7 @@ export default function AuthProvider({ children }: Props) {
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 

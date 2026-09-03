@@ -8,7 +8,7 @@ import { saveUserProfile } from "@/app/utils/database/db";
 // NEXT_PUBLIC_API_URL doesn't leave axios's baseURL undefined — which makes
 // every request resolve as a relative path against this app's own origin
 // (no matching route there, so it 404s) instead of the actual backend.
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://goye-platform-backend.onrender.com";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 // Create axios instance with default config
 const apiClient = axios.create({

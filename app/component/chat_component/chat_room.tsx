@@ -215,8 +215,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
     if (!isAuthReady) return;
 
     socketRef.current = io(
-      API_URL || "https://goye-platform-backend.onrender.com",
-      {
+      API_URL, {
         withCredentials: true,
       }
     );
