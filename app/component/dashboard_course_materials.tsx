@@ -26,11 +26,28 @@ interface PDFModalProps {
   materialTitle: string;
 }
 
-// Helper to get a viewable PDF URL (using Google Docs viewer)
-function getViewablePDFUrl(url: string): string {
-  // Encode the PDF URL for Google Docs viewer
-  const encodedUrl = encodeURIComponent(url);
-  return `https://docs.google.com/viewer?embedded=true&url=${encodedUrl}`;
+/** True when a material actually has a document behind it. */
+function hasDocument(url?: string | null): boolean {
+  return typeof url === "string" && url.trim() !== "";
+}
+
+/**
+ * Builds a Google Docs Viewer URL, or null when there is nothing to view.
+ *
+ * The null case is the bug students hit: this used to interpolate the URL
+ * unconditionally, so a material saved with an empty material_document
+ * produced "https://docs.google.com/viewer?embedded=true&url=" — and Google
+ * answers that with its own 400 page, "The server cannot process the request
+ * because it is malformed". The iframe loads that page *successfully*, so
+ * onError never fires and the viewer's own error state never shows. The
+ * student just sees a Google error inside the course.
+ *
+ * Two materials in the current database are in exactly that state, including
+ * the one titled "The Jesus I know".
+ */
+function getViewablePDFUrl(url: string): string | null {
+  if (!hasDocument(url)) return null;
+  return `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`;
 }
 
 // Helper to get download URL (forces attachment)
@@ -46,6 +63,11 @@ function getDownloadUrl(url: string): string {
 function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
   const [loadError, setLoadError] = useState(false);
   const viewableUrl = getViewablePDFUrl(pdfUrl);
+
+  // Reset between materials, so a failure on one doesn't stick to the next.
+  useEffect(() => {
+    setLoadError(false);
+  }, [pdfUrl]);
 
   if (!isOpen) return null;
 
@@ -67,7 +89,21 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
 
         {/* PDF Viewer */}
         <div className="flex-1 p-4">
-          {loadError ? (
+          {!viewableUrl ? (
+            // No document was ever stored against this material. Say so
+            // plainly instead of handing the student Google's 400 page.
+            <div className="flex flex-col items-center justify-center h-[70vh] text-center px-6">
+              <FaRegFileAlt className="text-4xl text-gray-400 dark:text-gray-500 mb-4" />
+              <p className="text-gray-800 dark:text-gray-100 font-semibold mb-2">
+                No document has been uploaded for this material yet.
+              </p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md">
+                Your tutor added &ldquo;{materialTitle}&rdquo; to this course but
+                the file didn&rsquo;t finish uploading. Let them know and
+                they can upload it again.
+              </p>
+            </div>
+          ) : loadError ? (
             <div className="flex flex-col items-center justify-center h-[70vh] text-center">
               <p className="text-red-500 dark:text-red-400 mb-4">Failed to load PDF preview.</p>
               <button
@@ -89,10 +125,26 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-lg">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-lg flex gap-3">
+          {/*
+            Always offered, not just on error. The embedded viewer can fail
+            without ever telling us: an iframe pointed at Google's viewer
+            fires onLoad whether it rendered the document or an error page,
+            and cross-origin rules stop us reading which. Rather than leave a
+            student staring at something broken with only a Close button,
+            give them a way straight to the file.
+          */}
+          {viewableUrl && (
+            <button
+              onClick={() => window.open(pdfUrl, "_blank", "noopener,noreferrer")}
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition-colors"
+            >
+              Open in new tab
+            </button>
+          )}
           <button
             onClick={onClose}
-            className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-md transition-colors"
+            className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-md transition-colors"
           >
             Close
           </button>
@@ -226,17 +278,27 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
                   <HiOutlineBookOpen /> {m.material_pages || '?'} Pages
                 </span>
               </p>
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center flex-wrap">
+                {/*
+                  Both actions are disabled when the material has no file
+                  behind it. Offering "View" and "Download" for a record with
+                  an empty material_document is what sent students into a
+                  Google error page and a download of nothing.
+                */}
                 <button
-                  className="form_more bg-transparent border border-[#ccc]/10 dark:border-gray-700 text-primaryColors-0 font-semibold flex justify-center items-center gap-2 px-4 py-2 rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="form_more bg-transparent border border-[#ccc]/10 dark:border-gray-700 text-primaryColors-0 font-semibold flex justify-center items-center gap-2 px-4 py-2 rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                   onClick={() => handleViewPDF(m.material_document, m.material_title)}
+                  disabled={!hasDocument(m.material_document)}
                 >
                   <IoEye /> View
                 </button>
                 <button
-                  className="form_more bg-primaryColors-0 text-white flex justify-center items-center gap-2 px-4 py-2 rounded-md disabled:opacity-50 transition-colors hover:bg-primaryColors-700"
+                  className="form_more bg-primaryColors-0 text-white flex justify-center items-center gap-2 px-4 py-2 rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-primaryColors-700"
                   onClick={() => handleDownloadPDF(m.material_document, `${m.material_title}.pdf`)}
-                  disabled={downloading === m.material_title}
+                  disabled={
+                    downloading === m.material_title ||
+                    !hasDocument(m.material_document)
+                  }
                 >
                   {downloading === m.material_title ? (
                     <>
@@ -249,6 +311,11 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
                     </>
                   )}
                 </button>
+                {!hasDocument(m.material_document) && (
+                  <span className="text-[13px] text-amber-600 dark:text-amber-400">
+                    File not uploaded yet
+                  </span>
+                )}
               </div>
               <div className="dashboard_hr my-5"></div>
             </div>
