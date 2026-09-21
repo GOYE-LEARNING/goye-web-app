@@ -448,12 +448,18 @@ export default function AuthProvider({ children }: Props) {
   const login = React.useCallback(
     async (userData: any, orgData?: any): Promise<boolean> => {
       try {
-        console.log("🔐 Login function called with:", { userData, orgData });
-        userData.userType =
-          userData.userType || userData.type || "ORGANIZATION_OWNER";
         // ✅ Extract organization ID from userData if available
         const orgId =
           userData?.organizationId || orgData?.id || orgData?.organizationId;
+
+        // Only assume an organisation user type when there is actually an
+        // organisation. This used to default to "ORGANIZATION_OWNER"
+        // unconditionally, so every student and tutor whose login response
+        // carried no userType was written into the local profile as an
+        // organisation owner — and since the profile is what the header reads,
+        // they were then shown as an org admin for the rest of the session.
+        userData.userType =
+          userData.userType || userData.type || (orgId ? "ORGANIZATION_OWNER" : "");
         const orgName =
           userData?.organizationName ||
           orgData?.organization_name ||
@@ -474,9 +480,12 @@ export default function AuthProvider({ children }: Props) {
             first_name: userData.first_name || "",
             last_name: userData.last_name || "",
             email_address: userData.email_address || userData.email || "",
-            userType:
-              userData.userType || userData.type || "ORGANIZATION_OWNER",
-            role: userData.role || "org_admin",
+            // Both of these previously defaulted to organisation values for
+            // every account. This profile is the record the header trusts, so
+            // an invented role here is not a display quirk — it is the wrong
+            // answer stored on the device until the next sign-in.
+            userType: userData.userType || userData.type || "",
+            role: userData.role || (orgId ? "org_admin" : ""),
             organizationId: orgId || null,
             level: userData.level,
             adminRole: userData.adminRole,
@@ -508,11 +517,14 @@ export default function AuthProvider({ children }: Props) {
           organization_email: userData?.email || "",
         };
 
-        // ✅ CRITICAL FIX: Explicitly ensure userType is in the user object
+        // Carry userType through to auth status, without inventing one for an
+        // account that has no organisation.
         const userWithType = {
           ...userData,
           userType:
-            userData?.userType || userData?.type || "ORGANIZATION_OWNER",
+            userData?.userType ||
+            userData?.type ||
+            (orgId ? "ORGANIZATION_OWNER" : ""),
         };
 
         setAuthStatus({

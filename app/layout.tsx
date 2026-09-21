@@ -30,6 +30,7 @@ import {
   syncDeviceIdAcrossTabs
 } from "@/app/utils/database/db";
 import "@/app/utils/globalFetch";
+import { reconcileStoredIdentity } from "@/app/utils/reconcileStoredIdentity";
 
 const Poppins = localFont({
   src: "../public/font/Poppins-Regular.ttf",
@@ -150,6 +151,23 @@ function DeviceIdSync() {
   return null;
 }
 
+/**
+ * One-off repair of identity values left behind by earlier builds.
+ *
+ * Sits here rather than inside AuthGuard because AuthGuard returns early on
+ * public routes, and the residue most needs clearing exactly when someone is
+ * sitting on /auth about to sign in as a different person.
+ *
+ * Renders nothing and never blocks startup.
+ */
+function IdentityReconciler() {
+  useEffect(() => {
+    void reconcileStoredIdentity();
+  }, []);
+
+  return null;
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -164,6 +182,7 @@ export default function RootLayout({
       <body
         className={`min-h-full ${Poppins.variable} dark:bg-secondaryColors-0 bg-white dark:text-textSlightDark-0 text-lightBoldText-0 antialiased font-['Fustat',_'sans-erif'] scrollbar2 ${checkAll ? "overflow-hidden" : ""}`}
       >
+        <IdentityReconciler />
         <GlobalNotFoundHandler>
           <GlobalAPIErrorHandler>
             <SignupProvider>
