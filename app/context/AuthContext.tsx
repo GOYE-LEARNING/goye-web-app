@@ -568,10 +568,20 @@ export default function AuthProvider({ children }: Props) {
       await clearAllData();
 
       // ✅ Clear localStorage items
-      localStorage.removeItem("organizationId");
-      localStorage.removeItem("org_name");
-      localStorage.removeItem("role");
-      localStorage.removeItem("userId");
+      //
+      // Every key that identifies the person who was signed in, not just the
+      // four that were listed here. `userType` and `org_email` were being left
+      // behind, and components read them as fallbacks — so the next account to
+      // sign in on this device picked up the previous one's organisation email
+      // and user type.
+      [
+        "organizationId",
+        "org_name",
+        "org_email",
+        "role",
+        "userId",
+        "userType",
+      ].forEach((key) => localStorage.removeItem(key));
 
       setAuthStatus({
         isExistingUser: false,

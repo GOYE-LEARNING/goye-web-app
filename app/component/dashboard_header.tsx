@@ -40,12 +40,21 @@ function resolveRole(user: any, organization: any): ResolvedRole {
     return { label: adminLabelMap[user?.adminRole] ?? "Admin" };
   }
 
-  // 2. Organisation owner
+  // 2. Invited member — checked BEFORE the owner test.
+  //
+  // The owner test used to accept `organization.userType ===
+  // "ORGANIZATION_OWNER"`, which describes the organisation record rather than
+  // this person's relationship to it. An invited member of a church therefore
+  // matched the owner branch and was shown as "Church Admin".
+  if (user?.userType === "INVITED_MEMBER") {
+    return { label: "Invited Member" };
+  }
+
+  // 3. Organisation owner. Decided only from the signed-in user.
   const isOrgAdmin =
     user?.userType === "ORGANIZATION_OWNER" ||
     user?.role === "org_admin" ||
-    user?.role === "org_owner" ||
-    organization?.userType === "ORGANIZATION_OWNER";
+    user?.role === "org_owner";
 
   if (isOrgAdmin) {
     const rawOrgType =
@@ -64,20 +73,14 @@ function resolveRole(user: any, organization: any): ResolvedRole {
     return { label: labelMap[orgType] ?? "Organisation Admin" };
   }
 
-  // 3. Invited member
-  if (
-    user?.userType === "INVITED_MEMBER" ||
-    organization?.userType === "INVITED_MEMBER"
-  ) {
-    return { label: "Invited Member" };
-  }
-
   // 4. Tutor
   if (user?.role === "instructor" || user?.role === "tutor") {
     return { label: "Tutor" };
   }
 
-  // 5. Default
+  // 5. Default. Reached when the role is absent or unrecognised, so it has to
+  // be the least-privileged label — guessing upwards tells someone they are an
+  // admin when nothing said so.
   return { label: "Student" };
 }
 
@@ -109,7 +112,7 @@ function HeaderSkeleton() {
 export default function DashboardHeader() {
   const { darkMode, setDarkMode } = useTheme();
   const { isConnected, unreadCount, connect } = useSocket();
-  const { authStatus } = useAuthContext();
+  const { authStatus, logout } = useAuthContext();
   const { openLanguageSelector } = useLanguage();
   const { t } = useI18n();
 
@@ -137,17 +140,17 @@ export default function DashboardHeader() {
     process.env.NEXT_PUBLIC_API_URL
 
   // ✅ Fetch organization profile from API
-  const fetchOrganizationProfile = async () => {
+  const fetchOrganizationProfile = async (orgIdFromProfile?: string | null) => {
     try {
       const tokens = await getAuthTokens();
-      const orgId = localStorage.getItem("organizationId");
+      // Takes the id from the signed-in profile. It used to read
+      // localStorage.organizationId, which outlives a sign-out and so could
+      // belong to a completely different account.
+      const orgId = orgIdFromProfile;
 
       if (!orgId || !tokens?.accessToken) {
-        console.log("⚠️ No orgId or token found");
         return null;
       }
-
-      console.log("🔄 Fetching organization profile for:", orgId);
 
       const response = await fetch(`${API_URL}/api/organizations/profile`, {
         headers: {
@@ -175,145 +178,90 @@ export default function DashboardHeader() {
     }
   };
 
-  // ✅ Load auth data - PRIORITIZE ORGANIZATION
+  /**
+   * Loads who is signed in, for the header only.
+   *
+   * The signed-in profile is the source of truth for identity and role, and
+   * organisation data only decorates an account that actually belongs to one.
+   * This used to work the other way round — it fetched the organisation first
+   * and, whenever that returned anything, hardcoded `role: "org_admin"`. Three
+   * consequences, all of which showed the wrong person in the header:
+   *
+   *  - The organisation lookup keys off `localStorage.organizationId`, which
+   *    survives a sign-out. Signing out of an org account and back in as a
+   *    student re-fetched the *previous* account's organisation and rendered
+   *    its name, email and logo over the student's own.
+   *  - Both fallback branches defaulted to `userType: "ORGANIZATION_OWNER"`
+   *    and `role: "org_admin"`, so any user whose stored profile simply had no
+   *    role — a normal state right after signup — was labelled an
+   *    organisation admin.
+   *  - The last branch only ran `if (localOrgId)`, so a student with no
+   *    organisation never set `isAuthReady` and sat on the skeleton forever.
+   */
   const loadAuthData = async () => {
     try {
-      console.log("🔄 DashboardHeader: Loading auth data...");
-
-      // 1️⃣ First, try to get organization data from API
-      const orgData = await fetchOrganizationProfile();
-
-      if (orgData) {
-        console.log("✅ Using organization data from API:", orgData);
-
-        const orgId = orgData.id || orgData.organizationId;
-        const orgName = orgData.organization_name || orgData.name;
-        const orgEmail = orgData.organization_email || orgData.email;
-        const orgImage = orgData.organization_image || orgData.image;
-        const userType = orgData.userType || "ORGANIZATION_OWNER";
-
-        // Build user data from organization
-        const userData = {
-          id: orgData.user?.id || orgData.userId || orgId,
-          first_name: orgData.user?.first_name || orgName || "",
-          last_name: orgData.user?.last_name || "",
-          email_address: orgData.user?.email_address || orgEmail || "",
-          role: "org_admin",
-          userType: userType,
-          organizationId: orgId,
-          user_pic: orgData.user?.user_pic || orgImage || "",
-        };
-
-        const organizationData = {
-          id: orgId,
-          organization_name: orgName || "",
-          organization_email: orgEmail || "",
-          organization_image: orgImage || "",
-          organization_type: orgData.organization_type || orgData.type || "",
-          userType: userType,
-        };
-
-        // ✅ Save to localStorage for fallback
-        if (orgId) localStorage.setItem("organizationId", orgId);
-        if (orgName) localStorage.setItem("org_name", orgName);
-        if (orgEmail) localStorage.setItem("org_email", orgEmail);
-        if (userType) localStorage.setItem("userType", userType);
-
-        setAuthUser(userData);
-        setAuthOrg(organizationData);
-        setIsAuthReady(true);
-        setIsChecking(false);
-        return;
-      }
-
-      // 2️⃣ Fallback: Try IndexedDB
-      console.log("🔄 Fallback: Loading from IndexedDB...");
       const session = await getSessionState();
       const profile = await getUserProfile();
 
-      if (session?.isAuthenticated && profile) {
-        const orgId =
-          profile.organizationId || localStorage.getItem("organizationId");
-        const orgName =
-          profile.organizationName || localStorage.getItem("org_name");
-        const orgEmail =
-          localStorage.getItem("org_email") || profile.email_address || "";
-        const userType =
-          profile.userType ||
-          localStorage.getItem("userType") ||
-          "ORGANIZATION_OWNER";
-        const role =
-          profile.role || localStorage.getItem("role") || "org_admin";
-
-        const userData = {
-          id: profile.userId || "",
-          first_name: profile.first_name || "",
-          last_name: profile.last_name || "",
-          email_address: profile.email_address || orgEmail,
-          role: role,
-          userType: userType,
-          organizationId: orgId || undefined,
-        };
-
-        const organizationData = orgId
-          ? {
-              id: orgId,
-              organization_name: orgName || "",
-              organization_email: orgEmail,
-              userType: userType,
-            }
-          : undefined;
-
-        console.log("✅ Loaded from IndexedDB:", {
-          userData,
-          organizationData,
-        });
-
-        setAuthUser(userData);
-        setAuthOrg(organizationData);
-        setIsAuthReady(true);
+      if (!session?.isAuthenticated || !profile) {
         setIsChecking(false);
         return;
       }
 
-      // 3️⃣ Last resort: localStorage only
-      console.log("🔄 Last resort: Loading from localStorage...");
-      const localOrgId = localStorage.getItem("organizationId");
-      const localOrgName = localStorage.getItem("org_name");
-      const localOrgEmail = localStorage.getItem("org_email");
-      const localUserType =
-        localStorage.getItem("userType") || "ORGANIZATION_OWNER";
-      const localRole = localStorage.getItem("role") || "org_admin";
+      const userData = {
+        id: profile.userId || "",
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
+        email_address: profile.email_address || "",
+        // No invented defaults. An absent role means "not an org account",
+        // which resolveRole reads as Student — the safe, least-privileged
+        // label — rather than promoting them to admin in the UI.
+        role: profile.role || "",
+        userType: profile.userType || "",
+        adminRole: profile.adminRole,
+        organizationId: profile.organizationId || undefined,
+      };
 
-      if (localOrgId) {
-        const userData = {
-          id: localOrgId,
-          first_name: localOrgName || "",
-          last_name: "",
-          email_address: localOrgEmail || "",
-          role: localRole,
-          userType: localUserType,
-          organizationId: localOrgId,
-        };
+      setAuthUser(userData);
+      setIsAuthReady(true);
+      setIsChecking(false);
 
-        const organizationData = {
-          id: localOrgId,
-          organization_name: localOrgName || "",
-          organization_email: localOrgEmail || "",
-          userType: localUserType,
-        };
+      // Only an account that genuinely belongs to an organisation gets the
+      // organisation lookup. Keyed off this session's profile, never off a
+      // localStorage value left behind by a previous one.
+      const belongsToOrg =
+        !!profile.organizationId ||
+        profile.userType === "ORGANIZATION_OWNER" ||
+        profile.userType === "INVITED_MEMBER" ||
+        profile.role === "org_admin" ||
+        profile.role === "org_owner";
 
-        console.log("✅ Loaded from localStorage:", {
-          userData,
-          organizationData,
-        });
-
-        setAuthUser(userData);
-        setAuthOrg(organizationData);
-        setIsAuthReady(true);
+      if (!belongsToOrg) {
+        setAuthOrg(null);
+        return;
       }
 
-      setIsChecking(false);
+      const orgData = await fetchOrganizationProfile(profile.organizationId);
+      if (!orgData) return;
+
+      const orgId = orgData.id || orgData.organizationId || profile.organizationId;
+      setAuthOrg({
+        id: orgId,
+        organization_name: orgData.organization_name || orgData.name || "",
+        organization_email: orgData.organization_email || orgData.email || "",
+        organization_image: orgData.organization_image || orgData.image || "",
+        organization_type: orgData.organization_type || orgData.type || "",
+        userType: orgData.userType || profile.userType || "",
+      });
+
+      // Keep the user's own name and picture; fill in only what the profile
+      // is missing. Overwriting first_name with the organisation's name is
+      // what made the header greet a person by their church's name.
+      setAuthUser((prev: any) => ({
+        ...prev,
+        organizationId: orgId,
+        user_pic: prev?.user_pic || orgData.user?.user_pic || "",
+      }));
     } catch (error) {
       console.error("❌ DashboardHeader: Failed to load auth data:", error);
       setIsChecking(false);
@@ -348,34 +296,28 @@ export default function DashboardHeader() {
   // ✅ PRIORITIZE ORGANIZATION DATA OVER USER DATA
   const userId = user?.id || organization?.id;
 
-  // ✅ Display name: Organization name > User name
-  const userDisplayName =
-    organization?.organization_name || user?.first_name
-      ? `${user?.first_name || ""} ${user?.last_name || ""}`.trim()
-      : "User";
-
-  // ✅ Email: Organization email > User email
-  const userEmail =
-    organization?.organization_email || user?.email_address || "";
-
-  // ✅ Profile picture: Organization image > User picture
-  const userPic = organization?.organization_image || user?.user_pic || "";
-
   const { label: displayRole } = resolveRole(user, organization);
 
-  // 🔍 Debug final display values
-  console.log("📊 DashboardHeader final display:", {
-    user,
-    organization,
-    displayRole,
-    userType: user?.userType,
-    role: user?.role,
-    userDisplayName,
-    userEmail,
-    userPic,
-    isAuthReady,
-    isChecking,
-  });
+  // The header identifies the signed-in *person*. It previously read:
+  //
+  //   organization?.organization_name || user?.first_name
+  //     ? `${first} ${last}`.trim()
+  //     : "User"
+  //
+  // which groups as `(orgName || firstName) ? "<first last>" : "User"` — the
+  // organisation name is only ever tested, never displayed, and an org account
+  // whose user record had no first_name rendered an empty string rather than
+  // falling back to "User".
+  const personName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim();
+  const userDisplayName = personName || organization?.organization_name || "User";
+
+  // The person's own email and picture. The organisation's are a fallback for
+  // an org account that has none of its own, not an override — showing the
+  // church's address where the member's should be is the same bug in a
+  // different field.
+  const userEmail =
+    user?.email_address || organization?.organization_email || "";
+  const userPic = user?.user_pic || organization?.organization_image || "";
 
   // ── Greeting ──────────────────────────────────────────────
   useEffect(() => {
@@ -549,8 +491,20 @@ export default function DashboardHeader() {
                   {t(displayRole)}
                 </span>
                 <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                  {/*
+                    Calls the real logout. This used to be a bare
+                    router.push("/auth"), which navigated away while leaving
+                    the session, the cached profile and the stored
+                    organizationId / org_name / role exactly where they were.
+                    The next person to sign in on the device inherited them —
+                    the most likely way a header ends up showing someone
+                    else's organisation and role.
+                  */}
                   <button
-                    onClick={() => router.push("/auth")}
+                    onClick={() => {
+                      setShowProfileBox(false);
+                      void logout();
+                    }}
                     className="text-xs text-red-500 hover:text-red-600 w-full text-left"
                   >
                     {t("Sign Out")}
