@@ -68,7 +68,7 @@ setIsLoading(false)
 
   return (
     <>
-      <div className="w-[390px] fixed top-0 right-0 h-full bg-white dark:bg-secondaryColors-0 drop-shadow-2xl p-[32px] border border-[#E3E3E833] transition-all duration-300 ease-in-out">
+      <div className="w-full min-h-full p-[32px] dark:bg-secondaryColors-0">
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[24px]">

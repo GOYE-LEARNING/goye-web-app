@@ -4,10 +4,11 @@ import { BiLike } from "react-icons/bi";
 import { CiClock2 } from "react-icons/ci";
 import { FaPlus, FaRegCommentAlt } from "react-icons/fa";
 import { FaReply } from "react-icons/fa6";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import DashboardTutorNewPost from "./dashboard_tutor_new_post";
 import DashboardTutorReply from "./dashboard_tutor_reply";
+import SlideOverModal from "./slide_over_modal";
 import Loader from "./loader";
 import { MdOutlineThumbUp, MdThumbUp } from "react-icons/md";
 
@@ -57,6 +58,19 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
   >(undefined);
   const [expandedPosts, setExpandedPosts] = useState<string[]>([]);
   const [expandedReplies, setExpandedReplies] = useState<string[]>([]);
+
+  // One close handler per panel, so the cancel button, the backdrop and
+  // Escape all clear the same state. This replaces a cancel path that left
+  // selectedPostId set on purpose ("to allow proper cleanup") and a success
+  // path that cleared it behind a setTimeout — both of which were working
+  // around the panel never unmounting. It unmounts now, so neither is needed.
+  const closePost = useCallback(() => setShowPost(false), []);
+  const closeReply = useCallback(() => {
+    setShowReply(false);
+    setSelectedParentReplyId(undefined);
+    setSelectedPostId("");
+  }, []);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingReplies, setIsLoadingReplies] = useState<{
     [key: string]: boolean;
@@ -656,42 +670,35 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
         </div>
       </div>
 
-      {/* New Post Modal */}
-      <div
-        className={`${showPost ? "translate-x-0" : "translate-x-full"} transition-all duration-300 h-full w-full bg-secondaryColors-0/40 backdrop-blur-md fixed top-0 left-0 z-[60] overflow-hidden`}
+      {/* New Post */}
+      <SlideOverModal
+        open={showPost}
+        onClose={closePost}
+        label="Create a new post"
       >
         <DashboardTutorNewPost
           courseId={courseId}
-          cancel={() => setShowPost(false)}
+          cancel={closePost}
           onPostUpdate={handlePostUpdate}
         />
-      </div>
+      </SlideOverModal>
 
-      {/* Reply Modal */}
-      <div
-        className={`fixed top-0 right-0 h-full bg-white w-[400px] transform transition-transform duration-300 ease-in-out z-50 shadow-2xl ${
-          showReply ? "translate-x-0" : "translate-x-full"
-        }`}
+      {/* Reply */}
+      <SlideOverModal
+        open={showReply}
+        onClose={closeReply}
+        label="Reply to a post"
       >
         <DashboardTutorReply
           postId={selectedPostId}
           parentReplyId={selectedParentReplyId}
-          cancel={() => {
-            setShowReply(false);
-            setSelectedParentReplyId(undefined);
-            // Don't reset selectedPostId immediately to allow proper cleanup
-          }}
+          cancel={closeReply}
           onReplyUpdate={(newReply: Reply) => {
             handleReplyUpdate(newReply, selectedParentReplyId);
-            setShowReply(false);
-            setSelectedParentReplyId(undefined);
-            // Reset after a short delay to ensure the callback completes
-            setTimeout(() => {
-              setSelectedPostId("");
-            }, 100);
+            closeReply();
           }}
         />
-      </div>
+      </SlideOverModal>
     </>
   );
 }
