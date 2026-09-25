@@ -47,6 +47,10 @@ export interface Notification {
     organization_name: string;
     organization_image: string | null;
   };
+  // Type-specific payload the backend attaches on creation — e.g. MESSAGE
+  // notifications carry { senderId, senderName, messageId, messagePreview }
+  // so the UI can jump straight into that conversation.
+  data?: Record<string, any>;
 }
 
 export interface OnlineUser {
@@ -77,6 +81,7 @@ interface SocketContextType {
   joinGroup: (groupId: string) => void;
   markNotificationRead: (notificationId: string) => void;
   markAllNotificationsRead: () => void;
+  deleteNotification: (notificationId: string) => void;
   sendPrivateMessage: (
     receiverId: string,
     content: string,
@@ -143,8 +148,16 @@ export function SocketProvider({
     userIdRef.current = userId;
   }, [organizationId, userType, userId]);
 
-  // Cleanup
+  // Mount/cleanup tracking. React 18 Strict Mode runs this effect's setup,
+  // then its cleanup, then its setup again on initial mount (dev only) — so
+  // the flag must be reset to true on setup too, not just false on cleanup.
+  // Without the reset, that first synchronous cleanup permanently leaves
+  // isMounted.current at false, and every `if (isMounted.current)` guard
+  // below (the notification fetch, every socket event handler, etc.) then
+  // silently no-ops forever, even though the underlying requests succeed —
+  // which is exactly what made notifications look broken only in dev.
   useEffect(() => {
+    isMounted.current = true;
     return () => {
       isMounted.current = false;
       if (connectionTimeoutRef.current) {
@@ -197,6 +210,85 @@ export function SocketProvider({
     setLoading(true);
     await fetchNotifications();
     setLoading(false);
+  };
+
+  // Mark a single notification as read — persists via the REST endpoint
+  // first (the source of truth), then nudges the socket so other open
+  // tabs/devices pick up the change live. The socket-only version of this
+  // silently no-op'd whenever the socket wasn't connected/authenticated
+  // (common — the socket microservice is a separate deploy from the API),
+  // so a "read" notification would reappear as unread on the next reload.
+  const markNotificationRead = async (notificationId: string) => {
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === notificationId ? { ...n, isRead: true, read: true } : n,
+      ),
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(
+        `${API_URL}/api/notifications/${notificationId}/read`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+      socketService.markNotificationRead(notificationId);
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      // Revert the optimistic update — it didn't actually persist.
+      await fetchNotifications();
+    }
+  };
+
+  // Delete a single notification — same REST-first optimistic pattern as
+  // markNotificationRead: remove it from local state immediately, then
+  // persist; on failure, refetch to undo the optimistic removal.
+  const deleteNotification = async (notificationId: string) => {
+    const removed = notifications.find((n) => n.id === notificationId);
+    const wasUnread = !!removed && !removed.isRead && !removed.read;
+
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+    if (wasUnread) setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${API_URL}/api/notifications/${notificationId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      // Revert the optimistic removal — it didn't actually persist.
+      await fetchNotifications();
+    }
+  };
+
+  // Mark all notifications as read — same REST-first, socket-second pattern.
+  const markAllNotificationsRead = async () => {
+    setNotifications((prev) =>
+      prev.map((n) => ({ ...n, isRead: true, read: true })),
+    );
+    setUnreadCount(0);
+
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${API_URL}/api/notifications/read-all`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+      socketService.markAllNotificationsRead();
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      await fetchNotifications();
+    }
   };
 
   // ✅ NEW: helper to (re)request the org-scoped online list on demand
@@ -586,10 +678,9 @@ export function SocketProvider({
     joinOrganization: socketService.joinOrganization.bind(socketService),
     joinCourse: socketService.joinCourse.bind(socketService),
     joinGroup: socketService.joinGroup.bind(socketService),
-    markNotificationRead:
-      socketService.markNotificationRead.bind(socketService),
-    markAllNotificationsRead:
-      socketService.markAllNotificationsRead.bind(socketService),
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
     sendPrivateMessage: socketService.sendPrivateMessage.bind(socketService),
     getOnlineUsers: socketService.getOnlineUsers.bind(socketService),
     getUserStatus: socketService.getUserStatus.bind(socketService),

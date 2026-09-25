@@ -4,6 +4,7 @@ import { useState } from "react";
 import SubHeader from "./dashboard_subheader";
 import { IoEye, IoEyeOff } from "react-icons/io5";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   submitFunc: () => void;
@@ -18,6 +19,7 @@ export default function DashboardCheckPassword({
   submitFunc,
   backFunc,
 }: Props) {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [formData, setFormData] = useState<FormData>({
@@ -79,7 +81,7 @@ export default function DashboardCheckPassword({
   // Define all password input fields
   const forms = [
     {
-      label: "Current password",
+      label: t("Current password"),
       name: "current_password",
       key: "current" as const,
     },
@@ -89,7 +91,7 @@ export default function DashboardCheckPassword({
     <>
       <div>
         <SubHeader
-          header="Reset Password"
+          header={t("Reset Password")}
           backFunction={() => {
             backFunc();
           }}
@@ -155,7 +157,7 @@ export default function DashboardCheckPassword({
                   });
                 }}
               >
-                Clear
+                {t("Clear")}
               </span>
               <div>
                 {isLoading == true ? (
@@ -164,7 +166,7 @@ export default function DashboardCheckPassword({
                   </div>
                 ) : (
                   <button type="submit" className="form_more text-white bg-primaryColors-0 md:mt-0">
-                    Submit
+                    {t("Submit")}
                   </button>
                 )}
               </div>

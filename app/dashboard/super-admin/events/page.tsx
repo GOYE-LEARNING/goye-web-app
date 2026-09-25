@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Loader from "@/app/component/loader";
 import DashboardSearch from "@/app/component/dashboard_search";
+import { useI18n } from "@/app/context/I18nContext";
 import { format } from "date-fns";
 import {
   HiOutlineCalendar,
@@ -39,6 +40,7 @@ const statusColor = (s: string) => {
 };
 
 export default function SuperAdminEvents() {
+  const { t } = useI18n();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -67,7 +69,7 @@ export default function SuperAdminEvents() {
   }, []);
 
   const handleDelete = async (event: EventRow) => {
-    if (!confirm(`Delete "${event.name}"? This cannot be undone.`)) return;
+    if (!confirm(`${t('Delete')} "${event.name}"? ${t("This cannot be undone.")}`)) return;
     try {
       setPendingId(event.id);
       const res = await fetch(`${API_URL}/api/super-admin/events/${event.id}`, {
@@ -78,7 +80,7 @@ export default function SuperAdminEvents() {
       if (data.success) {
         setEvents((prev) => prev.filter((e) => e.id !== event.id));
       } else {
-        alert(data.message || "Failed to delete event");
+        alert(data.message || t("Failed to delete event"));
       }
     } catch (err) {
       console.error("Error deleting event:", err);
@@ -96,13 +98,13 @@ export default function SuperAdminEvents() {
   return (
     <div className="w-full">
       <div className="flex justify-between items-center">
-        <h1 className="dashboard_h1">All Events</h1>
-        <span className="text-textGrey-0 text-[13px]">{events.length} total</span>
+        <h1 className="dashboard_h1">{t("All Events")}</h1>
+        <span className="text-textGrey-0 text-[13px]">{events.length} {t("total")}</span>
       </div>
-      <p className="text-textGrey-0 text-[13px] mb-4">Events across every organization.</p>
+      <p className="text-textGrey-0 text-[13px] mb-4">{t("Events across every organization.")}</p>
 
       <div className="mb-4">
-        <DashboardSearch value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by event name or organization..." />
+        <DashboardSearch value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("Search by event name or organization...")} />
       </div>
 
       {isLoading ? (
@@ -112,7 +114,7 @@ export default function SuperAdminEvents() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2">
           <HiOutlineCalendar className="text-3xl text-textGrey-0" />
-          <p className="text-textGrey-0 text-sm">No events found</p>
+          <p className="text-textGrey-0 text-sm">{t("No events found")}</p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -138,7 +140,7 @@ export default function SuperAdminEvents() {
                 <button
                   onClick={() => handleDelete(e)}
                   disabled={pendingId === e.id}
-                  title="Delete event"
+                  title={t("Delete event")}
                   className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {pendingId === e.id ? <FaSpinner className="animate-spin text-red-500" /> : <HiOutlineTrash className="w-5 h-5 text-red-500" />}

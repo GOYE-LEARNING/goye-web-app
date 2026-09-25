@@ -15,6 +15,7 @@ import Loader from "./loader";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBuiltInTab } from "../context/BuiltinTabContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backToMainPage: () => void;
@@ -63,6 +64,7 @@ export default function TutorCommunityGroup({
   onDeleteGroup,
   openEditGroup,
 }: Props) {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [createEvent, setCreateEvent] = useState<boolean>(false);
   const [openEventIndex, setOpenEventIndex] = useState<number | null>(null);
@@ -87,15 +89,15 @@ export default function TutorCommunityGroup({
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "Invalid Date";
+      if (isNaN(date.getTime())) return t("Invalid Date");
       return formatDistanceToNow(date, { addSuffix: true });
     } catch {
-      return "Invalid Date";
+      return t("Invalid Date");
     }
   };
 
   const formatDate2 = (dateString: string) => {
-    if (!dateString) return "No Date";
+    if (!dateString) return t("No Date");
     const date = new Date(dateString);
     return date.toLocaleDateString("en-us", {
       day: "numeric",
@@ -188,7 +190,7 @@ export default function TutorCommunityGroup({
   };
 
   const deleteGroupById = async (groupId: string) => {
-    if (!window.confirm("Are you sure you want to delete this group?")) {
+    if (!window.confirm(t("Are you sure you want to delete this group?"))) {
       return;
     }
 
@@ -351,7 +353,7 @@ export default function TutorCommunityGroup({
           border_width={3}
         />
         <p className="text-gray-500 dark:text-gray-400 text-sm animate-pulse">
-          Loading group details...
+          {t("Loading group details...")}
         </p>
       </motion.div>
     );
@@ -360,18 +362,18 @@ export default function TutorCommunityGroup({
   // No data state
   if (!groupDetails) {
     return (
-      <motion.div 
+      <motion.div
         className="flex flex-col justify-center items-center h-96 gap-4"
         initial="hidden"
         animate="visible"
         variants={fadeIn}
       >
-        <p className="text-gray-500 dark:text-gray-400">Group not found</p>
+        <p className="text-gray-500 dark:text-gray-400">{t("Group not found")}</p>
         <button
           onClick={backFunc}
           className="px-4 py-2 bg-primaryColors-0 text-white rounded-lg"
         >
-          Go Back
+          {t("Go Back")}
         </button>
       </motion.div>
     );
@@ -396,7 +398,7 @@ export default function TutorCommunityGroup({
               <p className="flex items-center gap-5 text-[#71748C] text-[14px]">
                 <span className="flex items-center gap-2">
                   <RiGroupLine />
-                  {groupDetails._count?.member || 0} members
+                  {groupDetails._count?.member || 0} {t("members")}
                 </span>
                 <span className="flex items-center gap-2">
                   <FaRegClock />
@@ -409,7 +411,7 @@ export default function TutorCommunityGroup({
                     <img
                       src={groupDetails.createdBy.user_pic}
                       className="h-full w-full object-cover"
-                      alt="Group creator"
+                      alt={t("Group creator")}
                     />
                   ) : (
                     <div className="h-full w-full bg-gray-200 flex items-center justify-center">
@@ -454,14 +456,14 @@ export default function TutorCommunityGroup({
                       openEditGroup(groupDetails.id);
                     }}
                   >
-                    <MdEdit /> Edit
+                    <MdEdit /> {t("Edit")}
                   </span>
                   <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
                   <span
                     className="flex items-center gap-[12px] px-[16px] py-[8px] text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                     onClick={() => deleteGroupById(groupId)}
                   >
-                    <IoMdTrash /> Delete
+                    <IoMdTrash /> {t("Delete")}
                   </span>
                 </div>
               )}
@@ -473,12 +475,12 @@ export default function TutorCommunityGroup({
               {groupDetails.group_image ? (
                 <img
                   src={groupDetails.group_image}
-                  alt="Group banner"
+                  alt={t("Group banner")}
                   className="h-full w-full object-cover"
                 />
               ) : (
                 <div className="h-full w-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <span className="text-gray-400 dark:text-gray-500">No image</span>
+                  <span className="text-gray-400 dark:text-gray-500">{t("No image")}</span>
                 </div>
               )}
             </div>
@@ -494,7 +496,7 @@ export default function TutorCommunityGroup({
                 handleOpenEvent();
               }}
             >
-              + Create Event
+              + {t("Create Event")}
             </button>
 
             <section className="grid grid-cols-3 my-5 bg-lightWhite-0 dark:bg-shadyColor-0 p-[16px] rounded-lg">
@@ -503,7 +505,7 @@ export default function TutorCommunityGroup({
                   0
                 </span>
                 <p className="text-[#71748C] dark:text-gray-400 text-[14px] font-[400]">
-                  Posts this Week
+                  {t("Posts this Week")}
                 </p>
               </div>
               <div className="flex justify-center items-center flex-col">
@@ -511,7 +513,7 @@ export default function TutorCommunityGroup({
                   {groupDetails._count?.member || 0}
                 </span>
                 <p className="text-[#71748C] dark:text-gray-400 text-[14px] font-[400]">
-                  Members
+                  {t("Members")}
                 </p>
               </div>
               <div className="flex justify-center items-center flex-col">
@@ -519,7 +521,7 @@ export default function TutorCommunityGroup({
                   {groupDetails._count?.event || 0}
                 </span>
                 <p className="text-[#71748C] dark:text-gray-400 text-[14px] font-[400]">
-                  Upcoming Events
+                  {t("Upcoming Events")}
                 </p>
               </div>
             </section>
@@ -528,7 +530,7 @@ export default function TutorCommunityGroup({
 
           <div className="w-full flex flex-col gap-1 my-5 bg-lightWhite-0 dark:bg-secondaryColors-0 p-[16px] rounded-lg">
             <h1 className="text-lightBoldText-0 dark:text-gray-200 font-bold text-[16px]">
-              Upcoming Events
+              {t("Upcoming Events")}
             </h1>
             
             {(groupDetails._count?.event || 0) === 0 ? (
@@ -540,7 +542,7 @@ export default function TutorCommunityGroup({
               >
                 <IoMdCalendar size={80} className="text-nearTextColors-0 dark:text-gray-600" />
                 <p className="text-[0.9rem] text-textSlightDark-0 dark:text-gray-400">
-                  No Events here yet
+                  {t("No Events here yet")}
                 </p>
               </motion.div>
             ) : (
@@ -555,7 +557,7 @@ export default function TutorCommunityGroup({
                   >
                     <div className="w-full flex items-center justify-between">
                       <h1 className="text-[14px] font-[600] text-lightBoldText-0 dark:text-gray-200">
-                        {e.event_name || "Untitled Event"}
+                        {e.event_name || t("Untitled Event")}
                       </h1>
                       <span
                         className={`${
@@ -566,11 +568,11 @@ export default function TutorCommunityGroup({
                             : "bg-blue-600"
                         } text-white px-[4px] text-[12px] rounded-[2px]`}
                       >
-                        {e.event_type || "Event"}
+                        {e.event_type || t("Event")}
                       </span>
                     </div>
                     <p className="text-[14px] text-[#71748C] dark:text-gray-400 font-[400]">
-                      {e.event_description || "No description"}
+                      {e.event_description || t("No description")}
                     </p>
                     <div className="flex gap-3 items-center text-[14px] font-[400] text-[#71748C] dark:text-gray-400 my-2">
                       <span className="flex items-center gap-1">
@@ -578,16 +580,16 @@ export default function TutorCommunityGroup({
                         {formatDate2(e.event_date as string)}
                       </span>
                       <span className="flex items-center gap-1">
-                        <GoVideo className="mb-1" /> {e.event_time || "No time"}
+                        <GoVideo className="mb-1" /> {e.event_time || t("No time")}
                       </span>
                     </div>
 
                     <div className="w-full flex justify-between items-center gap-3">
-                      <button 
+                      <button
                         onClick={() => handleOpenEventLink(e.event_link as string, e.event_name as string)}
                         className="h-[40px] bg-lightWhite-0 dark:bg-shadyColor-0 dark:text-white text-primaryColors-0 my-3 flex items-center justify-center gap-2 text-[13px] font-[600] w-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       >
-                        <p className="mt-1">Event Link </p>
+                        <p className="mt-1">{t("Event Link")} </p>
                         <FaExternalLinkAlt />
                       </button>
                       <div className="relative">
@@ -612,14 +614,14 @@ export default function TutorCommunityGroup({
                               className="flex items-center gap-[12px] px-[16px] py-[8px] hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-gray-300"
                               onClick={() => updateGroupEvent(e.id as string)}
                             >
-                              <MdEdit /> Edit
+                              <MdEdit /> {t("Edit")}
                             </span>
                             <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
                             <span
                               className="flex items-center gap-[12px] px-[16px] py-[8px] text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                               onClick={() => deleteEvent(e.id as string)}
                             >
-                              <IoMdTrash /> Delete
+                              <IoMdTrash /> {t("Delete")}
                             </span>
                           </div>
                         )}

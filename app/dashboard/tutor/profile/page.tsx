@@ -3,7 +3,8 @@ import DashboardChangeLanguage from "@/app/component/dashboard_change_language";
 import DashboardChangePassword from "@/app/auth/dashboard_change_password";
 import DashboardEditProfile from "@/app/component/dashboard_editprofile";
 import DashboardNotificationSettings from "@/app/component/dashboard_notification_settings_consolidated";
-import { useRouter } from "next/navigation";
+import { useI18n } from "@/app/context/I18nContext";
+import { useAuthContext } from "@/app/context/AuthContext";
 import React, { useEffect, useState } from "react";
 import { HiUserCircle } from "react-icons/hi";
 import { IoIosAddCircle, IoMdGlobe } from "react-icons/io";
@@ -26,6 +27,8 @@ interface Details {
 }
 
 export default function Profile() {
+  const { t } = useI18n();
+  const { logout } = useAuthContext();
   const [showProfile, setShowProfile] = useState<boolean>(true);
   const [file, setFile] = useState<File | null>(null);
   const [profilePic, setProfilePic] = useState<string>("");
@@ -44,26 +47,6 @@ export default function Profile() {
     "edit" | "password" | "notification" | "language"
   >();
   const [showActivePages, setShowActivePages] = useState<boolean>(false);
-  const logout = async () => {
-     const router = useRouter()
-     const API_URL = process.env.NEXT_PUBLIC_API_URL;
-     try {
-       const res = await fetch(`${API_URL}/api/user/logout`, {
-         method: "POST",
-         credentials: "include",
-       });
- 
-       if (!res.ok) {
-         return;
-       }
- 
-       const data = await res.json();
-       router.push("/")
-       console.log(data)
-     } catch (error) {
-       console.error(error);
-     }
-   };
   const handleClickPage = (
     tab: "edit" | "password" | "notification" | "language"
   ) => {
@@ -158,7 +141,7 @@ export default function Profile() {
     <>
       {showProfile && (
         <>
-          <h1 className="dashboard_h1 ">Profile</h1>
+          <h1 className="dashboard_h1 ">{t("Profile")}</h1>
           <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] w-full my-5">
             <div className="flex justify-center items-center flex-col">
               <label className="relative cursor-pointer">
@@ -171,7 +154,7 @@ export default function Profile() {
                 {profilePic ? (
                   <img
                     src={profilePic}
-                    alt="Profile"
+                    alt={t("Profile")}
                     className="h-[130px] w-[130px] object-cover rounded-full"
                   />
                 ) : (
@@ -185,7 +168,7 @@ export default function Profile() {
 
             <div className="bg-[#FAF8F8] dark:bg-shadyColor-0 p-[16px] flex flex-col gap-3 dark:text-white text-[#41415A]">
               <div className="flex justify-between items-center">
-                <p className=" text-[14px]">Email</p>
+                <p className=" text-[14px]">{t("Email")}</p>
                 <span className=" font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
@@ -196,7 +179,7 @@ export default function Profile() {
               </div>
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
-                <p className=" text-[14px]">Phone Number</p>
+                <p className=" text-[14px]">{t("Phone Number")}</p>
                 <span className=" font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
@@ -207,7 +190,7 @@ export default function Profile() {
               </div>
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
-                <p className=" text-[14px]">Location</p>
+                <p className=" text-[14px]">{t("Location")}</p>
                 <span className=" font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
@@ -231,10 +214,10 @@ export default function Profile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-[600] text-[14px]">
-                      Profile
+                      {t("Profile")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      Edit personal information
+                      {t("Edit personal information")}
                     </p>
                   </div>
                 </div>
@@ -252,10 +235,10 @@ export default function Profile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-[600] text-[14px]">
-                      Password
+                      {t("Password")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      Last changed 1 day ago
+                      {t("Last changed 1 day ago")}
                     </p>
                   </div>
                 </div>
@@ -273,10 +256,10 @@ export default function Profile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-[600] text-[14px]">
-                      Notifications
+                      {t("Notifications")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      Manage in-app and email notifications
+                      {t("Manage in-app and email notifications")}
                     </p>
                   </div>
                 </div>
@@ -294,10 +277,10 @@ export default function Profile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-[600] text-[14px]">
-                      Language
+                      {t("Language")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      English
+                      {t("English")}
                     </p>
                   </div>
                 </div>
@@ -306,7 +289,7 @@ export default function Profile() {
                 </span>
               </div>
               <button className="text-[#DA0E29] border border-[#D9D9D9] dark:border-[#ccc]/10 h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px]" onClick={logout}>
-                <MdLogout /> Logout
+                <MdLogout /> {t("Logout")}
               </button>
             </div>
           </div>

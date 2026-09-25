@@ -5,6 +5,7 @@ import { FaRegFileAlt } from "react-icons/fa";
 import { GoDownload } from "react-icons/go";
 import { HiOutlineBookOpen } from "react-icons/hi";
 import { IoEye } from "react-icons/io5";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   courseId: string;
@@ -61,6 +62,7 @@ function getDownloadUrl(url: string): string {
 
 // PDF Modal Component with Google Docs viewer (works 100%)
 function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
+  const { t } = useI18n();
   const [loadError, setLoadError] = useState(false);
   const viewableUrl = getViewablePDFUrl(pdfUrl);
 
@@ -95,22 +97,20 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
             <div className="flex flex-col items-center justify-center h-[70vh] text-center px-6">
               <FaRegFileAlt className="text-4xl text-gray-400 dark:text-gray-500 mb-4" />
               <p className="text-gray-800 dark:text-gray-100 font-semibold mb-2">
-                No document has been uploaded for this material yet.
+                {t("No document has been uploaded for this material yet.")}
               </p>
               <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md">
-                Your tutor added &ldquo;{materialTitle}&rdquo; to this course but
-                the file didn&rsquo;t finish uploading. Let them know and
-                they can upload it again.
+                {t("Your tutor added")} &ldquo;{materialTitle}&rdquo; {t("to this course but the file didn't finish uploading. Let them know and they can upload it again.")}
               </p>
             </div>
           ) : loadError ? (
             <div className="flex flex-col items-center justify-center h-[70vh] text-center">
-              <p className="text-red-500 dark:text-red-400 mb-4">Failed to load PDF preview.</p>
+              <p className="text-red-500 dark:text-red-400 mb-4">{t("Failed to load PDF preview.")}</p>
               <button
                 onClick={() => window.open(pdfUrl, '_blank')}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
               >
-                Open Original PDF
+                {t("Open Original PDF")}
               </button>
             </div>
           ) : (
@@ -139,14 +139,14 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
               onClick={() => window.open(pdfUrl, "_blank", "noopener,noreferrer")}
               className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition-colors"
             >
-              Open in new tab
+              {t("Open in new tab")}
             </button>
           )}
           <button
             onClick={onClose}
             className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-md transition-colors"
           >
-            Close
+            {t("Close")}
           </button>
         </div>
       </div>
@@ -155,6 +155,7 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
 }
 
 export default function DashboardCourseMaterials({ courseId }: Props) {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [material, setMaterial] = useState<Material[]>([]);
   const [selectedPDF, setSelectedPDF] = useState<{ url: string; title: string } | null>(null);
@@ -228,7 +229,7 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return 'Unknown size';
+    if (bytes === 0) return t('Unknown size');
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -250,14 +251,14 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
       <div className="dashboard_hr my-5"></div>
       <div className="dashboard_content_mainbox">
         <h1 className="text-textSlightDark-0 dark:text-white text-[18px] font-bold mb-6">
-          All Materials
+          {t("All Materials")}
         </h1>
 
         {material.length === 0 ? (
           <div className="text-center py-12">
             <FaRegFileAlt className="mx-auto text-4xl text-gray-400 dark:text-gray-500 mb-3" />
             <p className="text-gray-500 dark:text-gray-400">
-              No materials available for this course yet.
+              {t("No materials available for this course yet.")}
             </p>
           </div>
         ) : (
@@ -275,7 +276,7 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
                   {formatFileSize(m.material_file_size || 0)}
                 </span>
                 <span className="flex items-center gap-2">
-                  <HiOutlineBookOpen /> {m.material_pages || '?'} Pages
+                  <HiOutlineBookOpen /> {m.material_pages || '?'} {t("Pages")}
                 </span>
               </p>
               <div className="flex gap-2 items-center flex-wrap">
@@ -290,7 +291,7 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
                   onClick={() => handleViewPDF(m.material_document, m.material_title)}
                   disabled={!hasDocument(m.material_document)}
                 >
-                  <IoEye /> View
+                  <IoEye /> {t("View")}
                 </button>
                 <button
                   className="form_more bg-primaryColors-0 text-white flex justify-center items-center gap-2 px-4 py-2 rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-primaryColors-700"
@@ -303,17 +304,17 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
                   {downloading === m.material_title ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Downloading...
+                      {t("Downloading...")}
                     </>
                   ) : (
                     <>
-                      <GoDownload /> Download
+                      <GoDownload /> {t("Download")}
                     </>
                   )}
                 </button>
                 {!hasDocument(m.material_document) && (
                   <span className="text-[13px] text-amber-600 dark:text-amber-400">
-                    File not uploaded yet
+                    {t("File not uploaded yet")}
                   </span>
                 )}
               </div>

@@ -15,6 +15,7 @@ import {
 } from "react-icons/hi";
 import { formatDistanceToNow } from "date-fns";
 import { BiTrophy } from "react-icons/bi";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Activity {
   id: string;
@@ -70,6 +71,7 @@ interface ActivitySummary {
 }
 
 export default function DashboardOrgAdminActivities() {
+  const { t } = useI18n();
   const params = useParams<{ org_name: string }>();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [summary, setSummary] = useState<ActivitySummary | null>(null);
@@ -90,11 +92,11 @@ export default function DashboardOrgAdminActivities() {
           }
         );
         
-        if (!orgRes.ok) throw new Error("Failed to fetch organization");
+        if (!orgRes.ok) throw new Error(t("Failed to fetch organization"));
         const orgData = await orgRes.json();
         const organizationId = orgData.data?.id;
-        
-        if (!organizationId) throw new Error("Organization ID not found");
+
+        if (!organizationId) throw new Error(t("Organization ID not found"));
 
         // Fetch activities
         const res = await fetch(
@@ -107,18 +109,18 @@ export default function DashboardOrgAdminActivities() {
           }
         );
 
-        if (!res.ok) throw new Error("Failed to fetch activities");
+        if (!res.ok) throw new Error(t("Failed to fetch activities"));
         const result = await res.json();
-        
+
         if (result.success) {
           setActivities(result.data.activities || []);
           setSummary(result.data.summary || null);
         } else {
-          setError(result.message || "Failed to fetch data");
+          setError(result.message || t("Failed to fetch data"));
         }
       } catch (err) {
         console.error("Error fetching activities:", err);
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(err instanceof Error ? err.message : t("An error occurred"));
       } finally {
         setLoading(false);
       }
@@ -183,7 +185,7 @@ export default function DashboardOrgAdminActivities() {
     return (
       <div className="cr_box">
         <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">
-          Activities
+          {t("Activities")}
         </h1>
         <div className="flex justify-center py-8">
           <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
@@ -196,7 +198,7 @@ export default function DashboardOrgAdminActivities() {
     return (
       <div className="cr_box">
         <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">
-          Activities
+          {t("Activities")}
         </h1>
         <p className="text-red-500 dark:text-red-400 text-center py-4">{error}</p>
       </div>
@@ -207,11 +209,11 @@ export default function DashboardOrgAdminActivities() {
     return (
       <div className="cr_box">
         <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">
-          Activities
+          {t("Activities")}
         </h1>
         <div className="flex flex-col items-center justify-center py-8">
           <HiOutlineBookOpen className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-2" />
-          <p className="text-gray-500 dark:text-gray-400 text-center">No recent activities</p>
+          <p className="text-gray-500 dark:text-gray-400 text-center">{t("No recent activities")}</p>
         </div>
       </div>
     );
@@ -221,7 +223,7 @@ export default function DashboardOrgAdminActivities() {
     <div className="cr_box">
       <div className="flex justify-between items-center">
         <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[600]">
-          Activities
+          {t("Activities")}
         </h1>
      
       </div>
@@ -254,7 +256,7 @@ export default function DashboardOrgAdminActivities() {
             onClick={() => setShowAll(!showAll)}
             className="text-primary-500 dark:text-primary-400 text-sm text-center hover:underline mt-2 transition-colors"
           >
-            {showAll ? 'Show less' : `View all ${activities.length} activities`}
+            {showAll ? t('Show less') : `${t("View all")} ${activities.length} ${t("activities")}`}
           </button>
         )}
       </div>

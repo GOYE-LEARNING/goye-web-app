@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { BiBookOpen, BiTrophy } from "react-icons/bi";
 import Loader from "../loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface LeaderboardUser {
   rank: number;
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export default function GeneralLeaderboard({ search }: Props) {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -69,14 +71,14 @@ export default function GeneralLeaderboard({ search }: Props) {
       const data: LeaderboardResponse = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.message || "Failed to fetch leaderboard");
+        throw new Error(data.message || t("Failed to fetch leaderboard"));
       }
 
       setLeaderboardData(data.data.leaderboard);
       setTitle(data.data.title);
     } catch (err: any) {
       console.error("Error fetching leaderboard:", err);
-      setError(err.message || "Failed to load leaderboard");
+      setError(err.message || t("Failed to load leaderboard"));
     } finally {
       setIsLoading(false);
     }
@@ -87,12 +89,16 @@ export default function GeneralLeaderboard({ search }: Props) {
     fetchLeaderboard("global");
   }, []);
 
-  // Helper function to get medal color based on rank
+  // Helper function to get medal color based on rank. Ranks 1-3 use a
+  // vibrant medal color that reads fine with white text in either theme;
+  // rank 4+ used a hardcoded dark badge (bg-shadyColor-0) that looked right
+  // on a dark background but showed up as a stray black circle in light
+  // mode, so that case needs its own theme-aware background and text.
   const getMedalStyle = (rank: number) => {
-    if (rank === 1) return "bg-[#FFA82F]"; // Gold
-    if (rank === 2) return "bg-[#C7C8C7]"; // Silver
-    if (rank === 3) return "bg-[#C8936E]"; // Bronze
-    return "bg-shadyColor-0";
+    if (rank === 1) return "bg-[#FFA82F] text-white"; // Gold
+    if (rank === 2) return "bg-[#C7C8C7] text-white"; // Silver
+    if (rank === 3) return "bg-[#C8936E] text-white"; // Bronze
+    return "bg-lightBoldText-0/10 dark:bg-shadyColor-0 text-lightBoldText-0 dark:text-nearTextColors-0";
   };
 
   // Helper function to get medal label
@@ -125,13 +131,13 @@ export default function GeneralLeaderboard({ search }: Props) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-red-500 text-center">
-          <p className="text-lg font-semibold">Error loading leaderboard</p>
+          <p className="text-lg font-semibold">{t("Error loading leaderboard")}</p>
           <p className="text-sm">{error}</p>
           <button
             onClick={() => fetchLeaderboard("global")}
             className="mt-4 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primaryColors-0/90"
           >
-            Try Again
+            {t("Try Again")}
           </button>
         </div>
       </div>
@@ -148,18 +154,18 @@ export default function GeneralLeaderboard({ search }: Props) {
               <th className="leader_board_table_header rounded-tl-lg rounded-bl-lg  w-[60px] text-left pl-3">
                 #
               </th>
-              <th className="leader_board_table_header text-left pl-3">Name</th>
+              <th className="leader_board_table_header text-left pl-3">{t("Name")}</th>
                 <th className="leader_board_table_header text-left pl-3 hidden md:table-cell">
-                Country
+                {t("Country")}
               </th>
               <th className="leader_board_table_header text-left pl-3 hidden md:table-cell">
-                Level
+                {t("Level")}
               </th>
               <th className="leader_board_table_header text-left pl-3 hidden lg:table-cell">
-                Courses Completed
+                {t("Courses Completed")}
               </th>
               <th className="leader_board_table_header text-left pl-3 rounded-tr-lg rounded-br-lg">
-                Total XP
+                {t("Total XP")}
               </th>
             </tr>
           </thead>
@@ -171,7 +177,7 @@ export default function GeneralLeaderboard({ search }: Props) {
               >
                 {/* Rank with medal */}
                 <td className="pl-3">
-                  <div className="text-[12px] text-nearTextColors-0">
+                  <div className="text-[12px] text-lightBoldText-0/60 dark:text-nearTextColors-0">
                     {i + 1}
                   </div>
                 </td>
@@ -180,7 +186,7 @@ export default function GeneralLeaderboard({ search }: Props) {
                 <td className="pl-3">
                   <div className="flex items-center gap-2">
                     <div
-                      className={`${getMedalStyle(user.rank)} rounded-full flex justify-center items-center h-[40px] w-[40px] text-white font-semibold text-[12px]`}
+                      className={`${getMedalStyle(user.rank)} rounded-full flex justify-center items-center h-[40px] w-[40px] font-semibold text-[12px]`}
                     >
                       {getMedalLabel(user.rank)}
                     </div>
@@ -200,34 +206,34 @@ export default function GeneralLeaderboard({ search }: Props) {
                       )}
                     </div>
                     <div>
-                      <div className="font-semibold text-[14px] text-textSlightDark-0">
+                      <div className="font-semibold text-[14px] text-lightBoldText-0 dark:text-textSlightDark-0">
                         {user.name}
                       </div>
-                      <div className="text-[11px] text-textGrey-0 md:hidden">
-                        Level {user.level_number}: {user.level}
+                      <div className="text-[11px] text-nearTextColors-0 dark:text-textGrey-0 md:hidden">
+                        {t("Level")} {user.level_number}: {user.level}
                       </div>
                     </div>
                   </div>
                 </td>
 
                  <td className="hidden md:table-cell pl-3">
-                  <div className="font-semibold text-textSlightDark-0/70 text-[13px]">
+                  <div className="font-semibold text-lightBoldText-0/70 dark:text-textSlightDark-0/70 text-[13px]">
                     {user.country}
                   </div>
                 </td>
 
                 {/* Level (desktop) */}
                 <td className="hidden md:table-cell pl-3">
-                  <div className="font-semibold text-textSlightDark-0/70 text-[13px]">
-                    Level {user.level_number}: <i className="not-italic capitalize">{user.level}</i>
+                  <div className="font-semibold text-lightBoldText-0/70 dark:text-textSlightDark-0/70 text-[13px]">
+                    {t("Level")} {user.level_number}: <i className="not-italic capitalize">{user.level}</i>
                   </div>
                 </td>
 
                 {/* Courses Completed (desktop) */}
                 <td className="hidden lg:table-cell pl-3">
-                  <div className="font-semibold text-textSlightDark-0/50 text-[12px] flex items-center gap-1">
+                  <div className="font-semibold text-lightBoldText-0/50 dark:text-textSlightDark-0/50 text-[12px] flex items-center gap-1">
                     <BiBookOpen size={16} />
-                    {user.courses_completed || 0} courses
+                    {user.courses_completed || 0} {t("courses")}
                   </div>
                 </td>
 
@@ -248,9 +254,9 @@ export default function GeneralLeaderboard({ search }: Props) {
       {leaderboardData.length === 0 && !isLoading && (
         <div className=" text-center py-12">
           <BiTrophy size={48} className="mx-auto text-lightBoldText-0 mb-3" />
-          <p className="text-textGrey-0">No users on the leaderboard yet</p>
+          <p className="text-textGrey-0">{t("No users on the leaderboard yet")}</p>
           <p className="text-sm text-textGrey-0/60">
-            Complete activities to earn XP and appear here!
+            {t("Complete activities to earn XP and appear here!")}
           </p>
         </div>
       )}
@@ -258,7 +264,7 @@ export default function GeneralLeaderboard({ search }: Props) {
       {filterStudent.length === 0 && !isLoading && (
         <div className="text-center py-12">
           <BiTrophy size={48} className="mx-auto text-lightBoldText-0 mb-3" />
-          <p className="text-textGrey-0">No users matches your search</p>
+          <p className="text-textGrey-0">{t("No users matches your search")}</p>
         </div>
       )}
     </div>

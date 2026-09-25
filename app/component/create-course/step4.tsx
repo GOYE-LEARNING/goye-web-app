@@ -9,6 +9,7 @@ import { FaCheck, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { IoTrashOutline } from "react-icons/io5";
 import { MdCancel } from "react-icons/md";
 import usePersistentState from "@/app/hook/usePersistentState";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   formData: any;
@@ -34,13 +35,14 @@ interface Quiz {
 }
 
 export default function CourseStep4({ formData, setFormData }: Props) {
+  const { t } = useI18n();
   const [quiz, setQuiz] = usePersistentState<Quiz[]>('quiz',[]);
 
   const quizForm = [
-    { label: "Quiz title", type: "text", name: "quiz_title" },
-    { label: "Description", type: "text", name: "quiz_description" },
-    { label: "Duration (min)", type: "number", name: "quiz_duration" },
-    { label: "Passing Score (%)", type: "number", name: "quiz_passing_score" },
+    { label: t("Quiz title"), type: "text", name: "quiz_title" },
+    { label: t("Description"), type: "text", name: "quiz_description" },
+    { label: t("Duration (min)"), type: "number", name: "quiz_duration" },
+    { label: t("Passing Score (%)"), type: "number", name: "quiz_passing_score" },
   ];
 
   useEffect(() => {
@@ -204,24 +206,24 @@ export default function CourseStep4({ formData, setFormData }: Props) {
             {/* Header */}
             <div className="flex justify-between items-center">
               <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
-                Course Quizzes
+                {t("Course Quizzes")}
               </h1>
               <span
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={createQuiz}
               >
-                <BsPlus /> Add Quiz
+                <BsPlus /> {t("Add Quiz")}
               </span>
             </div>
 
             {/* Empty state */}
             {quiz.length === 0 ? (
               <div className="flex justify-center items-center flex-col gap-1">
-                <Image src={Pic} alt="pic" height={100} width={100} />
+                <Image src={Pic} alt={t("pic")} height={100} width={100} />
                 <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
-                  No Quiz Found
+                  {t("No Quiz Found")}
                 </h1>
-                <p className="text-textGrey-0">Create a quiz</p>
+                <p className="text-textGrey-0">{t("Create a quiz")}</p>
               </div>
             ) : (
               <div className="my-5">
@@ -233,7 +235,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                         <span className="h-[20px] w-[20px] bg-boldGreen-0 text-white flex justify-center items-center rounded-[2px]">
                           {i + 1}
                         </span>
-                        <h1>Quiz</h1>
+                        <h1>{t("Quiz")}</h1>
                         <div
                           className="flex flex-col text-[0.5em] cursor-pointer"
                           onClick={() => handleQuizShow(qz.id)}
@@ -283,7 +285,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                                   name={form.name}
                                   value={qz[form.name as keyof Quiz] as string}
                                   onChange={(e) => handleChangeQuiz(e, qz.id)}
-                                  placeholder={`${form.name == 'quiz_duration' ? '(e.g 40)' : ''}`}
+                                  placeholder={`${form.name == 'quiz_duration' ? t('(e.g 40)') : ''}`}
                                   className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px] bg-transparent"
                                 />
                               )}
@@ -302,7 +304,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                             {/* Question Text */}
                             <div className="flex flex-col border border-[#ccc]/20 justify-between w-full py-[8px] px-[12px] bg-white dark:bg-shadyColor-0">
                               <label className="text-textGrey-0 text-[12px]">
-                                Question
+                                {t("Question")}
                               </label>{" "}
                               <input
                                 type="text"
@@ -322,7 +324,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                               >
                                 <div className="flex flex-col border border-[#ccc]/20 justify-between w-full py-[8px] px-[12px] bg-white dark:bg-shadyColor-0">
                                   <label className="text-textGrey-0 text-[12px]">
-                                    {`Option ${idx + 1}`}
+                                    {`${t("Option")} ${idx + 1}`}
                                   </label>
                                   <input
                                     type="text"
@@ -399,7 +401,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                               onClick={() => deleteQuestion(qz.id, q.id)}
                               className="form_more bg-[#DA0E290D] text-[#DA0E29] text-[15px] font-[600] w-full flex items-center justify-center gap-2 mt-3"
                             >
-                              <IoTrashOutline /> Delete Question
+                              <IoTrashOutline /> {t("Delete Question")}
                             </button>
                           </div>
                         ))}
@@ -409,7 +411,7 @@ export default function CourseStep4({ formData, setFormData }: Props) {
                           onClick={() => createQuestion(qz.id)}
                           className="h-[48px] dark:bg-boldShadyColor-0 bg-lightWhite-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full mt-2"
                         >
-                          <BsPlus /> Add Question
+                          <BsPlus /> {t("Add Question")}
                         </span>
                       </motion.div>
                     )}

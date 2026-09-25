@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { FaReply } from "react-icons/fa";
 import { MdOutlineCancel } from "react-icons/md";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   cancel: () => void;
@@ -18,6 +19,7 @@ export default function DashboardNewReply({
   parentReplyId, 
   onReplyUpdate 
 }: Props) {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [content, setContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -27,12 +29,12 @@ export default function DashboardNewReply({
     e.preventDefault();
     
     if (!content.trim()) {
-      setError("Please enter a reply");
+      setError(t("Please enter a reply"));
       return;
     }
 
     if (!postId) {
-      setError("Post ID is missing");
+      setError(t("Post ID is missing"));
       return;
     }
 
@@ -63,7 +65,7 @@ export default function DashboardNewReply({
 
       if (!res.ok) {
         console.error("Error response:", data);
-        setError(data.message || "Failed to create reply");
+        setError(data.message || t("Failed to create reply"));
         setIsLoading(false);
         return;
       }
@@ -78,7 +80,7 @@ export default function DashboardNewReply({
       cancel();
     } catch (error) {
       console.error("Error creating reply:", error);
-      setError("An error occurred while creating your reply");
+      setError(t("An error occurred while creating your reply"));
     } finally {
       setIsLoading(false);
     }
@@ -89,8 +91,8 @@ export default function DashboardNewReply({
       <div className="w-full min-h-full p-[32px] dark:bg-secondaryColors-0">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h1 className="text-textSlightDark-0 font-bold text-[24px]">
-            {parentReplyId ? "New Reply to Comment" : "New Reply"}
+          <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-bold text-[24px]">
+            {parentReplyId ? t("New Reply to Comment") : t("New Reply")}
           </h1>
           <span onClick={cancel} className="cursor-pointer">
             <MdOutlineCancel size={20} className="text-[18px]" />
@@ -104,7 +106,7 @@ export default function DashboardNewReply({
           {/* Content Input */}
           <div className="w-full h-[176px] border border-[#D2D5DA] py-[8px] px-[12px] flex relative">
             <div className="flex flex-col w-full h-full">
-              <label className="text-[#71748C] text-[12px]">Content</label>
+              <label className="text-[#71748C] text-[12px]">{t("Content")}</label>
               <textarea
                 name="content"
                 onChange={(e) => {
@@ -113,8 +115,8 @@ export default function DashboardNewReply({
                 }}
                 value={content}
                 cols={30}
-                placeholder={parentReplyId ? "Write your reply to this comment..." : "Write your reply..."}
-                className="text-[#1F2937] text-[16px] font-[500] outline-none border-none resize-none h-full"
+                placeholder={parentReplyId ? t("Write your reply to this comment...") : t("Write your reply...")}
+                className="text-[#1F2937] dark:text-white text-[16px] font-[500] outline-none border-none resize-none h-full bg-transparent"
                 disabled={isLoading}
               />
             </div>
@@ -142,7 +144,7 @@ export default function DashboardNewReply({
               ) : (
                 <FaReply />
               )}
-              {parentReplyId ? "Post Reply" : "Reply"}
+              {parentReplyId ? t("Post Reply") : t("Reply")}
             </button>
 
             <button
@@ -151,7 +153,7 @@ export default function DashboardNewReply({
               className="form_more bg-[#F5F5F5] text-primaryColors-0 flex items-center gap-2 justify-center"
               disabled={isLoading}
             >
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         </form>

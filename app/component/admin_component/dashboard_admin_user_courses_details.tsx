@@ -1,7 +1,10 @@
+"use client";
+
 // components/dashboard_admin_users_details_course.tsx
 import { useEffect, useState } from "react";
 import DashboardProgressBar from "../dashboard_progress_bar";
 import Loader from "../loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   userId: string;
@@ -25,6 +28,7 @@ interface CourseEnrollment {
 export default function DashboardAdminUsersDetailsCourse({
   userId,
 }: Props) {
+  const { t } = useI18n();
   const [courseDetails, setCourseDetails] = useState<CourseEnrollment[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +51,7 @@ export default function DashboardAdminUsersDetailsCourse({
         const data = await res.json();
 
         if (!res.ok) {
-          setError(data.message || "An error occurred while fetching courses");
+          setError(data.message || t("An error occurred while fetching courses"));
           setIsLoading(false);
           return;
         }
@@ -58,7 +62,7 @@ export default function DashboardAdminUsersDetailsCourse({
         console.log("Fetched user courses:", enrolledCourses);
       } catch (error) {
         console.error("Error fetching user courses:", error);
-        setError("Failed to load courses");
+        setError(t("Failed to load courses"));
       } finally {
         setIsLoading(false);
       }
@@ -74,25 +78,25 @@ export default function DashboardAdminUsersDetailsCourse({
       case "COMPLETED":
         return (
           <p className="bg-green-500 text-white text-[12px] px-[8px] py-1 rounded-[2px]">
-            Completed
+            {t("Completed")}
           </p>
         );
       case "IN_PROGRESS":
         return (
           <p className="bg-blue-500 text-white text-[12px] px-[8px] py-1 rounded-[2px]">
-            In Progress
+            {t("In Progress")}
           </p>
         );
       case "ENROLLED":
         return (
           <p className="bg-yellow-500 text-white text-[12px] px-[8px] py-1 rounded-[2px]">
-            Enrolled
+            {t("Enrolled")}
           </p>
         );
       default:
         return (
           <p className="bg-gray-500 text-white text-[12px] px-[8px] py-1 rounded-[2px]">
-            Not Started
+            {t("Not Started")}
           </p>
         );
     }
@@ -133,7 +137,7 @@ export default function DashboardAdminUsersDetailsCourse({
                 );
                 const data = await res.json();
                 if (!res.ok) {
-                  setError(data.message || "An error occurred");
+                  setError(data.message || t("An error occurred"));
                   setIsLoading(false);
                   return;
                 }
@@ -141,7 +145,7 @@ export default function DashboardAdminUsersDetailsCourse({
                 setCourseDetails(enrolledCourses);
               } catch (error) {
                 console.error("Error fetching user courses:", error);
-                setError("Failed to load courses");
+                setError(t("Failed to load courses"));
               } finally {
                 setIsLoading(false);
               }
@@ -150,7 +154,7 @@ export default function DashboardAdminUsersDetailsCourse({
           }}
           className="mt-2 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
         >
-          Retry
+          {t("Retry")}
         </button>
       </div>
     );
@@ -160,7 +164,7 @@ export default function DashboardAdminUsersDetailsCourse({
     <div>
       {courseDetails.length === 0 ? (
         <div className="text-center py-4 text-textGrey-0 dark:text-gray-400 text-sm">
-          No courses enrolled yet
+          {t("No courses enrolled yet")}
         </div>
       ) : (
         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">

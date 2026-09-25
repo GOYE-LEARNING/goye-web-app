@@ -11,6 +11,8 @@ import { FaRegUser, FaUser } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import React, { useEffect, useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
+import { useAuthContext } from "@/app/context/AuthContext";
 
 interface Props {
   setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>
@@ -23,6 +25,8 @@ interface Props {
 export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Props) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { t } = useI18n();
+  const { logout } = useAuthContext();
 
   useEffect(() => {
     if (forceCollapseSignal === undefined) return;
@@ -30,25 +34,6 @@ export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Pr
     setIsCollapsedState(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceCollapseSignal]);
-
-  const logout = async () => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    try {
-      const res = await fetch(`${API_URL}/api/user/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        return;
-      }
-
-      const data = await res.json();
-      console.log(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -62,7 +47,7 @@ export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Pr
           <div className={`${isCollapsed ? 'hidden' : 'block'}`}>
             <Image
               src={lightLogo}
-              alt="logo"
+              alt={t("logo")}
               height={100}
               width={100}
               className="md:block hidden"
@@ -76,11 +61,11 @@ export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Pr
           </span>
         </div>
         
-        <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col md:gap-1 w-full mt-0 md:mt-[2rem]">
-          <div className="md:w-full">
+        <nav className="flex flex-nowrap md:items-start md:justify-start justify-center items-center md:flex-col gap-1 w-full mt-0 md:mt-[2rem] overflow-x-auto md:overflow-visible no-scrollbar">
+          <div className="ml-3 md:ml-0 md:w-full">
             <SidenavComponent
               path="/dashboard/student"
-              label="Dashboard"
+              label={t("Dashboard")}
               icon={
                 pathname !== "/dashboard/student" ? (
                   <GoHome size={25} />
@@ -95,7 +80,7 @@ export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Pr
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/student/course"
-              label="Course"
+              label={t("Course")}
               icon={
                 pathname !== "/dashboard/student/course" ? (
                   <IoSchoolOutline size={25} />
@@ -110,7 +95,7 @@ export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Pr
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/student/community"
-              label="Community"
+              label={t("Community")}
               icon={
                 pathname !== "/dashboard/student/community" ? (
                   <RiCompass3Line size={25} />
@@ -125,7 +110,7 @@ export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Pr
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/student/leaderboard"
-              label="Leaderboard"
+              label={t("Leaderboard")}
               icon={
                 pathname !== "/dashboard/student/leaderboard" ? (
                   <MdOutlineLeaderboard size={25} />
@@ -140,7 +125,7 @@ export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Pr
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/student/profile"
-              label="Profile"
+              label={t("Profile")}
               icon={
                 pathname !== "/dashboard/student/profile" ? (
                   <FaRegUser size={25} />
@@ -158,7 +143,7 @@ export default function Sidenav({ setIsCollapsedState, forceCollapseSignal }: Pr
         <div className="mt-10 md:block hidden md:w-full" onClick={logout}>
           <SidenavComponent
             path="/auth"
-            label="Logout"
+            label={t("Logout")}
             icon={<MdLogout size={25} />}
             isCollapsed={isCollapsed}
           />

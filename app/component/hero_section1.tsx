@@ -5,6 +5,7 @@ import { useTheme } from "../context/theme_provider";
 import GlobeHero from "./globe/GlobeHero";
 import { FaArrowRight } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { useI18n, T } from "@/app/context/I18nContext";
 
 const container = {
   hidden: {},
@@ -22,6 +23,7 @@ const item = {
 
 export default function HeroSection1() {
   const { darkMode } = useTheme();
+  const { t } = useI18n();
 const router = useRouter()
   return (
     <section
@@ -47,27 +49,29 @@ const router = useRouter()
           variants={item as any}
           className="font-medium text-[40px] md:text-[70px] font-bold leading-[1.05] text-center dark:text-transparent bg-clip-text bg-gradient-to-r font-poppins dark:from-white dark:to-primaryColors-0 text-primaryColors-0"
         >
-          Grow. Teach. Multiply
+          <T>Grow. Teach. Multiply</T>
         </motion.h1>
         <motion.p
           variants={item as any}
           className="mt-[16px] max-w-[46ch] text-center dark:text-textSlightDark-0 text-lightBoldText-0/50 text-[18px] md:text-[24px]"
         >
-          A self-learning discipleship platform built for both students seeking
-          growth and tutors guiding transformation.
+          <T>
+            A self-learning discipleship platform built for both students seeking
+            growth and tutors guiding transformation.
+          </T>
         </motion.p>
         <motion.div
           variants={item as any}
           className="flex items-center gap-3 mt-[32px]"
         >
           <button onClick={() => router.push("/auth")} className="nav_btn border border-[#ccc]/20  transition-all duration-200 hover:opacity-30 text-primaryColors-0 dark:bg-secondaryColors-0 bg-white md:w-[171px] w-[180px] md:text-[14px] text-[18px]">
-            Start Teaching
+            {t("Start Teaching")}
             <div className="flex justify-center items-center h-[35px] w-[35px] rounded-full bg-white">
               <FaArrowRight />
             </div>
           </button>
           <button onClick={() => router.push("/auth")} className="nav_btn transition-all duration-200 hover:opacity-30 md:w-[171px] w-[180px] bg-primaryColors-0 text-white md:text-[14px] text-[18px]">
-            Start Learning
+            {t("Start Learning")}
           </button>
         </motion.div>
       </motion.div>

@@ -1,4 +1,7 @@
+"use client";
+
 import { useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   allFunc: () => void;
@@ -12,6 +15,7 @@ export default function DashboardTutorActiveTab({
   activeFunc,
   inActiveFunc,
 }: Props) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<"all" | "active" | "inactive">(
     "all"
   );
@@ -29,7 +33,7 @@ export default function DashboardTutorActiveTab({
   const design = (tab: string) =>
     `${
       activeTab === tab
-        ? "bg-boldShadyColor-0 text-primaryColors-0"
+        ? "bg-white dark:bg-boldShadyColor-0 text-primaryColors-0 border border-primaryColors-0/30"
         : "bg-primaryColors-0 text-white"
     }`;
   return (
@@ -41,7 +45,7 @@ export default function DashboardTutorActiveTab({
             handleClickTab("all");
           }}
         >
-          All
+          {t("All")}
         </button>
         <button
           className={`h-[34px]  w-[15%] text-center ${design("active")}`}
@@ -49,7 +53,7 @@ export default function DashboardTutorActiveTab({
             handleClickTab("active");
           }}
         >
-          Active
+          {t("Active")}
         </button>
         <button
           className={`h-[34px]  w-[15%] text-center ${design("inactive")}`}
@@ -57,7 +61,7 @@ export default function DashboardTutorActiveTab({
             handleClickTab("inactive");
           }}
         >
-          Inactive
+          {t("Inactive")}
         </button>
       </div>
     </>

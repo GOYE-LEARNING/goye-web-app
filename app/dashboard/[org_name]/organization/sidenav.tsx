@@ -19,12 +19,14 @@ import { useParams, usePathname } from "next/navigation";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import { useState } from "react";
 import { useAuthContext } from "@/app/context/AuthContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function OrgSidenav({ setIsCollapsedState }: Props) {
+  const { t } = useI18n();
   const params = useParams<{ org_name: string }>();
   const { org_name } = params;
   // Hand-rolled logout replaced with the shared context one, so the local
@@ -47,7 +49,7 @@ export default function OrgSidenav({ setIsCollapsedState }: Props) {
           <div className={`${isCollapsed ? "hidden" : "block"}`}>
             <Image
               src={logo}
-              alt="logo"
+              alt={t("logo")}
               height={100}
               width={100}
               className="md:block hidden"
@@ -64,7 +66,7 @@ export default function OrgSidenav({ setIsCollapsedState }: Props) {
           <div className="w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/organization`}
-              label="Dashboard"
+              label={t("Dashboard")}
               icon={
                 pathname !== `/dashboard/${org_name}/organization` ? (
                   <GoHome size={25} />
@@ -78,7 +80,7 @@ export default function OrgSidenav({ setIsCollapsedState }: Props) {
           <div className="w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/organization/course`}
-              label="Course"
+              label={t("Course")}
               icon={
                 pathname !== `/dashboard/${org_name}/organization/course` ? (
                   <IoSchoolOutline size={25} />
@@ -93,7 +95,7 @@ export default function OrgSidenav({ setIsCollapsedState }: Props) {
           <div className="w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/organization/community`}
-              label="Community"
+              label={t("Community")}
               icon={
                 pathname !== `/dashboard/${org_name}/organization/community` ? (
                   <RiCompass3Line size={25} />
@@ -107,7 +109,7 @@ export default function OrgSidenav({ setIsCollapsedState }: Props) {
           <div className="w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/organization/profile`}
-              label="Profile"
+              label={t("Profile")}
               icon={
                 pathname !== `/dashboard/${org_name}/organization/profile` ? (
                   <FaRegUser size={25} />
@@ -125,7 +127,7 @@ export default function OrgSidenav({ setIsCollapsedState }: Props) {
           {" "}
           <SidenavComponent
             path="/"
-            label="Logout"
+            label={t("Logout")}
             icon={<MdLogout size={25} />}
             isCollapsed={isCollapsed}
           />

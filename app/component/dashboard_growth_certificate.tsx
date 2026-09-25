@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FiDownload, FiShare2, FiCalendar, FiAward, FiX, FiZoomIn, FiExternalLink } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Certificate {
   id: string;
@@ -23,6 +24,7 @@ export default function DashboardGrowthCertificate() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const { t } = useI18n();
 
   const fetchCertificates = async () => {
     try {
@@ -37,14 +39,14 @@ export default function DashboardGrowthCertificate() {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch certificates");
+        throw new Error(data.error || t("Failed to fetch certificates"));
       }
       
       setCertificates(data.data || []);
       
     } catch (error) {
       console.error("Error fetching certificates:", error);
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : t("An error occurred"));
     } finally {
       setIsLoading(false);
     }
@@ -67,8 +69,8 @@ export default function DashboardGrowthCertificate() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Course Certificate - ${certificate.course.course_title}`,
-          text: `I completed ${certificate.course.course_title} on GOYE Platform! 🎉`,
+          title: `${t("Course Certificate")} - ${certificate.course.course_title}`,
+          text: `${t("I completed")} ${certificate.course.course_title} ${t("on GOYE Platform! 🎉")}`,
           url: certificate.certificateImageURL,
         });
       } catch (err) {
@@ -76,7 +78,7 @@ export default function DashboardGrowthCertificate() {
       }
     } else {
       await navigator.clipboard.writeText(certificate.certificateImageURL);
-      alert("Certificate URL copied to clipboard!");
+      alert(t("Certificate URL copied to clipboard!"));
     }
   };
 
@@ -105,7 +107,7 @@ export default function DashboardGrowthCertificate() {
           onClick={fetchCertificates}
           className="mt-4 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primaryColors-0/90"
         >
-          Try Again
+          {t("Try Again")}
         </button>
       </div>
     );
@@ -118,10 +120,10 @@ export default function DashboardGrowthCertificate() {
           <FiAward className="w-10 h-10 text-primaryColors-0" />
         </div>
         <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          No Certificates Yet
+          {t("No Certificates Yet")}
         </h3>
         <p className="text-gray-500 dark:text-gray-400">
-          Complete courses to earn certificates!
+          {t("Complete courses to earn certificates!")}
         </p>
       </div>
     );
@@ -143,7 +145,7 @@ export default function DashboardGrowthCertificate() {
             <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
               <img
                 src={cert.certificateImageURL}
-                alt={`Certificate for ${cert.course.course_title}`}
+                alt={`${t("Certificate for")} ${cert.course.course_title}`}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
@@ -157,7 +159,7 @@ export default function DashboardGrowthCertificate() {
 
               {/* Certificate Badge */}
               <div className="absolute top-3 right-3 bg-green-500/90 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-full">
-                Certificate
+                {t("Certificate")}
               </div>
             </div>
 
@@ -179,14 +181,14 @@ export default function DashboardGrowthCertificate() {
                   className="flex-1 py-2 bg-primaryColors-0 text-white rounded-lg font-medium hover:bg-primaryColors-0/90 transition-colors flex items-center justify-center gap-2 text-sm"
                 >
                   <FiDownload className="w-4 h-4" />
-                  Download
+                  {t("Download")}
                 </button>
                 <button
                   onClick={() => shareCertificate(cert)}
                   className="flex-1 py-2 border border-primaryColors-0 text-primaryColors-0 rounded-lg font-medium hover:bg-primaryColors-0/10 transition-colors flex items-center justify-center gap-2 text-sm"
                 >
                   <FiShare2 className="w-4 h-4" />
-                  Share
+                  {t("Share")}
                 </button>
               </div>
             </div>
@@ -224,13 +226,13 @@ export default function DashboardGrowthCertificate() {
                     {selectedCertificate.course.course_title}
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Certificate of Completion • {formatDate(selectedCertificate.createdAt)}
+                    {t("Certificate of Completion")} • {formatDate(selectedCertificate.createdAt)}
                   </p>
                 </div>
                 <button
                   onClick={() => setSelectedCertificate(null)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                  aria-label="Close modal"
+                  aria-label={t("Close modal")}
                 >
                   <FiX className="w-6 h-6" />
                 </button>
@@ -241,7 +243,7 @@ export default function DashboardGrowthCertificate() {
                 <div className="flex justify-center items-center min-h-[400px]">
                   <img
                     src={selectedCertificate.certificateImageURL}
-                    alt={`Certificate for ${selectedCertificate.course.course_title}`}
+                    alt={`${t("Certificate for")} ${selectedCertificate.course.course_title}`}
                     className="w-auto h-auto max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl"
                   />
                 </div>
@@ -254,21 +256,21 @@ export default function DashboardGrowthCertificate() {
                   className="flex-1 py-3 bg-gradient-to-r from-primaryColors-0 to-green-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <FiDownload className="w-5 h-5" />
-                  Download Certificate
+                  {t("Download Certificate")}
                 </button>
                 <button
                   onClick={() => shareCertificate(selectedCertificate)}
                   className="flex-1 py-3 border-2 border-primaryColors-0 text-primaryColors-0 rounded-xl font-semibold hover:bg-primaryColors-0/10 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <FiShare2 className="w-5 h-5" />
-                  Share
+                  {t("Share")}
                 </button>
                 <button
                   onClick={() => window.open(selectedCertificate.certificateImageURL, '_blank')}
                   className="py-3 px-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <FiExternalLink className="w-5 h-5" />
-                  Open in New Tab
+                  {t("Open in New Tab")}
                 </button>
               </div>
             </motion.div>

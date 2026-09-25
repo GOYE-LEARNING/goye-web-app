@@ -13,6 +13,7 @@ import {
   MdContactSupport,
 } from "react-icons/md";
 import { FaDiscord, FaTwitter } from "react-icons/fa";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface NotFoundContextType {
   showNotFound: (resource?: string, customMessage?: string) => void;
@@ -30,6 +31,7 @@ export function useNotFound() {
 }
 
 export function GlobalNotFoundHandler({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [notFound, setNotFound] = useState<{
     show: boolean;
     resource?: string;
@@ -125,7 +127,7 @@ export function GlobalNotFoundHandler({ children }: { children: ReactNode }) {
                       font-size="14"
                       font-family="Arial"
                     >
-                      Page Not Found
+                      {t("Page Not Found")}
                     </text>
                   </svg>
                 </motion.div>
@@ -145,18 +147,18 @@ export function GlobalNotFoundHandler({ children }: { children: ReactNode }) {
                 <div className="flex items-center justify-center gap-2 mb-4">
                   <MdErrorOutline className="text-yellow-500 text-3xl" />
                   <h1 className="text-4xl font-bold text-gray-800 dark:text-white">
-                    Page Not Found
+                    {t("Page Not Found")}
                   </h1>
                 </div>
 
                 <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">
                   {notFound.customMessage ||
-                    "The page you're looking for doesn't exist or has been moved."}
+                    t("The page you're looking for doesn't exist or has been moved.")}
                 </p>
 
                 {notFound.resource && (
                   <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
-                    Resource:{" "}
+                    {t("Resource:")}{" "}
                     <span className="font-mono">{notFound.resource}</span>
                   </p>
                 )}
@@ -164,24 +166,24 @@ export function GlobalNotFoundHandler({ children }: { children: ReactNode }) {
                 {/* Suggestions */}
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-8 text-left">
                   <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                    You might want to:
+                    {t("You might want to:")}
                   </h3>
                   <ul className="space-y-2">
                     <li className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <MdSearch className="text-blue-500" />
-                      Check the URL for typos
+                      {t("Check the URL for typos")}
                     </li>
                     <li className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <MdArrowBack className="text-blue-500" />
-                      Go back to the previous page
+                      {t("Go back to the previous page")}
                     </li>
                     <li className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <MdHome className="text-blue-500" />
-                      Return to the dashboard
+                      {t("Return to the dashboard")}
                     </li>
                     <li className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <MdRefresh className="text-blue-500" />
-                      Refresh the page
+                      {t("Refresh the page")}
                     </li>
                   </ul>
                 </div>
@@ -194,7 +196,7 @@ export function GlobalNotFoundHandler({ children }: { children: ReactNode }) {
                     onClick={handleGoBack}
                     className="px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
                   >
-                    <MdArrowBack /> Go Back
+                    <MdArrowBack /> {t("Go Back")}
                   </motion.button>
 
                   <motion.button
@@ -203,7 +205,7 @@ export function GlobalNotFoundHandler({ children }: { children: ReactNode }) {
                     onClick={handleGoHome}
                     className="px-6 py-3 bg-primaryColors-0 text-white rounded-xl font-semibold hover:bg-primaryColors-600 transition-colors flex items-center gap-2"
                   >
-                    <MdHome /> Dashboard Home
+                    <MdHome /> {t("Dashboard Home")}
                   </motion.button>
 
                   <motion.button
@@ -212,14 +214,14 @@ export function GlobalNotFoundHandler({ children }: { children: ReactNode }) {
                     onClick={handleRefresh}
                     className="px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
                   >
-                    <MdRefresh /> Refresh Page
+                    <MdRefresh /> {t("Refresh Page")}
                   </motion.button>
                 </div>
 
                 {/* Help Section */}
                 <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-                    Need help? Contact support:
+                    {t("Need help? Contact support:")}
                   </p>
                   <div className="flex gap-4 justify-center">
                     <a

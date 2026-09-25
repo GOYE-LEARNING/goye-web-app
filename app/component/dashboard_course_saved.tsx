@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useModal } from "../context/SimpleModalContext";
 import CourseList from "./dashboard_courselist_component";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   openCourse: (id: string) => void;
@@ -18,6 +19,7 @@ export default function DashboardCourseSaved({ openCourse, search, isRefreshing 
   const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const { showModal } = useModal();
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const pathname = usePathname();
 
@@ -86,7 +88,7 @@ export default function DashboardCourseSaved({ openCourse, search, isRefreshing 
       }
     } catch (error) {
       console.error(error);
-      showModal("Error", isOrganizationRoute ? "Could not load organization courses" : "Could not load saved courses", "error");
+      showModal(t("Error"), isOrganizationRoute ? t("Could not load organization courses") : t("Could not load saved courses"), "error");
     } finally {
       setInitialLoading(false);
     }
@@ -131,10 +133,10 @@ export default function DashboardCourseSaved({ openCourse, search, isRefreshing 
 
       setSavedCourses((prev) => prev.filter((course) => course.id !== id));
       setBookmarkedIds((prev) => prev.filter((i) => i !== id));
-      showModal("Success", "Course removed from saved", "success");
+      showModal(t("Success"), t("Course removed from saved"), "success");
     } catch (error) {
       console.error(error);
-      showModal("Error", "Could not unsave course", "error");
+      showModal(t("Error"), t("Could not unsave course"), "error");
     }
   };
 
@@ -162,7 +164,7 @@ export default function DashboardCourseSaved({ openCourse, search, isRefreshing 
       onViewCourse={handleViewCourse}
       loadingCourseId={loadingCourseId}
       isLoading={initialLoading || isRefreshing}
-      emptyMessage={isOrganizationRoute ? "No courses found in this organization" : "You have no saved courses yet"}
+      emptyMessage={isOrganizationRoute ? t("No courses found in this organization") : t("You have no saved courses yet")}
     />
   );
 }

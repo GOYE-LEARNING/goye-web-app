@@ -4,6 +4,7 @@ import { useParams, usePathname } from "next/navigation";
 import { FaArrowLeft } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunction: () => void;
@@ -18,6 +19,7 @@ export default function SubHeader({
   showBackButton,
   subtitle 
 }: Props) {
+  const { t } = useI18n();
   const pathname = usePathname();
   const params = useParams<{ org_name: string }>();
   const [isHovered, setIsHovered] = useState(false);
@@ -131,7 +133,7 @@ export default function SubHeader({
                 bg-gray-900 text-white text-xs rounded-lg py-1 px-2 
                 opacity-0 group-hover:opacity-100 transition-opacity duration-200
                 whitespace-nowrap pointer-events-none z-10">
-                Go Back
+                {t("Go Back")}
               </span>
             </span>
           </motion.div>

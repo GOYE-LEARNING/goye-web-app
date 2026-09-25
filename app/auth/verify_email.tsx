@@ -5,6 +5,8 @@ import { useTimer } from "use-timer";
 import OtpLength from "../component/auth_otp_input";
 import CreatePassword from "./create-password/page";
 import MessageComponent from "../component/message_component";
+import { markOtpVerified } from "../utils/signupFlowGuard";
+import { useI18n } from "../context/I18nContext";
 
 interface Props {
   openSignup: () => void;
@@ -13,6 +15,7 @@ interface Props {
 }
 
 export default function VerifyEmail({ openSignup, type, openCreateNewPassword }: Props) {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -63,6 +66,7 @@ export default function VerifyEmail({ openSignup, type, openCreateNewPassword }:
 
         if (data.message == "Your otp has been verified") {
           pause();
+          markOtpVerified();
           setShowVerificationPage(false);
           setShowPasswordPage(true);
         }
@@ -127,7 +131,7 @@ export default function VerifyEmail({ openSignup, type, openCreateNewPassword }:
   // Memoize time display
   const timeDisplay = useMemo(() => {
     if (time === 0) {
-      return <span className="text-red-600">Your OTP has expired</span>;
+      return <span className="text-red-600">{t("Your OTP has expired")}</span>;
     }
     return <div>{formatTime()}</div>;
   }, [time, formatTime]);
@@ -136,22 +140,22 @@ export default function VerifyEmail({ openSignup, type, openCreateNewPassword }:
     <>
       {showVerificationPage && (
         <div className="form_container">
-          <h1 className="form_h1">Verify Email</h1>
+          <h1 className="form_h1">{t("Verify Email")}</h1>
           <p className="form-p">
-            A one-time password has been sent to your email.
+            {t("A one-time password has been sent to your email.")}
           </p>
           <form noValidate className="form">
             <div className="w-full">
               <OtpLength length={6} onComplete={onComplete} />
               <div className="text-[15px] w-full flex items-start justify-start flex-col my-4 gap-2">
                 <div className="flex items-center gap-1">
-                  <div className="text-[#71748C]">Resend Otp in:</div>
+                  <div className="text-[#71748C]">{t("Resend Otp in:")}</div>
                   <span className="font-semibold text-primaryColors-0">
                     {timeDisplay}
                   </span>
                 </div>
                 <span className="font-bold text-primaryColors-0">
-                  {message === "jwt expired" ? "Oops Otp has expired" : message}
+                  {message === "jwt expired" ? t("Oops Otp has expired") : message}
                 </span>
               </div>
               <button
@@ -163,9 +167,9 @@ export default function VerifyEmail({ openSignup, type, openCreateNewPassword }:
                 {isLoading ? (
                   <div className="animate-spin h-[25px] w-[25px] border-4 border-t-white border-r-primaryColors-0 border-b-white border-l-white bg-transparent rounded-full"></div>
                 ) : time === 0 ? (
-                  "Resend OTP"
+                  t("Resend OTP")
                 ) : (
-                  "Verify"
+                  t("Verify")
                 )}
               </button>
             </div>

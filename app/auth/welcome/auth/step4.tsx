@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 // Only shown to tutors (formData.role === "instructor") — collects the
 // info needed for future manual verification of instructors. Social media
@@ -12,15 +13,16 @@ export default function Step4({
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
 }) {
+  const { t } = useI18n();
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [field]: e.target.value });
   };
 
   return (
     <div className="w-full">
-      <h1 className="form_h1">Tell us about your ministry.</h1>
+      <h1 className="form_h1">{t("Tell us about your ministry.")}</h1>
       <p className="form-p my-5">
-        This helps us verify tutors and keep GOYE a trusted place to learn.
+        {t("This helps us verify tutors and keep GOYE a trusted place to learn.")}
       </p>
 
       <form className="flex flex-col gap-4 my-4">
@@ -37,7 +39,7 @@ export default function Step4({
               formData.bio ? "top-[2px] text-[14px]" : "top-[15px] text-[16px]"
             }`}
           >
-            Describe yourself
+            {t("Describe yourself")}
           </label>
         </div>
 
@@ -54,7 +56,7 @@ export default function Step4({
               formData.church_name ? "top-[2px] text-[14px]" : "top-[15px] text-[16px]"
             }`}
           >
-            Church you attend
+            {t("Church you attend")}
           </label>
         </div>
 
@@ -71,7 +73,7 @@ export default function Step4({
               formData.church_role ? "top-[2px] text-[14px]" : "top-[15px] text-[16px]"
             }`}
           >
-            Your role in that church
+            {t("Your role in that church")}
           </label>
         </div>
 
@@ -88,7 +90,7 @@ export default function Step4({
               formData.social_media ? "top-[2px] text-[14px]" : "top-[15px] text-[16px]"
             }`}
           >
-            Social media (optional)
+            {t("Social media (optional)")}
           </label>
         </div>
       </form>

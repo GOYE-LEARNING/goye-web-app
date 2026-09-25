@@ -20,6 +20,7 @@ import { socketService, Message } from "@/app/services/socketService";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 import { MessageActions } from "@/app/component/MessageActions";
 import { useModal } from "../context/SimpleModalContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Contact {
   id: string;
@@ -44,6 +45,7 @@ interface EditModalProps {
 }
 
 const EditMessageModal = ({ message, onConfirm, onClose }: EditModalProps) => {
+  const { t } = useI18n();
   const [value, setValue] = useState(message.content);
 
   return (
@@ -64,7 +66,7 @@ const EditMessageModal = ({ message, onConfirm, onClose }: EditModalProps) => {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
           <div className="flex justify-between items-center p-5 pb-0">
             <h2 className="text-lg font-semibold dark:text-white">
-              Edit Message
+              {t("Edit Message")}
             </h2>
             <button
               onClick={onClose}
@@ -87,7 +89,7 @@ const EditMessageModal = ({ message, onConfirm, onClose }: EditModalProps) => {
               onClick={onClose}
               className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm"
             >
-              Cancel
+              {t("Cancel")}
             </button>
             <button
               onClick={() => {
@@ -98,7 +100,7 @@ const EditMessageModal = ({ message, onConfirm, onClose }: EditModalProps) => {
               }}
               className="px-4 py-2 rounded-lg bg-primaryColors-0 hover:bg-primaryColors-0/90 text-white text-sm"
             >
-              Save
+              {t("Save")}
             </button>
           </div>
         </div>
@@ -110,6 +112,16 @@ const EditMessageModal = ({ message, onConfirm, onClose }: EditModalProps) => {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  // Pre-selects and opens a conversation with this person as soon as the
+  // modal opens — used by entry points that already know who to chat with
+  // (e.g. the "message this student" icon on the student details panel),
+  // instead of forcing the tutor to find them again in the contacts list.
+  initialContact?: {
+    id: string;
+    name: string;
+    first_name: string;
+    avatar?: string;
+  } | null;
 }
 
 const formatTime = (date: Date) => {
@@ -122,9 +134,10 @@ const formatTime = (date: Date) => {
   return date.toLocaleDateString();
 };
 
-export default function MessagesModal({ isOpen, onClose }: Props) {
+export default function MessagesModal({ isOpen, onClose, initialContact }: Props) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const { showModal } = useModal();
+  const { t } = useI18n();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -164,6 +177,13 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
       messageInputRef.current.focus();
     }
   }, [selectedContact]);
+
+  // Reset to the contact list each time the modal closes, so the next open
+  // doesn't show a stale conversation from a previous "message this person"
+  // entry point.
+  useEffect(() => {
+    if (!isOpen) setSelectedContact(null);
+  }, [isOpen]);
 
   // ── Fetch current user ────────────────────────────────────────────────────
   const fetchCurrentUserProfile = useCallback(async () => {
@@ -222,15 +242,15 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
       socketService.getOnlineUsers();
     };
     const handleAuthError = (error: any) => {
-      setSocketError(error?.message || "Authentication failed");
+      setSocketError(error?.message || t("Authentication failed"));
       setSocketConnected(false);
     };
     const handleAuthTimeout = () => {
-      setSocketError("Authentication timeout");
+      setSocketError(t("Authentication timeout"));
       setSocketConnected(false);
     };
     const handleConnectError = (error: any) => {
-      setSocketError(error?.message || "Socket connection failed");
+      setSocketError(error?.message || t("Socket connection failed"));
       setSocketConnected(false);
     };
     const handleDisconnect = () => setSocketConnected(false);
@@ -251,10 +271,21 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
       );
     };
 
-    const handleUsersOnlineList = (users: string[]) => {
-      setOnlineUsers(new Set(users));
+    // The server never goes offline for one user without a matching
+    // "user:offline" event — reusing handleUserOnline's shape keeps both in
+    // sync instead of only ever adding people to the online set.
+    const handleUserOffline = (data: any) =>
+      handleUserOnline({ ...data, online: false });
+
+    // The server's snapshot is an array of user objects ({ userId, ... }),
+    // not plain id strings — treating it as string[] meant `new Set(users)`
+    // held objects and `users.includes(c.id)` never matched, so nobody ever
+    // showed as online until their next individual "user:online" event.
+    const handleUsersOnlineList = (users: any[]) => {
+      const ids = users.map((u) => (typeof u === "string" ? u : u.userId));
+      setOnlineUsers(new Set(ids));
       setContacts((prev) =>
-        prev.map((c) => ({ ...c, online: users.includes(c.id) })),
+        prev.map((c) => ({ ...c, online: ids.includes(c.id) })),
       );
     };
 
@@ -298,7 +329,7 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === data.id
-            ? { ...msg, content: "This message was deleted", isDeleted: true }
+            ? { ...msg, content: t("This message was deleted"), isDeleted: true }
             : msg,
         ),
       );
@@ -350,6 +381,7 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
     socketService.on("connect_error", handleConnectError);
     socketService.on("disconnect", handleDisconnect);
     socketService.on("user:online", handleUserOnline);
+    socketService.on("user:offline", handleUserOffline);
     socketService.on("users:online:list", handleUsersOnlineList);
     socketService.on("private:message", handlePrivateMessage);
     socketService.on("private:message:sent", handleMessageSent);
@@ -367,6 +399,7 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
       socketService.off("connect_error", handleConnectError);
       socketService.off("disconnect", handleDisconnect);
       socketService.off("user:online", handleUserOnline);
+      socketService.off("user:offline", handleUserOffline);
       socketService.off("users:online:list", handleUsersOnlineList);
       socketService.off("private:message", handlePrivateMessage);
       socketService.off("private:message:sent", handleMessageSent);
@@ -407,7 +440,7 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
             first_name: item.first_name,
             avatar: item.user_pic,
             online: item.online || false,
-            lastMessage: item.lastMessage?.text || "Start a conversation",
+            lastMessage: item.lastMessage?.text || t("Start a conversation"),
             time: item.lastMessage?.time
               ? formatTime(new Date(item.lastMessage.time))
               : "",
@@ -424,7 +457,7 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
             first_name: item.first_name,
             avatar: item.user_pic,
             online: item.online || false,
-            lastMessage: "Start a conversation",
+            lastMessage: t("Start a conversation"),
             time: "",
             unreadCount: 0,
             isTyping: false,
@@ -474,13 +507,40 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
     fetchMessages(contact.id);
   };
 
+  // Jump straight into the conversation with initialContact rather than
+  // making the tutor pick them out of the list again — but only once per
+  // modal open, so tapping "back to contacts" inside the modal isn't
+  // immediately overridden by this effect re-selecting the same person.
+  const autoSelectedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isOpen) {
+      autoSelectedForRef.current = null;
+      return;
+    }
+    if (!initialContact) return;
+    if (autoSelectedForRef.current === initialContact.id) return;
+    autoSelectedForRef.current = initialContact.id;
+    const fromList = contacts.find((c) => c.id === initialContact.id);
+    handleSelectContact(
+      fromList || {
+        id: initialContact.id,
+        name: initialContact.name,
+        first_name: initialContact.first_name,
+        avatar: initialContact.avatar,
+        lastMessage: t("Start a conversation"),
+        time: "",
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialContact, contacts]);
+
   // ── Send message ──────────────────────────────────────────────────────────
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedContact) return;
     if (!currentUserId) {
       const uid = await fetchCurrentUserProfile();
       if (!uid) {
-        showModal("Error", "Unable to identify user. Please refresh.", "error");
+        showModal(t("Error"), t("Unable to identify user. Please refresh."), "error");
         return;
       }
     }
@@ -504,13 +564,13 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
         ? {
             id: replyingTo.id,
             text: replyingTo.content,
-            senderName: replyingTo.sender?.first_name || "Someone",
+            senderName: replyingTo.sender?.first_name || t("Someone"),
             senderId: replyingTo.senderId,
           }
         : undefined,
       sender: {
         id: currentUserId,
-        first_name: currentUser?.first_name || "Me",
+        first_name: currentUser?.first_name || t("Me"),
         last_name: currentUser?.last_name || "",
         user_pic: currentUser?.user_pic || "",
         role: currentUser?.role || "",
@@ -556,8 +616,8 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
           prev.filter((msg) => msg.id !== optimisticMessage.id),
         );
         showModal(
-          "Send failed",
-          "Failed to send message. Please try again.",
+          t("Send failed"),
+          t("Failed to send message. Please try again."),
           "error",
         );
       }
@@ -566,7 +626,7 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
       setMessages((prev) =>
         prev.filter((msg) => msg.id !== optimisticMessage.id),
       );
-      showModal("Error", "An unexpected error occurred.", "error");
+      showModal(t("Error"), t("An unexpected error occurred."), "error");
     } finally {
       setIsSending(false);
     }
@@ -603,16 +663,16 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
           socketService.editMessage(editingMessage.id, newContent);
       } else {
         showModal(
-          "Edit failed",
-          "Could not edit your message. Please try again.",
+          t("Edit failed"),
+          t("Could not edit your message. Please try again."),
           "error",
         );
       }
     } catch (error) {
       console.error("Error editing message:", error);
       showModal(
-        "Error",
-        "An unexpected error occurred while editing.",
+        t("Error"),
+        t("An unexpected error occurred while editing."),
         "error",
       );
     } finally {
@@ -623,8 +683,8 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
   // MessagesModal.tsx - handleDeleteForMe
   const handleDeleteForMe = (messageId: string) => {
     showModal(
-      "Delete for me",
-      "Remove this message from your view? Others will still see it.",
+      t("Delete for me"),
+      t("Remove this message from your view? Others will still see it."),
       "confirm",
       async () => {
         try {
@@ -637,10 +697,10 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
             setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
             setShowActionsFor(null);
           } else {
-            showModal("Failed", "Could not hide the message.", "error");
+            showModal(t("Failed"), t("Could not hide the message."), "error");
           }
         } catch (error) {
-          showModal("Error", "An unexpected error occurred.", "error");
+          showModal(t("Error"), t("An unexpected error occurred."), "error");
         }
       },
     );
@@ -650,8 +710,8 @@ export default function MessagesModal({ isOpen, onClose }: Props) {
  // MessagesModal.tsx
 const handleDeleteForEveryone = (messageId: string) => {
   showModal(
-    "Delete for everyone",
-    "This message will be permanently deleted for all participants.",
+    t("Delete for everyone"),
+    t("This message will be permanently deleted for all participants."),
     "confirm",
     async () => {
       try {
@@ -664,7 +724,7 @@ const handleDeleteForEveryone = (messageId: string) => {
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === messageId
-                ? { ...msg, content: "This message was deleted", isDeleted: true }
+                ? { ...msg, content: t("This message was deleted"), isDeleted: true }
                 : msg,
             ),
           );
@@ -674,10 +734,10 @@ const handleDeleteForEveryone = (messageId: string) => {
           // emit "private:message:deleted" to both users
           if (socketConnected) socketService.deleteMessage(messageId);
         } else {
-          showModal("Delete failed", "Failed to delete. Please try again.", "error");
+          showModal(t("Delete failed"), t("Failed to delete. Please try again."), "error");
         }
       } catch (error) {
-        showModal("Error", "An unexpected error occurred.", "error");
+        showModal(t("Error"), t("An unexpected error occurred."), "error");
       }
     },
   );
@@ -687,8 +747,8 @@ const handleDeleteForEveryone = (messageId: string) => {
   const handleClearChat = () => {
     if (!selectedContact) return;
     showModal(
-      "Clear chat",
-      `Clear all messages with ${selectedContact.name}? This cannot be undone.`,
+      t("Clear chat"),
+      `${t("Clear all messages with")} ${selectedContact.name}? ${t("This cannot be undone.")}`,
       "confirm",
       async () => {
         try {
@@ -699,17 +759,17 @@ const handleDeleteForEveryone = (messageId: string) => {
           if (res.ok) {
             setMessages([]);
             if (socketConnected) socketService.clearChat(selectedContact.id);
-            showModal("Done", "Chat has been cleared.", "success");
+            showModal(t("Done"), t("Chat has been cleared."), "success");
           } else {
             showModal(
-              "Failed",
-              "Could not clear the chat. Please try again.",
+              t("Failed"),
+              t("Could not clear the chat. Please try again."),
               "error",
             );
           }
         } catch (error) {
           console.error("Error clearing chat:", error);
-          showModal("Error", "An unexpected error occurred.", "error");
+          showModal(t("Error"), t("An unexpected error occurred."), "error");
         }
       },
     );
@@ -757,16 +817,16 @@ const handleDeleteForEveryone = (messageId: string) => {
   ) : (
     <FaChalkboardUser className="inline mr-2" />
   );
-  const headerTitle = isTutor ? "Your Students" : "Your Tutors";
+  const headerTitle = isTutor ? t("Your Students") : t("Your Tutors");
   const emptyStateIcon = isTutor ? "👨‍🎓" : "👨‍🏫";
-  const emptyStateText = isTutor ? "No students found" : "No tutors found";
+  const emptyStateText = isTutor ? t("No students found") : t("No tutors found");
   const emptyStateSubtext = isTutor
-    ? "Enroll students in your courses to connect with them"
-    : "Enroll in courses or join groups to connect with tutors";
-  const selectPrompt = isTutor ? "Select a student" : "Select a tutor";
+    ? t("Enroll students in your courses to connect with them")
+    : t("Enroll in courses or join groups to connect with tutors");
+  const selectPrompt = isTutor ? t("Select a student") : t("Select a tutor");
   const selectDescription = isTutor
-    ? "Choose a student from the list to start messaging"
-    : "Choose a tutor from the list to start messaging";
+    ? t("Choose a student from the list to start messaging")
+    : t("Choose a tutor from the list to start messaging");
 
   if (!isOpen) return null;
 
@@ -795,15 +855,17 @@ const handleDeleteForEveryone = (messageId: string) => {
               className="fixed inset-0 dark:bg-black/40 bg-white/40 backdrop-blur-sm z-40"
             />
 
-            {/* Main modal */}
+            {/* Main modal — full-screen, edge-to-edge, overlaying the whole
+                app like a real chat app, not a centered card with the page
+                visible (and blurred) around its edges. */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-0"
+              className="fixed inset-0 z-50 flex items-center justify-center"
             >
-              <div className="w-full h-full lg:w-[90%] lg:h-[85vh] max-w-6xl bg-white dark:bg-secondaryColors-0 rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+              <div className="w-full h-full bg-white dark:bg-secondaryColors-0 overflow-hidden flex flex-col lg:flex-row">
                 {/* ── Contacts Sidebar ────────────────────────────────────── */}
                 <div
                   className={`w-full lg:w-[35%] h-full bg-white dark:bg-shadyColor-0 border-r border-boldShadyColor-0/20 flex flex-col overflow-hidden ${selectedContact ? "hidden lg:flex" : "flex"}`}
@@ -829,7 +891,7 @@ const handleDeleteForEveryone = (messageId: string) => {
                       <input
                         type="text"
                         placeholder={
-                          isTutor ? "Search students..." : "Search tutors..."
+                          isTutor ? t("Search students...") : t("Search tutors...")
                         }
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -845,8 +907,8 @@ const handleDeleteForEveryone = (messageId: string) => {
                           <div className="w-10 h-10 border-4 border-primaryColors-0/20 border-t-primaryColors-0 rounded-full animate-spin mx-auto mb-2" />
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {isTutor
-                              ? "Loading students..."
-                              : "Loading tutors..."}
+                              ? t("Loading students...")
+                              : t("Loading tutors...")}
                           </p>
                         </div>
                       </div>
@@ -910,7 +972,7 @@ const handleDeleteForEveryone = (messageId: string) => {
                                   {contact.isTyping ? (
                                     <span className="text-primaryColors-0 flex items-center gap-1">
                                       <span className="animate-pulse">●</span>{" "}
-                                      typing...
+                                      {t("typing...")}
                                     </span>
                                   ) : (
                                     contact.lastMessage
@@ -918,7 +980,7 @@ const handleDeleteForEveryone = (messageId: string) => {
                                 </p>
                                 {contact.source && (
                                   <p className="text-xs text-gray-400 mt-1">
-                                    via {contact.source}
+                                    {t("via")} {contact.source}
                                   </p>
                                 )}
                               </div>
@@ -981,15 +1043,15 @@ const handleDeleteForEveryone = (messageId: string) => {
                               {isSelectedContactTyping ? (
                                 <span className="text-primaryColors-0 flex items-center gap-1">
                                   <span className="animate-pulse">●</span>{" "}
-                                  typing...
+                                  {t("typing...")}
                                 </span>
                               ) : isSelectedContactOnline ? (
                                 <span className="text-green-500 flex items-center gap-1">
                                   <span className="animate-pulse">●</span>{" "}
-                                  Active now
+                                  {t("Active now")}
                                 </span>
                               ) : (
-                                `Last seen ${selectedContact.lastSeen || "recently"}`
+                                `${t("Last seen")} ${selectedContact.lastSeen || t("recently")}`
                               )}
                             </p>
                           </div>
@@ -998,7 +1060,7 @@ const handleDeleteForEveryone = (messageId: string) => {
                           <button
                             onClick={handleClearChat}
                             className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition text-red-500"
-                            title="Clear chat"
+                            title={t("Clear chat")}
                           >
                             <FaTrash size={16} />
                           </button>
@@ -1010,8 +1072,8 @@ const handleDeleteForEveryone = (messageId: string) => {
                         <div className="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                           <div className="text-sm">
                             <span className="text-primaryColors-0 font-medium">
-                              Replying to{" "}
-                              {replyingTo.sender?.first_name || "Someone"}:{" "}
+                              {t("Replying to")}{" "}
+                              {replyingTo.sender?.first_name || t("Someone")}:{" "}
                             </span>
                             <span className="text-gray-700 dark:text-gray-300 italic">
                               {replyingTo.content.substring(0, 60)}
@@ -1042,7 +1104,7 @@ const handleDeleteForEveryone = (messageId: string) => {
                             <div className="text-center">
                               <div className="w-10 h-10 border-4 border-primaryColors-0/20 border-t-primaryColors-0 rounded-full animate-spin mx-auto mb-2" />
                               <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Loading messages...
+                                {t("Loading messages...")}
                               </p>
                             </div>
                           </div>
@@ -1051,10 +1113,10 @@ const handleDeleteForEveryone = (messageId: string) => {
                             <div className="text-center">
                               <div className="text-4xl mb-3">👋</div>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
-                                No messages yet
+                                {t("No messages yet")}
                               </p>
                               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                Start the conversation!
+                                {t("Start the conversation!")}
                               </p>
                             </div>
                           </div>
@@ -1084,7 +1146,7 @@ const handleDeleteForEveryone = (messageId: string) => {
                                         >
                                           <p className="font-medium text-primaryColors-0 text-left">
                                             {message.replyTo.senderName ||
-                                              "Someone"}
+                                              t("Someone")}
                                           </p>
                                           <p className="text-gray-600 dark:text-gray-300 italic truncate text-left">
                                             {(
@@ -1108,13 +1170,13 @@ const handleDeleteForEveryone = (messageId: string) => {
                                       >
                                         <p className="text-sm break-words whitespace-pre-wrap">
                                           {isDeleted
-                                            ? "This message was deleted"
+                                            ? t("This message was deleted")
                                             : message.content}
                                         </p>
                                         <div className="flex items-center justify-end gap-1 mt-1">
                                           {message.isEdited && !isDeleted && (
                                             <span className="text-xs opacity-70">
-                                              (edited)
+                                              {t("(edited)")}
                                             </span>
                                           )}
                                           <span className="text-xs opacity-70">
@@ -1162,7 +1224,7 @@ const handleDeleteForEveryone = (messageId: string) => {
                                             );
                                           }
                                         }}
-                                        aria-label="Message actions"
+                                        aria-label={t("Message actions")}
                                         className={`absolute top-0 ${
                                           isOwnMessage
                                             ? "right-0 -translate-x-2"
@@ -1197,7 +1259,7 @@ const handleDeleteForEveryone = (messageId: string) => {
                                           }
                                         }}
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer lg:hidden"
-                                        aria-label="Show message options"
+                                        aria-label={t("Show message options")}
                                       />
 
                                       {showActionsFor === message.id && (
@@ -1269,8 +1331,8 @@ const handleDeleteForEveryone = (messageId: string) => {
                             onKeyDown={handleKeyDown}
                             placeholder={
                               replyingTo
-                                ? "Type your reply..."
-                                : "Type a message..."
+                                ? t("Type your reply...")
+                                : t("Type a message...")
                             }
                             className="flex-1 px-4 py-2 bg-white dark:bg-gray-800 border border-boldShadyColor-0/10 rounded-full text-sm text-lightBoldText-0 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primaryColors-0 resize-none max-h-24"
                             rows={1}

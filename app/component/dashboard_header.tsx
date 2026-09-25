@@ -4,8 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { IoChevronDown, IoLanguage } from "react-icons/io5";
-import { MdNotifications } from "react-icons/md";
-import { HiOutlineChatAlt2 } from "react-icons/hi";
+import { MdNotifications, MdOutlineFeedback } from "react-icons/md";
 import DashboardNotification from "./dashboard_notification";
 import FeedbackModal from "./feedback_modal";
 import { FaBell } from "react-icons/fa";
@@ -111,7 +110,7 @@ function HeaderSkeleton() {
 // ── Main Component ──────────────────────────────────────────
 export default function DashboardHeader() {
   const { darkMode, setDarkMode } = useTheme();
-  const { isConnected, unreadCount, connect } = useSocket();
+  const { unreadCount, connect } = useSocket();
   const { authStatus, logout } = useAuthContext();
   const { openLanguageSelector } = useLanguage();
   const { t } = useI18n();
@@ -417,23 +416,13 @@ export default function DashboardHeader() {
 
           <button
             onClick={() => setShowFeedback(true)}
-            title="Send feedback"
-            aria-label="Send feedback"
-            className="text-gray-700 dark:text-gray-200 hover:text-primaryColors-0 transition-colors"
+            title={t("Send feedback")}
+            aria-label={t("Send feedback")}
+            className="flex items-center gap-1.5 text-gray-700 dark:text-gray-200 hover:text-primaryColors-0 transition-colors"
           >
-            <HiOutlineChatAlt2 size={22} />
+            <MdOutlineFeedback size={22} />
+            <span className="text-sm">{t("Feedback")}</span>
           </button>
-
-          <div className="flex items-center justify-center gap-1">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
-              }`}
-            />
-            <span className="text-sm text-gray-700 dark:text-gray-200">
-              {isConnected ? t("Online") : t("Offline")}
-            </span>
-          </div>
 
           <div className="relative">
             <button
@@ -530,18 +519,18 @@ export default function DashboardHeader() {
               )}
             </div>
             <div>
-              <p className="text-[10px] text-white/70">{t(getHours)}</p>
-              <p className="text-[16px] font-semibold text-white">
+              <p className="text-[10px] text-gray-500 dark:text-white/70">{t(getHours)}</p>
+              <p className="text-[16px] font-semibold text-gray-800 dark:text-white">
                 {userDisplayName}
               </p>
-              <p className="text-[10px] text-white/60">{t(displayRole)}</p>
+              <p className="text-[10px] text-gray-500 dark:text-white/60">{t(displayRole)}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="text-white hover:text-gray-200 transition-colors"
+              className="text-gray-700 dark:text-white hover:text-primaryColors-0 dark:hover:text-gray-200 transition-colors"
             >
               {darkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
             </button>
@@ -550,25 +539,25 @@ export default function DashboardHeader() {
               onClick={openLanguageSelector}
               title="Change language"
               aria-label="Change language"
-              className="text-white hover:text-gray-200 transition-colors"
+              className="text-gray-700 dark:text-white hover:text-primaryColors-0 dark:hover:text-gray-200 transition-colors"
             >
               <IoLanguage size={18} />
             </button>
 
             <button
               onClick={() => setShowFeedback(true)}
-              title="Send feedback"
-              aria-label="Send feedback"
-              className="text-white hover:text-gray-200 transition-colors"
+              title={t("Send feedback")}
+              aria-label={t("Send feedback")}
+              className="text-gray-700 dark:text-white hover:text-primaryColors-0 dark:hover:text-gray-200 transition-colors"
             >
-              <HiOutlineChatAlt2 size={18} />
+              <MdOutlineFeedback size={18} />
             </button>
 
             <div className="relative">
               <button
                 ref={mobileNotificationBtnRef}
                 onClick={toggleNotification}
-                className="relative text-white hover:text-gray-200 transition-colors"
+                className="relative text-gray-700 dark:text-white hover:text-primaryColors-0 dark:hover:text-gray-200 transition-colors"
               >
                 <FaBell size={18} />
                 {unreadCount > 0 && (

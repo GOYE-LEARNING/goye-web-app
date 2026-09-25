@@ -3,11 +3,13 @@
 import React, { useState } from "react";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { MdCancel, MdCheckCircle } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 interface PasswordConfirmation {
   password: string;
   confirmPassword: string;
 }
 export default function PasswordReset() {
+  const { t } = useI18n();
   const [passwordsConfirmation, setPasswordConfirmation] =
     useState<PasswordConfirmation>({ password: "", confirmPassword: "" });
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -40,8 +42,8 @@ export default function PasswordReset() {
   return (
     <>
       <div className="form_container">
-        <h1 className="form_h1">Reset Password</h1>
-        <p className="form-p">Set your new password</p>
+        <h1 className="form_h1">{t("Reset Password")}</h1>
+        <p className="form-p">{t("Set your new password")}</p>
         <form noValidate className="form py-5" onSubmit={handleSubmit}>
           <div className="form_label relative">
             <input
@@ -62,7 +64,7 @@ export default function PasswordReset() {
                   : "top-[15px] text-[16px]"
               }`}
             >
-              Password
+              {t("Password")}
             </label>
 
             <div
@@ -87,7 +89,7 @@ export default function PasswordReset() {
                       ) : (
                         <MdCancel className="text-red-500" />
                       )}
-                      <span>{rule.text}</span>
+                      <span>{t(rule.text)}</span>
                     </div>
                   );
                 })}
@@ -113,7 +115,7 @@ export default function PasswordReset() {
                   : "top-[15px] text-[16px]"
               }`}
             >
-              Confirm password
+              {t("Confirm password")}
             </label>
 
             <div
@@ -126,7 +128,7 @@ export default function PasswordReset() {
               {!showConfirmPassword ? <IoMdEye /> : <IoMdEyeOff />}
             </div>
           </div>
-          <input type="submit" value="Submit" className="form_btn" />
+          <input type="submit" value={t("Submit")} className="form_btn" />
         </form>
       </div>
     </>

@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { HiOutlineBookOpen, HiOutlineUserGroup, HiOutlineChatAlt2, HiX } from "react-icons/hi";
 import api from "../lib/unified-api-client";
+import { useI18n } from "@/app/context/I18nContext";
 
 type FeedbackType = "COURSE" | "GROUP" | "OTHER";
 
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function FeedbackModal({ onClose }: Props) {
+  const { t } = useI18n();
   const [type, setType] = useState<FeedbackType>("OTHER");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -26,7 +28,7 @@ export default function FeedbackModal({ onClose }: Props) {
 
   const handleSubmit = async () => {
     if (!message.trim()) {
-      setError("Please enter a message before submitting.");
+      setError(t("Please enter a message before submitting."));
       return;
     }
     setError("");
@@ -60,20 +62,20 @@ export default function FeedbackModal({ onClose }: Props) {
       if (!res.ok) {
         // ✅ Better error handling with specific messages
         if (res.status === 401) {
-          throw new Error("Please log in to send feedback. Redirecting to login...");
+          throw new Error(t("Please log in to send feedback. Redirecting to login..."));
         } else if (res.status === 400) {
-          throw new Error(data.message || "Invalid feedback. Please check your message.");
+          throw new Error(data.message || t("Invalid feedback. Please check your message."));
         } else if (res.status === 403) {
-          throw new Error("You don't have permission to send feedback.");
+          throw new Error(t("You don't have permission to send feedback."));
         } else {
-          throw new Error(data.message || `Failed to send feedback (${res.status})`);
+          throw new Error(data.message || `${t("Failed to send feedback")} (${res.status})`);
         }
       }
       
       setSent(true);
     } catch (err: any) {
       console.error("❌ Error:", err);
-      setError(err.message || "Could not send feedback. Please try again.");
+      setError(err.message || t("Could not send feedback. Please try again."));
       
       // ✅ Redirect to login if unauthorized
       if (err.message.includes("log in") || err.message.includes("401")) {
@@ -91,12 +93,12 @@ export default function FeedbackModal({ onClose }: Props) {
       <div className="w-full max-w-md rounded-xl bg-white dark:bg-gray-800 p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-            {sent ? "Thank you!" : "Send Feedback"}
+            {sent ? t("Thank you!") : t("Send Feedback")}
           </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-            aria-label="Close"
+            aria-label={t("Close")}
           >
             <HiX size={20} />
           </button>
@@ -105,18 +107,18 @@ export default function FeedbackModal({ onClose }: Props) {
         {sent ? (
           <div className="py-4">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Your feedback has been sent. We appreciate you taking the time.
+              {t("Your feedback has been sent. We appreciate you taking the time.")}
             </p>
             <button
               onClick={onClose}
               className="mt-4 w-full rounded-lg bg-primaryColors-0 text-white py-2 text-sm font-medium"
             >
-              Done
+              {t("Done")}
             </button>
           </div>
         ) : (
           <>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">What is this about?</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t("What is this about?")}</p>
             <div className="flex flex-wrap gap-2 mb-4">
               {TYPES.map((opt) => (
                 <button
@@ -129,16 +131,16 @@ export default function FeedbackModal({ onClose }: Props) {
                   }`}
                 >
                   {opt.icon}
-                  {opt.label}
+                  {t(opt.label)}
                 </button>
               ))}
             </div>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Your feedback</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t("Your feedback")}</p>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Tell us what's on your mind…"
+              placeholder={t("Tell us what's on your mind…")}
               rows={5}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent p-3 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primaryColors-0/50 resize-none"
             />
@@ -154,7 +156,7 @@ export default function FeedbackModal({ onClose }: Props) {
               disabled={submitting}
               className="mt-4 w-full rounded-lg bg-primaryColors-0 text-white py-2.5 text-sm font-medium disabled:opacity-60 hover:bg-primaryColors-0/90 transition-colors"
             >
-              {submitting ? "Sending…" : "Submit Feedback"}
+              {submitting ? t("Sending…") : t("Submit Feedback")}
             </button>
           </>
         )}

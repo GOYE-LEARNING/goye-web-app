@@ -7,6 +7,7 @@ import { FaCheck, FaGlobe } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../utils/checkLanguages";
 import { CiSearch } from "react-icons/ci";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunction: () => void;
@@ -50,6 +51,7 @@ const languages: LanguageOption[] = [
 ];
 
 export default function DashboardChangeLanguage({ backFunction }: Props) {
+  const { t } = useI18n();
   const { language, languageCode, saveLanguage, hasLanguage } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLanguage, setSelectedLanguage] =
@@ -103,23 +105,23 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
 
   return (
     <div className="h-full flex flex-col">
-      <SubHeader header="Language" backFunction={backFunction} />
+      <SubHeader header={t("Language")} backFunction={backFunction} />
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-2xl mx-auto">
           {/* Current Language Display */}
           <div className="glass_effect rounded-xl p-6 mb-6">
             <h3 className="text-sm font-medium text-[#B8BCC8] mb-2">
-              Current Language
+              {t("Current Language")}
             </h3>
             <div className="flex items-center gap-3">
               <div className="text-3xl">{selectedLanguage?.flag || "🌐"}</div>
               <div>
                 <p className="text-lg font-semibold text-white">
-                  {selectedLanguage?.name || "Not selected"}
+                  {selectedLanguage ? t(selectedLanguage.name) : t("Not selected")}
                 </p>
                 <p className="text-sm text-[#9CA3B0]">
-                  {selectedLanguage?.nativeName || "Select a language below"}
+                  {selectedLanguage?.nativeName || t("Select a language below")}
                 </p>
               </div>
             </div>
@@ -130,7 +132,7 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
             <CiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3B0]" />
             <input
               type="text"
-              placeholder="Search languages..."
+              placeholder={t("Search languages...")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-[#252830] border border-[#3a3d4a] rounded-xl px-10 py-3 text-white placeholder-[#9CA3B0] focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all"
@@ -142,7 +144,7 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
             <div className="max-h-[400px] overflow-y-auto chat_scroll3">
               {filteredLanguages.length === 0 ? (
                 <div className="text-center py-8 text-[#9CA3B0]">
-                  No languages found
+                  {t("No languages found")}
                 </div>
               ) : (
                 filteredLanguages.map((lang) => (
@@ -161,7 +163,7 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{lang.flag}</span>
                       <div>
-                        <p className="text-white font-medium">{lang.name}</p>
+                        <p className="text-white font-medium">{t(lang.name)}</p>
                         <p className="text-sm text-[#9CA3B0]">
                           {lang.nativeName}
                         </p>
@@ -194,12 +196,12 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
               {isSaving ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-[#121318] border-t-transparent"></span>
-                  Saving...
+                  {t("Saving...")}
                 </span>
               ) : selectedLanguage?.code === languageCode ? (
-                "Current Language Selected"
+                t("Current Language Selected")
               ) : (
-                `Save ${selectedLanguage?.name || "Language"}`
+                `${t("Save")} ${selectedLanguage ? t(selectedLanguage.name) : t("Language")}`
               )}
             </button>
 
@@ -212,15 +214,14 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
                   exit={{ opacity: 0, y: -10 }}
                   className="text-center text-green-400 text-sm"
                 >
-                  ✅ Language saved successfully!
+                  ✅ {t("Language saved successfully!")}
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Info Text */}
             <p className="text-xs text-[#9CA3B0] text-center">
-              Changing the language will update the interface language across
-              the platform.
+              {t("Changing the language will update the interface language across the platform.")}
             </p>
           </div>
         </div>

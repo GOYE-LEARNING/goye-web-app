@@ -13,6 +13,7 @@ import { usePathname } from "next/navigation";
 import { useAuthContext } from "@/app/context/AuthContext";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import React, { useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>;
@@ -22,6 +23,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
   const pathname = usePathname();
   const { logout } = useAuthContext();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { t } = useI18n();
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -34,7 +36,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
         <div className={`${isCollapsed ? 'hidden' : 'block'}`}>
           <Image
             src={logo}
-            alt="logo"
+            alt={t("logo")}
             height={100}
             width={100}
             className="md:block hidden"
@@ -49,10 +51,10 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
       </div>
 
       <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col md:gap-1 w-full mt-0 md:mt-[2rem]">
-        <div className="md:w-full">
+        <div className="ml-3 md:ml-0 md:w-full">
           <SidenavComponent
             path="/dashboard/super-admin"
-            label="Overview"
+            label={t("Overview")}
             icon={
               pathname !== "/dashboard/super-admin" ? (
                 <GoHome size={25} />
@@ -66,7 +68,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
         <div className="md:w-full">
           <SidenavComponent
             path="/dashboard/super-admin/organizations"
-            label="Organizations"
+            label={t("Organizations")}
             icon={
               pathname !== "/dashboard/super-admin/organizations" ? (
                 <HiOutlineOfficeBuilding size={25} />
@@ -80,7 +82,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
         <div className="md:w-full">
           <SidenavComponent
             path="/dashboard/super-admin/users"
-            label="Users"
+            label={t("Users")}
             icon={
               pathname !== "/dashboard/super-admin/users" ? (
                 <BsPeople size={25} />
@@ -94,7 +96,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
         <div className="md:w-full">
           <SidenavComponent
             path="/dashboard/super-admin/courses"
-            label="Courses"
+            label={t("Courses")}
             icon={
               pathname !== "/dashboard/super-admin/courses" ? (
                 <IoSchoolOutline size={25} />
@@ -108,7 +110,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
         <div className="md:w-full">
           <SidenavComponent
             path="/dashboard/super-admin/events"
-            label="Events"
+            label={t("Events")}
             icon={
               pathname !== "/dashboard/super-admin/events" ? (
                 <BsCalendarEvent size={22} />
@@ -122,7 +124,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
         <div className="md:w-full">
           <SidenavComponent
             path="/dashboard/super-admin/announcements"
-            label="Announce"
+            label={t("Announce")}
             icon={
               <MdCampaign
                 size={26}
@@ -135,7 +137,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
         <div className="md:w-full">
           <SidenavComponent
             path="/dashboard/super-admin/activity"
-            label="Activity"
+            label={t("Activity")}
             icon={
               <BsActivity
                 size={25}
@@ -148,7 +150,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
         <div className="md:w-full">
           <SidenavComponent
             path="/dashboard/super-admin/feedback"
-            label="Feedback"
+            label={t("Feedback")}
             icon={
               pathname !== "/dashboard/super-admin/feedback" ? (
                 <HiOutlineChatAlt2 size={25} />
@@ -165,7 +167,7 @@ export default function SuperAdminSidenav({ setIsCollapsedState }: Props) {
       <div className="mt-10 md:block hidden md:w-full" onClick={logout}>
         <SidenavComponent
           path="/"
-          label="Logout"
+          label={t("Logout")}
           icon={<MdLogout size={25} />}
           isCollapsed={isCollapsed}
         />

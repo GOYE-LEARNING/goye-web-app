@@ -9,6 +9,7 @@ import pic2 from "@/public/images/notfound.png";
 import { useEffect, useState } from "react";
 import DashboardTutorCourseBreakdown from "@/app/component/dashboard_tutor_course_breakdown";
 import Loader from "@/app/component/loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Enroll {
   status: string;
@@ -26,6 +27,7 @@ interface Course {
 }
 
 export default function AdminCourse() {
+  const { t } = useI18n();
   const [fill, setFill] = useState<string[]>([]);
   const [showCourse, setShowCourse] = useState<boolean>(true);
   const [showCourseDetails, setShowCourseDetails] = useState<boolean>(false);
@@ -133,7 +135,7 @@ export default function AdminCourse() {
       {showCourse && (
         <div>
           <div className="flex justify-between items-center">
-            <h1 className="dashboard_h1">Course</h1>
+            <h1 className="dashboard_h1">{t("Course")}</h1>
           </div>
           <div className="flex justify-between items-center gap-4">
             <div className=" w-full">
@@ -142,7 +144,7 @@ export default function AdminCourse() {
                 onChange={(e) => {
                   setSearch(e.target.value);
                 }}
-                placeholder="Search courses..."
+                placeholder={t("Search courses...")}
               />
             </div>
           </div>
@@ -151,11 +153,11 @@ export default function AdminCourse() {
             <div>
               {filterCourse.length === 0 ? (
                 <div className="flex justify-center items-center flex-col gap-1 md:mt-10 mt-[8rem]">
-                  <Image src={pic2} alt="pic" height={100} width={100} />
+                  <Image src={pic2} alt={t("pic")} height={100} width={100} />
                   <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
-                    No Course Found
+                    {t("No Course Found")}
                   </h1>
-                  <p className="text-textGrey-0">Create a Course</p>
+                  <p className="text-textGrey-0">{t("Create a Course")}</p>
                 </div>
               ) : (
                 <div>
@@ -168,7 +170,7 @@ export default function AdminCourse() {
                         <div className="relative">
                           <img
                             src={course.course_image || pic}
-                            alt="pic"
+                            alt={t("pic")}
                             className="h-[89.16px] w-[130px] object-cover"
                           />
                         </div>
@@ -179,7 +181,7 @@ export default function AdminCourse() {
                             </h1>
                             <span className="text-[10px] text-[#41415A] bg-[#F1F1F4] px-[4px]">
                               {course.enrollment.length == 0
-                                ? "NOT ENROLLED"
+                                ? t("NOT ENROLLED")
                                 : course.enrollment.map((e) => e.status)}
                             </span>
                           </div>
@@ -203,7 +205,7 @@ export default function AdminCourse() {
                           showCourseDetailsFunc(course.id || i.toString())
                         }
                       >
-                        View Course
+                        {t("View Course")}
                       </button>
                       <div className="h-[1px] w-full bg-[#EFEFF2]"></div>
                     </div>

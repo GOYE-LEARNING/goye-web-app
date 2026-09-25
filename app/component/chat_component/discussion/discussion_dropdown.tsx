@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import { BsThreeDots, BsTrash, BsPencil } from "react-icons/bs";
 import { AnimatePresence, motion } from "framer-motion";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   discussionId: string;
@@ -20,6 +21,7 @@ export default function DiscussionDropdown({
   onDelete,
   onEdit,
 }: Props) {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +41,7 @@ export default function DiscussionDropdown({
   if (!isAuthor) return null;
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this post?")) {
+    if (confirm(t("Are you sure you want to delete this post?"))) {
       onDelete?.(discussionId);
       setIsOpen(false);
     }
@@ -72,13 +74,13 @@ export default function DiscussionDropdown({
               onClick={handleEdit}
               className="w-full px-4 py-2 text-left text-sm text-white hover:bg-gray-100 flex items-center gap-2"
             >
-              <BsPencil size={14} /> Edit
+              <BsPencil size={14} /> {t("Edit")}
             </button>
             <button
               onClick={handleDelete}
               className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
             >
-              <BsTrash size={14} /> Delete
+              <BsTrash size={14} /> {t("Delete")}
             </button>
           </motion.div>
         )}

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { BsFillSendFill } from "react-icons/bs";
 import { MdOutlineCancel } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   cancel: () => void;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function DashboardNewPost({ cancel,  courseId }: Props) {
+  const { t } = useI18n();
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
 
@@ -25,7 +27,7 @@ export default function DashboardNewPost({ cancel,  courseId }: Props) {
     e.preventDefault();
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     if (!title || !content) {
-      alert("Please fill out both fields before posting!");
+      alert(t("Please fill out both fields before posting!"));
       return;
     }
     const res = await fetch(`${API_URL}/api/socials/create-post/${courseId}`, {
@@ -51,7 +53,7 @@ export default function DashboardNewPost({ cancel,  courseId }: Props) {
       <div className="w-full min-h-full p-[32px] dark:bg-secondaryColors-0">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[24px]">New Post</h1>
+          <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[24px]">{t("New Post")}</h1>
           <span onClick={cancel} className="cursor-pointer">
             <MdOutlineCancel size={20} className="text-[18px]" />
           </span>
@@ -68,7 +70,7 @@ export default function DashboardNewPost({ cancel,  courseId }: Props) {
           {/* Title Input */}
           <div className="w-full h-[63px] border border-[#ccc]/10 py-[8px] px-[12px] flex items-center relative">
             <div className="flex flex-col w-full">
-              <label className="text-[#71748C] text-[12px]">Title</label>
+              <label className="text-[#71748C] text-[12px]">{t("Title")}</label>
               <input
                 type="text"
                 name="title"
@@ -82,7 +84,7 @@ export default function DashboardNewPost({ cancel,  courseId }: Props) {
           {/* Content Input */}
           <div className="w-full h-[176px] border border-[#ccc]/20 py-[8px] px-[12px] flex relative">
             <div className="flex flex-col w-full h-full">
-              <label className="text-[#71748C] text-[12px]">Content</label>
+              <label className="text-[#71748C] text-[12px]">{t("Content")}</label>
               <textarea
                 name="content"
                 onChange={handleTextArea}
@@ -99,7 +101,7 @@ export default function DashboardNewPost({ cancel,  courseId }: Props) {
               type="submit"
               className="form_more bg-primaryColors-0 text-white flex items-center gap-2"
             >
-              Post <BsFillSendFill />
+              {t("Post")} <BsFillSendFill />
             </button>
 
             <button
@@ -107,7 +109,7 @@ export default function DashboardNewPost({ cancel,  courseId }: Props) {
               onClick={cancel}
               className="form_more bg-[#ccc]/10 dark:bg-shadyColor-0 text-primaryColors-0 flex items-center gap-2"
             >
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         </form>

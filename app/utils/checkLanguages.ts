@@ -1,106 +1,58 @@
 // hooks/useLanguage.ts
-import { useState, useEffect, useCallback } from 'react';
-import { translateText } from '../utils/translator';
-
-interface LanguageState {
-  language: string;
-  languageCode: string;
-  hasLanguage: boolean;
-}
+//
+// Legacy hook kept for its many existing call sites. It no longer holds its
+// own localStorage-backed state — it's a thin adapter over I18nContext, the
+// single source of truth for the active language, so every consumer of this
+// hook gets the same in-memory/backend-driven behavior for free.
+import { useCallback } from 'react';
+import { useI18n } from '../context/I18nContext';
+import { translateText } from './translator';
 
 export function useLanguage() {
-  const [languageState, setLanguageState] = useState<LanguageState>({
-    language: '',
-    languageCode: '',
-    hasLanguage: false,
-  });
+  const { locale, languageName, hasLanguage, setLanguage } = useI18n();
 
-  // Load language from localStorage
-  const loadLanguage = useCallback(() => {
-    const lang = localStorage.getItem('lang') || '';
-    const langCode = localStorage.getItem('langCode') || '';
-    
-    setLanguageState({
-      language: lang,
-      languageCode: langCode,
-      hasLanguage: !!(lang && langCode),
-    });
-  }, []);
-
-  // Save language to localStorage
+  // Update the in-memory language immediately, and — when a session exists —
+  // persist it to the backend so it follows the account to other devices.
+  // Logged out or offline, the PUT is silently ignored and the choice still
+  // applies for the rest of this session via context state.
   const saveLanguage = useCallback((language: string, languageCode: string) => {
-    localStorage.setItem('lang', language);
-    localStorage.setItem('langCode', languageCode);
-    
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new Event('languageUpdated'));
-    
-    setLanguageState({
-      language,
-      languageCode,
-      hasLanguage: !!(language && languageCode),
-    });
-  }, []);
+    setLanguage(language, languageCode);
 
-  // Clear language from localStorage
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    fetch(`${API_URL}/api/user/update-user`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ language, languageCode }),
+    }).catch(() => {
+      /* not logged in, or offline — context state still holds it for this session */
+    });
+  }, [setLanguage]);
+
   const clearLanguage = useCallback(() => {
-    localStorage.removeItem('lang');
-    localStorage.removeItem('langCode');
-    
-    window.dispatchEvent(new Event('languageUpdated'));
-    
-    setLanguageState({
-      language: '',
-      languageCode: '',
-      hasLanguage: false,
-    });
-  }, []);
+    setLanguage('', 'en');
+  }, [setLanguage]);
 
-  // Translate text using the selected language
+  // Translate text using the selected language. Callers of this legacy hook
+  // (TranslatedText, useTranslation) await this directly and set their own
+  // local state from the result, so it has to resolve to the real
+  // translation rather than the fire-and-forget cache lookup `t()` does.
   const translate = useCallback(async (text: string): Promise<string> => {
-    if (!languageState.hasLanguage || languageState.languageCode === 'en') {
-      return text;
-    }
-    
+    if (!hasLanguage || locale === 'en') return text;
     try {
-      return await translateText(text, languageState.languageCode);
-    } catch (error) {
-      console.error('Translation failed:', error);
+      return await translateText(text, locale);
+    } catch {
       return text;
     }
-  }, [languageState.hasLanguage, languageState.languageCode]);
-
-  // Subscribe to language changes
-  useEffect(() => {
-    // Load initial language
-    loadLanguage();
-
-    // Listen for storage changes (cross-tab)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'lang' || e.key === 'langCode') {
-        loadLanguage();
-      }
-    };
-
-    // Listen for custom event (same-tab)
-    const handleLanguageUpdate = () => {
-      loadLanguage();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('languageUpdated', handleLanguageUpdate);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('languageUpdated', handleLanguageUpdate);
-    };
-  }, [loadLanguage]);
+  }, [hasLanguage, locale]);
 
   return {
-    ...languageState,
+    language: languageName,
+    languageCode: locale,
+    hasLanguage,
     saveLanguage,
     clearLanguage,
-    reloadLanguage: loadLanguage,
-    translate, // Add translate function
+    reloadLanguage: () => {},
+    translate,
   };
 }

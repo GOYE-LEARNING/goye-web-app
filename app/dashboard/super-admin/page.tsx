@@ -10,6 +10,7 @@ import {
   HiOutlineExclamationCircle,
   HiOutlineAcademicCap,
 } from "react-icons/hi";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface OverviewData {
   totalOrganizations: number;
@@ -169,8 +170,9 @@ function MultiSeriesLineChart({
 
 // Horizontal bar list for top-N rankings with long labels (course titles).
 function TopCoursesBarChart({ data }: { data: { title: string; enrollments: number }[] }) {
+  const { t } = useI18n();
   if (data.length === 0) {
-    return <p className="text-textGrey-0 text-sm text-center py-8">No enrollments yet</p>;
+    return <p className="text-textGrey-0 text-sm text-center py-8">{t("No enrollments yet")}</p>;
   }
   const max = Math.max(1, ...data.map((d) => d.enrollments));
   return (
@@ -233,9 +235,10 @@ function VerticalBarChart({
   data: { label: string; value: number }[];
   dark: boolean;
 }) {
+  const { t } = useI18n();
   const [hover, setHover] = useState<number | null>(null);
   if (data.length === 0) {
-    return <p className="text-textGrey-0 text-sm text-center py-8">No data yet</p>;
+    return <p className="text-textGrey-0 text-sm text-center py-8">{t("No data yet")}</p>;
   }
   const max = Math.max(1, ...data.map((d) => d.value));
   const barW = 100 / data.length;
@@ -307,6 +310,7 @@ function RoleBreakdownBars({ data, dark }: { data: { role: string; count: number
 
 // Completion ring — one figure (completion rate) with a radial gauge.
 function CompletionRing({ completed, total }: { completed: number; total: number }) {
+  const { t } = useI18n();
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   const r = 52;
   const circ = 2 * Math.PI * r;
@@ -324,17 +328,18 @@ function CompletionRing({ completed, total }: { completed: number; total: number
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[28px] font-[700] text-textSlightDark-0 dark:text-white">{pct}%</span>
-          <span className="text-[11px] text-textGrey-0">completed</span>
+          <span className="text-[11px] text-textGrey-0">{t("completed")}</span>
         </div>
       </div>
       <p className="text-[12px] text-textGrey-0 text-center">
-        {completed.toLocaleString()} of {total.toLocaleString()} enrollments
+        {completed.toLocaleString()} {t("of")} {total.toLocaleString()} {t("enrollments")}
       </p>
     </div>
   );
 }
 
 export default function SuperAdminOverview() {
+  const { t } = useI18n();
   const [data, setData] = useState<OverviewData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -348,7 +353,7 @@ export default function SuperAdminOverview() {
     const fetchOverview = async () => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       if (!API_URL) {
-        setError("API URL not configured");
+        setError(t("API URL not configured"));
         setIsLoading(false);
         return;
       }
@@ -359,14 +364,14 @@ export default function SuperAdminOverview() {
         });
         const result = await res.json();
         if (!res.ok || !result.success) {
-          setError(result.message || "Failed to load platform overview");
+          setError(result.message || t("Failed to load platform overview"));
           setIsLoading(false);
           return;
         }
         setData(result.data);
       } catch (err) {
         console.error("Error fetching super admin overview:", err);
-        setError("We couldn't reach the server. Please try again.");
+        setError(t("We couldn't reach the server. Please try again."));
       } finally {
         setIsLoading(false);
       }
@@ -386,46 +391,46 @@ export default function SuperAdminOverview() {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-2">
         <HiOutlineExclamationCircle className="text-3xl text-textGrey-0" />
-        <p className="text-textGrey-0 text-sm">{error || "No data available"}</p>
+        <p className="text-textGrey-0 text-sm">{error || t("No data available")}</p>
       </div>
     );
   }
 
   return (
     <div className="w-full">
-      <h1 className="dashboard_h1">Platform Overview</h1>
+      <h1 className="dashboard_h1">{t("Platform Overview")}</h1>
       <p className="text-textGrey-0 text-[13px] mb-4">
-        A live look across every organization and account on GOYE.
+        {t("A live look across every organization and account on GOYE.")}
       </p>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-        <StatTile label="Organizations" value={data.totalOrganizations} icon={<HiOutlineOfficeBuilding />} accent="#2a78d6" />
-        <StatTile label="Total Users" value={data.totalUsers} icon={<HiOutlineUserGroup />} accent="#1baf7a" />
-        <StatTile label="Courses" value={data.totalCourses} icon={<HiOutlineBookOpen />} accent="#eda100" />
-        <StatTile label="Enrollments" value={data.totalEnrollments} icon={<HiOutlineClipboardCheck />} accent="#4a3aa7" />
-        <StatTile label="Org Members" value={data.totalOrganizationMembers} icon={<HiOutlineAcademicCap />} accent="#e87ba4" />
-        <StatTile label="Suspended Orgs" value={data.suspendedOrganizations} icon={<HiOutlineExclamationCircle />} accent="#e34948" />
+        <StatTile label={t("Organizations")} value={data.totalOrganizations} icon={<HiOutlineOfficeBuilding />} accent="#2a78d6" />
+        <StatTile label={t("Total Users")} value={data.totalUsers} icon={<HiOutlineUserGroup />} accent="#1baf7a" />
+        <StatTile label={t("Courses")} value={data.totalCourses} icon={<HiOutlineBookOpen />} accent="#eda100" />
+        <StatTile label={t("Enrollments")} value={data.totalEnrollments} icon={<HiOutlineClipboardCheck />} accent="#4a3aa7" />
+        <StatTile label={t("Org Members")} value={data.totalOrganizationMembers} icon={<HiOutlineAcademicCap />} accent="#e87ba4" />
+        <StatTile label={t("Suspended Orgs")} value={data.suspendedOrganizations} icon={<HiOutlineExclamationCircle />} accent="#e34948" />
       </div>
 
       <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10 mb-6">
         <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-3">
-          Signups vs Enrollments — last 30 days
+          {t("Signups vs Enrollments — last 30 days")}
         </h2>
         <MultiSeriesLineChart
           series={[
-            { name: "Signups", color: ACCENT, data: data.signupsLast30Days },
-            { name: "Enrollments", color: CATEGORICAL[0].light, data: data.enrollmentsLast30Days },
+            { name: t("Signups"), color: ACCENT, data: data.signupsLast30Days },
+            { name: t("Enrollments"), color: CATEGORICAL[0].light, data: data.enrollmentsLast30Days },
           ]}
         />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10">
-          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">Users by Role</h2>
+          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">{t("Users by Role")}</h2>
           <RoleBreakdownBars data={data.usersByRole} dark={dark} />
         </div>
         <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10">
-          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">Organizations by Type</h2>
+          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">{t("Organizations by Type")}</h2>
           <VerticalBarChart
             data={data.organizationsByType.map((o) => ({ label: o.type, value: o.count }))}
             dark={dark}
@@ -435,30 +440,30 @@ export default function SuperAdminOverview() {
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10">
-          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">Top Courses by Enrollment</h2>
+          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">{t("Top Courses by Enrollment")}</h2>
           <TopCoursesBarChart data={data.topCoursesByEnrollment} />
         </div>
         <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10">
-          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">New Organizations — last 6 months</h2>
+          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-4">{t("New Organizations — last 6 months")}</h2>
           <MonthlyGrowthBarChart data={data.organizationGrowthLast6Months} />
         </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10">
-          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-2">Course Completion</h2>
+          <h2 className="text-textSlightDark-0 dark:text-white font-[600] text-[14px] mb-2">{t("Course Completion")}</h2>
           <CompletionRing completed={data.completedEnrollments} total={data.totalEnrollments} />
         </div>
         <div className="bg-white dark:bg-shadyColor-0 rounded-xl p-4 border border-[#ccc]/10 flex flex-col justify-center gap-4">
           <div>
-            <p className="text-textGrey-0 text-[12px]">Active enrollments</p>
+            <p className="text-textGrey-0 text-[12px]">{t("Active enrollments")}</p>
             <p className="text-textSlightDark-0 dark:text-white text-[24px] font-[700]">
               {(data.totalEnrollments - data.completedEnrollments).toLocaleString()}
             </p>
           </div>
           <div className="h-[1px] bg-[#ccc]/10" />
           <div>
-            <p className="text-textGrey-0 text-[12px]">Avg enrollments / course</p>
+            <p className="text-textGrey-0 text-[12px]">{t("Avg enrollments / course")}</p>
             <p className="text-textSlightDark-0 dark:text-white text-[24px] font-[700]">
               {data.totalCourses > 0 ? (data.totalEnrollments / data.totalCourses).toFixed(1) : "0"}
             </p>

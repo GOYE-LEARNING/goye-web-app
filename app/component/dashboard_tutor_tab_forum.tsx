@@ -11,6 +11,7 @@ import DashboardTutorReply from "./dashboard_tutor_reply";
 import SlideOverModal from "./slide_over_modal";
 import Loader from "./loader";
 import { MdOutlineThumbUp, MdThumbUp } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   openPost: () => void;
@@ -50,6 +51,7 @@ interface Reply {
 }
 
 export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
+  const { t } = useI18n();
   const [showPost, setShowPost] = useState(false);
   const [showReply, setShowReply] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState("");
@@ -84,10 +86,10 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "Invalid Date";
+      if (isNaN(date.getTime())) return t("Invalid Date");
       return formatDistanceToNow(date, { addSuffix: true });
     } catch {
-      return "Invalid Date";
+      return t("Invalid Date");
     }
   };
 
@@ -450,7 +452,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
             {/* Vertical connector line */}
             {depth > 0 && (
               <div
-                className="absolute left-[-24px] top-0 bottom-0 w-px bg-gray-200"
+                className="absolute left-[-24px] top-0 bottom-0 w-px bg-gray-200 dark:bg-white/10"
                 style={{
                   height: "100%",
                   left: `${depth * -20 - 4}px`,
@@ -461,7 +463,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
             {/* Horizontal connector line */}
             {depth > 0 && (
               <div
-                className="absolute w-4 h-px bg-gray-200"
+                className="absolute w-4 h-px bg-gray-200 dark:bg-white/10"
                 style={{
                   left: `${depth * -20 - 4}px`,
                   top: "28px",
@@ -472,7 +474,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
 
             <div className="relative pl-6 py-3">
               <div className="flex gap-2 items-center">
-                <div className="bg-[#EFEFF1] h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
+                <div className="bg-[#EFEFF1] dark:bg-shadyColor-0 h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
                   <img
                     src={reply.user?.user_pic || "/default-avatar.png"}
                     alt="user_pic"
@@ -480,20 +482,20 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
                   />
                 </div>
                 <div className="flex flex-col items-start flex-1">
-                  <h1 className="text-[#41415A] text-sm font-semibold">
+                  <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 text-sm font-semibold">
                     {reply.user?.last_name} {reply.user?.first_name}
                   </h1>
-                  <p className="flex items-center gap-2 text-[#71748C] text-xs font-semibold">
+                  <p className="flex items-center gap-2 text-textGrey-0 text-xs font-semibold">
                     <CiClock2 /> {formatDate(reply.createdAt)}
                   </p>
                 </div>
               </div>
 
-              <p className="text-[#71748C] text-sm mt-2 ml-10">
+              <p className="text-textGrey-0 text-sm mt-2 ml-10">
                 {reply.content}
               </p>
 
-              <div className="flex items-center gap-4 text-[#71748C] text-sm mt-2 ml-10">
+              <div className="flex items-center gap-4 text-textGrey-0 text-sm mt-2 ml-10">
                 <span
                   className="flex items-center gap-1 cursor-pointer hover:text-primaryColors-0 transition-colors"
                   onClick={() => checkAndToggleLike("reply", reply.id)}
@@ -523,7 +525,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
                   className="flex items-center gap-1 cursor-pointer hover:text-primaryColors-0 transition-colors"
                   onClick={() => openReplyModal(currentPostId, reply.id)} // FIXED: Pass currentPostId
                 >
-                  Reply <FaReply className="text-xs" />
+                  {t("Reply")} <FaReply className="text-xs" />
                 </span>
               </div>
 
@@ -548,14 +550,14 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
       <div className="dashboard_hr my-5"></div>
       <div className="dashboard_content_mainbox">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-textSlightDark-0 font-bold text-[18px]">
-            Course Forum
+          <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-bold text-[18px]">
+            {t("Course Forum")}
           </h1>
           <button
             className="flex items-center gap-2 text-primaryColors-0 text-[13px] font-[600] cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => setShowPost(true)}
           >
-            <FaPlus /> New Post
+            <FaPlus /> {t("New Post")}
           </button>
         </div>
 
@@ -572,20 +574,20 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
             </div>
           ) : posts.length === 0 ? (
             <div className="text-center py-12 dark:bg-shadyColor-0 bg-lightWhite-0 rounded-lg">
-              <p className="text-gray-500 mb-2">No posts yet</p>
-              <p className="text-gray-400 text-sm">
-                Be the first to start a discussion!
+              <p className="text-gray-500 dark:text-gray-400 mb-2">{t("No posts yet")}</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm">
+                {t("Be the first to start a discussion!")}
               </p>
             </div>
           ) : (
             posts.map((post) => (
               <div
                 key={post.id}
-                className="mb-6 border-b border-gray-100 pb-4 last:border-0"
+                className="mb-6 border-b border-gray-100 dark:border-white/10 pb-4 last:border-0"
               >
                 {/* Post Header */}
                 <div className="flex gap-3 items-center mb-3">
-                  <div className="bg-[#EFEFF1] h-[45px] w-[45px] rounded-full overflow-hidden flex-shrink-0">
+                  <div className="bg-[#EFEFF1] dark:bg-shadyColor-0 h-[45px] w-[45px] rounded-full overflow-hidden flex-shrink-0">
                     <img
                       src={post.user?.user_pic || "/default-avatar.png"}
                       alt="user_pic"
@@ -593,10 +595,10 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
                     />
                   </div>
                   <div className="flex flex-col items-start">
-                    <h1 className="text-[#41415A] text-[15px] font-[600]">
+                    <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 text-[15px] font-[600]">
                       {post.user?.last_name} {post.user?.first_name}
                     </h1>
-                    <p className="flex items-center gap-2 text-[#71748C] text-[12px] font-[500]">
+                    <p className="flex items-center gap-2 text-textGrey-0 text-[12px] font-[500]">
                       <CiClock2 /> {formatDate(post.createdAt)}
                     </p>
                   </div>
@@ -604,14 +606,14 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
 
                 {/* Post Content */}
                 <div className="ml-12">
-                  <h2 className="text-[16px] font-[600] text-textSlightDark-0 mb-2">
+                  <h2 className="text-[16px] font-[600] text-lightBoldText-0 dark:text-textSlightDark-0 mb-2">
                     {post.title}
                   </h2>
-                  <p className="text-[#71748C] text-[14px] leading-relaxed mb-3">
+                  <p className="text-textGrey-0 text-[14px] leading-relaxed mb-3">
                     {post.content}
                   </p>
 
-                  <div className="flex items-center gap-5 text-[#71748C] text-[14px]">
+                  <div className="flex items-center gap-5 text-textGrey-0 text-[14px]">
                     <span
                       className="flex items-center gap-1.5 cursor-pointer hover:text-primaryColors-0 transition-colors"
                       onClick={() =>
@@ -641,14 +643,14 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
                       onClick={() => openReplyModal(post.id as string)} // FIXED: Pass postId
                       className="flex items-center gap-1.5 cursor-pointer hover:text-primaryColors-0 transition-colors"
                     >
-                      Reply <FaReply className="text-xs" />
+                      {t("Reply")} <FaReply className="text-xs" />
                     </span>
                   </div>
                 </div>
 
                 {/* Replies Section */}
                 {expandedPosts.includes(post.id as string) && (
-                  <div className="mt-5 ml-12 pl-4 border-l-2 border-gray-100">
+                  <div className="mt-5 ml-12 pl-4 border-l-2 border-gray-100 dark:border-white/10">
                     {repliesByPostId[post.id as string]?.length > 0 ? (
                       <NestedRepliesList
                         replies={repliesByPostId[post.id as string]}
@@ -657,8 +659,8 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
                       />
                     ) : (
                       !isLoadingReplies[post.id as string] && (
-                        <div className="text-center py-4 text-gray-400 text-sm">
-                          No replies yet. Be the first to reply!
+                        <div className="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
+                          {t("No replies yet. Be the first to reply!")}
                         </div>
                       )
                     )}
@@ -674,7 +676,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
       <SlideOverModal
         open={showPost}
         onClose={closePost}
-        label="Create a new post"
+        label={t("Create a new post")}
       >
         <DashboardTutorNewPost
           courseId={courseId}
@@ -687,7 +689,7 @@ export default function DashboardTutorTabForum({ openPost, courseId }: Props) {
       <SlideOverModal
         open={showReply}
         onClose={closeReply}
-        label="Reply to a post"
+        label={t("Reply to a post")}
       >
         <DashboardTutorReply
           postId={selectedPostId}

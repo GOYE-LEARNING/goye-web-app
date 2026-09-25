@@ -13,6 +13,7 @@ import { TbCancel } from "react-icons/tb";
 import DashboardPop from "./dashboard_popop";
 import DashboardTutorCourseBreakdown from "./dashboard_tutor_course_breakdown";
 import { getFriendlyErrorMessage } from "@/app/utils/errorMessages";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   courseId?: string;
@@ -104,6 +105,7 @@ export default function DashboardTutorCreateCourse({
   refreshCourse,
 }: Props) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const { t } = useI18n();
 
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -340,20 +342,20 @@ export default function DashboardTutorCreateCourse({
   // instead of the course silently 500-ing after a long upload wait.
   const validateCourseBeforeSubmit = (): string | null => {
     if (!formData.course_title?.trim()) {
-      return "Please give your course a title before continuing.";
+      return t("Please give your course a title before continuing.");
     }
     if (!formData.course_description?.trim()) {
-      return "Please add a course description before continuing.";
+      return t("Please add a course description before continuing.");
     }
     if (!formData.course_level?.trim()) {
-      return "Please choose a course level before continuing.";
+      return t("Please choose a course level before continuing.");
     }
     if (!formData.module || formData.module.length === 0) {
-      return "Please add at least one module before continuing.";
+      return t("Please add at least one module before continuing.");
     }
     const hasLesson = formData.module.some((m) => (m.lessons || []).length > 0);
     if (!hasLesson) {
-      return "Please add at least one lesson to a module before continuing.";
+      return t("Please add at least one lesson to a module before continuing.");
     }
     return null;
   };
@@ -371,10 +373,10 @@ export default function DashboardTutorCreateCourse({
     setIsUploading(true);
     setUploadProgress(0);
     setUploadWarnings([]);
-    setUploadStatus("Starting course creation...");
+    setUploadStatus(t("Starting course creation..."));
 
     try {
-      setUploadStatus("Calculating video durations...");
+      setUploadStatus(t("Calculating video durations..."));
 
       const modulesWithDuration = await Promise.all(
         (formData.module || []).map(async (m, index) => {
@@ -454,7 +456,7 @@ export default function DashboardTutorCreateCourse({
         })),
       };
 
-      setUploadStatus("Creating course structure...");
+      setUploadStatus(t("Creating course structure..."));
       setUploadProgress(10);
 
       const courseResponse = await fetch(
@@ -489,7 +491,7 @@ export default function DashboardTutorCreateCourse({
         validateFileObject(formData.courseImageFile)
       ) {
         try {
-          setUploadStatus("Uploading course image...");
+          setUploadStatus(t("Uploading course image..."));
           const uploadedImageUrl = await uploadCourseImage(
             formData.courseImageFile,
             newCourseId,
@@ -506,7 +508,7 @@ export default function DashboardTutorCreateCourse({
           console.error("Failed to upload course image:", error);
           setUploadWarnings((prev) => [
             ...prev,
-            "Your course image didn't upload — you can add it from Edit Course.",
+            t("Your course image didn't upload — you can add it from Edit Course."),
           ]);
         }
       }
@@ -520,7 +522,7 @@ export default function DashboardTutorCreateCourse({
       }
 
       if (totalVideos > 0) {
-        setUploadStatus(`Uploading ${totalVideos} video(s)...`);
+        setUploadStatus(`${t("Uploading")} ${totalVideos} ${t("video(s)...")}`);
 
         for (
           let moduleIndex = 0;
@@ -549,7 +551,7 @@ export default function DashboardTutorCreateCourse({
               dbLesson?.id
             ) {
               try {
-                setUploadStatus(`Uploading video: ${lesson.lesson_title}...`);
+                setUploadStatus(`${t("Uploading video:")} ${lesson.lesson_title}...`);
 
                 const uploadResult = await uploadLessonVideo(
                   lesson.videoFile,
@@ -591,7 +593,7 @@ export default function DashboardTutorCreateCourse({
                 );
                 setUploadWarnings((prev) => [
                   ...prev,
-                  `The video for "${lesson.lesson_title}" didn't upload — you can add it from Edit Course.`,
+                  `${t('The video for')} "${lesson.lesson_title}" ${t("didn't upload — you can add it from Edit Course.")}`,
                 ]);
               }
             }
@@ -612,7 +614,7 @@ export default function DashboardTutorCreateCourse({
       }
 
       if (totalMaterials > 0) {
-        setUploadStatus(`Uploading ${totalMaterials} document(s)...`);
+        setUploadStatus(`${t("Uploading")} ${totalMaterials} ${t("document(s)...")}`);
 
         for (
           let materialIndex = 0;
@@ -628,7 +630,7 @@ export default function DashboardTutorCreateCourse({
           ) {
             try {
               setUploadStatus(
-                `Uploading document: ${tempMaterial.material_title}...`,
+                `${t("Uploading document:")} ${tempMaterial.material_title}...`,
               );
 
               const documentUrl = await uploadCourseMaterial(
@@ -648,7 +650,7 @@ export default function DashboardTutorCreateCourse({
               );
               setUploadWarnings((prev) => [
                 ...prev,
-                `The document for "${tempMaterial.material_title}" didn't upload — you can add it from Edit Course.`,
+                `${t("The document for")} "${tempMaterial.material_title}" ${t("didn't upload — you can add it from Edit Course.")}`,
               ]);
             }
           }
@@ -656,7 +658,7 @@ export default function DashboardTutorCreateCourse({
       }
 
       setUploadProgress(95);
-      setUploadStatus("Finalizing course...");
+      setUploadStatus(t("Finalizing course..."));
 
       const finalResponse = await fetch(
         `${API_URL}/api/course/get-course/${newCourseId}`,
@@ -674,7 +676,7 @@ export default function DashboardTutorCreateCourse({
       }
 
       setUploadProgress(100);
-      setUploadStatus("Course created successfully!");
+      setUploadStatus(t("Course created successfully!"));
       // Snapshot the title before formData is cleared below — the success
       // popup renders after this reset, so it can't safely read
       // formData.course_title live without showing it blank.
@@ -699,7 +701,7 @@ export default function DashboardTutorCreateCourse({
       localStorage.removeItem("course_materials");
     } catch (error: any) {
       console.error("❌ Course creation failed:", error);
-      setUploadStatus("Course creation failed!");
+      setUploadStatus(t("Course creation failed!"));
       setErrorMessage(describeCreateCourseError(error));
       setShowError(true);
     } finally {
@@ -713,7 +715,7 @@ export default function DashboardTutorCreateCourse({
 
   setIsUploading(true);
   setUploadProgress(0);
-  setUploadStatus("Starting course update...");
+  setUploadStatus(t("Starting course update..."));
 
   try {
     let updatedImageUrl = formData.course_image;
@@ -722,7 +724,7 @@ export default function DashboardTutorCreateCourse({
       validateFileObject(formData.courseImageFile)
     ) {
       try {
-        setUploadStatus("Uploading new course image...");
+        setUploadStatus(t("Uploading new course image..."));
         updatedImageUrl = await uploadCourseImage(
           formData.courseImageFile,
           courseId,
@@ -849,7 +851,7 @@ export default function DashboardTutorCreateCourse({
     };
 
     setUploadProgress(20);
-    setUploadStatus("Updating course structure...");
+    setUploadStatus(t("Updating course structure..."));
 
     // Step 1: Update the course (this creates new modules in the database)
     const updateResponse = await fetch(
@@ -870,7 +872,7 @@ export default function DashboardTutorCreateCourse({
     }
 
     setUploadProgress(50);
-    setUploadStatus("Fetching updated course data...");
+    setUploadStatus(t("Fetching updated course data..."));
 
     // Step 2: Fetch the updated course to get the new module/lesson IDs
     const updatedCourseResponse = await fetch(
@@ -889,7 +891,7 @@ export default function DashboardTutorCreateCourse({
     const updatedModules = updatedCourseData.data?.module || [];
 
     setUploadProgress(60);
-    setUploadStatus("Uploading lesson videos...");
+    setUploadStatus(t("Uploading lesson videos..."));
 
     // Step 3: Upload any newly-selected videos, for BOTH new and existing modules/lessons.
     // A lesson gets a video upload+save whenever the tutor picked a new videoFile in this
@@ -946,7 +948,7 @@ export default function DashboardTutorCreateCourse({
         }
 
         try {
-          setUploadStatus(`Uploading video: ${lesson.lesson_title}...`);
+          setUploadStatus(`${t("Uploading video:")} ${lesson.lesson_title}...`);
 
           // Get duration
           let duration = lesson.duration;
@@ -992,7 +994,7 @@ export default function DashboardTutorCreateCourse({
     }
 
     setUploadProgress(90);
-    setUploadStatus("Uploading course materials...");
+    setUploadStatus(t("Uploading course materials..."));
 
     // Step 4: Upload any newly-selected documents, for BOTH new and existing materials.
     // Same fix as the video loop above — a material gets a document upload whenever the
@@ -1028,7 +1030,7 @@ export default function DashboardTutorCreateCourse({
         dbMaterialId
       ) {
         try {
-          setUploadStatus(`Uploading document: ${tempMaterial.material_title}...`);
+          setUploadStatus(`${t("Uploading document:")} ${tempMaterial.material_title}...`);
 
           await uploadCourseMaterial(
             doc.documentFile,
@@ -1048,13 +1050,13 @@ export default function DashboardTutorCreateCourse({
     }
 
     setUploadProgress(100);
-    setUploadStatus("Course updated successfully!");
+    setUploadStatus(t("Course updated successfully!"));
     setShowPop(true);
     refreshCourse();
 
   } catch (error: any) {
     console.error("❌ Course update failed:", error);
-    setUploadStatus("Course update failed!");
+    setUploadStatus(t("Course update failed!"));
     setShowError(true);
   } finally {
     setIsUploading(false);
@@ -1354,7 +1356,7 @@ export default function DashboardTutorCreateCourse({
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primaryColors-0"></div>
-        <p className="ml-3">Loading course details...</p>
+        <p className="ml-3">{t("Loading course details...")}</p>
       </div>
     );
   }
@@ -1373,20 +1375,20 @@ export default function DashboardTutorCreateCourse({
         <div>
           {showPop && (
             <DashboardPop
-              header={isEditMode ? "Course Updated!" : "Awesome!"}
+              header={isEditMode ? t("Course Updated!") : t("Awesome!")}
               close={close}
               backToCourse={backToCourseFunc}
               reviewCourse={reviewCourseFunc}
               paragraph={
                 isEditMode
-                  ? `Your course "${formData.course_title}" has been updated successfully.`
-                  : `Your course "${createdCourseTitle}" has been created successfully.${
+                  ? `${t("Your course")} "${formData.course_title}" ${t("has been updated successfully.")}`
+                  : `${t("Your course")} "${createdCourseTitle}" ${t("has been created successfully.")}${
                       uploadWarnings.length > 0
-                        ? " A couple of files need another try — you'll see them below."
+                        ? ` ${t("A couple of files need another try — you'll see them below.")}`
                         : ""
                     }`
               }
-              buttonFunc="Review Course"
+              buttonFunc={t("Review Course")}
             />
           )}
           {showPop && !isEditMode && uploadWarnings.length > 0 && (
@@ -1398,7 +1400,7 @@ export default function DashboardTutorCreateCourse({
             >
               <div className="bg-primaryYellow-0/10 border border-primaryYellow-0 rounded-lg p-4">
                 <p className="text-primaryYellow-0 text-[13px] font-[600] mb-2">
-                  Your course is live! A few files just need another try:
+                  {t("Your course is live! A few files just need another try:")}
                 </p>
                 <ul className="text-textSlightDark-0 text-[12px] list-disc pl-4 space-y-1">
                   {uploadWarnings.map((warning, i) => (
@@ -1423,7 +1425,7 @@ export default function DashboardTutorCreateCourse({
                     <TbCancel size={24} color="#DA0E29" />
                   </span>
                   <p className="text-[#DA0E29] text-[13px] flex-1">
-                    {errorMessage || "We hit a snag. Please try again — your details are still here, ready to go."}
+                    {errorMessage || t("We hit a snag. Please try again — your details are still here, ready to go.")}
                   </p>
                   <span
                     onClick={() => setShowError(false)}
@@ -1443,7 +1445,7 @@ export default function DashboardTutorCreateCourse({
               >
                 <div className="bg-secondaryColors-0 p-6 rounded-lg max-w-md w-full">
                   <h3 className="text-lg font-semibold mb-2">
-                    {isEditMode ? "Updating Course..." : "Uploading Course..."}
+                    {isEditMode ? t("Updating Course...") : t("Uploading Course...")}
                   </h3>
                   <div className="w-full h-2 bg-secondaryColors-0 rounded-full mb-2">
                     <div
@@ -1452,7 +1454,7 @@ export default function DashboardTutorCreateCourse({
                     ></div>
                   </div>
                   <p className="text-sm text-gray-600 mb-1">
-                    {uploadProgress}% Complete
+                    {uploadProgress}% {t("Complete")}
                   </p>
                   {uploadStatus && (
                     <p className="text-xs text-gray-500 truncate">
@@ -1466,7 +1468,7 @@ export default function DashboardTutorCreateCourse({
             {showCourse && (
               <>
                 <SubHeader
-                  header={isEditMode ? "Edit Course" : "Create Course"}
+                  header={isEditMode ? t("Edit Course") : t("Create Course")}
                   backFunction={backToCourse}
                 />
                 <div className="dashboard_content_mainbox overflow-x-hidden">
@@ -1497,7 +1499,7 @@ export default function DashboardTutorCreateCourse({
                         onClick={prevStep}
                         disabled={isUploading}
                       >
-                        Back
+                        {t("Back")}
                       </button>
                       {step < totalSteps - 1 ? (
                         <button
@@ -1506,7 +1508,7 @@ export default function DashboardTutorCreateCourse({
                           onClick={nextStep}
                           disabled={isUploading}
                         >
-                          Next <FaArrowRight />
+                          {t("Next")} <FaArrowRight />
                         </button>
                       ) : (
                         <button
@@ -1516,11 +1518,11 @@ export default function DashboardTutorCreateCourse({
                         >
                           {isUploading
                             ? isEditMode
-                              ? "Updating Course..."
-                              : "Creating Course..."
+                              ? t("Updating Course...")
+                              : t("Creating Course...")
                             : isEditMode
-                              ? "Update Course"
-                              : "Create Course"}
+                              ? t("Update Course")
+                              : t("Create Course")}
                         </button>
                       )}
                     </div>

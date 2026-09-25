@@ -25,6 +25,11 @@ const GoogleSignInButton = ({
   const router = useRouter();
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Once the timeout banner has shown, a same-flow success/failure that
+  // resolves late shouldn't also trigger the page-level error banner —
+  // that's the "two messages for one event" complaint. A late success still
+  // goes ahead (no reason to punish someone who did eventually finish).
+  const timedOutRef = useRef<boolean>(false);
 
   useEffect(() => {
     return () => {
@@ -36,10 +41,14 @@ const GoogleSignInButton = ({
 
   const handleClick = async () => {
     setTimeoutError(null);
-    
+    timedOutRef.current = false;
+
+    // A single, calm message scoped to this button — not also routed through
+    // onError's page-level banner, which used to show a second, near-
+    // identical error for the exact same event.
     timeoutRef.current = setTimeout(() => {
-      setTimeoutError("Google sign-in is taking too long. Please check your internet connection and try again.");
-      onError("Google sign-in is taking too long. Please check your internet connection and try again.");
+      timedOutRef.current = true;
+      setTimeoutError("This is taking longer than usual. You can keep waiting, or try again.");
     }, 20000);
 
     try {
@@ -48,6 +57,19 @@ const GoogleSignInButton = ({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
+      }
+
+      // Resolved after all, even though the timeout banner already showed —
+      // clear it and let a genuine success/cancel proceed normally instead
+      // of leaving a stale "taking too long" message on screen.
+      if (timedOutRef.current) {
+        setTimeoutError(null);
+      }
+
+      if (result?.cancelled) {
+        // The user closed the popup themselves — a normal choice, not an
+        // error. No banner, just let them try again whenever they want.
+        return;
       }
 
       if (result?.success) {
@@ -137,8 +159,8 @@ const GoogleSignInButton = ({
   return (
     <div className="w-full">
       {timeoutError && (
-        <div className="mb-3 p-3 bg-red-500/10 border border-red-500 rounded-lg text-red-500 text-sm text-center">
-          ⚠️ {timeoutError}
+        <div className="mb-3 p-3 bg-primaryColors-0/10 border border-primaryColors-0/40 rounded-lg text-primaryColors-0 text-sm text-center">
+          {timeoutError}
         </div>
       )}
       <button

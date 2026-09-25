@@ -20,6 +20,7 @@ import { v4 as uuidv4 } from "uuid";
 import { io, Socket } from "socket.io-client";
 import { FaArrowLeft } from "react-icons/fa6";
 import { AnimatePresence, motion } from "framer-motion";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Message {
   id: string;
@@ -49,6 +50,7 @@ interface ChatUser {
 }
 
 export default function ChatRoom({ clientId, onClose }: Props) {
+  const { t } = useI18n();
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageInput, setMessageInput] = useState<string>("");
   const [chatUser, setChatUser] = useState<ChatUser | null>(null);
@@ -261,7 +263,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === data.id
-            ? { ...msg, text: "This message was deleted", isDeleted: true }
+            ? { ...msg, text: t("This message was deleted"), isDeleted: true }
             : msg
         )
       );
@@ -314,7 +316,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
             text: replyingTo.text.substring(0, 80),
             senderName:
               replyingTo.senderId === currentUserId
-                ? "You"
+                ? t("You")
                 : `${chatUser?.first_name}`,
             senderId: replyingTo.senderId,
           }
@@ -365,7 +367,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
     setMessages((prev) =>
       prev.map((msg) =>
         msg.id === selectedMessage.id
-          ? { ...msg, text: "This message was deleted", isDeleted: true }
+          ? { ...msg, text: t("This message was deleted"), isDeleted: true }
           : msg
       )
     );
@@ -380,7 +382,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
 
   // Clear chat
   const handleClearChat = async () => {
-    if (!confirm(`Clear all messages with ${chatUser?.first_name}?`)) return;
+    if (!confirm(`${t("Clear all messages with")} ${chatUser?.first_name}?`)) return;
 
     setMessages([]);
     socketRef.current?.emit("private:clear", { receiverId: clientId });
@@ -436,7 +438,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
   const formatTime = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    if (diff < 60000) return "Just now";
+    if (diff < 60000) return t("Just now");
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
     if (diff < 86400000)
       return date.toLocaleTimeString([], {
@@ -447,13 +449,13 @@ export default function ChatRoom({ clientId, onClose }: Props) {
   };
 
   const formatLastSeen = (lastActive: string) => {
-    if (!lastActive) return "Offline";
+    if (!lastActive) return t("Offline");
     const date = new Date(lastActive);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    if (diff < 60000) return "Last seen just now";
-    if (diff < 3600000) return `Last seen ${Math.floor(diff / 60000)}m ago`;
-    return `Last seen ${date.toLocaleTimeString([], {
+    if (diff < 60000) return t("Last seen just now");
+    if (diff < 3600000) return `${t("Last seen")} ${Math.floor(diff / 60000)}m ${t("ago")}`;
+    return `${t("Last seen")} ${date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     })}`;
@@ -474,7 +476,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
         >
           <img
             src={user.user_pic}
-            alt="avatar"
+            alt={t("avatar")}
             className="h-full w-full object-cover"
           />
         </div>
@@ -501,8 +503,8 @@ export default function ChatRoom({ clientId, onClose }: Props) {
 
   const getReplySenderName = (replyTo: Message["replyTo"]) => {
     if (!replyTo) return "";
-    if (replyTo.senderId === currentUserId) return "You";
-    if (replyTo.senderId === clientId) return chatUser?.first_name || "User";
+    if (replyTo.senderId === currentUserId) return t("You");
+    if (replyTo.senderId === clientId) return chatUser?.first_name || t("User");
     return replyTo.senderName;
   };
 
@@ -598,20 +600,20 @@ export default function ChatRoom({ clientId, onClose }: Props) {
                   onClick={handleEditMessage}
                   className="text-xs bg-white/20 px-2 py-1 rounded"
                 >
-                  Save
+                  {t("Save")}
                 </button>
                 <button
                   onClick={() => setEditingMessage(null)}
                   className="text-xs bg-white/20 px-2 py-1 rounded"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
               </div>
             ) : (
               <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
                 {msg.text}
                 {msg.isEdited && !msg.isDeleted && (
-                  <span className="text-xs ml-1 opacity-60">(edited)</span>
+                  <span className="text-xs ml-1 opacity-60">({t("edited")})</span>
                 )}
               </p>
             )}
@@ -653,7 +655,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
               <h1 className="font-semibold text-textSlightDark-0 text-[14px] sm:text-[15px]">
                 {chatUser
                   ? `${chatUser.first_name} ${chatUser.last_name}`
-                  : "Loading..."}
+                  : t("Loading...")}
               </h1>
               <div className="flex items-center gap-1.5">
                 <span
@@ -663,7 +665,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
                 />
                 <p className="text-[0.6rem] sm:text-[0.68rem] text-nearTextColors-0">
                   {chatUser?.isOnline
-                    ? "Online"
+                    ? t("Online")
                     : formatLastSeen(chatUser?.lastActive || "")}
                 </p>
               </div>
@@ -692,7 +694,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
                     onClick={handleClearChat}
                     className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
                   >
-                    <BsTrash size={16} /> Clear Chat
+                    <BsTrash size={16} /> {t("Clear Chat")}
                   </button>
                 </motion.div>
               )}
@@ -712,9 +714,9 @@ export default function ChatRoom({ clientId, onClose }: Props) {
           >
             <div className="flex-1">
               <p className="text-xs font-medium text-primaryColors-0">
-                Replying to{" "}
+                {t("Replying to")}{" "}
                 {replyingTo.senderId === currentUserId
-                  ? "yourself"
+                  ? t("yourself")
                   : chatUser?.first_name}
               </p>
               <p className="text-xs sm:text-sm text-gray-400 line-clamp-1">
@@ -739,16 +741,16 @@ export default function ChatRoom({ clientId, onClose }: Props) {
         {isLoadingMessages ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
             <div className="h-6 w-6 rounded-full border-2 border-gray-300 border-t-primaryColors-0 animate-spin" />
-            <p className="text-xs">Loading messages...</p>
+            <p className="text-xs">{t("Loading messages...")}</p>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 gap-2">
             <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gray-100 flex items-center justify-center">
               <BiSend className="text-gray-300" size={18} />
             </div>
-            <p className="text-xs sm:text-sm font-medium">No messages yet</p>
+            <p className="text-xs sm:text-sm font-medium">{t("No messages yet")}</p>
             <p className="text-xs">
-              Say hi to {chatUser ? chatUser.first_name : "them"}!
+              {t("Say hi to")} {chatUser ? chatUser.first_name : t("them")}!
             </p>
           </div>
         ) : (
@@ -763,7 +765,7 @@ export default function ChatRoom({ clientId, onClose }: Props) {
           <div className="relative w-full">
             <input
               type="text"
-              placeholder={`Message ${chatUser?.first_name || ""}...`}
+              placeholder={`${t("Message")} ${chatUser?.first_name || ""}...`}
               className="bg-primaryColors-0/5 rounded-full h-[42px] sm:h-[48px] w-full border-none outline-none pl-4 sm:pl-5 pr-12 sm:pr-14 text-sm"
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
@@ -800,19 +802,19 @@ export default function ChatRoom({ clientId, onClose }: Props) {
               onClick={startEditing}
               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
             >
-              <BiEdit size={16} /> Edit
+              <BiEdit size={16} /> {t("Edit")}
             </button>
             <button
               onClick={() => selectedMessage && handleReply(selectedMessage)}
               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
             >
-              <BsReply size={14} /> Reply
+              <BsReply size={14} /> {t("Reply")}
             </button>
             <button
               onClick={handleDeleteMessage}
               className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
             >
-              <BiTrash size={16} /> Delete
+              <BiTrash size={16} /> {t("Delete")}
             </button>
           </motion.div>
         )}

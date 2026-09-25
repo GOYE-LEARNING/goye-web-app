@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 /**
  * Shared chart primitives.
@@ -124,11 +125,12 @@ export function DonutChart({
   dark: boolean;
   centerLabel?: string;
 }) {
+  const { t } = useI18n();
   const [hover, setHover] = useState<number | null>(null);
   const total = data.reduce((s, d) => s + d.value, 0);
 
   if (total === 0) {
-    return <p className="text-textGrey-0 text-sm text-center py-10">No data yet</p>;
+    return <p className="text-textGrey-0 text-sm text-center py-10">{t("No data yet")}</p>;
   }
 
   const size = 180;
@@ -153,7 +155,7 @@ export function DonutChart({
         viewBox={`0 0 ${size} ${size}`}
         className="w-[180px] h-[180px] flex-shrink-0"
         role="img"
-        aria-label={`Donut chart: ${data.map((d) => `${d.label} ${d.value}`).join(", ")}`}
+        aria-label={`${t("Donut chart")}: ${data.map((d) => `${d.label} ${d.value}`).join(", ")}`}
         onMouseLeave={() => setHover(null)}
       >
         {segments.map((s) => (
@@ -182,7 +184,7 @@ export function DonutChart({
           className="fill-textGrey-0"
           style={{ fontSize: 10 }}
         >
-          {active ? active.label : centerLabel || "total"}
+          {active ? active.label : centerLabel || t("total")}
         </text>
       </svg>
 
@@ -224,6 +226,7 @@ export interface Series {
  * A single series gets an area wash; multiple series get a legend instead.
  */
 export function LineChart({ series, height = 200 }: { series: Series[]; height?: number }) {
+  const { t } = useI18n();
   const [hover, setHover] = useState<number | null>(null);
   const width = 640;
   const padL = 8;
@@ -248,7 +251,7 @@ export function LineChart({ series, height = 200 }: { series: Series[]; height?:
     new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
   if (dates.length === 0) {
-    return <p className="text-textGrey-0 text-sm text-center py-10">No data yet</p>;
+    return <p className="text-textGrey-0 text-sm text-center py-10">{t("No data yet")}</p>;
   }
 
   return (
@@ -268,7 +271,7 @@ export function LineChart({ series, height = 200 }: { series: Series[]; height?:
         className="w-full"
         style={{ height }}
         role="img"
-        aria-label={`Line chart of ${series.map((s) => s.name).join(" and ")} over time`}
+        aria-label={`${t("Line chart of")} ${series.map((s) => s.name).join(" and ")} ${t("over time")}`}
         onMouseLeave={() => setHover(null)}
       >
         <defs>
@@ -368,9 +371,10 @@ export function BarChart({
   height?: number;
   singleHue?: string;
 }) {
+  const { t } = useI18n();
   const [hover, setHover] = useState<number | null>(null);
   if (data.length === 0) {
-    return <p className="text-textGrey-0 text-sm text-center py-8">No data yet</p>;
+    return <p className="text-textGrey-0 text-sm text-center py-8">{t("No data yet")}</p>;
   }
   const max = Math.max(1, ...data.map((d) => d.value));
 
@@ -414,15 +418,16 @@ export function HorizontalBars({
   data,
   dark,
   labelWidth = 140,
-  emptyMessage = "No data yet",
+  emptyMessage,
 }: {
   data: { label: string; value: number }[];
   dark: boolean;
   labelWidth?: number;
   emptyMessage?: string;
 }) {
+  const { t } = useI18n();
   if (data.length === 0) {
-    return <p className="text-textGrey-0 text-sm text-center py-8">{emptyMessage}</p>;
+    return <p className="text-textGrey-0 text-sm text-center py-8">{emptyMessage ? t(emptyMessage) : t("No data yet")}</p>;
   }
   const sorted = [...data].sort((a, b) => b.value - a.value);
   const max = Math.max(1, ...sorted.map((d) => d.value));
@@ -459,7 +464,7 @@ export function HorizontalBars({
 export function ProgressRing({
   value,
   total,
-  label = "completed",
+  label,
   caption,
   color = "#30A46F",
 }: {
@@ -469,6 +474,8 @@ export function ProgressRing({
   caption?: string;
   color?: string;
 }) {
+  const { t } = useI18n();
+  const displayLabel = label ? t(label) : t("completed");
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   const r = 52;
   const circ = 2 * Math.PI * r;
@@ -477,7 +484,7 @@ export function ProgressRing({
   return (
     <div className="flex flex-col items-center justify-center h-full gap-2">
       <div className="relative w-[130px] h-[130px]">
-        <svg viewBox="0 0 130 130" className="w-full h-full -rotate-90" role="img" aria-label={`${pct}% ${label}`}>
+        <svg viewBox="0 0 130 130" className="w-full h-full -rotate-90" role="img" aria-label={`${pct}% ${displayLabel}`}>
           <circle cx="65" cy="65" r={r} fill="none" stroke="currentColor" className="text-[#ccc]/15" strokeWidth={12} />
           <circle
             cx="65"
@@ -494,7 +501,7 @@ export function ProgressRing({
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[28px] font-[700] text-lightBoldText-0-0 dark:text-white tabular-nums">{pct}%</span>
-          <span className="text-[11px] text-textGrey-0">{label}</span>
+          <span className="text-[11px] text-textGrey-0">{displayLabel}</span>
         </div>
       </div>
       {caption && <p className="text-[12px] text-textGrey-0 text-center">{caption}</p>}

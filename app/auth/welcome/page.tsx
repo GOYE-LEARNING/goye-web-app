@@ -11,8 +11,21 @@ import pic5 from "@/public/images/pic5.png";
 import pic6 from "@/public/images/pic6.png";
 import pic7 from "@/public/images/pic7.png";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { hasVerifiedOtp } from "@/app/utils/signupFlowGuard";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function WelcomeAuth() {
+  const router = useRouter();
+  const { t } = useI18n();
+
+  // Block direct URL access — this step is only reachable after OTP verification.
+  useEffect(() => {
+    if (!hasVerifiedOtp()) {
+      router.replace("/auth");
+    }
+  }, [router]);
+
   const pics = [
     { pic: pic1 },
     { pic: pic2 },
@@ -22,17 +35,16 @@ export default function WelcomeAuth() {
     { pic: pic6 },
     { pic: pic7 },
   ];
-  const router = useRouter();
   return (
     <>
       <div className="flex justify-center items-center flex-col">
         <div className="form_container">
           <div className="flex justify-center items-center flex-col  md:mt-0 md:my-[1rem] my-[7rem] w-full">
             <h1 className="md:form_h1 font-semibold text-[40px] text-center dark:text-textSlightDark-0 text-lightBoldText-0">
-              Welcome to your new <br /> experience.
+              {t("Welcome to your new")} <br /> {t("experience.")}
             </h1>
             <p className="md:form_p text-[#41415A]  text-center my-7">
-              Grow deeper, walk stronger.
+              {t("Grow deeper, walk stronger.")}
             </p>
           </div>
           <div className=" flex justify-center items-center w-full">
@@ -48,7 +60,7 @@ export default function WelcomeAuth() {
                 >
                   <Image
                     src={pic.pic}
-                    alt="pics"
+                    alt={t("pics")}
                     className="h-[74.51px] w-[74.51px] object-cover"
                   />
                 </div>
@@ -61,7 +73,7 @@ export default function WelcomeAuth() {
               router.push("./welcome/auth");
             }}
           >
-            Continue
+            {t("Continue")}
           </span>
         </div>
       </div>

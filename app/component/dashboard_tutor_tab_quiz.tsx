@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { BiPlus } from "react-icons/bi";
 import { CiCircleQuestion, CiClock2 } from "react-icons/ci";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 interface Props {
   viewQuiz: () => void;
   openAddQuiz: () => void;
@@ -24,6 +25,7 @@ export default function DashboardTutorTabQuiz({
   openAddQuiz,
   courseId,
 }: Props) {
+  const { t } = useI18n();
   const [quizDetails, setQuizDetails] = useState<Quiz[]>([]);
   const [isloading, setIsLoading] = useState<boolean>(false);
   useEffect(() => {
@@ -59,13 +61,13 @@ export default function DashboardTutorTabQuiz({
       <div className="w-full gap-3">
         <div className="flex justify-between items-center">
           <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[700] text-[18px] my-5">
-            All Quizzes
+            {t("All Quizzes")}
           </h1>
           <button
             className="text-[13px] flex items-center gap-2 font-semibold text-primaryColors-0"
             onClick={openAddQuiz}
           >
-            <BiPlus /> Add Quiz
+            <BiPlus /> {t("Add Quiz")}
           </button>
         </div>
         {!isloading ? (
@@ -80,17 +82,17 @@ export default function DashboardTutorTabQuiz({
                   <p className="flex gap-4">
                     <span className="flex items-center text-[14px] text-[#71748C] gap-2">
                       <CiCircleQuestion size={15} /> {q.questions.length}{" "}
-                      questions
+                      {t("questions")}
                     </span>
                     <span className="flex items-center text-[14px] text-[#71748C] gap-2">
-                      <CiClock2 size={15} /> {q.duration}min
+                      <CiClock2 size={15} /> {q.duration}{t("min")}
                     </span>
                   </p>
                   <button
                     className="form_more font-semibold bg-lightWhite-0 dark:bg-shadyColor-0 border border-[#ccc]/10 text-primaryColors-0"
                     onClick={viewQuiz}
                   >
-                    View Quiz
+                    {t("View Quiz")}
                   </button>
                 </div>
                 <div className="dashboard_hr"></div>

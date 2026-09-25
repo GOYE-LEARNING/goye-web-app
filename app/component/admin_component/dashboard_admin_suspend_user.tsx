@@ -5,7 +5,9 @@ interface Props {
 }
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useI18n } from "@/app/context/I18nContext";
 export default function SuspendUserModal({ cancelFunc, removeUser }: Props) {
+  const { t } = useI18n();
   return (
     <>
       <div className="fixed top-0 left-0 min-h-[100vh] min-w-[100vw] z-50 bg-[#00000033] flex justify-center items-center">
@@ -26,19 +28,19 @@ export default function SuspendUserModal({ cancelFunc, removeUser }: Props) {
             </div>
             <div className="mt-[40px] flex items-start flex-col gap-[5px]">
               <h1 className="text-[24px] text-textSlightDark-0 font-bold">
-                Remove User
+                {t("Remove User")}
               </h1>
               <p className="text-[#41415A] text-[14px]">
-                Are you sure you want to switch to remove Alex Buckmaster?
+                {t("Are you sure you want to switch to remove Alex Buckmaster?")}
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-2 mt-[30px]">
               <button className="form_more bg-[#DA0E29] text-white" onClick={removeUser}>
-                Remove
+                {t("Remove")}
               </button>
               <button className="form_more bg-[#F5F5F5] text-[#41415A] ">
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </motion.div>

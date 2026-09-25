@@ -3,7 +3,7 @@
 import DashboardNotificationSettings from "@/app/component/dashboard_notification_settings_consolidated";
 import DashboardChangeLanguage from "@/app/component/dashboard_change_language";
 import DashboardEditProfile from "@/app/component/dashboard_editprofile";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import React, { useEffect, useState, useCallback } from "react";
 import { HiUserCircle } from "react-icons/hi";
 import { IoIosAddCircle, IoMdGlobe } from "react-icons/io";
@@ -15,9 +15,11 @@ import {
   MdSecurity,
 } from "react-icons/md";
 import { useAPIErrorHandler } from "@/app/hook/useAPIErrorHandler";
+import { useAuthContext } from "@/app/context/AuthContext";
 import api from "@/app/lib/api-client";
 import { APIErrorDisplay } from "@/app/component/APIErrorDisplay";
 import DashboardChangePassword from "@/app/auth/dashboard_change_password";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Church {
   church_min_name?: string;
@@ -84,11 +86,11 @@ interface User {
 }
 
 export default function OrgAdminProfile() {
+  const { t } = useI18n();
   const [showProfile, setShowProfile] = useState<boolean>(true);
   const [file, setFile] = useState<File | null>(null);
   const [profilePic, setProfilePic] = useState<string>("");
   const params = useParams<{ org_name: string }>();
-  const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const [details, setDetails] = useState<Details>({
@@ -122,25 +124,7 @@ export default function OrgAdminProfile() {
   // Use the error handler
   const { errorState, clearError, handleError, isError } = useAPIErrorHandler();
 
-  const logout = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/user/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        return;
-      }
-
-      const data = await res.json();
-      router.push("/");
-      console.log(data);
-    } catch (error) {
-      console.error(error);
-      handleError(error);
-    }
-  };
+  const { logout } = useAuthContext();
 
   const handleClickPage = (
     tab: "edit" | "password" | "notification" | "language",
@@ -224,7 +208,7 @@ export default function OrgAdminProfile() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Upload failed");
+        throw new Error(data.message || t("Upload failed"));
       }
 
       console.log("Upload success:", data);
@@ -261,7 +245,7 @@ export default function OrgAdminProfile() {
 
       {showProfile && (
         <div className="flex flex-col w-full">
-          <h1 className="dashboard_h1">Profile</h1>
+          <h1 className="dashboard_h1">{t("Profile")}</h1>
           <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] w-full my-5">
             <div className="flex justify-center items-center flex-col">
               <label className="relative cursor-pointer">
@@ -275,7 +259,7 @@ export default function OrgAdminProfile() {
                 {profilePic ? (
                   <img
                     src={profilePic}
-                    alt="Profile"
+                    alt={t("Profile")}
                     className="h-[130px] w-[130px] object-cover rounded-full"
                   />
                 ) : (
@@ -295,20 +279,20 @@ export default function OrgAdminProfile() {
             <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px] flex flex-col gap-3">
               <div className="flex justify-between items-center">
                 <p className="dark:text-white text-lightBoldText-0 text-[14px]">
-                  Email
+                  {t("Email")}
                 </p>
                 <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
-                    details.organization_email || "N/A"
+                    details.organization_email || t("N/A")
                   )}
                 </span>
               </div>
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
                 <p className="dark:text-white text-lightBoldText-0 text-[14px]">
-                  Phone Number
+                  {t("Phone Number")}
                 </p>
                 <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
@@ -321,15 +305,15 @@ export default function OrgAdminProfile() {
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
                 <p className="dark:text-white text-lightBoldText-0 text-[14px]">
-                  Location
+                  {t("Location")}
                 </p>
                 <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
                     <div className="animate-spin h-[20px] w-[20px] bg-transparent border-2 border-t-primaryColors-0 border-r-white border-b-white border-l-white rounded-full"></div>
                   ) : (
                     <div>
-                      {details.organization_state || "N/A"},{" "}
-                      {details.organization_country || "N/A"}
+                      {details.organization_state || t("N/A")},{" "}
+                      {details.organization_country || t("N/A")}
                     </div>
                   )}
                 </span>
@@ -347,10 +331,10 @@ export default function OrgAdminProfile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
-                      Profile
+                      {t("Profile")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      Edit personal information
+                      {t("Edit personal information")}
                     </p>
                   </div>
                 </div>
@@ -368,10 +352,10 @@ export default function OrgAdminProfile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
-                      Password
+                      {t("Password")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      Last changed 1 day ago
+                      {t("Last changed 1 day ago")}
                     </p>
                   </div>
                 </div>
@@ -389,10 +373,10 @@ export default function OrgAdminProfile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
-                      Notifications
+                      {t("Notifications")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      Manage in-app and email notifications
+                      {t("Manage in-app and email notifications")}
                     </p>
                   </div>
                 </div>
@@ -410,10 +394,10 @@ export default function OrgAdminProfile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
-                      Language
+                      {t("Language")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      English
+                      {t("English")}
                     </p>
                   </div>
                 </div>
@@ -425,7 +409,7 @@ export default function OrgAdminProfile() {
                 className="text-[#DA0E29] border border-[#ccc]/20 h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px] hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 onClick={logout}
               >
-                <MdLogout /> Logout
+                <MdLogout /> {t("Logout")}
               </button>
             </div>
           </div>

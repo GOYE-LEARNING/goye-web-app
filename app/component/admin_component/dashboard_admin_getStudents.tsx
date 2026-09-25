@@ -1,7 +1,10 @@
 "use client"
 
+import { useI18n } from "@/app/context/I18nContext"
+
 export default function AdminGetStudent () {
+    const { t } = useI18n()
     return (
-        <div>Student</div>
+        <div>{t("Student")}</div>
     )
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Loader from "@/app/component/loader";
+import { useI18n } from "@/app/context/I18nContext";
 import { formatDistanceToNow } from "date-fns";
 import {
   HiOutlineUserAdd,
@@ -31,6 +32,7 @@ const ACTIVITY_COLOR: Record<ActivityItem["type"], string> = {
 };
 
 export default function SuperAdminActivity() {
+  const { t } = useI18n();
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,7 +41,7 @@ export default function SuperAdminActivity() {
     const fetchActivity = async () => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       if (!API_URL) {
-        setError("API URL not configured");
+        setError(t("API URL not configured"));
         setIsLoading(false);
         return;
       }
@@ -52,7 +54,7 @@ export default function SuperAdminActivity() {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          setError(data.message || "Failed to load platform activity");
+          setError(data.message || t("Failed to load platform activity"));
           setIsLoading(false);
           return;
         }
@@ -60,7 +62,7 @@ export default function SuperAdminActivity() {
         setActivity(data.data || []);
       } catch (err) {
         console.error("Error fetching platform activity:", err);
-        setError("We couldn't reach the server. Please try again.");
+        setError(t("We couldn't reach the server. Please try again."));
       } finally {
         setIsLoading(false);
       }
@@ -71,9 +73,9 @@ export default function SuperAdminActivity() {
 
   return (
     <div className="w-full">
-      <h1 className="dashboard_h1">Platform Activity</h1>
+      <h1 className="dashboard_h1">{t("Platform Activity")}</h1>
       <p className="text-textGrey-0 text-[13px] mb-4">
-        The most recent signups, organizations, and courses across GOYE.
+        {t("The most recent signups, organizations, and courses across GOYE.")}
       </p>
 
       {isLoading ? (
@@ -88,7 +90,7 @@ export default function SuperAdminActivity() {
       ) : activity.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2">
           <HiOutlineClock className="text-3xl text-textGrey-0" />
-          <p className="text-textGrey-0 text-sm">No recent activity yet</p>
+          <p className="text-textGrey-0 text-sm">{t("No recent activity yet")}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-1">

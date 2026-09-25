@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { SocketProvider } from "@/app/context/SocketContext";
 import { useAuthContext } from "@/app/context/AuthContext";
 import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
+import { useI18n } from "@/app/context/I18nContext";
 
 // ✅ Helper to get cookie
 function getCookie(name: string): string | null {
@@ -43,6 +44,7 @@ export default function OrgAdminDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   const params = useParams<{ org_name: string }>();
   const { authStatus } = useAuthContext();
   const { setOrganizationId, organizationId } = useOrganizationContext();
@@ -206,7 +208,7 @@ export default function OrgAdminDashboardLayout({
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-2 text-gray-500">Loading organization data...</p>
+          <p className="mt-2 text-gray-500">{t("Loading organization data...")}</p>
         </div>
       </div>
     );
@@ -234,7 +236,7 @@ export default function OrgAdminDashboardLayout({
             <DashboardHeader />
             <div
               className={`w-full flex md:justify-center md:items-center flex-col md:px-0 md:py-0 md:rounded-none rounded-tr-xl rounded-tl-xl
-           h-[90%] md:h-auto md:static absolute bottom-0 left-0 overflow-y-auto scrollbar2 pb-[3.5rem] md:px-0 px-[1.3rem] md:pb-0 md:mb-5`}
+           h-[90%] md:h-auto md:static absolute bottom-0 left-0 overflow-y-auto scrollbar2 pb-[3.5rem] md:px-0 px-3 md:pb-0 md:mb-5`}
             >
               <div className="flex justify-center items-center w-full">
                 <div className="md:max-w-[707px] relative w-full max-w-full min-w-0 mt-[1.3rem] flex justify-center items-center">

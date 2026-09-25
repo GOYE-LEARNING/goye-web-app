@@ -3,6 +3,7 @@
 import { FaCheckCircle } from "react-icons/fa";
 import confetti from "canvas-confetti";
 import { motion } from "framer-motion";
+import { useI18n } from "@/app/context/I18nContext";
 interface Props {
   close: () => void;
   backToCourse: () => void;
@@ -20,6 +21,7 @@ export default function DashboardPop({
   paragraph,
   buttonFunc
 }: Props) {
+  const { t } = useI18n();
   confetti({
     particleCount: 25,
     spread: 80,
@@ -57,7 +59,7 @@ export default function DashboardPop({
               className="form_more bg-shadyColor-0 text-primaryColors-0"
               onClick={backToCourse}
             >
-              Back to Course
+              {t("Back to Course")}
             </button>
           </div>
         </motion.div>

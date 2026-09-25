@@ -8,12 +8,14 @@ import { SocketProvider } from "@/app/context/SocketContext";
 import { useAuthContext } from "@/app/context/AuthContext";
 import ProgressProvider from "@/app/context/progressContext";
 import QuizProvider from "@/app/context/quizContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function InvitedUserDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   const { authStatus } = useAuthContext();
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export default function InvitedUserDashboardLayout({
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-2 text-gray-500">Loading user data...</p>
+          <p className="mt-2 text-gray-500">{t("Loading user data...")}</p>
         </div>
       </div>
     );
@@ -96,7 +98,7 @@ export default function InvitedUserDashboardLayout({
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500">Unable to load user data. Please try logging in again.</p>
+          <p className="text-gray-500">{t("Unable to load user data. Please try logging in again.")}</p>
         </div>
       </div>
     );

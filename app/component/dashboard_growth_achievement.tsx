@@ -5,6 +5,7 @@ import { SlBadge } from "react-icons/sl";
 import { FaMedal, FaStar, FaTrophy, FaAward } from "react-icons/fa";
 import { GiPrayer, GiAchievement } from "react-icons/gi";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Achievement {
   id: string;
@@ -66,18 +67,20 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// Helper to get achievement description
-const getAchievementDescription = (achievement: Achievement) => {
-  if (achievement.course) {
-    return `Completed course: ${achievement.course.course_title}`;
-  }
-  if (achievement.group) {
-    return `Achievement in group: ${achievement.group.group_title}`;
-  }
-  return achievement.content || "Achievement unlocked";
-};
-
 export default function DashboardGrowthAchievement() {
+  const { t } = useI18n();
+
+  // Helper to get achievement description
+  const getAchievementDescription = (achievement: Achievement) => {
+    if (achievement.course) {
+      return `${t("Completed course:")} ${achievement.course.course_title}`;
+    }
+    if (achievement.group) {
+      return `${t("Achievement in group:")} ${achievement.group.group_title}`;
+    }
+    return achievement.content || t("Achievement unlocked");
+  };
+
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [summary, setSummary] = useState<AchievementData["summary"] | null>(
     null,
@@ -99,7 +102,7 @@ export default function DashboardGrowthAchievement() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch achievements");
+        throw new Error(data.message || t("Failed to fetch achievements"));
       }
 
       console.log("Achievements data:", data);
@@ -107,7 +110,7 @@ export default function DashboardGrowthAchievement() {
       setSummary(data.data?.summary || null);
     } catch (error) {
       console.error("Error fetching achievements:", error);
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : t("An error occurred"));
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +148,7 @@ export default function DashboardGrowthAchievement() {
               onClick={fetchAchievements}
               className="mt-4 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primaryColors-0/90 text-sm"
             >
-              Try Again
+              {t("Try Again")}
             </button>
           </div>
         </div>
@@ -159,10 +162,10 @@ export default function DashboardGrowthAchievement() {
         <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[16px] text-center">
           <SlBadge className="w-12 h-12 text-gray-400 mx-auto mb-3" />
           <h3 className="font-semibold text-gray-600 dark:text-gray-400">
-            No Achievements Yet
+            {t("No Achievements Yet")}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-            Complete courses and lessons to earn achievements!
+            {t("Complete courses and lessons to earn achievements!")}
           </p>
         </div>
       </div>
@@ -189,7 +192,7 @@ export default function DashboardGrowthAchievement() {
                 {getAchievementDescription(achievement)}
               </h2>
               <p className="text-[#30A46F] text-[12px] font-[600]">
-                Earned {formatDate(achievement.createdAt)}
+                {t("Earned")} {formatDate(achievement.createdAt)}
               </p>
             </div>
           </div>

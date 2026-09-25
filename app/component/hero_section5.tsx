@@ -2,10 +2,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 
 import Image from "next/image";
-import { BiLogoPlayStore } from "react-icons/bi";
-import { FaApple } from "react-icons/fa";
 import pic1 from "@/public/images/bigframe8.png";
+import { useI18n } from "@/app/context/I18nContext";
+import InstallPwaPrompt from "@/app/component/InstallPwaPrompt";
 export default function HeroSecton5() {
+  const { t } = useI18n();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -49,36 +50,27 @@ export default function HeroSecton5() {
                 variants={itemVariants as any}
                 className="uppercase font-bold mt-[40px] text-[13px] tracking-wide dark:text-textSlightDark-0 text-lightBoldText-0/60"
               >
-                Available on Mobile
+                {t("Available on Mobile")}
               </motion.p>
               <motion.h1
                 variants={itemVariants as any}
                 className="font-medium md:text-[48px] text-[30px] text-primaryColors-0"
               >
-                Stay connected with your discipleship journey anytime, anywhere
+                {t("Stay connected with your discipleship journey anytime, anywhere")}
               </motion.h1>
-              <div className="flex items-center gap-3 mb-9">
-                <motion.button
-                  variants={itemVariants as any}
-                  className="nav_btn flex items-center justify-center gap-2 md:w-[169px] md:px-0 px-1 dark:bg-secondaryColors-0 bg-white border border-[#B7BAD2]/10 rounded-[6px]"
-                >
-                  <FaApple />
-                  Get on iPhone
-                </motion.button>
-                <motion.button
-                  variants={itemVariants as any}
-                  className="nav_btn flex items-center justify-center gap-2 md:w-[169px] md:px-0 px-2 dark:bg-secondaryColors-0 bg-white border border-[#B7BAD2]/10 rounded-[6px]"
-                >
-                  <BiLogoPlayStore />
-                  Get on Android
-                </motion.button>
-              </div>
+              {/* These used to be two dead "Get on iPhone" / "Get on Android"
+                  buttons with no link and no store listing behind them —
+                  there is no native app, so they never did anything. GOYE is
+                  a PWA instead: this is the real, working install action. */}
+              <motion.div variants={itemVariants as any} className="mb-9">
+                <InstallPwaPrompt />
+              </motion.div>
             </div>
             <motion.div
               variants={itemVariants as any}
               className="md:w-[35%] w-full  h-full md:absolute bottom-0 md:right-0 right-[20px] flex justify-end items-end flex-col"
             >
-              <Image src={pic1} alt="GOYE mobile app preview" className="h-auto w-full" />
+              <Image src={pic1} alt={t("GOYE mobile app preview")} className="h-auto w-full" />
             </motion.div>
           </motion.div>
         </motion.div>

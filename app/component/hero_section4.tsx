@@ -4,7 +4,9 @@ import { FaCheck } from "react-icons/fa6";
 import pic1 from "@/public/images/bigframe6.png";
 import pic2 from "@/public/images/bigframe7.png";
 import Image from "next/image";
+import { useI18n } from "@/app/context/I18nContext";
 export default function HeroSection4() {
+  const { t } = useI18n();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -31,38 +33,38 @@ export default function HeroSection4() {
     {
       pic: {
         image: (
-          <Image src={pic1} alt="Instructor dashboard preview" className="mt-[4.5rem] w-[80%] h-auto" />
+          <Image src={pic1} alt={t("Instructor dashboard preview")} className="mt-[4.5rem] w-[80%] h-auto" />
         ),
       },
-      header: "Multiply your impact, effortlessly.",
-      p: "Empower others with structured mentorship tools that make discipleship scalable and personal.",
+      header: t("Multiply your impact, effortlessly."),
+      p: t("Empower others with structured mentorship tools that make discipleship scalable and personal."),
       list: {
-        l1: "Create or adapt structured lesson plans",
-        l2: "Assign modules, monitor student progress",
-        l3: "Provide feedback and mentorship online",
-        l4: "Access reports to see spiritual growth over time",
+        l1: t("Create or adapt structured lesson plans"),
+        l2: t("Assign modules, monitor student progress"),
+        l3: t("Provide feedback and mentorship online"),
+        l4: t("Access reports to see spiritual growth over time"),
       },
-      button: "Become an Instructor",
+      button: t("Become an Instructor"),
     },
     {
       pic: {
         image: (
           <Image
             src={pic2}
-            alt="Student growth dashboard preview"
+            alt={t("Student growth dashboard preview")}
             className="mt-[4.5rem] md:w-[80%] w-full h-auto"
           />
         ),
       },
-      header: "Your journey of faith, made simple.",
-      p: "Experience structured spiritual growth with tools designed to help you learn, reflect, and connect.",
+      header: t("Your journey of faith, made simple."),
+      p: t("Experience structured spiritual growth with tools designed to help you learn, reflect, and connect."),
       list: {
-        l1: "Follow a clear discipleship roadmap",
-        l2: "Engage with lessons and guided exercises",
-        l3: "Track your growth through progress dashboards",
-        l4: "Connect with tutors for deeper mentorship",
+        l1: t("Follow a clear discipleship roadmap"),
+        l2: t("Engage with lessons and guided exercises"),
+        l3: t("Track your growth through progress dashboards"),
+        l4: t("Connect with tutors for deeper mentorship"),
       },
-      button: "Start Discipleship Journey",
+      button: t("Start Discipleship Journey"),
     },
   ];
   return (

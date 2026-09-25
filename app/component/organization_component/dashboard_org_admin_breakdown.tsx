@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface BreakdownData {
   total_members: number;
@@ -33,6 +34,7 @@ interface BreakdownData {
 }
 
 export default function DashboardAdminOrgBreakdown() {
+  const { t } = useI18n();
   const params = useParams<{ org_name: string }>();
   const [data, setData] = useState<BreakdownData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,11 +53,11 @@ export default function DashboardAdminOrgBreakdown() {
           }
         );
         
-        if (!orgRes.ok) throw new Error("Failed to fetch organization");
+        if (!orgRes.ok) throw new Error(t("Failed to fetch organization"));
         const orgData = await orgRes.json();
         const organizationId = orgData.data?.id;
-        
-        if (!organizationId) throw new Error("Organization ID not found");
+
+        if (!organizationId) throw new Error(t("Organization ID not found"));
 
         // Fetch user breakdown
         const res = await fetch(
@@ -68,17 +70,17 @@ export default function DashboardAdminOrgBreakdown() {
           }
         );
 
-        if (!res.ok) throw new Error("Failed to fetch user breakdown");
+        if (!res.ok) throw new Error(t("Failed to fetch user breakdown"));
         const result = await res.json();
-        
+
         if (result.success) {
           setData(result.data);
         } else {
-          setError(result.message || "Failed to fetch data");
+          setError(result.message || t("Failed to fetch data"));
         }
       } catch (err) {
         console.error("Error fetching breakdown:", err);
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(err instanceof Error ? err.message : t("An error occurred"));
       } finally {
         setLoading(false);
       }
@@ -93,7 +95,7 @@ export default function DashboardAdminOrgBreakdown() {
     return (
       <div className="dashboard_content_box">
         <h1 className="font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">
-          Users Breakdown
+          {t("Users Breakdown")}
         </h1>
         <div className="flex justify-center py-8">
           <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
@@ -106,7 +108,7 @@ export default function DashboardAdminOrgBreakdown() {
     return (
       <div className="dashboard_content_box">
         <h1 className="font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">
-          Users Breakdown
+          {t("Users Breakdown")}
         </h1>
         <p className="text-red-500 text-center py-4">{error}</p>
       </div>
@@ -117,9 +119,9 @@ export default function DashboardAdminOrgBreakdown() {
     return (
       <div className="dashboard_content_box">
         <h1 className="font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">
-          Users Breakdown
+          {t("Users Breakdown")}
         </h1>
-        <p className="text-gray-500 text-center py-4">No data available</p>
+        <p className="text-gray-500 text-center py-4">{t("No data available")}</p>
       </div>
     );
   }
@@ -128,7 +130,7 @@ export default function DashboardAdminOrgBreakdown() {
     <div className="dashboard_content_box">
       <div className="flex justify-between items-center">
         <h1 className="font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">
-          Users Breakdown
+          {t("Users Breakdown")}
         </h1>
       
       </div>
@@ -138,22 +140,22 @@ export default function DashboardAdminOrgBreakdown() {
             <h1 className="font-bold dark:text-textSlightDark-0 text-lightBoldText-0 text-[18px]">
               {data.total_members}
             </h1>
-            <span className="text-[#71748C] text-[12px]">All Members</span>
+            <span className="text-[#71748C] text-[12px]">{t("All Members")}</span>
             {data.pending_invitations > 0 && (
               <span className="text-[10px] text-orange-500">
-                +{data.pending_invitations} pending
+                +{data.pending_invitations} {t("pending")}
               </span>
             )}
           </div>
-          
+
           <div className="flex flex-col gap-1 items-center justify-center md:w-[206.3333282470703px] w-[100.66666412353516px]">
             <h1 className="font-bold dark:text-textSlightDark-0 text-lightBoldText-0 text-[18px]">
               {data.students}
             </h1>
-            <span className="text-[#71748C] text-[12px]">Students</span>
+            <span className="text-[#71748C] text-[12px]">{t("Students")}</span>
             {data.activity.in_progress_courses > 0 && (
               <span className="text-[10px] text-blue-500">
-                {data.activity.in_progress_courses} in progress
+                {data.activity.in_progress_courses} {t("in progress")}
               </span>
             )}
           </div>
@@ -162,7 +164,7 @@ export default function DashboardAdminOrgBreakdown() {
             <h1 className="font-bold dark:text-textSlightDark-0 text-lightBoldText-0 text-[18px]">
               {data.instructors}
             </h1>
-                  <span className="text-[#71748C] text-[12px]">Instructors</span>
+                  <span className="text-[#71748C] text-[12px]">{t("Instructors")}</span>
 
           </div>
         </div>

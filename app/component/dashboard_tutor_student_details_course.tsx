@@ -1,4 +1,7 @@
+"use client";
+
 import DashboardProgressBar from "./dashboard_progress_bar";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface StudentEnrollment {
   course_title: string;
@@ -15,6 +18,7 @@ export default function DashboardTutorStudentDetailsCourse({
   enrollments,
   isLoading,
 }: Props) {
+  const { t } = useI18n();
   return (
     <>
       {!isLoading ? (
@@ -29,7 +33,7 @@ export default function DashboardTutorStudentDetailsCourse({
                         {c.course_title}
                       </h1>
                       <p className="bg-boldGreen-0 text-white text-[12px] px-[8px] py-[2px] rounded-[2px]">
-                        In Progress
+                        {t("In Progress")}
                       </p>
                     </div>
                     <div className="flex justify-between items-center">
@@ -48,7 +52,7 @@ export default function DashboardTutorStudentDetailsCourse({
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-textGrey-0 dark:text-gray-400">No courses enrolled</p>
+              <p className="text-textGrey-0 dark:text-gray-400">{t("No courses enrolled")}</p>
             </div>
           )}
         </>

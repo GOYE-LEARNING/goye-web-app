@@ -22,6 +22,10 @@ const apiClient = axios.create({
 interface GoogleSignInResult {
   success: boolean;
   error?: string;
+  // Set when the user closed the Google popup themselves — a normal,
+  // deliberate action, not a failure. Callers should reset quietly instead
+  // of showing an error banner for this one.
+  cancelled?: boolean;
   data?: any;
   requiresProfileCompletion?: boolean;
   isProfileComplete?: boolean;
@@ -121,8 +125,8 @@ const useGoogleSignupButton = () => {
     } catch (err: any) {
       console.error("Google sign-in error:", err);
       
-      if (err.code === 'auth/popup-closed-by-user') {
-        return { success: false, error: "Sign-in popup was closed. Please try again." };
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        return { success: false, cancelled: true, error: "Sign-in was cancelled." };
       }
       if (err.code === 'auth/popup-blocked') {
         return { success: false, error: "Pop-up was blocked. Please allow popups." };

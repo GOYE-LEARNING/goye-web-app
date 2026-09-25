@@ -13,6 +13,7 @@ import { BsPeople, BsPeopleFill } from "react-icons/bs";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import { useState } from "react";
 import { useAuthContext } from "@/app/context/AuthContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>;
@@ -22,6 +23,7 @@ export default function AdminSidenav({ setIsCollapsedState }: Props) {
   // Was a hand-rolled fetch to `${API_URL}` with no path at all — it POSTed
   // to the API root, ignored the result, and never cleared the session.
   // Uses the same context logout every other sidenav does now.
+  const { t } = useI18n();
   const { logout } = useAuthContext();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -41,7 +43,7 @@ export default function AdminSidenav({ setIsCollapsedState }: Props) {
           <div className={`${isCollapsed ? "hidden" : "block"}`}>
             <Image
               src={logo}
-              alt="logo"
+              alt={t("logo")}
               height={100}
               width={100}
               className="md:block hidden"
@@ -55,10 +57,10 @@ export default function AdminSidenav({ setIsCollapsedState }: Props) {
           </span>
         </div>
         <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col md:gap-1 w-full mt-0 md:mt-[2rem]">
-          <div className="md:w-full">
+          <div className="ml-3 md:ml-0 md:w-full">
             <SidenavComponent
               path="/dashboard/admin"
-              label="Dashboard"
+              label={t("Dashboard")}
               icon={
                 pathname !== "/dashboard/admin" ? (
                   <GoHome size={25} />
@@ -72,7 +74,7 @@ export default function AdminSidenav({ setIsCollapsedState }: Props) {
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/admin/course"
-              label="Course"
+              label={t("Course")}
               icon={
                 pathname !== "/dashboard/admin/course" ? (
                   <IoSchoolOutline size={25} />
@@ -86,7 +88,7 @@ export default function AdminSidenav({ setIsCollapsedState }: Props) {
           <div className="md:w-full hidden md:block">
             <SidenavComponent
               path="/dashboard/admin/users"
-              label="Users"
+              label={t("Users")}
               icon={
                 pathname !== "/dashboard/admin/users" ? (
                   <BsPeople size={25} />
@@ -100,7 +102,7 @@ export default function AdminSidenav({ setIsCollapsedState }: Props) {
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/admin/community"
-              label="Community"
+              label={t("Community")}
               icon={
                 pathname !== "/dashboard/admin/community" ? (
                   <RiCompass3Line size={25} />
@@ -114,7 +116,7 @@ export default function AdminSidenav({ setIsCollapsedState }: Props) {
           <div className="md:w-full">
             <SidenavComponent
               path="/dashboard/admin/profile"
-              label="Profile"
+              label={t("Profile")}
               icon={
                 pathname !== "/dashboard/admin/profile" ? (
                   <FaRegUser size={25} />
@@ -132,7 +134,7 @@ export default function AdminSidenav({ setIsCollapsedState }: Props) {
           {" "}
           <SidenavComponent
             path="/"
-            label="Logout"
+            label={t("Logout")}
             icon={<MdLogout size={25} />}
             isCollapsed={isCollapsed}
           />

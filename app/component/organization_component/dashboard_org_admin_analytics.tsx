@@ -20,6 +20,7 @@ import {
   HiOutlineClipboardCheck,
   HiOutlineExclamationCircle,
 } from "react-icons/hi";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface AnalyticsData {
   summary: {
@@ -41,6 +42,7 @@ interface AnalyticsData {
 }
 
 export default function DashboardOrgAdminAnalytics() {
+  const { t } = useI18n();
   const { organizationId } = useOrganizationContext();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,13 +68,13 @@ export default function DashboardOrgAdminAnalytics() {
         if (cancelled) return;
 
         if (!res.ok || !json.success) {
-          setError(json.message || "Failed to load analytics");
+          setError(json.message || t("Failed to load analytics"));
           return;
         }
         setData(json.data);
         setError("");
       } catch (err) {
-        if (!cancelled) setError("We couldn't reach the server. Please try again.");
+        if (!cancelled) setError(t("We couldn't reach the server. Please try again."));
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -102,7 +104,7 @@ export default function DashboardOrgAdminAnalytics() {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-2">
         <HiOutlineExclamationCircle className="text-3xl text-textGrey-0" />
-        <p className="text-textGrey-0 text-sm">{error || "No analytics available yet"}</p>
+        <p className="text-textGrey-0 text-sm">{error || t("No analytics available yet")}</p>
       </div>
     );
   }
@@ -116,18 +118,18 @@ export default function DashboardOrgAdminAnalytics() {
       {/* Line — the two series that answer "is activity growing?" */}
       <div className="mb-6">
         <ChartCard
-          title="Enrollments vs completions"
-          subtitle="Last 30 days"
+          title={t("Enrollments vs completions")}
+          subtitle={t("Last 30 days")}
         >
           <LineChart
             series={[
               {
-                name: "Enrollments",
+                name: t("Enrollments"),
                 color: ACCENT,
                 data: data.enrollmentsLast30Days,
               },
               {
-                name: "Completions",
+                name: t("Completions"),
                 color: hueAt(1, dark),
                 data: data.completionsLast30Days,
               },
@@ -138,21 +140,21 @@ export default function DashboardOrgAdminAnalytics() {
 
       {/* Pie/donut composition */}
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        <ChartCard title="Members by role" subtitle="Share of your organization">
-          <DonutChart data={data.membersByRole} dark={dark} centerLabel="members" />
+        <ChartCard title={t("Members by role")} subtitle={t("Share of your organization")}>
+          <DonutChart data={data.membersByRole} dark={dark} centerLabel={t("members")} />
         </ChartCard>
-        <ChartCard title="Enrollment status" subtitle="Where members are in their courses">
+        <ChartCard title={t("Enrollment status")} subtitle={t("Where members are in their courses")}>
           <DonutChart
             data={data.enrollmentsByStatus}
             dark={dark}
-            centerLabel="enrollments"
+            centerLabel={t("enrollments")}
           />
         </ChartCard>
       </div>
 
       {/* Bars */}
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        <ChartCard title="New members" subtitle="Last 6 months">
+        <ChartCard title={t("New members")} subtitle={t("Last 6 months")}>
           <BarChart
             data={data.memberGrowthLast6Months.map((m) => ({
               label: new Date(`${m.month}-01`).toLocaleDateString(undefined, {
@@ -164,32 +166,32 @@ export default function DashboardOrgAdminAnalytics() {
             singleHue={ACCENT}
           />
         </ChartCard>
-        <ChartCard title="Top courses" subtitle="By enrollment">
+        <ChartCard title={t("Top courses")} subtitle={t("By enrollment")}>
           <HorizontalBars
             data={data.topCoursesByEnrollment.map((c) => ({
               label: c.title,
               value: c.enrollments,
             }))}
             dark={dark}
-            emptyMessage="No enrollments in your courses yet"
+            emptyMessage={t("No enrollments in your courses yet")}
           />
         </ChartCard>
       </div>
 
       {/* Completion + join method */}
       <div className="grid md:grid-cols-2 gap-6">
-        <ChartCard title="Course completion" subtitle="Across all enrollments">
+        <ChartCard title={t("Course completion")} subtitle={t("Across all enrollments")}>
           <ProgressRing
             value={summary.completedEnrollments}
             total={summary.totalEnrollments}
-            caption={`${summary.completedEnrollments.toLocaleString()} of ${summary.totalEnrollments.toLocaleString()} enrollments`}
+            caption={`${summary.completedEnrollments.toLocaleString()} ${t("of")} ${summary.totalEnrollments.toLocaleString()} ${t("enrollments")}`}
           />
         </ChartCard>
-        <ChartCard title="How members joined" subtitle="Invite vs other routes">
+        <ChartCard title={t("How members joined")} subtitle={t("Invite vs other routes")}>
           <DonutChart
             data={data.membersByJoinMethod}
             dark={dark}
-            centerLabel="members"
+            centerLabel={t("members")}
           />
         </ChartCard>
       </div>

@@ -7,6 +7,7 @@ import { MdCheck, MdClose } from "react-icons/md";
 import { HiOutlineBookOpen } from "react-icons/hi";
 import { IoIosRefresh } from "react-icons/io";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunction: () => void;
@@ -55,6 +56,7 @@ export default function DashboardQuizReview({
   quizId,
   backToQuiz,
 }: Props) {
+  const { t } = useI18n();
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export default function DashboardQuizReview({
       const data: ApiResponse = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Error fetching quiz");
+        setError(data.message || t("Error fetching quiz"));
         return;
       }
 
@@ -83,7 +85,7 @@ export default function DashboardQuizReview({
       setQuizData(data.data);
     } catch (error) {
       console.error(error);
-      setError("Failed to fetch quiz results");
+      setError(t("Failed to fetch quiz results"));
     } finally {
       setLoading(false);
     }
@@ -96,9 +98,9 @@ export default function DashboardQuizReview({
   if (loading) {
     return (
       <div>
-        <SubHeader header="Quiz Review" backFunction={backFunction} />
+        <SubHeader header={t("Quiz Review")} backFunction={backFunction} />
         <div className="dashboard_content_mainbox flex justify-center items-center h-64">
-          <div className="text-center">Loading quiz results...</div>
+          <div className="text-center">{t("Loading quiz results...")}</div>
         </div>
       </div>
     );
@@ -107,10 +109,10 @@ export default function DashboardQuizReview({
   if (error || !quizData) {
     return (
       <div>
-        <SubHeader header="Quiz Review" backFunction={backFunction} />
+        <SubHeader header={t("Quiz Review")} backFunction={backFunction} />
         <div className="dashboard_content_mainbox flex justify-center items-center h-64">
           <div className="text-center text-red-500">
-            {error || "Failed to load quiz data"}
+            {error || t("Failed to load quiz data")}
           </div>
         </div>
       </div>
@@ -123,9 +125,9 @@ export default function DashboardQuizReview({
   if (!latestAttempt) {
     return (
       <div>
-        <SubHeader header="Quiz Review" backFunction={backFunction} />
+        <SubHeader header={t("Quiz Review")} backFunction={backFunction} />
         <div className="dashboard_content_mainbox flex justify-center items-center h-64">
-          <div className="text-center">No quiz attempt found</div>
+          <div className="text-center">{t("No quiz attempt found")}</div>
         </div>
       </div>
     );
@@ -166,7 +168,7 @@ export default function DashboardQuizReview({
                 {score}%
               </h1>
               <p className="text-[#71748C] text-[14px]">
-                {correctAnswers} out of {totalQuestions} correct
+                {correctAnswers} {t("out of")} {totalQuestions} {t("correct")}
               </p>
             </div>
             <div className="dashboard_hr my-4"></div>
@@ -177,19 +179,19 @@ export default function DashboardQuizReview({
                 <h1 className="font-[700] text-textSlightDark-0 text-[18px]">
                   {correctAnswers}
                 </h1>
-                <p className="text-[14px]">Correct</p>
+                <p className="text-[14px]">{t("Correct")}</p>
               </div>
               <div className="flex flex-col gap-1 items-center">
                 <h1 className="font-[700] text-[#DA0E29] text-[18px]">
                   {incorrectAnswers}
                 </h1>
-                <p className="text-[14px]">Incorrect</p>
+                <p className="text-[14px]">{t("Incorrect")}</p>
               </div>
               <div className="flex flex-col gap-1 items-center">
                 <h1 className="font-[700] text-textSlightDark-0 text-[18px]">
                   {formatTimeTaken(latestAttempt.timeFinished || 0)}
                 </h1>
-                <p className="text-[14px]">Time taken</p>
+                <p className="text-[14px]">{t("Time taken")}</p>
               </div>
             </div>
           </div>
@@ -197,7 +199,7 @@ export default function DashboardQuizReview({
           {/* Performance Section */}
           <div className="my-5 flex flex-col gap-3">
             <span className="flex items-center gap-3 text-[#41415A] text-[14px] font-[600]">
-              <FaBullseye /> Performance
+              <FaBullseye /> {t("Performance")}
             </span>
 
             {/* Performance Bar */}
@@ -210,7 +212,7 @@ export default function DashboardQuizReview({
 
             {/* Overall Score */}
             <div className="flex justify-between items-center text-[14px] font-[600] dark:text-[#41415A] text-lightBoldText-0">
-              <h1>Overall score</h1>
+              <h1>{t("Overall score")}</h1>
               <p>{score}%</p>
             </div>
 
@@ -219,14 +221,14 @@ export default function DashboardQuizReview({
               <div className="border border-[#F1F1F4] h-[41px] flex items-center p-[12px] text-[#30A46F]">
                 <p className="flex gap-5 items-center text-[14px]">
                   <MdCheck />
-                  Passing grade achieved! Great understanding of the course.
+                  {t("Passing grade achieved! Great understanding of the course.")}
                 </p>
               </div>
             ) : (
               <div className="border border-[#ccc]/20 h-[41px] flex items-center p-[12px] text-[#DA0E29]">
                 <p className="flex gap-5 items-center text-[14px]">
                   <MdClose />
-                  Keep learning! Review the material and try again.
+                  {t("Keep learning! Review the material and try again.")}
                 </p>
               </div>
             )}
@@ -236,7 +238,7 @@ export default function DashboardQuizReview({
             {/* Question Overview */}
             <div className="w-full flex flex-col gap-3">
               <span className="flex items-center gap-3 text-[#41415A] text-[14px] font-[600]">
-                <HiOutlineBookOpen /> Question Overview
+                <HiOutlineBookOpen /> {t("Question Overview")}
               </span>
 
               {/* Question Grid */}
@@ -270,7 +272,7 @@ export default function DashboardQuizReview({
                 className="form_more bg-primaryColors-0 text-[#ffffff] font-[600] text-[13px] py-3 rounded-md"
                 onClick={backToQuiz}
               >
-                Review in Details
+                {t("Review in Details")}
               </button>
             </div>
           </div>

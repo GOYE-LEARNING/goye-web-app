@@ -178,15 +178,15 @@ export default function DashboardStudentCourse({ openCourse }: Props) {
                   <div key={enrollment.enrollment_id || i} className="dashboard_content_subbox">
                     {/* Course Title */}
                     <h1 className=" text-gray-800 dark:text-white">
-                      {enrollment.course.course_title}
+                      {t(enrollment.course.course_title)}
                     </h1>
-                    
+
                     {/* Course Description */}
                     <h2 className=" text-gray-600 dark:text-gray-300 mt-1">
-                      {enrollment.course.course_short_description}
+                      {t(enrollment.course.course_short_description)}
                     </h2>
                     <p className=" text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
-                      {enrollment.course.course_description}
+                      {t(enrollment.course.course_description)}
                     </p>
                     
                     {/* Progress Section */}

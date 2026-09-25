@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaCheck, FaChevronDown } from "react-icons/fa6";
 import DropDowns from "../drop_downs";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunc: () => void;
@@ -16,6 +17,7 @@ interface Announcement {
 }
 
 export default function DashboardAdminMakeAnnouncement({ backFunc }: Props) {
+  const { t } = useI18n();
   const [selectedValue, setSelectedValue] = useState<string[]>([]);
   const types = [
     "All Users",
@@ -116,23 +118,23 @@ export default function DashboardAdminMakeAnnouncement({ backFunc }: Props) {
 
   const form = [
     {
-      label: "Header",
+      label: t("Header"),
       type: "text",
       name: "announcement_title",
       value: formData.announcement_title,
     },
     {
-      label: "Description",
+      label: t("Description"),
       name: "announcement_description",
       value: formData.announcement_description,
     },
     {
-      label: "User Category",
+      label: t("User Category"),
       name: "announcement_category",
       value: formData.annoucement_category,
     },
     {
-      label: `Select Specific ${role.length == 0 ? "Role" : role}`,
+      label: `${t("Select Specific")} ${role.length == 0 ? t("Role") : role}`,
       name: "announcement_name",
       value: formData.announcement_name,
     },
@@ -141,7 +143,7 @@ export default function DashboardAdminMakeAnnouncement({ backFunc }: Props) {
   return (
     <div className="fixed bg-white right-0 top-0 md:w-[350px] w-[300px] min-h-[100vh] drop-shadow-xl">
       <div className="p-[25px] flex justify-between items-center border-b border-[#F1F1F4]">
-        <h1 className="font-bold text-textSlightDark-0 text-[24px]">Announcement</h1>
+        <h1 className="font-bold text-textSlightDark-0 text-[24px]">{t("Announcement")}</h1>
         <span
           onClick={backFunc}
           className="h-[40px] w-[40px] flex justify-center items-center rounded-[4px] bg-[#F5F5F5]"
@@ -181,24 +183,24 @@ export default function DashboardAdminMakeAnnouncement({ backFunc }: Props) {
               ) : f.name == "announcement_category" ? (
                 <div>
                   <span className="text-[16px]">
-                    {selected as string | " "}
+                    {selected ? t(selected) : " "}
                   </span>
                   {showDropdown && (
                     <div ref={boxRef}>
                       <DropDowns
                         value={selected}
                         onChange={() => {}}
-                        countries={types.map((t, i) => (
+                        countries={types.map((type, i) => (
                           <div
                             key={i}
                             onClick={() => {
-                              selectValue(t as any);
-                              selectedFunc(t as any);
+                              selectValue(type as any);
+                              selectedFunc(type as any);
                             }}
-                            className={`${selected == t ? "bg-[#F6F3F4]" : ""} flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 cursor-pointer`}
+                            className={`${selected == type ? "bg-[#F6F3F4]" : ""} flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 cursor-pointer`}
                           >
-                            <div className="text-[14px]">{t}</div>
-                            {selected == t ? <FaCheck size={13}/> : ''}
+                            <div className="text-[14px]">{t(type as string)}</div>
+                            {selected == type ? <FaCheck size={13}/> : ''}
                           </div>
                         ))}
                       />
@@ -213,16 +215,16 @@ export default function DashboardAdminMakeAnnouncement({ backFunc }: Props) {
                       <DropDowns
                         value={specific}
                         onChange={() => {}}
-                        countries={roleArray.map((t, i) => (
+                        countries={roleArray.map((roleOption, i) => (
                           <div
                             key={i}
                             onClick={() => {
-                              selectValueForNames(t as any);
+                              selectValueForNames(roleOption as any);
                               setShowNames(false);
                             }}
                             className="flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 cursor-pointer"
                           >
-                            <div className="text-[14px]">{t}</div>
+                            <div className="text-[14px]">{t(roleOption)}</div>
                           </div>
                         ))}
                       />
@@ -258,7 +260,7 @@ export default function DashboardAdminMakeAnnouncement({ backFunc }: Props) {
             type="submit"
             className="form_more bg-primaryColors-0 text-white flex items-center gap-2"
           >
-            Submit
+            {t("Submit")}
           </button>
 
           <button
@@ -273,7 +275,7 @@ export default function DashboardAdminMakeAnnouncement({ backFunc }: Props) {
             }}
             className="form_more bg-[#F5F5F5] text-primaryColors-0 flex items-center gap-2"
           >
-            Cancel
+            {t("Cancel")}
           </button>
         </div>
       </form>

@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { socketService } from "@/app/services/socketService";
 import { FaArrowLeft } from "react-icons/fa6";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   openPrivateMessages: (userId: string, userName: string) => void;
@@ -23,6 +24,7 @@ interface Contact {
 }
 
 export default function StudentTutors({ openPrivateMessages, closePrivateMessageContainer }: Props) {
+  const { t } = useI18n();
   const [todayContacts, setTodayContacts] = useState<Contact[]>([]);
   const [yesterdayContacts, setYesterdayContacts] = useState<Contact[]>([]);
   const [persons, setPersons] = useState<Contact[]>([]);
@@ -106,7 +108,7 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
   const formatTime = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    if (diff < 60000) return "Just now";
+    if (diff < 60000) return t("Just now");
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
     if (diff < 86400000) return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     return date.toLocaleDateString();
@@ -143,17 +145,17 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
         console.log(data);
 
         const mapContacts = (list: any[]): Contact[] =>
-          list.map((t) => ({
-            id: t.id,
-            name: `${t.first_name} ${t.last_name}`,
-            first_name: t.first_name,
-            lastMessage: t.lastMessage?.text || "Start a conversation",
-            time: t.lastMessage?.time
-              ? formatTime(new Date(t.lastMessage.time))
+          list.map((item) => ({
+            id: item.id,
+            name: `${item.first_name} ${item.last_name}`,
+            first_name: item.first_name,
+            lastMessage: item.lastMessage?.text || t("Start a conversation"),
+            time: item.lastMessage?.time
+              ? formatTime(new Date(item.lastMessage.time))
               : "",
-            avatar: t.user_pic || "",
-            unreadCount: t.unreadCount || 0,
-            online: t.online || false,
+            avatar: item.user_pic || "",
+            unreadCount: item.unreadCount || 0,
+            online: item.online || false,
             isTyping: false,
           }));
 
@@ -225,7 +227,7 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
     const unsubscribeMessageUpdated = socketService.on("private:message:updated", (data: any) => {
       const senderId = data.senderId;
       if (senderId !== currentUserId) {
-        updateContactMessage(senderId, `${data.content} (edited)`, new Date());
+        updateContactMessage(senderId, `${data.content} (${t("edited")})`, new Date());
       }
     });
 
@@ -233,7 +235,7 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
     const unsubscribeMessageDeleted = socketService.on("private:message:deleted", (data: any) => {
       const senderId = data.senderId;
       if (senderId !== currentUserId) {
-        updateContactMessage(senderId, "This message was deleted", new Date());
+        updateContactMessage(senderId, t("This message was deleted"), new Date());
       }
     });
 
@@ -272,7 +274,7 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
           <div className="relative flex-shrink-0">
             <div className="h-[45px] w-[45px] bg-gradient-to-br from-primaryColors-0 to-primaryColors-0/70 rounded-full flex items-center justify-center text-white font-semibold overflow-hidden">
               {contact.avatar ? (
-                <img src={contact.avatar} alt="avatar" className="h-full w-full object-cover" />
+                <img src={contact.avatar} alt={t("avatar")} className="h-full w-full object-cover" />
               ) : (
                 <span>{contact.first_name.charAt(0).toUpperCase()}</span>
               )}
@@ -293,7 +295,7 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
               {isTyping ? (
                 <span className="text-primaryColors-0 flex items-center gap-1">
                   <span className="animate-pulse">●</span>
-                  <span>typing...</span>
+                  <span>{t("typing...")}</span>
                 </span>
               ) : (
                 <span>{contact.lastMessage}</span>
@@ -324,13 +326,13 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
             />
           )}
           <h1 className="font-semibold text-textSlightDark-0 text-[1.2rem]">
-            Messages
+            {t("Messages")}
           </h1>
         </div>
         <p className="text-[0.8rem] text-nearTextColors-0 break-words mt-1">
           {isInstructor
-            ? "Your students from courses and groups you manage."
-            : "Your tutors from groups and courses you joined and enrolled in."}
+            ? t("Your students from courses and groups you manage.")
+            : t("Your tutors from groups and courses you joined and enrolled in.")}
         </p>
       </div>
 
@@ -338,7 +340,7 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
       {todayContacts.length > 0 && (
         <div>
           <h2 className="text-[0.75rem] font-semibold text-nearTextColors-0 uppercase tracking-wide mb-2">
-            Today
+            {t("Today")}
           </h2>
           <div className="space-y-1">
             {todayContacts.map((contact) => (
@@ -352,7 +354,7 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
       {yesterdayContacts.length > 0 && (
         <div>
           <h2 className="text-[0.75rem] font-semibold text-nearTextColors-0 uppercase tracking-wide mb-2">
-            Yesterday
+            {t("Yesterday")}
           </h2>
           <div className="space-y-1">
             {yesterdayContacts.map((contact) => (
@@ -366,7 +368,7 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
       {persons.length > 0 && (
         <div>
           <h2 className="text-[0.75rem] font-semibold text-nearTextColors-0 uppercase tracking-wide mb-2">
-            {isInstructor ? "Students To Chat With" : "Tutors To Chat With"}
+            {isInstructor ? t("Students To Chat With") : t("Tutors To Chat With")}
           </h2>
           <div className="space-y-1">
             {persons.map((contact) => (
@@ -384,11 +386,11 @@ export default function StudentTutors({ openPrivateMessages, closePrivateMessage
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
             </svg>
           </div>
-          <p className="text-sm">No contacts yet</p>
+          <p className="text-sm">{t("No contacts yet")}</p>
           <p className="text-xs mt-1 text-center max-w-[200px]">
             {isInstructor
-              ? "Students will appear here once they enroll in your courses."
-              : "Tutors will appear here once you enroll in a course or join a group."}
+              ? t("Students will appear here once they enroll in your courses.")
+              : t("Tutors will appear here once you enroll in a course or join a group.")}
           </p>
         </div>
       )}

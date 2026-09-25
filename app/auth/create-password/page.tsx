@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { MdCancel, MdCheckCircle } from "react-icons/md";
 import { useSignup } from "../../context/SignupContext";
@@ -10,9 +10,12 @@ import Signin from "../signup";
 import Login from "../login";
 import AuthHeader from "@/app/component/auth_header";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { hasVerifiedOtp } from "@/app/utils/signupFlowGuard";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function CreatePassword() {
   const { openLanguageSelector } = useLanguage();
+  const { t } = useI18n();
   const { formData, setFormData } = useSignup();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [touched, setTouched] = useState<boolean>(false);
@@ -20,6 +23,13 @@ export default function CreatePassword() {
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showSignin, setShowSignin] = useState<boolean>(false);
   const [showResetPassword, setShowResetPassword] = useState<boolean>(true);
+
+  // Block direct URL access — this step is only reachable after OTP verification.
+  useEffect(() => {
+    if (!hasVerifiedOtp()) {
+      router.replace("/auth");
+    }
+  }, [router]);
 
   const changeContentLogin = () => {
     setShowLogin(false);
@@ -35,9 +45,9 @@ export default function CreatePassword() {
 
   // ✅ Fixed: Correct regex (not strings)
   const rules = [
-    { text: "At least 8 characters", test: /.{8,}/ },
-    { text: "At least one number", test: /\d/ },
-    { text: "At least one symbol", test: /[@$!%*?&]/ },
+    { text: t("At least 8 characters"), test: /.{8,}/ },
+    { text: t("At least one number"), test: /\d/ },
+    { text: t("At least one symbol"), test: /[@$!%*?&]/ },
   ];
 
   // ✅ Fixed: handleChange now receives event properly
@@ -67,10 +77,9 @@ export default function CreatePassword() {
       <AnimatePresence mode="wait">
         {showResetPassword && (
           <div className="form_container">
-            <h1 className="form_h1">Create a Password</h1>
+            <h1 className="form_h1">{t("Create a Password")}</h1>
             <p className="form-p">
-              Your password must be at least 8 characters long, and include 1
-              symbol and 1 number.
+              {t("Your password must be at least 8 characters long, and include 1 symbol and 1 number.")}
             </p>
             <form noValidate className="form py-5" onSubmit={handleSubmit}>
               <div className="form_label relative">
@@ -92,7 +101,7 @@ export default function CreatePassword() {
                       : "top-[15px] text-[16px]"
                   }`}
                 >
-                  Password
+                  {t("Password")}
                 </label>
 
                 <div
@@ -129,7 +138,7 @@ export default function CreatePassword() {
 
               <input
                 type="submit"
-                value="Submit"
+                value={t("Submit")}
                 className="form_btn md:mt-0 mt-[8rem]"
               />
             </form>

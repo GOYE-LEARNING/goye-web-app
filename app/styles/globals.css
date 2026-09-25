@@ -375,6 +375,54 @@ body.chat-page-desktop {
   @apply md:w-[80px] md:px-[16px];
 }
 
+/* Mobile: a compact floating pill instead of a full-width bar flush against
+   the screen edge — the previous h-[auto]-with-20px-padding bar read as
+   oversized on a phone. Margin + rounded corners + shadow read as a native
+   tab bar; the border only made sense against a screen-edge bar, so it's
+   dropped here. */
+@media (max-width: 767px) {
+  .sidenav {
+    left: 12px;
+    right: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: auto;
+    height: auto;
+    border-radius: 9999px;
+    padding: 10px 14px;
+    border: 1px solid rgba(204, 204, 204, 0.25);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* A dark background needs a lighter, more visible border and a stronger,
+   darker-toned shadow to still read as "floating" — the light-mode values
+   above go nearly invisible against the near-black dashboard background. */
+@media (max-width: 767px) {
+  .dark .sidenav {
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Tablet: still a floating bar, but wide enough to afford a bit more
+   breathing room than the phone-width pill above. */
+@media (min-width: 480px) and (max-width: 767px) {
+  .sidenav {
+    padding: 12px 20px;
+  }
+}
+
+/* Hides the scrollbar track/thumb entirely while keeping the element
+   scrollable — used by the mobile tab bar so it can scroll past its width
+   without a visible scrollbar breaking the pill look. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .side_link {
   @apply transition-all duration-150;
 }
@@ -496,11 +544,11 @@ body.chat-page-desktop {
 }
 
 .cr_p {
-  @apply text-[14px] text-[#71748C];
+  @apply text-[14px] dark:text-textSlightDark-0 text-lightBoldText-0;
 }
 
 .cr_list {
-  @apply list-disc text-primaryColors-0 text-[14px] capitalize;
+  @apply list-disc dark:text-white text-lightBoldText-0 text-[14px] capitalize;
 }
 
 .cr_box {
@@ -654,7 +702,7 @@ body.chat-page-desktop {
 }
 
 .leader_board_table_header {
-  @apply text-nearTextColors-0/20 text-[12px] font-semibold;
+  @apply text-lightBoldText-0/40 dark:text-nearTextColors-0/60 text-[12px] font-semibold;
 }
 
 .leader_icon {

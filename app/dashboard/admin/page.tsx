@@ -10,8 +10,10 @@ import DashboardAdminManageUsers from "@/app/component/admin_component/dashboard
 import DashboardAdminReviewCourses from "@/app/component/admin_component/dashboard_admin_review_courses";
 import DashboardAdminManageGroups from "@/app/component/admin_component/dashboard_admin_manage_groups";
 import DashboardAdminMakeAnnouncement from "@/app/component/admin_component/dashboard_admin_make_announcement";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function TutorDashboard() {
+  const { t } = useI18n();
   const [showDashboard, setShowDashboard] = useState<boolean>(true);
   const [annoucementModal, setAnnouncementModal] = useState<boolean>(false);
   const [subPages, setSubPages] = useState<
@@ -95,7 +97,7 @@ export default function TutorDashboard() {
             exit="exit"
             className="w-full"
           >
-            <h1 className="dashboard_h1">Dashboard</h1>
+            <h1 className="dashboard_h1">{t("Dashboard")}</h1>
 
             <motion.div
               variants={containerVariants}

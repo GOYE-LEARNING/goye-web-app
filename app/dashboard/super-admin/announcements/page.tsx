@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 import {
   HiOutlineSpeakerphone,
   HiOutlineMail,
@@ -12,7 +13,7 @@ import { FaSpinner } from "react-icons/fa";
 type Audience = "all" | "students" | "tutors" | "org_admins";
 type Mode = "announcement" | "email";
 
-const AUDIENCES: { value: Audience; label: string }[] = [
+const AUDIENCE_KEYS: { value: Audience; label: string }[] = [
   { value: "all", label: "Everyone" },
   { value: "students", label: "Students" },
   { value: "tutors", label: "Tutors" },
@@ -20,6 +21,8 @@ const AUDIENCES: { value: Audience; label: string }[] = [
 ];
 
 export default function SuperAdminAnnouncements() {
+  const { t } = useI18n();
+  const AUDIENCES = AUDIENCE_KEYS.map((a) => ({ ...a, label: t(a.label) }));
   const [mode, setMode] = useState<Mode>("announcement");
   const [audience, setAudience] = useState<Audience>("all");
   const [title, setTitle] = useState("");
@@ -37,18 +40,18 @@ export default function SuperAdminAnnouncements() {
   const handleSend = async () => {
     setResult(null);
     if (!title.trim() || !message.trim()) {
-      setResult({ ok: false, text: mode === "email" ? "Subject and message are required." : "Title and message are required." });
+      setResult({ ok: false, text: mode === "email" ? t("Subject and message are required.") : t("Title and message are required.") });
       return;
     }
     if (!API_URL) {
-      setResult({ ok: false, text: "API URL not configured." });
+      setResult({ ok: false, text: t("API URL not configured.") });
       return;
     }
 
     const confirmText =
       mode === "email"
-        ? `Send this email to ${AUDIENCES.find((a) => a.value === audience)?.label}? This delivers real email.`
-        : `Post this in-app announcement to ${AUDIENCES.find((a) => a.value === audience)?.label}?`;
+        ? `${t("Send this email to")} ${AUDIENCES.find((a) => a.value === audience)?.label}? ${t("This delivers real email.")}`
+        : `${t("Post this in-app announcement to")} ${AUDIENCES.find((a) => a.value === audience)?.label}?`;
     if (!confirm(confirmText)) return;
 
     setIsSending(true);
@@ -68,14 +71,14 @@ export default function SuperAdminAnnouncements() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setResult({ ok: true, text: data.message || "Sent successfully." });
+        setResult({ ok: true, text: data.message || t("Sent successfully.") });
         reset();
       } else {
-        setResult({ ok: false, text: data.message || "Failed to send." });
+        setResult({ ok: false, text: data.message || t("Failed to send.") });
       }
     } catch (err) {
       console.error("Error sending:", err);
-      setResult({ ok: false, text: "We couldn't reach the server. Please try again." });
+      setResult({ ok: false, text: t("We couldn't reach the server. Please try again.") });
     } finally {
       setIsSending(false);
     }
@@ -83,9 +86,9 @@ export default function SuperAdminAnnouncements() {
 
   return (
     <div className="w-full max-w-[640px] mx-auto">
-      <h1 className="dashboard_h1">Announcements & Email</h1>
+      <h1 className="dashboard_h1">{t("Announcements & Email")}</h1>
       <p className="text-textGrey-0 text-[13px] mb-4">
-        Broadcast an in-app announcement or send email to the whole platform.
+        {t("Broadcast an in-app announcement or send email to the whole platform.")}
       </p>
 
       {/* Mode toggle */}
@@ -96,7 +99,7 @@ export default function SuperAdminAnnouncements() {
             mode === "announcement" ? "bg-white dark:bg-shadyColor-0 text-primaryColors-0 shadow-sm" : "text-textGrey-0"
           }`}
         >
-          <HiOutlineSpeakerphone /> In-App Announcement
+          <HiOutlineSpeakerphone /> {t("In-App Announcement")}
         </button>
         <button
           onClick={() => { setMode("email"); setResult(null); }}
@@ -104,7 +107,7 @@ export default function SuperAdminAnnouncements() {
             mode === "email" ? "bg-white dark:bg-shadyColor-0 text-primaryColors-0 shadow-sm" : "text-textGrey-0"
           }`}
         >
-          <HiOutlineMail /> Email Broadcast
+          <HiOutlineMail /> {t("Email Broadcast")}
         </button>
       </div>
 
@@ -117,7 +120,7 @@ export default function SuperAdminAnnouncements() {
         )}
 
         {/* Audience */}
-        <label className="block text-[13px] font-[600] text-textSlightDark-0 dark:text-white mb-2">Audience</label>
+        <label className="block text-[13px] font-[600] text-textSlightDark-0 dark:text-white mb-2">{t("Audience")}</label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
           {AUDIENCES.map((a) => (
             <button
@@ -136,23 +139,23 @@ export default function SuperAdminAnnouncements() {
 
         {/* Title / subject */}
         <label className="block text-[13px] font-[600] text-textSlightDark-0 dark:text-white mb-1">
-          {mode === "email" ? "Subject" : "Title"}
+          {mode === "email" ? t("Subject") : t("Title")}
         </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={mode === "email" ? "Email subject line" : "Announcement title"}
+          placeholder={mode === "email" ? t("Email subject line") : t("Announcement title")}
           className="w-full px-4 py-2 border border-[#ccc]/20 rounded-lg bg-lightWhite-0 dark:bg-secondaryColors-0 text-textSlightDark-0 dark:text-white text-sm mb-4 outline-none focus:border-primaryColors-0"
         />
 
         {/* Message */}
-        <label className="block text-[13px] font-[600] text-textSlightDark-0 dark:text-white mb-1">Message</label>
+        <label className="block text-[13px] font-[600] text-textSlightDark-0 dark:text-white mb-1">{t("Message")}</label>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={6}
-          placeholder="Write your message..."
+          placeholder={t("Write your message...")}
           className="w-full px-4 py-2 border border-[#ccc]/20 rounded-lg bg-lightWhite-0 dark:bg-secondaryColors-0 text-textSlightDark-0 dark:text-white text-sm mb-4 outline-none focus:border-primaryColors-0 resize-none"
         />
 
@@ -162,11 +165,11 @@ export default function SuperAdminAnnouncements() {
           className="w-full py-3 rounded-xl bg-primaryColors-0 text-white font-[600] text-[14px] hover:bg-primaryColors-0/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isSending ? (
-            <><FaSpinner className="animate-spin" /> Sending...</>
+            <><FaSpinner className="animate-spin" /> {t("Sending...")}</>
           ) : mode === "email" ? (
-            <><HiOutlineMail /> Send Email</>
+            <><HiOutlineMail /> {t("Send Email")}</>
           ) : (
-            <><HiOutlineSpeakerphone /> Post Announcement</>
+            <><HiOutlineSpeakerphone /> {t("Post Announcement")}</>
           )}
         </button>
       </div>

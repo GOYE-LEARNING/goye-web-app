@@ -2,12 +2,16 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { HiOutlineUserGroup } from "react-icons/hi";
 import { PiThumbsUpLight } from "react-icons/pi";
 import { RiCheckDoubleFill } from "react-icons/ri";
 import { formatTime } from "../hook/formatDate";
 import { FaSpinner } from "react-icons/fa";
 import { useSocket, Notification } from "@/app/context/SocketContext";
+import { useI18n } from "@/app/context/I18nContext";
+import { FaTrash } from "react-icons/fa6";
+import { IoClose } from "react-icons/io5";
 
 interface DashboardNotificationProps {
   onClose?: () => void;
@@ -18,6 +22,7 @@ export default function DashboardNotification({
   onClose,
   organizationId,
 }: DashboardNotificationProps) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
   const [showFullMessage, setShowFullMessage] = useState<string[]>([]);
   const [isMarkingSpecific, setIsMarkingSpecific] = useState<string | null>(null);
@@ -38,8 +43,51 @@ export default function DashboardNotification({
     isConnected,
     markNotificationRead,
     markAllNotificationsRead,
+    deleteNotification,
     refreshNotifications,
+    userType,
+    isIndividualUser,
   } = useSocket();
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const router = useRouter();
+  const params = useParams<{ org_name?: string }>();
+
+  // Where a notification's own "activity" actually lives, so clicking one
+  // takes the reader there instead of just marking it read in place. Not
+  // every type has a real destination (a system announcement isn't "about"
+  // anything to jump to) — those fall through to null and just mark as read.
+  const getNotificationPath = (n: Notification): string | null => {
+    const org = params?.org_name;
+    const isTutor = userType === "tutor" || userType === "instructor";
+    const base = isIndividualUser
+      ? isTutor
+        ? "/dashboard/tutor"
+        : "/dashboard/student"
+      : org
+        ? `/dashboard/${org}/${isTutor || userType === "admin" ? "admin" : "organization"}`
+        : null;
+
+    if (!base) return null;
+
+    if (n.courseId) return `${base}/course?courseId=${n.courseId}`;
+
+    switch (n.type) {
+      case "GROUP_JOIN":
+      case "POST_LIKE":
+      case "POST_COMMENT":
+      case "MESSAGE":
+        return `${base}/community`;
+      case "ACHIEVEMENT_UNLOCKED":
+        return isIndividualUser && !isTutor ? "/dashboard/student/leaderboard" : null;
+      case "ORG_INVITE":
+      case "ORG_MEMBER_JOINED":
+      case "ORG_MEMBER_LEFT":
+      case "ORG_ROLE_CHANGED":
+        return org ? `${base}/profile` : null;
+      default:
+        return n.groupId ? `${base}/community` : null;
+    }
+  };
 
   // Update local state when context notifications change
   useEffect(() => {
@@ -120,7 +168,7 @@ export default function DashboardNotification({
   };
 
   const deleteAllNotifications = async () => {
-    if (!confirm("Are you sure you want to delete all notifications?")) return;
+    if (!confirm(t("Are you sure you want to delete all notifications?"))) return;
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       if (!API_URL) {
@@ -142,9 +190,24 @@ export default function DashboardNotification({
     }
   };
 
+  const handleDeleteNotification = async (id: string) => {
+    setIsDeleting(id);
+    try {
+      await deleteNotification(id);
+      setLocalNotifications((prev) => prev.filter((n) => n.id !== id));
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.isRead && !notification.read) {
       markSpecificNotificationAsRead(notification.id);
+    }
+    const path = getNotificationPath(notification);
+    if (path) {
+      router.push(path);
+      onClose?.();
     }
   };
 
@@ -185,15 +248,24 @@ export default function DashboardNotification({
 
   return (
     <div
-      className="h-[700px] w-[390px] scrollbar2 dark:bg-secondaryColors-0 bg-white backdrop-blur-md border border-[#ccc]/10 drop-shadow-2xl md:h-[509px] md:w-[400px] z-[99999] right-0 absolute p-[20px] rounded-xl overflow-hidden"
+      className="fixed inset-0 w-screen h-screen md:absolute md:inset-auto md:right-0 md:top-0 md:h-[509px] md:w-[400px] scrollbar2 dark:bg-secondaryColors-0 bg-white backdrop-blur-md border border-[#ccc]/10 drop-shadow-2xl z-[99999] p-[20px] md:rounded-xl overflow-hidden"
     >
-      <div className="dashboard_triangle absolute -top-[0.8rem] right-4"></div>
+      <div className="dashboard_triangle absolute -top-[0.8rem] right-4 hidden md:block"></div>
 
-      {/* Connection status indicator */}
-      <div className="flex items-center justify-end mb-2">
-        <div className={`flex items-center gap-1 text-xs ${isConnected ? 'text-green-500' : 'text-red-500'}`}>
+      {/* Connection status + close (close only needed on mobile, where this
+          now covers the whole screen and there's no backdrop to tap outside
+          of to dismiss it). */}
+      <div className="flex items-center justify-between mb-2">
+        <button
+          onClick={onClose}
+          className="md:hidden p-1.5 -ml-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          aria-label={t("Close")}
+        >
+          <IoClose size={24} />
+        </button>
+        <div className={`flex items-center gap-1 text-xs ml-auto ${isConnected ? 'text-green-500' : 'text-red-500'}`}>
           <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-          {isConnected ? 'Live' : 'Offline'}
+          {isConnected ? t('Live') : t('Offline')}
         </div>
       </div>
 
@@ -213,7 +285,7 @@ export default function DashboardNotification({
                 activeTab === "all" ? "text-primaryColors-0" : "text-textGrey-0"
               }`}
             >
-              All
+              {t("All")}
             </p>
 
             <span className="w-[24px] h-[19px] flex justify-center items-center flex-col pt-[4px] bg-primaryColors-0 text-[#ffffff] text-[12px] rounded-full">
@@ -235,7 +307,7 @@ export default function DashboardNotification({
                 activeTab === "unread" ? "text-primaryColors-0" : "text-textGrey-0"
               }`}
             >
-              Unread
+              {t("Unread")}
             </p>
 
             <span className="w-[24px] h-[19px] flex justify-center items-center flex-col pt-[4px] dark:bg-shadyColor-0 bg-primaryYellow-0 text-white text-[12px] rounded-full">
@@ -270,7 +342,7 @@ export default function DashboardNotification({
               <RiCheckDoubleFill />
             )}
 
-            <span>Mark All Read</span>
+            <span>{t("Mark All Read")}</span>
           </button>
         </div>
       </div>
@@ -285,10 +357,10 @@ export default function DashboardNotification({
             </div>
           </div>
 
-          <h1 className="text-[32px] text-[#111827] font-[500]">All Caught Up</h1>
+          <h1 className="text-[32px] text-[#111827] font-[500]">{t("All Caught Up")}</h1>
 
           <p className="text-[16px] text-[#41415A]">
-            {activeTab === "all" ? "No notifications yet." : "No unread notifications."}
+            {activeTab === "all" ? t("No notifications yet.") : t("No unread notifications.")}
           </p>
         </div>
       ) : (
@@ -340,7 +412,7 @@ export default function DashboardNotification({
                                 : "text-textSlightDark-0"
                             }`}
                           >
-                            {n?.title}
+                            {n?.title && n.title !== "undefined" ? n.title : t("Notification")}
 
                             {isUnread && (
                               <span className="ml-2 inline-block w-2 h-2 bg-primaryColors-0 rounded-full"></span>
@@ -352,14 +424,32 @@ export default function DashboardNotification({
                               showFullMessage.includes(n.id) ? "" : "line-clamp-2"
                             }`}
                           >
-                            {n?.message}
+                            {n?.message && n.message !== "undefined" ? n.message : t("You have a new update.")}
                           </div>
                         </div>
                       </div>
 
                       <div className="flex flex-col items-end gap-2 flex-shrink-0 ml-2">
-                        <div className="text-nearTextColors-0 text-[0.7rem] whitespace-nowrap">
-                          {formatTime(n?.createdAt as any)}
+                        <div className="flex items-center gap-2">
+                          <div className="text-nearTextColors-0 text-[0.7rem] whitespace-nowrap">
+                            {formatTime(n?.createdAt as any)}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNotification(n.id);
+                            }}
+                            disabled={isDeleting === n.id}
+                            title={t("Delete")}
+                            aria-label={t("Delete notification")}
+                            className="text-gray-400 hover:text-red-500 transition-all disabled:opacity-50"
+                          >
+                            {isDeleting === n.id ? (
+                              <FaSpinner className="animate-spin" size={12} />
+                            ) : (
+                              <FaTrash size={12} />
+                            )}
+                          </button>
                         </div>
 
                         {isUnread && activeTab === "all" && (
@@ -374,7 +464,7 @@ export default function DashboardNotification({
                             {isMarkingSpecific === n.id ? (
                               <FaSpinner className="animate-spin" size={12} />
                             ) : (
-                              "Mark as read"
+                              t("Mark as read")
                             )}
                           </button>
                         )}

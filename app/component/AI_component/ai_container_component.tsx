@@ -12,6 +12,7 @@ import { IoSchoolOutline, IoPeopleOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import ShekiAIOrb from "./ShekiAIOrb";
 import { AssistantMode, CourseCandidate, GroupCandidate, TutorCandidate, useShekiAI } from "@/app/hook/useShekiAI";
+import { useI18n } from "@/app/context/I18nContext";
 
 // Reveals assistant text a chunk at a time rather than all at once, so a
 // reply feels spoken rather than dumped on screen. Chunked (not per-char)
@@ -188,6 +189,7 @@ export default function AIContainerComponent({
   isExpanded?: boolean;
   onToggleExpand?: (next: boolean) => void;
 }) {
+  const { t } = useI18n();
   const isStudent = mode === "student";
   const QUICK_ACTIONS = isStudent ? STUDENT_QUICK_ACTIONS : TUTOR_QUICK_ACTIONS;
   const {
@@ -290,13 +292,13 @@ export default function AIContainerComponent({
       <div className="flex justify-between items-center w-full px-5 py-4 border-b border-black/5 dark:border-white/5 shrink-0">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primaryYellow-0 to-primaryColors-0" />
-          <span className="font-semibold text-lightBoldText-0 dark:text-textSlightDark-0">ShekiAI</span>
+          <span className="font-semibold text-lightBoldText-0 dark:text-textSlightDark-0">{t("ShekiAI")}</span>
         </div>
         <div className="flex items-center gap-2">
           {onToggleExpand && (
             <button
               onClick={() => onToggleExpand(!isExpanded)}
-              aria-label={isExpanded ? "Exit full screen" : "Expand to full screen"}
+              aria-label={isExpanded ? t("Exit full screen") : t("Expand to full screen")}
               className="h-8 w-8 bg-boldShadyColor-0/10 dark:bg-boldShadyColor-0 rounded-full flex justify-center items-center text-lightBoldText-0 dark:text-white hover:opacity-80"
             >
               {isExpanded ? <MdCloseFullscreen size={14} /> : <MdOpenInFull size={14} />}
@@ -305,7 +307,7 @@ export default function AIContainerComponent({
           {onClose && (
             <button
               onClick={onClose}
-              aria-label={closeVariant === "collapse" ? "Collapse assistant" : "Close assistant"}
+              aria-label={closeVariant === "collapse" ? t("Collapse assistant") : t("Close assistant")}
               className="h-8 w-8 bg-boldShadyColor-0/10 dark:bg-boldShadyColor-0 rounded-full flex justify-center items-center text-lightBoldText-0 dark:text-white hover:opacity-80"
             >
               {closeVariant === "collapse" ? <FiChevronRight size={15} /> : <IoClose />}
@@ -320,10 +322,10 @@ export default function AIContainerComponent({
           <div className="h-full flex flex-col items-center justify-center gap-8 py-8">
             <div className="text-center">
               <h2 className="text-xl font-semibold text-lightBoldText-0 dark:text-textSlightDark-0">
-                Hello, {tutorName}!
+                {t("Hello,")} {tutorName}!
               </h2>
               <p className="text-nearTextColors-0 dark:text-textGrey-0 mt-1">
-                {isStudent ? "Looking for a mentor? Let's find the right person." : "How can I help you today?"}
+                {isStudent ? t("Looking for a mentor? Let's find the right person.") : t("How can I help you today?")}
               </p>
             </div>
 
@@ -337,7 +339,7 @@ export default function AIContainerComponent({
                   disabled={isStarting}
                   className="text-sm px-3 py-2.5 rounded-xl bg-white dark:bg-boldShadyColor-0 text-lightBoldText-0 dark:text-textSlightDark-0 border border-black/5 dark:border-white/5 hover:border-primaryColors-0 transition-colors disabled:opacity-50"
                 >
-                  {action.label}
+                  {t(action.label)}
                 </button>
               ))}
             </div>
@@ -394,7 +396,7 @@ export default function AIContainerComponent({
             {(status === "thinking" || isUploadingDoc) && (
               <div className="flex items-center gap-2 text-nearTextColors-0 dark:text-textGrey-0 text-sm px-1">
                 <ShekiAIOrb status="thinking" size={24} />
-                <span>{isUploadingDoc ? "Reading your document…" : "Thinking…"}</span>
+                <span>{isUploadingDoc ? t("Reading your document…") : t("Thinking…")}</span>
               </div>
             )}
 
@@ -403,34 +405,34 @@ export default function AIContainerComponent({
             {!isStudent && status === "awaiting_approval" && !finalizedCourseId && (
               <div className="bg-shadyYellow-0 border border-primaryYellow-0/40 rounded-xl p-3 flex items-center justify-between gap-3">
                 <span className="text-sm text-lightBoldText-0 dark:text-textSlightDark-0">
-                  Your draft is ready — want me to create the course?
+                  {t("Your draft is ready — want me to create the course?")}
                 </span>
                 <button
                   onClick={handleFinalize}
                   disabled={isFinalizing}
                   className="shrink-0 text-sm px-3 py-1.5 rounded-lg bg-primaryColors-0 text-white disabled:opacity-60"
                 >
-                  {isFinalizing ? "Creating…" : "Create it"}
+                  {isFinalizing ? t("Creating…") : t("Create it")}
                 </button>
               </div>
             )}
 
             {finalizedCourseId && (
               <div className="bg-shadyGrreen-0 border border-boldGreen-0/40 rounded-xl p-3 text-sm text-lightBoldText-0 dark:text-textSlightDark-0">
-                🎉 Course created! You can add lesson videos and materials from your course dashboard.
+                🎉 {t("Course created! You can add lesson videos and materials from your course dashboard.")}
               </div>
             )}
 
             {isStudent && matchedTutor && (
               <div className="bg-shadyGrreen-0 border border-boldGreen-0/40 rounded-xl p-3 flex items-center justify-between gap-3">
                 <span className="text-sm text-lightBoldText-0 dark:text-textSlightDark-0">
-                  🎉 {matchedTutor.name} has been notified — your chat is ready.
+                  🎉 {matchedTutor.name} {t("has been notified — your chat is ready.")}
                 </span>
                 <button
                   onClick={() => setShowMessages(true)}
                   className="shrink-0 text-sm px-3 py-1.5 rounded-lg bg-primaryColors-0 text-white"
                 >
-                  Open chat
+                  {t("Open chat")}
                 </button>
               </div>
             )}
@@ -448,7 +450,7 @@ export default function AIContainerComponent({
             <span className="text-sm text-lightBoldText-0 dark:text-textSlightDark-0 truncate flex-1">{pendingFile.name}</span>
             <button
               onClick={() => setPendingFile(null)}
-              aria-label="Remove attached document"
+              aria-label={t("Remove attached document")}
               className="shrink-0 text-nearTextColors-0 hover:text-red-500"
             >
               <IoClose size={16} />
@@ -458,7 +460,7 @@ export default function AIContainerComponent({
         <div className="flex items-center gap-2 bg-white dark:bg-boldShadyColor-0 rounded-full px-3 py-2 border border-black/5 dark:border-white/5">
           <button
             onClick={() => fileInputRef.current?.click()}
-            aria-label="Attach a document"
+            aria-label={t("Attach a document")}
             disabled={!sessionId || isUploadingDoc}
             className="h-8 w-8 rounded-full shrink-0 flex items-center justify-center text-nearTextColors-0 hover:text-primaryColors-0 disabled:opacity-40"
           >
@@ -480,7 +482,7 @@ export default function AIContainerComponent({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder={pendingFile ? "Say something about this file (optional)…" : "Ask me anything…"}
+            placeholder={pendingFile ? t("Say something about this file (optional)…") : t("Ask me anything…")}
             disabled={isUploadingDoc}
             className="flex-1 bg-transparent outline-none text-sm text-lightBoldText-0 dark:text-textSlightDark-0 placeholder:text-nearTextColors-0 disabled:opacity-50"
           />
@@ -492,7 +494,7 @@ export default function AIContainerComponent({
                 exit={{ scale: 0.7, opacity: 0 }}
                 onClick={handleSend}
                 disabled={isUploadingDoc}
-                aria-label="Send message"
+                aria-label={t("Send message")}
                 className="h-8 w-8 rounded-full bg-primaryColors-0 text-white flex items-center justify-center shrink-0 disabled:opacity-60"
               >
                 <FaPaperPlane size={13} />

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthContext } from "@/app/context/AuthContext";
 import AuthLoader from "@/app/auth/auth_loader";
+import AuthErrorScreen from "@/app/component/auth_error_screen";
 import { getUserProfile } from "@/app/utils/database/db";
 
 export default function DashboardStudentAuthContext({
@@ -13,9 +14,17 @@ export default function DashboardStudentAuthContext({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { authStatus, checkAuth, refreshToken } = useAuthContext();
+  const {
+    authStatus,
+    checkAuth,
+    refreshToken,
+    authError,
+    clearAuthError,
+    getAuthError,
+  } = useAuthContext();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const verifyAuth = async () => {
@@ -55,6 +64,16 @@ export default function DashboardStudentAuthContext({
       }
 
       if (!isAuthenticated) {
+        // checkAuth()/refreshToken() set authError when the server never
+        // actually answered (network drop, timeout, 5xx) — that's not proof
+        // this session is invalid, so don't sign the user out over it.
+        // getAuthError() reads a ref, so it reflects what just happened
+        // above rather than the (possibly one-render-stale) authError prop.
+        if (getAuthError()) {
+          console.log("Auth check errored, showing error screen instead of redirecting");
+          setIsCheckingAuth(false);
+          return;
+        }
         console.log("Not authenticated, redirecting to login");
         router.push("/auth");
         setIsCheckingAuth(false);
@@ -85,7 +104,23 @@ export default function DashboardStudentAuthContext({
     };
 
     verifyAuth();
-  }, [authStatus.isExistingUser, authStatus.isProfileComplete, authStatus.user?.role, checkAuth, refreshToken, router, pathname]);
+    // authError deliberately excluded: it's an *output* of this effect (via
+    // checkAuth/refreshToken), not an input — including it would re-run the
+    // effect every time it sets its own error. retryCount is the only
+    // manual re-trigger.
+  }, [authStatus.isExistingUser, authStatus.isProfileComplete, authStatus.user?.role, checkAuth, refreshToken, router, pathname, retryCount, getAuthError]);
+
+  if (!isAuthorized && !isCheckingAuth && authError) {
+    return (
+      <AuthErrorScreen
+        message={authError}
+        onRetry={() => {
+          clearAuthError();
+          setRetryCount((c) => c + 1);
+        }}
+      />
+    );
+  }
 
   if (isCheckingAuth || !isAuthorized) {
     return <AuthLoader />;

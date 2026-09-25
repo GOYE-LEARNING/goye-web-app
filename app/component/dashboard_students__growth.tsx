@@ -6,10 +6,12 @@ import DashboardGrowthSubHeader from "@/app/component/dashboard_growth_subheader
 import DashboardStudentGrowthMore from "@/app/component/dashboard_student_growth_more";
 import SubHeader from "@/app/component/dashboard_subheader";
 import { useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 interface Props {
   backFunc: () => void;
 }
 export default function StudentGrowth({ backFunc }: Props) {
+  const { t } = useI18n();
   const [acheivements, setAchivement] = useState<boolean>(true);
   const [certificates, setCertificate] = useState<boolean>(false);
   const backFunction = () => {
@@ -26,7 +28,7 @@ export default function StudentGrowth({ backFunc }: Props) {
   return (
     <>
       <div className="">
-        <SubHeader backFunction={backFunction} header="Spiritual Growth" />
+        <SubHeader backFunction={backFunction} header={t("Spiritual Growth")} />
         <DashboardStudentGrowthMore />
         <DashboardGrowthSubHeader
           acheivement={acheivement}

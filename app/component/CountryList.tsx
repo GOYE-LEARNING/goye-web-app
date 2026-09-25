@@ -208,10 +208,12 @@ export default function CountryList({
           )}
         </div>
 
-        {/* Countries grid */}
+        {/* Countries grid — scrolls on its own, so the submit button below
+            (rendered outside this div) stays pinned in view instead of
+            being pushed past the fold by a long country list. */}
         <div
           ref={containerRef}
-          className="md:my-[1.5rem] my-[1rem] grid grid-cols-2 md:flex md:flex-wrap gap-[1rem]"
+          className="md:my-[1.5rem] my-[1rem] grid grid-cols-2 md:flex md:flex-wrap gap-[1rem] flex-1 min-h-0 overflow-y-auto pb-2"
         >
           {filteredCountries.length > 0 ? (
             filteredCountries.map((country, i) => {
@@ -323,18 +325,25 @@ export default function CountryList({
             </div>
           )}
         </div>
-      </div>
 
-      {filteredCountries.length > 0 && (
-        <div className="flex justify-end items-end w-full pb-4">
-          <button
-            onClick={handleSubmit}
-            className="h-[45px] w-[180px] md:w-[240px] bg-primaryColors-0 transition-all duration-200 hover:bg-white hover:text-primaryColors-0 flex justify-center items-center rounded-[15px] font-bold text-sm md:text-base"
-          >
-            Let interact!!
-          </button>
-        </div>
-      )}
+        {/* Was rendered as a sibling after this flex column, which meant it
+            only came into view once the (scrollable) country grid above had
+            already filled — and consumed — the whole modal height, so it
+            read as "hidden." Moving it inside the flex column, after the
+            now-independently-scrolling grid, keeps it always in view without
+            needing to scroll the whole list. */}
+        {filteredCountries.length > 0 && (
+          <div className="flex justify-end items-end w-full pt-2 pb-1 shrink-0">
+            <button
+              onClick={handleSubmit}
+              disabled={!selectedLanguageData}
+              className="h-[45px] w-[180px] md:w-[240px] bg-primaryColors-0 transition-all duration-200 hover:bg-white hover:text-primaryColors-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primaryColors-0 disabled:hover:text-white flex justify-center items-center rounded-[15px] font-bold text-sm md:text-base text-white"
+            >
+              <TranslatedText text="Let's go!" />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

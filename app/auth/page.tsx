@@ -9,6 +9,7 @@ import { useAuthContext } from "../context/AuthContext";
 import AuthWelcomeHeader from "../component/auth_welcome_header";
 import SelectLanguageContext from "../component/select_languages_context";
 import { useRouter } from "next/navigation";
+import { useI18n } from "../context/I18nContext";
 
 // Helper to get cookie
 function getCookie(name: string): string | null {
@@ -44,6 +45,7 @@ export default function AuthPage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
   const { authStatus } = useAuthContext(); // ✅ Only destructure authStatus
   const router = useRouter();
+  const { t, hasLanguage: contextHasLanguage, isReady } = useI18n();
 
   // ✅ Check if already logged in and redirect
   useEffect(() => {
@@ -64,31 +66,22 @@ export default function AuthPage() {
     checkAuth();
   }, [router]);
 
-  // Check for language on mount
+  // Language now lives in I18nContext (no localStorage). A fresh visit here
+  // starts with no locale known yet — not "no language," just "haven't
+  // asked the backend/the person yet." Wait for `isReady` (the initial
+  // /api/user/profile check to settle) before deciding to prompt: without
+  // that wait, the selector would flash open for every returning,
+  // already-signed-in visitor for the split second before their account's
+  // language comes back from the backend.
   useEffect(() => {
-    const checkLanguage = () => {
-      const lang = localStorage.getItem("lang");
-      const langCode = localStorage.getItem("langCode");
-      setHasLanguage(!!(lang && langCode));
-    };
+    setHasLanguage(contextHasLanguage);
+  }, [contextHasLanguage]);
 
-    checkLanguage();
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "lang" || e.key === "langCode") {
-        checkLanguage();
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    const handleLanguageUpdate = () => checkLanguage();
-    window.addEventListener("languageUpdated", handleLanguageUpdate);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("languageUpdated", handleLanguageUpdate);
-    };
-  }, []);
+  useEffect(() => {
+    if (isReady && !contextHasLanguage) {
+      setShowLanguage(true);
+    }
+  }, [isReady, contextHasLanguage]);
 
   // ✅ Handle auth status changes for profile completion
   useEffect(() => {
@@ -137,7 +130,7 @@ export default function AuthPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primaryColors-0 border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking authentication...</p>
+          <p className="mt-4 text-gray-600">{t("Checking authentication...")}</p>
         </div>
       </div>
     );
@@ -189,7 +182,7 @@ export default function AuthPage() {
               transition={{ duration: 0.3, ease: "easeIn" }}
               className="w-[350px] md:w-auto"
             >
-              <Signin 
+              <Signin
                 changeContentLogin={changeContentSignin}
               />
             </motion.div>

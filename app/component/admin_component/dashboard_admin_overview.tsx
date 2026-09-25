@@ -1,11 +1,15 @@
+"use client";
+
 import { set } from "date-fns/fp";
 import React, { useEffect, useRef, useState } from "react";
 import { BiChevronDown } from "react-icons/bi";
 import { HiOutlineChartBar } from "react-icons/hi";
 import { LuChartLine } from "react-icons/lu";
 import { MdOutlineShowChart, MdPeople } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function DashboardAdminOverview() {
+  const { t } = useI18n();
   const boxRef = useRef<HTMLDivElement | null>(null);
   const dateInputRef = useRef<HTMLInputElement | null>(null);
   const [showBox, setShowBox] = useState<boolean>(false);
@@ -59,7 +63,7 @@ export default function DashboardAdminOverview() {
         );
 
         if (!res.ok) {
-          throw new Error("Failed to load admin stats");
+          throw new Error(t("Failed to load admin stats"));
         }
 
         const data = await res.json();
@@ -72,7 +76,7 @@ export default function DashboardAdminOverview() {
           engagementRate: apiStats.engagementRate ?? 0,
         });
       } catch (err: any) {
-        setError(err.message ?? "Unable to load stats");
+        setError(err.message ?? t("Unable to load stats"));
       } finally {
         setLoading(false);
       }
@@ -109,7 +113,7 @@ export default function DashboardAdminOverview() {
   return (
     <div className="dashboard_content_box">
       <div className="flex justify-between items-center">
-        <h1 className="font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">Overview</h1>
+        <h1 className="font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">{t("Overview")}</h1>
         <div className="relative">
           <button
             className="flex items-center gap-1 text-primaryColors-0 text-[12px]"
@@ -127,25 +131,25 @@ export default function DashboardAdminOverview() {
                   className="admin_data_date_select"
                   onClick={() => selectValue("Today")}
                 >
-                  Today
+                  {t("Today")}
                 </li>
                 <li
                   className="admin_data_date_select"
                   onClick={() => selectValue("This week")}
                 >
-                  This week
+                  {t("This week")}
                 </li>
                 <li
                   className="admin_data_date_select"
                   onClick={() => selectValue("Last week")}
                 >
-                  Last week
+                  {t("Last week")}
                 </li>
                 <li
                   className="admin_data_date_select"
                   onClick={() => selectValue("Last month")}
                 >
-                  Last Month
+                  {t("Last Month")}
                 </li>
                 <label
                   className="admin_data_date_select relative"
@@ -153,7 +157,7 @@ export default function DashboardAdminOverview() {
                     dateInputRef.current?.showPicker?.();
                   }}
                 >
-                  Select previous date
+                  {t("Select previous date")}
                 </label>
                 <input
                   type="date"
@@ -181,7 +185,7 @@ export default function DashboardAdminOverview() {
             <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
               {loading ? "..." : stats.activeUsers}
             </h1>
-            <span className="dark:text-white text-lightBoldText-0 text-[12px]">Active Users</span>
+            <span className="dark:text-white text-lightBoldText-0 text-[12px]">{t("Active Users")}</span>
           </div>
 
           <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-boldShadyColor-0">
@@ -193,7 +197,7 @@ export default function DashboardAdminOverview() {
             <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
               {loading ? "..." : stats.newUsersToday}
             </h1>
-            <span className="dark:text-white text-lightBoldText-0 text-[12px]">New Users</span>
+            <span className="dark:text-white text-lightBoldText-0 text-[12px]">{t("New Users")}</span>
           </div>
 
           <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-boldShadyColor-0">
@@ -205,7 +209,7 @@ export default function DashboardAdminOverview() {
             <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
               {loading ? "..." : `${stats.avgCompletionRate}%`}
             </h1>
-            <span className="dark:text-white text-lightBoldText-0 text-[12px]">Avg. Completion</span>
+            <span className="dark:text-white text-lightBoldText-0 text-[12px]">{t("Avg. Completion")}</span>
           </div>
 
           <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-boldShadyColor-0">
@@ -217,7 +221,7 @@ export default function DashboardAdminOverview() {
             <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
               {loading ? "..." : `${stats.engagementRate}%`}
             </h1>
-            <span className="dark:text-white text-lightBoldText-0 text-[12px]">Engagement</span>
+            <span className="dark:text-white text-lightBoldText-0 text-[12px]">{t("Engagement")}</span>
           </div>
 
           <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-boldShadyColor-0">

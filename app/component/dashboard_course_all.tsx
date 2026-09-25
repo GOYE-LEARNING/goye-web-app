@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useModal } from "../context/SimpleModalContext";
 import CourseList from "./dashboard_courselist_component";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   openCourse: (id: string) => void;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function DashboardCourseAllProvider({ openCourse, search, isRefreshing }: Props) {
+  const { t } = useI18n();
   const [courses, setCourses] = useState<any[]>([]);
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
   const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
@@ -94,7 +96,7 @@ export default function DashboardCourseAllProvider({ openCourse, search, isRefre
       
     } catch (error) {
       console.error(error);
-      showModal("Error", "Could not load courses", "error");
+      showModal(t("Error"), t("Could not load courses"), "error");
     } finally {
       setInitialLoading(false);
     }
@@ -148,7 +150,7 @@ export default function DashboardCourseAllProvider({ openCourse, search, isRefre
         });
         if (!res.ok) throw new Error("Failed to unsave course");
         setBookmarkedIds((prev) => prev.filter((i) => i !== id));
-        showModal("Success", "Course removed from saved", "success");
+        showModal(t("Success"), t("Course removed from saved"), "success");
       } else {
         const res = await fetch(`${API_URL}/api/course/save-course/${id}`, {
           method: "POST",
@@ -156,11 +158,11 @@ export default function DashboardCourseAllProvider({ openCourse, search, isRefre
         });
         if (!res.ok) throw new Error("Failed to save course");
         setBookmarkedIds((prev) => [...prev, id]);
-        showModal("Success", "Course saved successfully", "success");
+        showModal(t("Success"), t("Course saved successfully"), "success");
       }
     } catch (error) {
       console.error(error);
-      showModal("Error", "Could not update saved status", "error");
+      showModal(t("Error"), t("Could not update saved status"), "error");
     }
   };
 
@@ -188,7 +190,7 @@ export default function DashboardCourseAllProvider({ openCourse, search, isRefre
       onViewCourse={handleViewCourse}
       loadingCourseId={loadingCourseId}
       isLoading={initialLoading || isRefreshing}
-      emptyMessage="No courses found"
+      emptyMessage={t("No courses found")}
     />
   );
 }

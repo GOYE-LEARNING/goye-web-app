@@ -7,12 +7,14 @@ import { CiClock2 } from "react-icons/ci";
 import { MdDelete, MdMoreVert } from "react-icons/md";
 import { useEffect, useRef, useState } from "react";
 import DashboardNewReply from "./dashboard_reply";
+import { useI18n } from "@/app/context/I18nContext";
 interface Props {
   backToForum: () => void;
   postId?: string;
   onReplyUpdate?: (reply: any) => void;
 }
 export default function DashboardPostView({ backToForum, postId, onReplyUpdate }: Props) {
+  const { t } = useI18n();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showReply, setShowReply] = useState<boolean>(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -29,7 +31,7 @@ export default function DashboardPostView({ backToForum, postId, onReplyUpdate }
   return (
     <>
       <div>
-        <SubHeader header="Post" backFunction={backToForum} />
+        <SubHeader header={t("Post")} backFunction={backToForum} />
         <div className="dashboard_content_mainbox">
           <div>
             <div className="flex justify-between items-center">
@@ -37,10 +39,10 @@ export default function DashboardPostView({ backToForum, postId, onReplyUpdate }
                 <div className="bg-[#EFEFF1] h-[40px] w-[40px] rounded-full"></div>
                 <div className="flex flex-col items-start">
                   <h1 className="text-[#41415A] text-[14px] font-[600]">
-                    Pst. Rhoda Rhodes
+                    {t("Pst. Rhoda Rhodes")}
                   </h1>
                   <p className="flex items-center gap-2 text-[#71748C] text-[13px] font-[600]">
-                    <CiClock2 /> 10 days ago
+                    <CiClock2 /> {t("10 days ago")}
                   </p>
                 </div>
               </div>
@@ -57,7 +59,7 @@ export default function DashboardPostView({ backToForum, postId, onReplyUpdate }
                     className="absolute right-0 my-2 bg-white drop-shadow-2xl h-[44px] w-[102px] flex justify-center items-center"
                   >
                     <span className="flex justify-center items-center gap-1 text-[#DA0E29] font-[500] text-[14px]">
-                      <MdDelete /> Delete
+                      <MdDelete /> {t("Delete")}
                     </span>
                   </div>
                 )}
@@ -65,11 +67,10 @@ export default function DashboardPostView({ backToForum, postId, onReplyUpdate }
             </div>
             <div className="flex flex-col gap-2">
               <h1 className="text-[14px] font-[600] text-textSlightDark-0">
-                Welcome to Foundations of Discipleship Forum!
+                {t("Welcome to Foundations of Discipleship Forum!")}
               </h1>
               <p className="text-[#71748C] text-[14px]">
-                Welcome everyone! This is where we can discuss course materials,
-                ask questions, and support each other in our spiritual journey.
+                {t("Welcome everyone! This is where we can discuss course materials, ask questions, and support each other in our spiritual journey.")}
               </p>
               <p className="flex items-center gap-4  text-[14px]">
                 <span className="flex items-center gap-1 text-[#71748C]">
@@ -77,7 +78,7 @@ export default function DashboardPostView({ backToForum, postId, onReplyUpdate }
                 </span>
                 {postId && (
                   <span className="flex items-center gap-1 text-primaryColors-0" onClick={() => setShowReply(true)}>
-                    <FaReply /> Reply
+                    <FaReply /> {t("Reply")}
                   </span>
                 )}
               </p>

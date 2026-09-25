@@ -10,6 +10,7 @@ import Pic from "@/public/images/notfound.png";
 import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
 import SubHeader from "./dashboard_subheader";
+import { useModal } from "@/app/context/SimpleModalContext"; // adjust path to your ModalProvider file
 
 function usePersistentState<T>(
   key: string,
@@ -33,7 +34,8 @@ function usePersistentState<T>(
 }
 
 interface Props {
-    removeModule: () => void
+  removeModule: () => void;
+  courseId: string;
 }
 
 interface Lesson {
@@ -52,8 +54,13 @@ interface Module {
   visible: boolean;
 }
 
-export default function DashboardTutorCreateModule({removeModule} : Props) {
+export default function DashboardTutorCreateModule({
+  removeModule,
+  courseId,
+}: Props) {
   const [modules, setModules] = usePersistentState<Module[]>("module", []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showModal } = useModal();
 
   // --- FORM ARRAYS ---
   const modulesForm = [
@@ -82,7 +89,6 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
     ]);
   };
 
-
   const handleModuleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     id: number
@@ -102,7 +108,15 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
   };
 
   const deleteModule = (id: number) => {
-    setModules((prev) => prev.filter((m) => m.id !== id));
+    showModal(
+      "Delete Module",
+      "Are you sure you want to delete this module? This action cannot be undone.",
+      "confirm",
+      () => {
+        setModules((prev) => prev.filter((m) => m.id !== id));
+        showModal("Deleted", "Module has been removed.", "success");
+      }
+    );
   };
 
   // --- LESSON FUNCTIONS ---
@@ -148,12 +162,20 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
   };
 
   const deleteLesson = (moduleId: number, lessonId: number) => {
-    setModules((prev) =>
-      prev.map((m) =>
-        m.id === moduleId
-          ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
-          : m
-      )
+    showModal(
+      "Delete Lesson",
+      "Are you sure you want to delete this lesson?",
+      "confirm",
+      () => {
+        setModules((prev) =>
+          prev.map((m) =>
+            m.id === moduleId
+              ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
+              : m
+          )
+        );
+        showModal("Deleted", "Lesson removed successfully.", "success");
+      }
     );
   };
 
@@ -204,14 +226,123 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
     );
   };
 
+  // --- SUBMIT MODULES TO API ---
+  const handleSubmit = async () => {
+    console.log("Module Id", courseId)
+    // Validation
+    if (modules.length === 0) {
+      showModal(
+        "No Modules",
+        "Please add at least one module before submitting.",
+        "error"
+      );
+      return;
+    }
+
+    for (let i = 0; i < modules.length; i++) {
+      const mod = modules[i];
+      if (!mod.module_title.trim()) {
+        showModal(
+          "Missing Field",
+          `Module ${i + 1} is missing a title.`,
+          "error"
+        );
+        return;
+      }
+      if (!mod.module_description.trim()) {
+        showModal(
+          "Missing Field",
+          `Module ${i + 1} is missing a description.`,
+          "error"
+        );
+        return;
+      }
+      if (!mod.module_time.trim()) {
+        showModal(
+          "Missing Field",
+          `Module ${i + 1} is missing a duration.`,
+          "error"
+        );
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+      const results = await Promise.all(
+        modules.map(async (mod) => {
+          const body = {
+            module_title: mod.module_title,
+            module_description: mod.module_description,
+            module_duration: mod.module_time,
+            lesson: mod.lessons.map((l) => ({
+              lesson_title: l.lesson_title,
+              lesson_video: l.lesson_video,
+            })),
+          };
+
+          const res = await fetch(
+            `${API_URL}/api/course/create-module/${courseId}`,
+            {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(body),
+            }
+          );
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(
+              errData.message ||
+                `Failed to create module "${mod.module_title}"`
+            );
+          }
+
+          return res.json();
+        })
+      );
+
+      showModal(
+        "Success",
+        `${results.length} module${results.length > 1 ? "s" : ""} created successfully!`,
+        "success"
+      );
+
+      // Clear persisted state
+      setModules([]);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("module");
+      }
+
+      // Go back after the toast has had a moment to show
+      setTimeout(() => {
+        removeModule();
+      }, 1200);
+    } catch (err: any) {
+      showModal(
+        "Error",
+        err.message || "Something went wrong. Please try again.",
+        "error"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div>
-        <SubHeader header="Add Module" backFunction={removeModule}/>
-      <AnimatePresence mode="wait" >
+      <SubHeader header="Add Module" backFunction={removeModule} />
+      <AnimatePresence mode="wait">
         <div key="module" className="dashboard_content_mainbox">
           {/* --- HEADER --- */}
           <div className="flex justify-between items-center">
-            <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
+            <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
               Course Structure
             </h1>
             <span
@@ -225,7 +356,7 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
           {modules.length === 0 ? (
             <div className="flex justify-center items-center flex-col gap-1">
               <Image src={Pic} alt="pic" height={100} width={100} />
-              <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
+              <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
                 No Course Found
               </h1>
               <p className="text-textGrey-0">Create a course</p>
@@ -270,7 +401,7 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
                       <div className="my-3 flex flex-col gap-3">
                         {modulesForm.map((form, index) => (
                           <div
-                            className="flex flex-col border border-[#D2D5DA] justify-between w-full py-[8px] px-[12px]"
+                            className="flex flex-col border border-[#D2D5DA]/20 justify-between w-full py-[8px] px-[12px]"
                             key={index}
                           >
                             <label className="text-textGrey-0 text-[12px]">
@@ -281,7 +412,7 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
                                 name={form.name}
                                 value={mod.module_description}
                                 onChange={(e) => handleModuleChange(e, mod.id)}
-                                className="resize-none h-[154px] outline-none border-none"
+                                className="resize-none h-[154px] outline-none border-none bg-transparent"
                               />
                             ) : (
                               <input
@@ -295,7 +426,7 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
                                     : ""
                                 }
                                 onChange={(e) => handleModuleChange(e, mod.id)}
-                                className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px]"
+                                className="border-none outline-none w-full dark:text-textSlightDark-0 text-lightBoldText-0 bg-transparent font-[500] text-[16px]"
                               />
                             )}
                           </div>
@@ -309,7 +440,7 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
                         {mod.lessons.map((lesson) => (
                           <div
                             key={lesson.id}
-                            className="p-[12px] bg-shadyColor-0 flex flex-col gap-2 relative w-full my-5"
+                            className="p-[12px] dark:bg-shadyColor-0 bg-lightWhite-0 flex flex-col gap-2 relative w-full my-5"
                           >
                             {lessonForm.map((form, i) => (
                               <div
@@ -325,9 +456,9 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
                                     {!lesson.video_preview ? (
                                       <label
                                         htmlFor={`video-${lesson.id}`}
-                                        className="border-dashed border border-[#D2D5DA] bg-white py-[8px] px-[12px] h-[88px] flex flex-col items-center justify-center gap-[3px] cursor-pointer"
+                                        className="border-dashed border border-[#D2D5DA] bg-white dark:bg-transparent py-[8px] px-[12px] h-[88px] flex flex-col items-center justify-center gap-[3px] cursor-pointer"
                                       >
-                                        <h1 className="font-[500] text-[14px] text-textSlightDark-0">
+                                        <h1 className="font-[500] text-[14px] dark:text-textSlightDark-0 text-lightBoldText-0">
                                           Upload Lesson Video
                                         </h1>
                                         <p className="text-textGrey-0 text-[12px]">
@@ -382,7 +513,7 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="form_input bg-white">
+                                  <div className="form_input bg-white dark:bg-transparent">
                                     <label className="text-textGrey-0 text-[12px]">
                                       {form.label}
                                     </label>
@@ -391,9 +522,13 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
                                       name="lesson_title"
                                       value={lesson.lesson_title}
                                       onChange={(e) =>
-                                        handleLessonChange(e, mod.id, lesson.id)
+                                        handleLessonChange(
+                                          e,
+                                          mod.id,
+                                          lesson.id
+                                        )
                                       }
-                                      className="border-none outline-none w-full text-textSlightDark-0 font-[500] text-[16px]"
+                                      className="border-none outline-none w-full dark:text-textSlightDark-0 text-lightBoldText-0 font-[500] text-[16px] bg-transparent"
                                     />
                                   </div>
                                 )}
@@ -412,7 +547,7 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
                       {/* ADD LESSON BUTTON */}
                       <button
                         onClick={() => createLesson(mod.id)}
-                        className="h-[48px] bg-boldShadyColor-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
+                        className="h-[48px] dark:bg-boldShadyColor-0 bg-lightWhite-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
                       >
                         <BsPlus /> Add Lesson
                       </button>
@@ -424,6 +559,14 @@ export default function DashboardTutorCreateModule({removeModule} : Props) {
               ))}
             </div>
           )}
+
+          <button
+            className="form_btn disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleSubmit}
+            disabled={isSubmitting || modules.length === 0}
+          >
+            {isSubmitting ? "Creating..." : "Create Module"}
+          </button>
         </div>
       </AnimatePresence>
     </div>

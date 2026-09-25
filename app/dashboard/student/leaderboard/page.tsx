@@ -6,6 +6,7 @@ import { CiSearch } from "react-icons/ci";
 import { useEffect, useState } from "react";
 import GeneralLeaderboard from "@/app/component/leaderboard_component/general_leaderboard";
 import { AnimatePresence, motion } from "framer-motion";
+import { useI18n } from "@/app/context/I18nContext";
 interface LeaderboardUser {
   rank: number;
   id: string;
@@ -29,12 +30,13 @@ interface PersonalData {
 }
 
 export default function StudentLeaderBoardPage() {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([]);
   const [personalData, setPersonalData] = useState<PersonalData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [title, setTitle] = useState<string>("Global Leaderboard");
+  const [title, setTitle] = useState<string>(t("Global Leaderboard"));
   const [search, setSearch] = useState<string>("");
   const fetchLeaderboard = async (
     type: "global" | "course" | "group" = "global",
@@ -60,14 +62,14 @@ export default function StudentLeaderBoardPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.message || "Failed to fetch leaderboard");
+        throw new Error(data.message || t("Failed to fetch leaderboard"));
       }
 
       setLeaderboardData(data.data.leaderboard);
       setTitle(data.data.title);
     } catch (err: any) {
       console.error("Error fetching leaderboard:", err);
-      setError(err.message || "Failed to load leaderboard");
+      setError(err.message || t("Failed to load leaderboard"));
     } finally {
       setIsLoading(false);
     }
@@ -104,20 +106,20 @@ export default function StudentLeaderBoardPage() {
       <br/>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-[1.5rem] font-bold"> Leaderboard </h1>
+          <h1 className="text-[1.5rem] font-bold"> {t("Leaderboard")} </h1>
           <div className="text-[1.5rem]">
             <MdLeaderboard />{" "}
           </div>
         </div>
         <div className="w-[auto] bg-white dark:bg-secondaryColors-0 py-2 px-3 rounded-[10px] flex items-center justify-between gap-1">
           <div className="h-[30px] w-[30px] rounded-full overflow-hidden">
-            <img src={personalData?.user.avatar} alt="user_pic" className="h-full w-full object-cover z-10" />
+            <img src={personalData?.user.avatar} alt={t("user_pic")} className="h-full w-full object-cover z-10" />
           </div>
-          <p className="font-semibold text-[14px]">You</p>
+          <p className="font-semibold text-[14px]">{t("You")}</p>
           <div className="h-[20px] w-[1px] mx-2 bg-nearTextColors-0/20"></div>
           <div className="flex items-center gap-1">
             <p className="font-semibold text-[12px]">
-              {personalData?.gamification.totalXP || 0}XP
+              {personalData?.gamification.totalXP || 0}{t("XP")}
             </p>
             <BiTrophy color="#FE9900" />
           </div>
@@ -131,8 +133,7 @@ export default function StudentLeaderBoardPage() {
               {title}
             </h2>
             <p className="dark:text-textSlightDark-0 text-lightBoldText-0/80 text-sm mt-1">
-              Top {leaderboardData.length} learners ranked by total experience
-              points
+              {t("Top")} {leaderboardData.length} {t("learners ranked by total experience points")}
             </p>
           </div>
           <div className="flex items-center gap-3 md:w-auto w-full">
@@ -143,7 +144,7 @@ export default function StudentLeaderBoardPage() {
               </div>
               <input
                 type="text"
-                placeholder="Search for friends..."
+                placeholder={t("Search for friends...")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="border border-[#ccc]/10 outline-none h-[35px] md:w-[200px] w-full pl-6 pr-3 text-[12px] rounded-[10px] bg-lightWhite-0 dark:bg-shadyColor-0"

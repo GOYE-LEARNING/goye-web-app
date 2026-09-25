@@ -1,7 +1,9 @@
 "use client";
 import { FaArrowRight, FaCheck } from "react-icons/fa";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function Step2({ formData, setFormData }: any) {
+  const { t } = useI18n();
   const selected = formData.role;
 
   const formComponent = [
@@ -15,8 +17,8 @@ export default function Step2({ formData, setFormData }: any) {
 
   return (
     <div>
-      <h1 className="form_h1">What's your role?</h1>
-      <p className="form-p my-5">Your role helps us to personalize your GOYE journey.</p>
+      <h1 className="form_h1">{t("What's your role?")}</h1>
+      <p className="form-p my-5">{t("Your role helps us to personalize your GOYE journey.")}</p>
 
       <form className="flex gap-5 my-5 flex-col">
         {formComponent.map((form, i) => {
@@ -32,8 +34,8 @@ export default function Step2({ formData, setFormData }: any) {
             >
               <input id={form.value} type="radio" name="role" checked={isActive} value={form.value} onChange={() => handleSelect(form.value)} className="hidden" />
               <div>
-                <h1 className={`font-semibold ${isActive ? "text-primaryColors-0" : "dark:text-white text-lightBoldText-0/60"}`}>{form.label}</h1>
-                <p className="form-p">{form.label_p}</p>
+                <h1 className={`font-semibold ${isActive ? "text-primaryColors-0" : "dark:text-white text-lightBoldText-0/60"}`}>{t(form.label)}</h1>
+                <p className="form-p">{t(form.label_p)}</p>
               </div>
               <div>
                 <span className="text-primaryColors-0">{isActive ? <FaCheck size={12} /> : <FaArrowRight size={12} />}</span>

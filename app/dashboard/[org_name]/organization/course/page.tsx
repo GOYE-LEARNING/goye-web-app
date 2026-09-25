@@ -10,10 +10,12 @@ import DashboardTabSelection from "@/app/component/dashboard_tab_selection";
 import Loader from "@/app/component/loader";
 import { useState, useRef } from "react";
 import { IoMdRefresh } from "react-icons/io";
+import { useI18n } from "@/app/context/I18nContext";
 
 type TabType = "all" | "enrolled" | "saved" | "done";
 
 export default function MainContainer() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [showCoursePage, setShowCoursePage] = useState<boolean>(true);
   const [showCourse, setShowCourse] = useState<boolean>(false);
@@ -128,7 +130,7 @@ export default function MainContainer() {
       {showCoursePage && (  
         <div>
           <div className="flex justify-between items-center">
-            <h1 className="dashboard_h1">Course</h1>
+            <h1 className="dashboard_h1">{t("Course")}</h1>
             <div className="flex items-center gap-3">
               <span
                 className="text-white h-[35px] w-[35px] bg-primaryColors-0 rounded-full font-semibold flex items-center justify-center gap-2 md:hidden cursor-pointer hover:bg-primaryColors-0/90 transition-colors"
@@ -145,7 +147,7 @@ export default function MainContainer() {
                 onChange={(e) => {
                   setSearch(e.target.value);
                 }}
-                placeholder="Search for what fit you..."
+                placeholder={t("Search for what fit you...")}
               />
             </div>
             <div className="flex items-center gap-2">

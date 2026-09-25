@@ -1,5 +1,8 @@
+"use client";
+
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   allFunc: () => void;
@@ -13,6 +16,7 @@ export default function DashboardAdminTab({
   studentFunc,
   tutorFunc,
 }: Props) {
+  const { t } = useI18n();
   const params = useParams<{org_name: string}>()
   const {org_name} = params;
   const pathname = usePathname()
@@ -47,7 +51,7 @@ export default function DashboardAdminTab({
             handleClickTab("all");
           }}
         >
-          All
+          {t("All")}
         </button>
         <button
           className={`h-[34px]  w-[15%] text-center ${design("student")}`}
@@ -55,7 +59,7 @@ export default function DashboardAdminTab({
             handleClickTab("student");
           }}
         >
-          {pathname == `/dashboard/${org_name}/admin/users` ? 'Members' : "Student"}
+          {pathname == `/dashboard/${org_name}/admin/users` ? t('Members') : t("Student")}
         </button>
         <button
           className={`h-[34px]  w-[15%] text-center ${design("instructors")}`}
@@ -63,7 +67,7 @@ export default function DashboardAdminTab({
             handleClickTab("instructors");
           }}
         >
-          Instructors
+          {t("Instructors")}
         </button>
       </div>
     </>

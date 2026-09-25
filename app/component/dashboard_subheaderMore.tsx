@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { IoMdTrash } from "react-icons/io";
 import { MdEdit, MdMoreVert } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunc: () => void;
@@ -20,6 +21,7 @@ export default function DashboardSubHeaderMore({
   editCourse,
   deleteCourse
 }: Props) {
+  const { t } = useI18n();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownBox = useRef<HTMLDivElement | null>(null);
 
@@ -55,25 +57,25 @@ export default function DashboardSubHeaderMore({
           <h2 className="text-textGrey-0">{paragraph}</h2>
         </div>
 
-        <div className="relative">
-          <button onClick={iconEdit} className="text-white text-[16px]">
+        <div className="relative z-10">
+          <button onClick={iconEdit} className="dark:text-white text-lightBoldText-0 text-[16px]">
             <MdMoreVert />
           </button>
 
           {showDropdown && (
             <div
               ref={dropdownBox}
-              className="bg-secondaryColors-0 drop-shadow-2xl w-[152px] text-[14px] absolute right-0"
+              className="bg-white dark:bg-secondaryColors-0 drop-shadow-2xl w-[152px] text-[14px] absolute right-0 z-50"
             >
               <span className="flex items-center gap-[12px] px-[16px] py-[8px]" onClick={editCourse}>
-                <MdEdit /> Edit
+                <MdEdit /> {t("Edit")}
               </span>
               <div className="dashboard_hr"></div>
               <span
                 className="flex items-center gap-[12px] px-[16px] py-[8px] text-[#DA0E29] cursor-pointer"
                 onClick={deleteCourseFunc}
               >
-                <IoMdTrash /> Delete
+                <IoMdTrash /> {t("Delete")}
               </span>
             </div>
           )}

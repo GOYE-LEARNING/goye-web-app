@@ -4,6 +4,7 @@
 import { BiHeart } from "react-icons/bi";
 import { BsHeartFill } from "react-icons/bs";
 import { NestedReply } from "@/app/interface/discussion";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   nestedReply: NestedReply;
@@ -20,6 +21,7 @@ export default function NestedReplyItem({
   onToggleLike,
   renderFormattedText,
 }: Props) {
+  const { t } = useI18n();
   return (
     <div className="mb-2">
       <div className="flex items-start gap-2">
@@ -27,7 +29,7 @@ export default function NestedReplyItem({
           <img
             src={nestedReply.author.user_pic}
             className="h-full w-full object-cover"
-            alt="avatar"
+            alt={t("avatar")}
           />
         </div>
         <div className="flex-1">

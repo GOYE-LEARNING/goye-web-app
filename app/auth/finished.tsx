@@ -5,9 +5,11 @@ import { motion } from "framer-motion";
 import { MdCheckCircle } from "react-icons/md";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function Finished() {
   const router = useRouter();
+  const { t } = useI18n();
   confetti({
     particleCount: 25,
     spread: 80,
@@ -21,11 +23,11 @@ export default function Finished() {
           <div className="text-green-700">
             <MdCheckCircle size={80} />
           </div>
-          <h1 className="form_h1 md:text-4xl text-[40px]">Awesome</h1>
-          <p className="form-p">Your account has been created successfully.</p>
+          <h1 className="form_h1 md:text-4xl text-[40px]">{t("Awesome")}</h1>
+          <p className="form-p">{t("Your account has been created successfully.")}</p>
 
           <span className="form_btn" onClick={() => router.push("../../loading")}>
-            Go To Dashboard <FaArrowRight size={13} />
+            {t("Go To Dashboard")} <FaArrowRight size={13} />
           </span>
         </div>
       </div>

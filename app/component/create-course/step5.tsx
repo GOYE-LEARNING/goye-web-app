@@ -2,6 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import React from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   formData: any;
@@ -17,6 +18,7 @@ interface Form {
 }
 
 export default function CourseStep5({ formData, setFormData }: Props) {
+  const { t } = useI18n();
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -28,11 +30,11 @@ export default function CourseStep5({ formData, setFormData }: Props) {
   };
 
   const form: Form[] = [
-    { label: "Objective 1", type: "text", name: "obj1", value: formData.objective?.[0]?.obj1 || "" },
-    { label: "Objective 2", type: "text", name: "obj2", value: formData.objective?.[0]?.obj2 || "" },
-    { label: "Objective 3", type: "text", name: "obj3", value: formData.objective?.[0]?.obj3 || "" },
-    { label: "Objective 4", type: "text", name: "obj4", value: formData.objective?.[0]?.obj4 || "" },
-    { label: "Objective 5", type: "text", name: "obj5", value: formData.objective?.[0]?.obj5 || "" },
+    { label: t("Objective 1"), type: "text", name: "obj1", value: formData.objective?.[0]?.obj1 || "" },
+    { label: t("Objective 2"), type: "text", name: "obj2", value: formData.objective?.[0]?.obj2 || "" },
+    { label: t("Objective 3"), type: "text", name: "obj3", value: formData.objective?.[0]?.obj3 || "" },
+    { label: t("Objective 4"), type: "text", name: "obj4", value: formData.objective?.[0]?.obj4 || "" },
+    { label: t("Objective 5"), type: "text", name: "obj5", value: formData.objective?.[0]?.obj5 || "" },
   ];
 
   return (
@@ -40,7 +42,7 @@ export default function CourseStep5({ formData, setFormData }: Props) {
       <AnimatePresence mode="wait">
         <div key="course_objectives">
           <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
-            Course Objectives
+            {t("Course Objectives")}
           </h1>
           <div className="my-5 flex flex-col gap-3">
             {form.map((item, i) => (

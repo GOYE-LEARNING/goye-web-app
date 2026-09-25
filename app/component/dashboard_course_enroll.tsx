@@ -8,6 +8,7 @@ import Loader from "./loader";
 import { LuUser } from "react-icons/lu";
 import { FaAngleDoubleUp } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface EnrolledCourse {
   enrollment_id: string;
@@ -44,6 +45,7 @@ export default function DashboardCourseEnrolled({
   search,
   isRefreshing,
 }: Props) {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -154,13 +156,13 @@ export default function DashboardCourseEnrolled({
         <Image src={pic2} alt="pic" height={100} width={100} />
         <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
           {isOrganizationRoute
-            ? "No Enrolled Organization Courses"
-            : "No Enrolled Course Found"}
+            ? t("No Enrolled Organization Courses")
+            : t("No Enrolled Course Found")}
         </h1>
         <p className="text-textGrey-0">
           {isOrganizationRoute
-            ? "Browse organization courses"
-            : "Join a Course"}
+            ? t("Browse organization courses")
+            : t("Join a Course")}
         </p>
       </div>
     );
@@ -181,13 +183,13 @@ export default function DashboardCourseEnrolled({
             />
             <div className="flex-1">
               <h1 className="text-lg font-semibold">
-                {item.course.course_title}
+                {t(item.course.course_title)}
               </h1>
 
               {/* Progress Section */}
               <div className="mt-2">
                 <div className="flex justify-between text-sm">
-                  <span>Progress</span>
+                  <span>{t("Progress")}</span>
                   <span>{Math.round(item.course_progress.percentage)}%</span>
                 </div>
                 <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -197,18 +199,18 @@ export default function DashboardCourseEnrolled({
                   />
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  {item.course_progress.completed_lessons} of{" "}
-                  {item.course_progress.total_lessons} lessons completed
+                  {item.course_progress.completed_lessons} {t("of")}{" "}
+                  {item.course_progress.total_lessons} {t("lessons completed")}
                 </p>
               </div>
 
               <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 line-clamp-2">
-                {item.course.course_description}
+                {t(item.course.course_description)}
               </p>
 
               <div className="flex items-center gap-4 mt-2 text-sm">
                 <span className="flex items-center gap-2 text-gray-500">
-                  <LuUser /> {item.course.createdBy || "GOYE Instructor"}
+                  <LuUser /> {item.course.createdBy || t("GOYE Instructor")}
                 </span>
                 <span className="flex items-center gap-2 text-green-600">
                   <FaAngleDoubleUp /> {item.course.course_level}
@@ -222,8 +224,8 @@ export default function DashboardCourseEnrolled({
             onClick={() => openCourse(item.course.id)}
           >
             {item.enrollment_status === "IN_PROGRESS"
-              ? "Continue Course"
-              : "View Course"}
+              ? t("Continue Course")
+              : t("View Course")}
           </button>
         </div>
       ))}

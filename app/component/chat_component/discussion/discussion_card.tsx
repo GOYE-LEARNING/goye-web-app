@@ -28,6 +28,9 @@ import {
   BsVolumeMuteFill,
 } from "react-icons/bs";
 import Portal from "../../Portal";
+import { useI18n } from "@/app/context/I18nContext";
+import { translateText } from "@/app/utils/translator";
+import { MdTranslate } from "react-icons/md";
 
 interface Props {
   discussion: Discussion;
@@ -272,6 +275,7 @@ const SlideshowModal = ({
   onVideoComplete?: (videoUrl: string) => void;
 }) => {
   // ... (keep existing SlideshowModal code)
+  const { t } = useI18n();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isZoomed, setIsZoomed] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -365,7 +369,7 @@ const SlideshowModal = ({
         <button
           onClick={onClose}
           className="p-2 md:p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-all duration-200 backdrop-blur-sm hover:scale-105"
-          aria-label="Close"
+          aria-label={t("Close")}
         >
           <svg
             className="w-5 h-5 md:w-6 md:h-6 text-white"
@@ -397,7 +401,7 @@ const SlideshowModal = ({
               handlePrev();
             }}
             className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-[10000] flex items-center justify-center w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-black/50 hover:bg-black/70 rounded-full transition-all duration-200 backdrop-blur-sm hover:scale-110"
-            aria-label="Previous"
+            aria-label={t("Previous")}
           >
             <FaChevronLeft className="text-white text-xl md:text-2xl lg:text-3xl" />
           </button>
@@ -407,7 +411,7 @@ const SlideshowModal = ({
               handleNext();
             }}
             className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-[10000] flex items-center justify-center w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-black/50 hover:bg-black/70 rounded-full transition-all duration-200 backdrop-blur-sm hover:scale-110"
-            aria-label="Next"
+            aria-label={t("Next")}
           >
             <FaChevronRight className="text-white text-xl md:text-2xl lg:text-3xl" />
           </button>
@@ -440,7 +444,7 @@ const SlideshowModal = ({
           ) : (
             <img
               src={currentMedia.url}
-              alt={currentMedia.filename || `Media ${currentIndex + 1}`}
+              alt={currentMedia.filename || `${t("Media")} ${currentIndex + 1}`}
               className={`max-w-full max-h-full w-auto h-auto object-contain transition-all duration-300 ${
                 isZoomed ? "scale-150 lg:scale-175" : "scale-100"
               }`}
@@ -472,7 +476,7 @@ const SlideshowModal = ({
               >
                 <img
                   src={media.thumbnail || media.url}
-                  alt={`Thumbnail ${idx + 1}`}
+                  alt={`${t("Thumbnail")} ${idx + 1}`}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -491,7 +495,7 @@ const SlideshowModal = ({
         <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 md:hidden z-[10000] animate-pulse">
           <div className="px-4 py-2 bg-black/70 rounded-full text-white/90 text-xs backdrop-blur-sm flex items-center gap-3">
             <span className="text-sm">←</span>
-            <span className="font-medium">Swipe to navigate</span>
+            <span className="font-medium">{t("Swipe to navigate")}</span>
             <span className="text-sm">→</span>
           </div>
         </div>
@@ -500,7 +504,7 @@ const SlideshowModal = ({
       {!isVideo && (
         <div className="absolute bottom-6 right-4 md:bottom-8 md:right-6 z-[10000]">
           <div className="px-3 py-1.5 bg-black/50 rounded-full text-white/60 text-xs md:text-sm backdrop-blur-sm">
-            {isZoomed ? "🔍 Click to zoom out" : "🔍 Click to zoom in"}
+            {isZoomed ? `🔍 ${t("Click to zoom out")}` : `🔍 ${t("Click to zoom in")}`}
           </div>
         </div>
       )}
@@ -518,6 +522,7 @@ const MediaGrid = ({
   mediaItems: MediaItem[];
   onMediaClick: (index: number) => void;
 }) => {
+  const { t } = useI18n();
   const mediaCount = mediaItems.length;
 
   if (mediaCount === 0) return null;
@@ -537,7 +542,7 @@ const MediaGrid = ({
         <>
           <img
             src={media.thumbnail || media.url}
-            alt={media.filename || `Media ${index + 1}`}
+            alt={media.filename || `${t("Media")} ${index + 1}`}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition-colors">
@@ -555,7 +560,7 @@ const MediaGrid = ({
         <>
           <img
             src={media.url}
-            alt={media.filename || `Media ${index + 1}`}
+            alt={media.filename || `${t("Media")} ${index + 1}`}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           />
           {isOverlay && (
@@ -694,8 +699,36 @@ export default function DiscussionCard({
   onEdit,
   onVideoComplete,
 }: Props) {
+  const { t, locale, hasLanguage } = useI18n();
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
   const [showShareTooltip, setShowShareTooltip] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState<string | null>(null);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  // "See translation" toggle for this post's content, in the language the
+  // reader already picked app-wide — mirrors the familiar social-app pattern
+  // instead of translating every post unconditionally (posts are public,
+  // often written in whatever language the author speaks, and eagerly
+  // machine-translating all of them would be wasteful and sometimes wrong).
+  const handleToggleTranslation = async () => {
+    if (showTranslation) {
+      setShowTranslation(false);
+      return;
+    }
+    if (translatedContent !== null) {
+      setShowTranslation(true);
+      return;
+    }
+    setIsTranslating(true);
+    try {
+      const result = await translateText(discussion.content, locale);
+      setTranslatedContent(result);
+      setShowTranslation(true);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   const allMedia: MediaItem[] = discussion.mediaUrls || [];
   const categoryStyles = getCategoryStyles(discussion.category);
@@ -709,6 +742,48 @@ export default function DiscussionCard({
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/discussion/${discussion.id}`;
+    const shareText = discussion.content?.slice(0, 140) || t("Check out this post on GOYE");
+
+    // Carry this specific post's own image into the share sheet, not just a
+    // bare link — a link alone renders as plain text/a generic app icon in
+    // most share targets (WhatsApp, iMessage, etc.), which is exactly the
+    // "unique picture of the post" this was missing.
+    const firstImage = allMedia.find((m) => m.type === "image");
+
+    if (navigator.share) {
+      try {
+        if (firstImage) {
+          const response = await fetch(firstImage.url);
+          const blob = await response.blob();
+          const extension = blob.type.split("/")[1] || "jpg";
+          const file = new File([blob], `post.${extension}`, { type: blob.type });
+
+          if (navigator.canShare?.({ files: [file] })) {
+            await navigator.share({
+              title: t("GOYE Community Post"),
+              text: shareText,
+              url: shareUrl,
+              files: [file],
+            });
+            return;
+          }
+        }
+
+        // No image on this post, or the browser can't share files —
+        // still use the native sheet so the link/text goes to a real app.
+        await navigator.share({
+          title: t("GOYE Community Post"),
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err: any) {
+        // The user closing the share sheet is not an error worth logging.
+        if (err?.name === "AbortError") return;
+        console.error("Failed to share, falling back to clipboard:", err);
+      }
+    }
+
     try {
       await navigator.clipboard.writeText(shareUrl);
       setShowShareTooltip(true);
@@ -727,22 +802,22 @@ export default function DiscussionCard({
 
   // Random blessing template
   const blessingMessages = [
-    "May the Lord bless you and keep you; may His face shine upon you.",
-    "The Lord is your shepherd; you shall not want.",
-    "May God's grace be multiplied to you in abundance.",
-    "Blessed are those who trust in the Lord.",
-    "The Lord will fight for you; you need only to be still.",
-    "May the peace of Christ rule in your heart.",
+    t("May the Lord bless you and keep you; may His face shine upon you."),
+    t("The Lord is your shepherd; you shall not want."),
+    t("May God's grace be multiplied to you in abundance."),
+    t("Blessed are those who trust in the Lord."),
+    t("The Lord will fight for you; you need only to be still."),
+    t("May the peace of Christ rule in your heart."),
   ];
   const randomBlessing = blessingMessages[Math.floor(Math.random() * blessingMessages.length)];
 
   // Devotion Bible verse suggestion
   const devotionVerses = [
-    "“I can do all things through Christ who strengthens me.” - Philippians 4:13",
-    "“For God so loved the world that He gave His only Son.” - John 3:16",
-    "“The Lord is my light and my salvation.” - Psalm 27:1",
-    "“Be still, and know that I am God.” - Psalm 46:10",
-    "“Trust in the Lord with all your heart.” - Proverbs 3:5",
+    t("“I can do all things through Christ who strengthens me.” - Philippians 4:13"),
+    t("“For God so loved the world that He gave His only Son.” - John 3:16"),
+    t("“The Lord is my light and my salvation.” - Psalm 27:1"),
+    t("“Be still, and know that I am God.” - Psalm 46:10"),
+    t("“Trust in the Lord with all your heart.” - Proverbs 3:5"),
   ];
   const randomVerse = devotionVerses[Math.floor(Math.random() * devotionVerses.length)];
 
@@ -760,7 +835,7 @@ export default function DiscussionCard({
               <div className="h-8 w-8 md:h-[30px] md:w-[30px] rounded-full overflow-hidden bg-[#ccc]/10 ring-2 ring-transparent transition-all hover:ring-primaryColors-0">
                 <img
                   src={discussion.author.user_pic}
-                  alt="avatar"
+                  alt={t("avatar")}
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -786,7 +861,7 @@ export default function DiscussionCard({
           <div className="mt-3 flex items-center gap-2">
             <span className="text-2xl">{categoryStyles.headerIcon}</span>
             <span className={`text-sm font-semibold ${categoryStyles.badgeClass} px-3 py-1 rounded-full`}>
-              {categoryStyles.headerText}
+              {t(categoryStyles.headerText)}
             </span>
           </div>
 
@@ -805,7 +880,7 @@ export default function DiscussionCard({
             <div className="mt-3 p-3 bg-blue-100/30 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 flex items-center gap-2">
               <GiPrayerBeads className="text-blue-600" />
               <p className="text-xs text-blue-600 dark:text-blue-400">
-                “The prayer of a righteous person is powerful and effective.” - James 5:16
+                {t("“The prayer of a righteous person is powerful and effective.” - James 5:16")}
               </p>
             </div>
           )}
@@ -814,8 +889,32 @@ export default function DiscussionCard({
           <div className={`mt-3 dark:text-textSlightDark-0 text-lightBoldText-0/80 text-sm md:text-base
             ${categoryStyles.contentClass}`}
           >
-            {renderFormattedText(discussion.content)}
+            {renderFormattedText(
+              showTranslation && translatedContent !== null
+                ? translatedContent
+                : discussion.content,
+            )}
           </div>
+
+          {hasLanguage && locale !== "en" && (
+            <button
+              onClick={handleToggleTranslation}
+              disabled={isTranslating}
+              className="mt-1.5 flex items-center gap-1.5 text-xs text-primaryColors-0 hover:underline disabled:opacity-60"
+            >
+              {isTranslating ? (
+                <>
+                  <FaSpinner className="animate-spin" size={11} />
+                  {t("Translating...")}
+                </>
+              ) : (
+                <>
+                  <MdTranslate size={13} />
+                  {showTranslation ? t("See original") : t("See translation")}
+                </>
+              )}
+            </button>
+          )}
 
           {/* Media Grid - Hidden for prayers */}
           {shouldShowMedia && allMedia.length > 0 && (
@@ -826,10 +925,10 @@ export default function DiscussionCard({
           {isPrayer && (
             <div className="mt-3 flex items-center gap-3">
               <button className="px-3 py-1 text-sm bg-blue-500 text-white rounded-full hover:bg-blue-600 transition shadow-sm">
-                🙏 I Prayed
+                🙏 {t("I Prayed")}
               </button>
               <button className="px-3 py-1 text-sm border border-blue-500 text-blue-600 dark:text-blue-400 rounded-full hover:bg-blue-50 transition">
-                🤝 Encourage
+                🤝 {t("Encourage")}
               </button>
             </div>
           )}
@@ -839,13 +938,13 @@ export default function DiscussionCard({
             <div className="mt-3 p-3 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 rounded-lg border border-amber-200 dark:border-amber-800 shadow-inner">
               <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                 <GiPearlNecklace className="text-2xl" />
-                <span className="text-sm font-semibold">Blessing of the Day</span>
+                <span className="text-sm font-semibold">{t("Blessing of the Day")}</span>
               </div>
               <p className="text-sm text-amber-700 dark:text-amber-300 mt-2 italic">
                 “{randomBlessing}”
               </p>
               <p className="text-xs text-amber-500 dark:text-amber-400 mt-2 text-right">
-                — Numbers 6:24-26
+                — {t("Numbers 6:24-26")}
               </p>
             </div>
           )}
@@ -872,7 +971,7 @@ export default function DiscussionCard({
               className="flex items-center gap-1.5 md:gap-2 hover:text-primaryColors-0 transition group"
             >
               <FaRegCommentDots className="text-gray-400 group-hover:text-primaryColors-0 text-sm md:text-base" />
-              <span className="text-xs md:text-sm text-gray-500">Comment</span>
+              <span className="text-xs md:text-sm text-gray-500">{t("Comment")}</span>
             </button>
             <div className="relative">
               <button
@@ -880,11 +979,11 @@ export default function DiscussionCard({
                 className="flex items-center gap-1.5 md:gap-2 hover:text-primaryColors-0 transition group"
               >
                 <CiShare2 className="text-gray-400 group-hover:text-primaryColors-0 text-sm md:text-base" />
-                <span className="text-xs md:text-sm text-gray-500">Share</span>
+                <span className="text-xs md:text-sm text-gray-500">{t("Share")}</span>
               </button>
               {showShareTooltip && (
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] md:text-xs rounded whitespace-nowrap">
-                  Link copied!
+                  {t("Link copied!")}
                 </div>
               )}
             </div>
@@ -897,7 +996,7 @@ export default function DiscussionCard({
                 <img
                   src={userPic || ""}
                   className="h-full w-full object-cover"
-                  alt="avatar"
+                  alt={t("avatar")}
                 />
               ) : (
                 <div className="h-full w-full bg-[#ccc]/20 rounded-full" />
@@ -906,7 +1005,7 @@ export default function DiscussionCard({
             <div className="flex-1 relative">
               <input
                 type="text"
-                placeholder={isPrayer ? "Type a prayer or encouragement..." : "Write your comment..."}
+                placeholder={isPrayer ? t("Type a prayer or encouragement...") : t("Write your comment...")}
                 value={commentText}
                 onChange={(e) => onCommentChange(discussion.id, e.target.value)}
                 onKeyDown={(e) => {
@@ -952,7 +1051,7 @@ export default function DiscussionCard({
                 ))
               ) : (
                 <p className="text-xs md:text-sm text-gray-400 text-center py-2">
-                  No comments yet. Be the first to comment!
+                  {t("No comments yet. Be the first to comment!")}
                 </p>
               )}
             </div>

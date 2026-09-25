@@ -18,6 +18,7 @@ import {
 } from "react-icons/hi";
 import { FaSpinner } from "react-icons/fa";
 import { format } from "date-fns";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Event {
   id: string;
@@ -58,6 +59,7 @@ const EMPTY_FORM: EventFormState = {
 };
 
 export default function ManageEvents({ onBack }: ManageEventsProps) {
+  const { t } = useI18n();
   const params = useParams<{ org_name: string }>();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,7 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
 
   const handleSubmitForm = async () => {
     if (!formData.name.trim() || !formData.date || !formData.time) {
-      setFormError("Name, date, and time are required");
+      setFormError(t("Name, date, and time are required"));
       return;
     }
 
@@ -170,7 +172,7 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setFormError(data.message || "Failed to save event");
+        setFormError(data.message || t("Failed to save event"));
         return;
       }
 
@@ -178,14 +180,14 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
       fetchEvents();
     } catch (error) {
       console.error("Error saving event:", error);
-      setFormError("An error occurred while saving the event");
+      setFormError(t("An error occurred while saving the event"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (event: Event) => {
-    if (!confirm(`Delete "${event.name}"? This cannot be undone.`)) return;
+    if (!confirm(`${t('Delete')} "${event.name}"? ${t("This cannot be undone.")}`)) return;
 
     try {
       const res = await fetch(
@@ -213,43 +215,43 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-lightWhite-0/80 backdrop-blur-md dark:bg-secondaryColors-0/60 backdrop-blur-sm rounded-[20px]">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-white dark:bg-secondaryColors-0 border-b border-[#ccc]/10 dark:border-[#ccc]/10 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-shadyColor-0 rounded-lg transition-colors"
             >
               <HiOutlineChevronDown className="w-5 h-5 rotate-90 text-gray-600 dark:text-gray-300" />
             </button>
-            <h1 className="text-xl font-semibold dark:text-white">Manage Events</h1>
+            <h1 className="text-xl font-semibold dark:text-white">{t("Manage Events")}</h1>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              ({events.length} events)
+              ({events.length} {t("events")})
             </span>
           </div>
           <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <HiOutlinePlus className="w-5 h-5" />
-            <span>Create Event</span>
+            <span>{t("Create Event")}</span>
           </button>
         </div>
       </div>
 
       {/* Search & Filter */}
-      <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-4 bg-white dark:bg-secondaryColors-0 border-b border-[#ccc]/10 dark:border-[#ccc]/10">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search events..."
+              placeholder={t("Search events...")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -257,13 +259,13 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="px-3 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <option value="all">All Types</option>
-              <option value="webinar">Webinar</option>
-              <option value="workshop">Workshop</option>
-              <option value="seminar">Seminar</option>
-              <option value="social">Social</option>
+              <option value="all">{t("All Types")}</option>
+              <option value="webinar">{t("Webinar")}</option>
+              <option value="workshop">{t("Workshop")}</option>
+              <option value="seminar">{t("Seminar")}</option>
+              <option value="social">{t("Social")}</option>
             </select>
           </div>
         </div>
@@ -273,17 +275,17 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
       <div className="p-4">
         {loading ? (
           <div className="flex justify-center py-12">
-            <FaSpinner className="w-8 h-8 text-primary-500 animate-spin" />
+            <FaSpinner className="w-8 h-8 text-primaryColors-0 animate-spin" />
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <HiOutlineCalendar className="w-16 h-16 text-gray-300 dark:text-gray-600" />
-            <p className="mt-4 text-gray-500 dark:text-gray-400">No events found</p>
+            <p className="mt-4 text-gray-500 dark:text-gray-400">{t("No events found")}</p>
             <button
               onClick={openCreateModal}
-              className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              className="mt-4 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
-              Create your first event
+              {t("Create your first event")}
             </button>
           </div>
         ) : (
@@ -291,12 +293,12 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
             {filteredEvents.map((event) => (
               <div
                 key={event.id}
-                className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-secondaryColors-0 rounded-lg border border-[#ccc]/10 dark:border-[#ccc]/10 p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <HiOutlineCalendar className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                    <div className="w-12 h-12 bg-primaryColors-0/10 dark:bg-primaryColors-0/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <HiOutlineCalendar className="w-6 h-6 text-primaryColors-0 dark:text-primaryColors-0" />
                     </div>
                     <div>
                       <h3 className="font-semibold dark:text-white">{event.name}</h3>
@@ -306,7 +308,7 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
                       <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-1">
                           <HiOutlineClock className="w-4 h-4" />
-                          {event.date ? format(new Date(event.date), 'MMM d, yyyy') : "—"} at {event.time}
+                          {event.date ? format(new Date(event.date), 'MMM d, yyyy') : "—"} {t("at")} {event.time}
                         </span>
                         {event.location && (
                           <span className="flex items-center gap-1">
@@ -316,7 +318,7 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
                         )}
                         <span className="flex items-center gap-1">
                           <HiOutlineUserGroup className="w-4 h-4" />
-                          {event.attendees ?? 0} attendees
+                          {event.attendees ?? 0} {t("attendees")}
                         </span>
                       </div>
                     </div>
@@ -327,7 +329,7 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
                     </span>
                     <button
                       onClick={() => openEditModal(event)}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-shadyColor-0 rounded-lg transition-colors"
                     >
                       <HiOutlinePencilAlt className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                     </button>
@@ -348,14 +350,14 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
       {/* Create / Edit Modal */}
       {showFormModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full shadow-xl overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-secondaryColors-0 rounded-xl max-w-lg w-full shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-[#ccc]/10 dark:border-[#ccc]/10">
               <h2 className="text-lg font-semibold dark:text-white">
-                {editingEvent ? "Edit Event" : "Create Event"}
+                {editingEvent ? t("Edit Event") : t("Create Event")}
               </h2>
               <button
                 onClick={closeFormModal}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-shadyColor-0 rounded-lg transition-colors"
               >
                 <HiOutlineX className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
@@ -370,111 +372,111 @@ export default function ManageEvents({ onBack }: ManageEventsProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Event Name
+                  {t("Event Name")}
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description
+                  {t("Description")}
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Date
+                    {t("Date")}
                   </label>
                   <input
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Time
+                    {t("Time")}
                   </label>
                   <input
                     type="time"
                     value={formData.time}
                     onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Location
+                  {t("Location")}
                 </label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Optional"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder={t("Optional")}
+                  className="w-full px-4 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Type
+                    {t("Type")}
                   </label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
-                    <option value="webinar">Webinar</option>
-                    <option value="workshop">Workshop</option>
-                    <option value="seminar">Seminar</option>
-                    <option value="social">Social</option>
+                    <option value="webinar">{t("Webinar")}</option>
+                    <option value="workshop">{t("Workshop")}</option>
+                    <option value="seminar">{t("Seminar")}</option>
+                    <option value="social">{t("Social")}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Capacity
+                    {t("Capacity")}
                   </label>
                   <input
                     type="number"
                     min={1}
                     value={formData.capacity}
                     onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex gap-3 p-6 border-t border-[#ccc]/10 dark:border-[#ccc]/10">
               <button
                 onClick={closeFormModal}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 px-4 py-2 border border-[#ccc]/10 dark:border-[#ccc]/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-shadyColor-0 transition-colors"
               >
-                Cancel
+                {t("Cancel")}
               </button>
               <button
                 onClick={handleSubmitForm}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSubmitting && <FaSpinner className="animate-spin w-4 h-4" />}
-                {editingEvent ? "Save Changes" : "Create Event"}
+                {editingEvent ? t("Save Changes") : t("Create Event")}
               </button>
             </div>
           </div>

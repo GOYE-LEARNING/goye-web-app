@@ -31,6 +31,7 @@ import DiscussionCard from "./discussion/discussion_card";
 import { FaBookBible, FaMessage, FaPen, FaRegCommentDots } from "react-icons/fa6";
 import { GiPrayerBeads, GiPearlNecklace } from "react-icons/gi";
 import Portal from "@/app/component/Portal";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   openPrivateMessages: () => void;
@@ -117,6 +118,7 @@ const CreatePostModal = ({
   isSubmitting: boolean;
   showToast: (message: string, type?: ToastType) => void;
 }) => {
+  const { t } = useI18n();
   const [content, setContent] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("DISCUSSION");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -227,7 +229,7 @@ const CreatePostModal = ({
       if (!isImage && !isVideo) continue;
       
       if (isVideo && !allowedVideoCats.includes(selectedCategory)) {
-        showToast("You can only upload videos for Post, Devotion, or Testimony categories.", "error");
+        showToast(t("You can only upload videos for Post, Devotion, or Testimony categories."), "error");
         continue;
       }
 
@@ -260,7 +262,7 @@ const CreatePostModal = ({
             m.id === newMedia.id ? { ...m, uploading: false, uploadProgress: 0 } : m
           )
         );
-        showToast(`Failed to upload ${file.name}`, "error");
+        showToast(`${t("Failed to upload")} ${file.name}`, "error");
       }
     }
     
@@ -275,13 +277,13 @@ const CreatePostModal = ({
 
   const handleSubmit = () => {
     if (!content.trim() && mediaFiles.length === 0) {
-      showToast("Please add some content", "error");
+      showToast(t("Please add some content"), "error");
       return;
     }
-    
+
     const hasUploading = mediaFiles.some(m => m.uploading);
     if (hasUploading) {
-      showToast("Please wait for all media to finish uploading", "error");
+      showToast(t("Please wait for all media to finish uploading"), "error");
       return;
     }
     
@@ -329,7 +331,7 @@ const CreatePostModal = ({
         >
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-900 rounded-t-2xl">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Create Post</h2>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">{t("Create Post")}</h2>
             <button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -344,7 +346,7 @@ const CreatePostModal = ({
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-200">
                 {userPic ? (
-                  <img src={userPic} alt="profile" className="h-full w-full object-cover" />
+                  <img src={userPic} alt={t("profile")} className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center bg-primaryColors-0 text-white font-bold">
                     {userName?.charAt(0) || "U"}
@@ -352,8 +354,8 @@ const CreatePostModal = ({
                 )}
               </div>
               <div>
-                <p className="font-semibold text-gray-800 dark:text-white">{userName || "User"}</p>
-                <p className="text-xs text-gray-500 capitalize">{userRole || "Christian"}</p>
+                <p className="font-semibold text-gray-800 dark:text-white">{userName || t("User")}</p>
+                <p className="text-xs text-gray-500 capitalize">{userRole || t("Christian")}</p>
               </div>
             </div>
 
@@ -365,7 +367,7 @@ const CreatePostModal = ({
                   ${selectedCategoryInfo.bgColor} ${selectedCategoryInfo.textColor} border border-current/20`}
               >
                 <span className="text-base">{selectedCategoryInfo.emoji}</span>
-                <span>{selectedCategoryInfo.label}</span>
+                <span>{t(selectedCategoryInfo.label)}</span>
                 <FaAngleDown className={`text-sm transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
               </button>
               
@@ -383,7 +385,7 @@ const CreatePostModal = ({
                     >
                       <span className="text-base">{category.emoji}</span>
                       <span className={selectedCategory === category.id ? category.textColor : 'text-gray-700 dark:text-gray-300'}>
-                        {category.label}
+                        {t(category.label)}
                       </span>
                     </button>
                   ))}
@@ -397,7 +399,7 @@ const CreatePostModal = ({
                 type="button"
                 onClick={() => handleFormat('bold')}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                title="Bold"
+                title={t("Bold")}
               >
                 <FaBold className="text-gray-600 dark:text-gray-400" />
               </button>
@@ -405,7 +407,7 @@ const CreatePostModal = ({
                 type="button"
                 onClick={() => handleFormat('italic')}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                title="Italic"
+                title={t("Italic")}
               >
                 <FaItalic className="text-gray-600 dark:text-gray-400" />
               </button>
@@ -413,7 +415,7 @@ const CreatePostModal = ({
                 type="button"
                 onClick={() => handleFormat('underline')}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                title="Underline"
+                title={t("Underline")}
               >
                 <FaUnderline className="text-gray-600 dark:text-gray-400" />
               </button>
@@ -422,7 +424,7 @@ const CreatePostModal = ({
                 type="button"
                 onClick={() => handleFormat('h1')}
                 className="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-bold"
-                title="Heading 1"
+                title={t("Heading 1")}
               >
                 H1
               </button>
@@ -430,7 +432,7 @@ const CreatePostModal = ({
                 type="button"
                 onClick={() => handleFormat('h2')}
                 className="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-semibold"
-                title="Heading 2"
+                title={t("Heading 2")}
               >
                 H2
               </button>
@@ -438,7 +440,7 @@ const CreatePostModal = ({
                 type="button"
                 onClick={() => handleFormat('h3')}
                 className="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-                title="Heading 3"
+                title={t("Heading 3")}
               >
                 H3
               </button>
@@ -447,7 +449,7 @@ const CreatePostModal = ({
                 type="button"
                 onClick={() => handleFormat('ul')}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                title="Bullet List"
+                title={t("Bullet List")}
               >
                 <FaListUl className="text-gray-600 dark:text-gray-400" />
               </button>
@@ -455,7 +457,7 @@ const CreatePostModal = ({
                 type="button"
                 onClick={() => handleFormat('ol')}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                title="Numbered List"
+                title={t("Numbered List")}
               >
                 <FaListOl className="text-gray-600 dark:text-gray-400" />
               </button>
@@ -472,7 +474,7 @@ const CreatePostModal = ({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-                title="Upload Image or Video"
+                title={t("Upload Image or Video")}
               >
                 {isUploading ? <FaSpinner className="animate-spin" /> : <FaImage className="text-gray-600 dark:text-gray-400" />}
               </button>
@@ -486,7 +488,7 @@ const CreatePostModal = ({
               onMouseUp={getSelectedText}
               onKeyUp={getSelectedText}
               onSelect={getSelectedText}
-              placeholder={`Share your ${selectedCategoryInfo.label.toLowerCase()}...`}
+              placeholder={`${t("Share your")} ${t(selectedCategoryInfo.label).toLowerCase()}...`}
               className="w-full min-h-[200px] p-3 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primaryColors-0 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
               autoFocus
             />
@@ -494,7 +496,7 @@ const CreatePostModal = ({
             {/* Live Preview */}
             {content.trim() && (
               <div className="mt-4 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <p className="text-xs text-gray-500 mb-2">Preview:</p>
+                <p className="text-xs text-gray-500 mb-2">{t("Preview:")}</p>
                 <div className="prose prose-sm max-w-none dark:prose-invert">
                   {renderPreview(content)}
                 </div>
@@ -509,7 +511,7 @@ const CreatePostModal = ({
                     {media.type === "video" ? (
                       <video src={media.preview} className="h-24 w-full object-cover rounded-lg" />
                     ) : (
-                      <img src={media.preview} alt="preview" className="h-24 w-full object-cover rounded-lg" />
+                      <img src={media.preview} alt={t("preview")} className="h-24 w-full object-cover rounded-lg" />
                     )}
                     {media.uploading && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
@@ -535,7 +537,7 @@ const CreatePostModal = ({
               disabled={isSubmitting || (!content.trim() && mediaFiles.length === 0) || isUploading}
               className="px-6 py-2 bg-primaryColors-0 text-white rounded-full text-sm font-medium disabled:opacity-50 hover:bg-primaryColors-0/90 transition"
             >
-              {isSubmitting ? <FaSpinner className="animate-spin" /> : "Post"}
+              {isSubmitting ? <FaSpinner className="animate-spin" /> : t("Post")}
             </button>
           </div>
         </motion.div>
@@ -551,7 +553,9 @@ const ToastStack = ({
 }: {
   toasts: ToastMsg[];
   onDismiss: (id: string) => void;
-}) => (
+}) => {
+  const { t } = useI18n();
+  return (
   <Portal containerId="toast-stack-root">
     <div className="fixed bottom-4 right-4 left-4 sm:left-auto z-[200] flex flex-col gap-2 sm:max-w-sm sm:w-full">
       <AnimatePresence>
@@ -577,7 +581,7 @@ const ToastStack = ({
             <button
               onClick={() => onDismiss(toast.id)}
               className="opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
-              aria-label="Dismiss"
+              aria-label={t("Dismiss")}
             >
               <MdClose size={16} />
             </button>
@@ -586,7 +590,8 @@ const ToastStack = ({
       </AnimatePresence>
     </div>
   </Portal>
-);
+  );
+};
 
 // ==================== CONFIRM DELETE MODAL ====================
 const ConfirmDeleteModal = ({
@@ -600,6 +605,7 @@ const ConfirmDeleteModal = ({
   onCancel: () => void;
   onConfirm: () => void;
 }) => {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   return (
@@ -624,10 +630,10 @@ const ConfirmDeleteModal = ({
             <FaTrashAlt className="text-red-500 text-lg" />
           </div>
           <h3 className="text-lg font-semibold text-center text-gray-800 dark:text-white mb-2">
-            Delete this post?
+            {t("Delete this post?")}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-            This can't be undone. The post and all its comments will be permanently removed.
+            {t("This can't be undone. The post and all its comments will be permanently removed.")}
           </p>
           <div className="flex gap-3">
             <button
@@ -635,14 +641,14 @@ const ConfirmDeleteModal = ({
               disabled={isDeleting}
               className="flex-1 py-2.5 rounded-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
             >
-              Cancel
+              {t("Cancel")}
             </button>
             <button
               onClick={onConfirm}
               disabled={isDeleting}
               className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-medium hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center"
             >
-              {isDeleting ? <FaSpinner className="animate-spin" /> : "Delete"}
+              {isDeleting ? <FaSpinner className="animate-spin" /> : t("Delete")}
             </button>
           </div>
         </motion.div>
@@ -656,6 +662,7 @@ export default function GeneralPost({
   triggerCreatePost = false,
   onTriggerClose,
 }: Props) {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const selectionButtonRef = useRef<HTMLDivElement | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -786,11 +793,11 @@ export default function GeneralPost({
         setPage(pageNum);
         backendSortRef.current = backendSort;
       } else {
-        showToast(data.message || "Failed to load posts", "error");
+        showToast(data.message || t("Failed to load posts"), "error");
       }
     } catch (err) {
       console.error(err);
-      showToast("Something went wrong while loading posts", "error");
+      showToast(t("Something went wrong while loading posts"), "error");
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -907,7 +914,7 @@ export default function GeneralPost({
       console.log("📥 Response body:", responseText);
 
       if (!response.ok) {
-        let errorMessage = "Failed to create post";
+        let errorMessage = t("Failed to create post");
         try {
           const errorData = JSON.parse(responseText);
           errorMessage = errorData.message || errorData.error || errorMessage;
@@ -923,23 +930,23 @@ export default function GeneralPost({
         data = JSON.parse(responseText);
       } catch (e) {
         console.error("Failed to parse response:", e);
-        showToast("Invalid response from server", "error");
+        showToast(t("Invalid response from server"), "error");
         return;
       }
 
       if (data.success !== false) {
         setShowPost(false);
         setShowPeoplePost(true);
-        showToast("Post shared successfully!", "success");
+        showToast(t("Post shared successfully!"), "success");
         setDiscussions([]);
         setHasMore(true);
         await fetchDiscussions(1, false);
       } else {
-        showToast(data.message || "Failed to create post", "error");
+        showToast(data.message || t("Failed to create post"), "error");
       }
     } catch (error) {
       console.error("Error creating post:", error);
-      showToast("An error occurred while creating your post", "error");
+      showToast(t("An error occurred while creating your post"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -997,7 +1004,7 @@ export default function GeneralPost({
         );
         if (showReplies[discussionId]) fetchDiscussionWithReplies(discussionId);
       } else {
-        showToast(data.message || "Failed to add comment", "error");
+        showToast(data.message || t("Failed to add comment"), "error");
       }
     } catch (err) { console.error(err); }
   };
@@ -1030,7 +1037,7 @@ export default function GeneralPost({
         cancelReply(discussionId);
         fetchDiscussionWithReplies(discussionId);
       } else {
-        showToast(data.message || "Failed to add reply", "error");
+        showToast(data.message || t("Failed to add reply"), "error");
       }
     } catch (err) { console.error(err); }
   };
@@ -1087,7 +1094,7 @@ export default function GeneralPost({
   const handleEditPost = async (discussionId: string) => {
     const currentPost = discussions.find((d) => d.id === discussionId);
     if (!currentPost) return;
-    const newContent = prompt("Edit your post:", currentPost.content);
+    const newContent = prompt(t("Edit your post:"), currentPost.content);
     if (!newContent || newContent === currentPost.content) return;
     try {
       const response = await fetch(`${API_URL}/api/discussion/${discussionId}`, {
@@ -1097,13 +1104,13 @@ export default function GeneralPost({
       const data = await response.json();
       if (response.ok && data.success !== false) {
         setDiscussions((prev) => prev.map((d) => d.id === discussionId ? { ...d, content: newContent, isEdited: true } : d));
-        showToast("Post updated successfully!", "success");
+        showToast(t("Post updated successfully!"), "success");
       } else {
-        showToast(data.message || "Failed to update post", "error");
+        showToast(data.message || t("Failed to update post"), "error");
       }
     } catch (error) {
       console.error("Error editing post:", error);
-      showToast("An error occurred while editing the post", "error");
+      showToast(t("An error occurred while editing the post"), "error");
     }
   };
 
@@ -1120,13 +1127,13 @@ export default function GeneralPost({
       const data = await response.json();
       if (response.ok && data.success !== false) {
         setDiscussions((prev) => prev.filter((d) => d.id !== deleteTarget));
-        showToast("Post deleted successfully", "success");
+        showToast(t("Post deleted successfully"), "success");
       } else {
-        showToast(data.message || "Failed to delete post", "error");
+        showToast(data.message || t("Failed to delete post"), "error");
       }
     } catch (error) {
       console.error("Error deleting post:", error);
-      showToast("An error occurred while deleting the post", "error");
+      showToast(t("An error occurred while deleting the post"), "error");
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
@@ -1145,24 +1152,24 @@ export default function GeneralPost({
     const id = (filterId || "").toUpperCase();
     switch (id) {
       case "PRAYER":
-        return "No Prayers yet — be the first to pray for a nation.";
+        return t("No Prayers yet — be the first to pray for a nation.");
       case "DEVOTION":
-        return "No Devotions yet — be the first to share a devotion.";
+        return t("No Devotions yet — be the first to share a devotion.");
       case "BLESSING":
-        return "No Blessings yet — be the first to share a blessing.";
+        return t("No Blessings yet — be the first to share a blessing.");
       case "TESTIMONY":
-        return "No Testimonies yet — be the first to share your story of faith.";
+        return t("No Testimonies yet — be the first to share your story of faith.");
       case "QUESTION":
-        return "No Faith Questions yet — be the first to ask or seek an answer.";
+        return t("No Faith Questions yet — be the first to ask or seek an answer.");
       case "POST":
       case "DISCUSSION":
-        return "No Posts yet — be the first to start a conversation.";
+        return t("No Posts yet — be the first to start a conversation.");
       case "ALL":
       case "LATEST":
       case "POPULAR":
       case "TRENDING":
       default:
-        return "No discussions yet. Be the first to post!";
+        return t("No discussions yet. Be the first to post!");
     }
   };
 
@@ -1186,7 +1193,7 @@ export default function GeneralPost({
                 <div className="flex items-center gap-1.5 relative z-10">
                   <span className="text-sm">{filter.icon}</span>
                   <span className={`font-medium text-xs md:text-sm ${activeFilter === filter.id ? 'text-white' : ''}`}>
-                    {filter.label}
+                    {t(filter.label)}
                   </span>
                 </div>
               </button>
@@ -1200,7 +1207,7 @@ export default function GeneralPost({
             className={`group relative overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95
               bg-gradient-to-r from-primaryColors-0 to-primaryColors-600 text-white rounded-full p-2 md:p-2.5 shadow-md
               disabled:opacity-50 disabled:cursor-not-allowed`}
-            title="Refresh posts"
+            title={t("Refresh posts")}
           >
             <FaSync 
               className={`text-sm md:text-base ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} 
@@ -1257,11 +1264,11 @@ export default function GeneralPost({
               {isLoadingMore && (
                 <div className="flex items-center gap-2 text-primaryColors-0">
                   <FaSpinner className="animate-spin text-lg" />
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Loading more...</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{t("Loading more...")}</span>
                 </div>
               )}
               {!hasMore && !isLoadingMore && (
-                <span className="text-xs text-gray-400 dark:text-gray-500">You're all caught up 🎉</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">{t("You're all caught up")} 🎉</span>
               )}
             </div>
           )}

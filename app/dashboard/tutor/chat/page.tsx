@@ -7,8 +7,10 @@ import { useCallback, useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaArrowLeft, FaPen, FaRegCommentDots } from "react-icons/fa6";
 import { MdAdd } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function Chat() {
+  const { t } = useI18n();
   const [showPrivateMessages, setShowPrivateMessages] =
     useState<boolean>(false);
   const [showGeneralContainer, setShowGeneralContainer] =
@@ -63,7 +65,7 @@ useEffect(() => {
   const openPrivateMessage = useCallback(
     (userId?: string, userName?: string) => {
       if (userId) {
-        setSelectedUser({ id: userId, name: userName || "User" });
+        setSelectedUser({ id: userId, name: userName || t("User") });
         setShowPrivateMessages(true);
         setShowGeneralContainer(false);
       }
@@ -154,7 +156,7 @@ useEffect(() => {
           >
             <FaArrowLeft size={18} className="text-gray-600" />
           </button>
-          <h1 className="font-semibold text-textSlightDark-0">Messages</h1>
+          <h1 className="font-semibold text-textSlightDark-0">{t("Messages")}</h1>
         </motion.div>
       );
     }

@@ -14,6 +14,7 @@ import ManageMembers from "@/app/component/organization_component/ManageMembers"
 import ReviewCourses from "@/app/component/organization_component/ReviewCourses";
 import ManageEvents from "@/app/component/organization_component/ManageEvents";
 import MakeAnnouncementModal from "@/app/component/organization_component/MakeAnnoucementModal";
+import { useI18n } from "@/app/context/I18nContext";
 
 type SubPage = "m-members" | "r-courses" | "m-event" | null;
 
@@ -24,6 +25,7 @@ const pageTransitionVariants = {
 };
 
 export default function OrgAdminDashboard() {
+  const { t } = useI18n();
   const [showDashboard, setShowDashboard] = useState<boolean>(true);
   const [subPage, setSubPage] = useState<SubPage>(null);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState<boolean>(false);
@@ -125,7 +127,7 @@ export default function OrgAdminDashboard() {
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-2 text-gray-500">Loading dashboard...</p>
+          <p className="mt-2 text-gray-500">{t("Loading dashboard...")}</p>
         </div>
       </div>
     );
@@ -167,7 +169,7 @@ export default function OrgAdminDashboard() {
             className="w-full"
           >
             <h1 className="dashboard_h1 line-clamp-1">
-              Welcome Back <span className="capitalize">{organizationName || params.org_name}</span>
+              {t("Welcome Back")} <span className="capitalize">{organizationName || params.org_name}</span>
             </h1>
 
             <motion.div

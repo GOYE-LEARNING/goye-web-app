@@ -1,6 +1,8 @@
 "use client";
 
 import { FaAngleDoubleUp, FaVideo } from "react-icons/fa";
+import { MdEdit } from "react-icons/md";
+import { IoMdTrash } from "react-icons/io";
 import DashboardSubHeaderMore from "./dashboard_subheaderMore";
 import pic from "@/public/images/overview.png";
 import { useCallback, useEffect, useState } from "react";
@@ -15,6 +17,7 @@ import Loader from "./loader";
 import DashboardTutorCreateCourse from "./dashboard_tutor_create-course";
 import DashboardCourseViewContent from "./dashboard_course_view_content";
 import DashboardTutorMoreCourseActivities from "./dashboard_tutor_more_course_activites";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunc: () => void;
@@ -32,6 +35,8 @@ interface Course {
   course_duration: string;
   course_level: string;
   enrolled: string;
+  totalDurationSeconds?: number;
+  totalLessons?: number;
   quiz?: {
     title?: string;
     description?: string;
@@ -39,11 +44,34 @@ interface Course {
   };
 }
 
+// Total runtime comes from the videos themselves, not a number a tutor
+// typed in, so this only ever formats what was actually uploaded.
+function formatCourseDuration(
+  t: (text: string) => string,
+  totalSeconds?: number,
+  totalLessons?: number,
+): string {
+  const lessons = totalLessons ?? 0;
+  const lessonLabel = `${lessons} ${lessons === 1 ? t("Lesson") : t("Lessons")}`;
+
+  if (!totalSeconds) return lessonLabel;
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.round((totalSeconds % 3600) / 60);
+  const timeLabel =
+    hours > 0
+      ? `${hours}${t("hr")} ${minutes}${t("min")}`
+      : `${minutes}${t("min")}`;
+
+  return `${timeLabel} - ${lessonLabel}`;
+}
+
 export default function DashboardTutorCourseBreakdown({
   backFunc,
   courseId,
   onDelete,
 }: Props) {
+  const { t } = useI18n();
   const [hideQuiz, setHideQuiz] = useState<boolean>(true);
   const [openActivities, setOpenActivities] = useState<boolean>(false);
   const [showQuizReview, setShowReviewQuiz] = useState<boolean>(false);
@@ -52,7 +80,8 @@ export default function DashboardTutorCourseBreakdown({
   const [showPost, setShowPost] = useState<boolean>(false);
   const [viewCourse, setviewCourse] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showBackArrowFromActivity, setShowBackArrowFromActivity] = useState<boolean>(false);
+  const [showBackArrowFromActivity, setShowBackArrowFromActivity] =
+    useState<boolean>(false);
   const [courseDetails, setCourseDetails] = useState<Course[]>([]);
   const [showCreateCourse, setShowCreateCourse] = useState<boolean>(false);
   const [coursesId, setCourseId] = useState<string>("");
@@ -202,7 +231,9 @@ export default function DashboardTutorCourseBreakdown({
                         </span>
                         <span className="flex items-center gap-2 text-[14px]">
                           <FaVideo />
-                          <span>1hr 15min - 12 Lessons</span>
+                          <span>
+                            {formatCourseDuration(t, c.totalDurationSeconds, c.totalLessons)}
+                          </span>
                         </span>
                       </div>
                     }
@@ -212,43 +243,70 @@ export default function DashboardTutorCourseBreakdown({
                       {" "}
                       <img
                         src={c.course_image || pic}
-                        alt="pic"
+                        alt={t("Course image")}
                         className="w-full h-[228px] object-cover"
                       />
                     </div>
-                    <div className="flex justify-between items-center gap-1">
-                      <button
-                        className={`${handleStyle(
-                          "overview",
-                        )} h-[34px] w-[170.75px]  text-[#41415A] text-[14px] font-[500]`}
-                        onClick={() => handleTab("overview")}
-                      >
-                        Overview
-                      </button>
-                      <button
-                        className={`${handleStyle(
-                          "quiz",
-                        )} h-[34px] w-[170.75px]  text-[#41415A] text-[14px] font-[500]`}
-                        onClick={() => handleTab("quiz")}
-                      >
-                        Quizzes
-                      </button>
-                      <button
-                        className={`${handleStyle(
-                          "materials",
-                        )} h-[34px] w-[170.75px]  text-[#41415A] text-[14px] font-[500]`}
-                        onClick={() => handleTab("materials")}
-                      >
-                        Materials
-                      </button>
-                      <button
-                        className={`${handleStyle(
-                          "forums",
-                        )} h-[34px] w-[170.75px]  text-[#41415A] text-[14px] font-[500]`}
-                        onClick={() => handleTab("forums")}
-                      >
-                        Forums
-                      </button>
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                        <button
+                          className={`${handleStyle(
+                            "overview",
+                          )} h-[34px] w-[170.75px] shrink-0 text-[#41415A] text-[14px] font-[500]`}
+                          onClick={() => handleTab("overview")}
+                        >
+                          {t("Overview")}
+                        </button>
+                        <button
+                          className={`${handleStyle(
+                            "quiz",
+                          )} h-[34px] w-[170.75px] shrink-0 text-[#41415A] text-[14px] font-[500]`}
+                          onClick={() => handleTab("quiz")}
+                        >
+                          {t("Quizzes")}
+                        </button>
+                        <button
+                          className={`${handleStyle(
+                            "materials",
+                          )} h-[34px] w-[170.75px] shrink-0 text-[#41415A] text-[14px] font-[500]`}
+                          onClick={() => handleTab("materials")}
+                        >
+                          {t("Materials")}
+                        </button>
+                        <button
+                          className={`${handleStyle(
+                            "forums",
+                          )} h-[34px] w-[170.75px] shrink-0 text-[#41415A] text-[14px] font-[500]`}
+                          onClick={() => handleTab("forums")}
+                        >
+                          {t("Forums")}
+                        </button>
+                      </div>
+
+                      {/* Edit/delete used to live only in the header's "⋮"
+                          menu at the very top of the page — easy to lose
+                          track of once you've scrolled down into a tab's
+                          content. Mirroring them here, next to the tab
+                          selector itself, keeps them reachable no matter
+                          which tab is open or how far down the page is. */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={editCourse}
+                          title={t("Edit")}
+                          aria-label={t("Edit course")}
+                          className="h-[34px] w-[34px] flex items-center justify-center rounded-md text-primaryColors-0 hover:bg-primaryColors-0/10 transition-colors"
+                        >
+                          <MdEdit size={18} />
+                        </button>
+                        <button
+                          onClick={() => deleteCourse(c.id as string)}
+                          title={t("Delete")}
+                          aria-label={t("Delete course")}
+                          className="h-[34px] w-[34px] flex items-center justify-center rounded-md text-[#DA0E29] hover:bg-[#DA0E29]/10 transition-colors"
+                        >
+                          <IoMdTrash size={18} />
+                        </button>
+                      </div>
                     </div>
                     <div className="dashboard_hr my-5"></div>
                     {activeTab == "overview" ? (
@@ -308,6 +366,7 @@ export default function DashboardTutorCourseBreakdown({
       )}
       {showAddQuiz && (
         <DashboardTutorAddQuiz
+        courseId={courseId}
           removeReview={() => {
             setHideQuiz(true);
             setShowAddQuiz(false);
@@ -316,6 +375,7 @@ export default function DashboardTutorCourseBreakdown({
       )}
       {showModule && (
         <DashboardTutorCreateModule
+          courseId={courseId}
           removeModule={() => {
             setHideQuiz(true);
             setShowModule(false);
@@ -345,7 +405,11 @@ export default function DashboardTutorCourseBreakdown({
         />
       )}
       {openActivities && (
-        <DashboardTutorMoreCourseActivities courseId={courseId} backFunc={closeActivitiesFunc} isAlone={showBackArrowFromActivity}/>
+        <DashboardTutorMoreCourseActivities
+          courseId={courseId}
+          backFunc={closeActivitiesFunc}
+          isAlone={showBackArrowFromActivity}
+        />
       )}
     </>
   );

@@ -9,6 +9,7 @@ import { LuUser } from "react-icons/lu";
 import { FaAngleDoubleUp } from "react-icons/fa";
 import { FaCheckCircle } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface CompletedCourse {
   enrollment_id: string;
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export default function DashboardCourseDone({ openCourse, search, isRefreshing }: Props) {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [completedCourses, setCompletedCourses] = useState<CompletedCourse[]>([]);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -99,7 +101,7 @@ export default function DashboardCourseDone({ openCourse, search, isRefreshing }
               course_image: course.course_image,
               course_level: course.course_level,
               point: 0,
-              createdBy: course.organizationName || "GOYE Instructor",
+              createdBy: course.organizationName || t("GOYE Instructor"),
             }
           }));
       } else {
@@ -152,12 +154,12 @@ export default function DashboardCourseDone({ openCourse, search, isRefreshing }
   if (filterCourse.length === 0) {
     return (
       <div className="flex justify-center items-center flex-col gap-1 md:mt-10 mt-[8rem]">
-        <Image src={pic2} alt="No completed courses" height={100} width={100} />
+        <Image src={pic2} alt={t("No completed courses")} height={100} width={100} />
         <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
-          {isOrganizationRoute ? "No Completed Organization Courses" : "No Completed Courses Yet"}
+          {isOrganizationRoute ? t("No Completed Organization Courses") : t("No Completed Courses Yet")}
         </h1>
         <p className="text-textGrey-0">
-          {isOrganizationRoute ? "Complete courses in this organization" : "Finish a course to see it here"}
+          {isOrganizationRoute ? t("Complete courses in this organization") : t("Finish a course to see it here")}
         </p>
       </div>
     );
@@ -173,43 +175,43 @@ export default function DashboardCourseDone({ openCourse, search, isRefreshing }
           <div className="flex justify-start items-start w-full gap-3">
             <img
               src={item.course.course_image || logo.src}
-              alt="course"
+              alt={t("course")}
               className="md:h-[89.16px] h-[100px] w-[130px] object-cover rounded"
             />
             <div className="w-full flex flex-col gap-2">
               <div className="flex justify-between items-center w-full">
                 <h1 className="text-[14px] font-[700] text-[#41415A] dark:text-white">
-                  {item.course.course_title}
+                  {t(item.course.course_title)}
                 </h1>
                 {/* Completed badge */}
                 <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 rounded-full">
-                  <FaCheckCircle size={12} /> Completed
+                  <FaCheckCircle size={12} /> {t("Completed")}
                 </span>
               </div>
 
               {/* Progress Bar at 100% */}
               <div className="w-full">
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>Progress</span>
+                  <span>{t("Progress")}</span>
                   <span>100%</span>
                 </div>
                 <div className="w-full h-2 dark:bg-shadyColor-0 bg-lightWhite-0 rounded-full overflow-hidden">
                   <div className="h-full bg-green-500 w-full" />
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
-                  {item.course_progress.completed_lessons} of {item.course_progress.total_lessons} lessons
+                  {item.course_progress.completed_lessons} {t("of")} {item.course_progress.total_lessons} {t("lessons")}
                 </p>
               </div>
 
               <p className="text-[#71748C] text-[13px] font-[600] line-clamp-2">
-                {item.course.course_description}
+                {t(item.course.course_description)}
               </p>
               <p className="flex items-center gap-6">
                 <span className="flex items-center gap-3 text-[#71748C] md:text-[13px] text-[12px]">
-                  <LuUser /> {item.course.createdBy || "GOYE Instructor"}
+                  <LuUser /> {item.course.createdBy || t("GOYE Instructor")}
                 </span>
                 <span className="flex items-center gap-3 text-[#30A46F] text-[13px]">
-                  <FaAngleDoubleUp /> {item.course.course_level}
+                  <FaAngleDoubleUp /> {item.course.course_level ? t(item.course.course_level) : item.course.course_level}
                 </span>
               </p>
             </div>
@@ -218,7 +220,7 @@ export default function DashboardCourseDone({ openCourse, search, isRefreshing }
             className="h-[36px] text-[14px] dark:bg-shadyColor-0 dark:text-primaryColors-0 bg-primaryColors-0 text-white my-3 w-full rounded-md hover:opacity-90 transition-opacity cursor-pointer"
             onClick={() => openCourse(item.course.id)}
           >
-            View Course
+            {t("View Course")}
           </button>
           <div className="hidden md:block h-[1px] w-full dark:bg-[#EFEFF2]/20 bg-[#ccc]/20"></div>
         </div>

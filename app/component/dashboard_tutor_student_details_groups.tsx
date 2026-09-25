@@ -1,4 +1,7 @@
+"use client";
+
 import { formatDistanceToNow } from "date-fns";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface StudentGroup {
   group_title: string;
@@ -11,6 +14,7 @@ interface Props {
 }
 
 export default function DashboardTutorStudentDetailsGroup({ groups, isLoading }: Props) {
+  const { t } = useI18n();
   return (
     <>
       {!isLoading ? (
@@ -23,17 +27,17 @@ export default function DashboardTutorStudentDetailsGroup({ groups, isLoading }:
                     {group.group_title}
                   </h1>
                   <p className="text-textGrey-0 dark:text-gray-400 text-[12px]">
-                    Joined {formatDistanceToNow(new Date(group.joined_at), { addSuffix: true })}
+                    {t("Joined")} {formatDistanceToNow(new Date(group.joined_at), { addSuffix: true })}
                   </p>
                 </div>
                 <p className="px-[8px] py-[4px] bg-primaryColors-0 text-white text-[12px] rounded ml-2 whitespace-nowrap">
-                  Member
+                  {t("Member")}
                 </p>
               </div>
             ))
           ) : (
             <p className="text-textGrey-0 dark:text-gray-400 text-center py-8">
-              No groups joined yet
+              {t("No groups joined yet")}
             </p>
           )}
         </div>

@@ -16,6 +16,7 @@ import { form } from "framer-motion/client";
 import ErrorComponent from "@/app/component/organization_component/dashboard_error_component";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLanguage } from "@/app/utils/checkLanguages";
+import { useI18n } from "@/app/context/I18nContext";
 
 //for background slide
 const bgImages = [
@@ -153,6 +154,7 @@ export default function BodyProvider({
   const pathname = usePathname();
   const router = useRouter();
   const { translate } = useLanguage();
+  const { t } = useI18n();
   const [index, setIndex] = useState<number>(0);
   const toolTipRef = useRef<HTMLDivElement | null>(null);
   const [toggleIndex, setToogleIndex] = useState<number[]>([]);
@@ -418,7 +420,7 @@ export default function BodyProvider({
         >
           {showError && (
             <ErrorComponent
-              message="Please complete the previous form to proceed."
+              message={t("Please complete the previous form to proceed.")}
               status="Oops"
               cancelFunc={() => {
                 setError(false);
@@ -602,7 +604,7 @@ lg:glass_effect top-0 right-0 grid lg:grid-cols-[70%,_30%] gap-4 lg:p-[30px]   l
                             {!isVerifying ? (
                               <span>{step.name}</span>
                             ) : (
-                              <span>Verifying...</span>
+                              <span>{t("Verifying...")}</span>
                             )}
                           </div>
                         ) : (

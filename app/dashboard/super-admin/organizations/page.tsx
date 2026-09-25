@@ -6,6 +6,7 @@ import DashboardSearch from "@/app/component/dashboard_search";
 import { formatDistanceToNow } from "date-fns";
 import { HiOutlineOfficeBuilding } from "react-icons/hi";
 import { FaSpinner } from "react-icons/fa";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Organization {
   id: string;
@@ -22,6 +23,7 @@ interface Organization {
 }
 
 export default function SuperAdminOrganizations() {
+  const { t } = useI18n();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -65,8 +67,8 @@ export default function SuperAdminOrganizations() {
   const handleToggleSuspend = async (org: Organization) => {
     const confirmed = confirm(
       org.isSuspended
-        ? `Reactivate "${org.name}"? Its members will regain access.`
-        : `Suspend "${org.name}"? Its members will lose access until reactivated.`,
+        ? `${t('Reactivate')} "${org.name}"? ${t("Its members will regain access.")}`
+        : `${t('Suspend')} "${org.name}"? ${t("Its members will lose access until reactivated.")}`,
     );
     if (!confirmed) return;
 
@@ -88,11 +90,11 @@ export default function SuperAdminOrganizations() {
           prev.map((o) => (o.id === org.id ? { ...o, isSuspended: !o.isSuspended } : o)),
         );
       } else {
-        alert(data.message || "Failed to update organization status");
+        alert(data.message || t("Failed to update organization status"));
       }
     } catch (error) {
       console.error("Error toggling organization suspension:", error);
-      alert("An error occurred. Please try again.");
+      alert(t("An error occurred. Please try again."));
     } finally {
       setPendingId("");
     }
@@ -112,9 +114,9 @@ export default function SuperAdminOrganizations() {
   return (
     <div className="w-full">
       <div className="flex justify-between items-center">
-        <h1 className="dashboard_h1">Organizations</h1>
+        <h1 className="dashboard_h1">{t("Organizations")}</h1>
         <span className="text-textGrey-0 text-[13px]">
-          {organizations.length} total
+          {organizations.length} {t("total")}
         </span>
       </div>
 
@@ -123,7 +125,7 @@ export default function SuperAdminOrganizations() {
           <DashboardSearch
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search organizations by name or email..."
+            placeholder={t("Search organizations by name or email...")}
           />
         </div>
         <select
@@ -131,9 +133,9 @@ export default function SuperAdminOrganizations() {
           onChange={(e) => setFilterStatus(e.target.value as any)}
           className="px-3 py-2 border border-[#ccc]/20 rounded-lg bg-white dark:bg-shadyColor-0 text-textSlightDark-0 dark:text-white text-sm"
         >
-          <option value="all">All statuses</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
+          <option value="all">{t("All statuses")}</option>
+          <option value="active">{t("Active")}</option>
+          <option value="suspended">{t("Suspended")}</option>
         </select>
       </div>
 
@@ -144,20 +146,20 @@ export default function SuperAdminOrganizations() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2">
           <HiOutlineOfficeBuilding className="text-3xl text-textGrey-0" />
-          <p className="text-textGrey-0 text-sm">No organizations found</p>
+          <p className="text-textGrey-0 text-sm">{t("No organizations found")}</p>
         </div>
       ) : (
         <div className="w-full overflow-x-auto">
           <table className="w-full min-w-[720px] border-collapse">
             <thead>
               <tr className="border-b border-[#ccc]/10 text-left">
-                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">Organization</th>
-                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">Type</th>
-                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">Members</th>
-                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">Courses</th>
-                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">Joined</th>
-                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">Status</th>
-                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase text-right">Action</th>
+                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">{t("Organization")}</th>
+                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">{t("Type")}</th>
+                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">{t("Members")}</th>
+                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">{t("Courses")}</th>
+                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">{t("Joined")}</th>
+                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase">{t("Status")}</th>
+                <th className="py-3 px-2 text-[11px] font-[600] text-textGrey-0 uppercase text-right">{t("Action")}</th>
               </tr>
             </thead>
             <tbody>
@@ -183,7 +185,7 @@ export default function SuperAdminOrganizations() {
                           : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       }`}
                     >
-                      {org.isSuspended ? "Suspended" : "Active"}
+                      {org.isSuspended ? t("Suspended") : t("Active")}
                     </span>
                   </td>
                   <td className="py-3 px-2 text-right">
@@ -199,9 +201,9 @@ export default function SuperAdminOrganizations() {
                       {pendingId === org.id ? (
                         <FaSpinner className="animate-spin inline" />
                       ) : org.isSuspended ? (
-                        "Reactivate"
+                        t("Reactivate")
                       ) : (
-                        "Suspend"
+                        t("Suspend")
                       )}
                     </button>
                   </td>

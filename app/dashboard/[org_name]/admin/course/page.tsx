@@ -12,6 +12,7 @@ import DashboardTutorCreateCourse from "@/app/component/dashboard_tutor_create-c
 import DashboardTutorCourseBreakdown from "@/app/component/dashboard_tutor_course_breakdown";
 import { IoMdRefresh } from "react-icons/io";
 import Loader from "@/app/component/loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Enroll {
   status: string;
@@ -29,6 +30,7 @@ interface Course {
 }
 
 export default function OrgAdminCourse() {
+  const { t } = useI18n();
   const [fill, setFill] = useState<string[]>([]);
   const [showCourse, setShowCourse] = useState<boolean>(true);
   const [showCourseDetails, setShowCourseDetails] = useState<boolean>(false);
@@ -158,13 +160,13 @@ export default function OrgAdminCourse() {
       {showCourse && (
         <div>
           <div className="flex justify-between items-center">
-            <h1 className="dashboard_h1">Course</h1>
+            <h1 className="dashboard_h1">{t("Course")}</h1>
             <div className="flex items-center gap-3">
               <span
                 className="text-primaryColors-0 dark:bg-secondaryColors-0 bg-white rounded font-semibold flex items-center gap-2 md:hidden cursor-pointer"
                 onClick={showCreateCourseFunc}
               >
-                <MdAdd /> New Course
+                <MdAdd /> {t("New Course")}
               </span>
               <span
                 className="text-white h-[35px] w-[35px] bg-primaryColors-0 rounded-full font-semibold flex items-center justify-center gap-2 md:hidden cursor-pointer"
@@ -181,7 +183,7 @@ export default function OrgAdminCourse() {
                 onChange={(e) => {
                   setSearch(e.target.value);
                 }}
-                placeholder="Search for your great courses..."
+                placeholder={t("Search for your great courses...")}
               />
             </div>
             <div className="flex items-center gap-2">
@@ -189,7 +191,7 @@ export default function OrgAdminCourse() {
                 className="md:flex items-center justify-center gap-2 border border-[#ccc]/20 bg-white dark:bg-secondaryColors-0 h-[36px] md:w-[131px] hidden text-primaryColors-0 cursor-pointer"
                 onClick={showCreateCourseFunc}
               >
-                <MdAdd /> New course
+                <MdAdd /> {t("New course")}
               </button>
               <span
                 className="text-white h-[35px] w-[35px] bg-primaryColors-0 rounded-full font-semibold md:flex items-center justify-center gap-2 hidden cursor-pointer"
@@ -204,11 +206,11 @@ export default function OrgAdminCourse() {
             <div>
               {filterCourse.length === 0 ? (
                 <div className="flex justify-center items-center flex-col gap-1 md:mt-10 mt-[8rem]">
-                  <Image src={pic2} alt="pic" height={100} width={100} />
+                  <Image src={pic2} alt={t("pic")} height={100} width={100} />
                   <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
-                    No Course Found
+                    {t("No Course Found")}
                   </h1>
-                  <p className="text-textGrey-0">Create a Course</p>
+                  <p className="text-textGrey-0">{t("Create a Course")}</p>
                 </div>
               ) : (
                 <div>
@@ -221,7 +223,7 @@ export default function OrgAdminCourse() {
                         <div className="relative">
                           <img
                             src={course.course_image || pic}
-                            alt="pic"
+                            alt={t("pic")}
                             className="h-[89.16px] w-[130px] object-cover rounded-[15px]"
                           />
                         </div>
@@ -232,10 +234,10 @@ export default function OrgAdminCourse() {
                             </h1>
                             <span className="text-[10px] text-white bg-primaryColors-0 px-2 py-2 border-2 border-dashed border-white font-bold rounded-full">
                               {course.enrollment.length == 0
-                                ? "NO STUDENT HAS ENROLLED"
+                                ? t("NO STUDENT HAS ENROLLED")
                                 : course.enrollment.length == 1
-                                  ? "GREAT! A STUDENT JUST ENROLLED IN YOUR COURSE"
-                                  : "AMEN! YOU HAVE ENROLLED STUDENT"}
+                                  ? t("GREAT! A STUDENT JUST ENROLLED IN YOUR COURSE")
+                                  : t("AMEN! YOU HAVE ENROLLED STUDENT")}
                             </span>
                           </div>
                           <p className="text-[#71748C] dark:text-white/80 text-[13px] font-[600] line-clamp-2 md:line-clamp-3">
@@ -258,7 +260,7 @@ export default function OrgAdminCourse() {
                           showCourseDetailsFunc(course.id || i.toString())
                         }
                       >
-                        View Course
+                        {t("View Course")}
                       </button>
                       <div className="h-[1px] w-full bg-[#ccc]/20"></div>
                     </div>

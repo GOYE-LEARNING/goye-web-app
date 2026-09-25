@@ -2,6 +2,7 @@
 
 import DashboardRadio from "./dashboard_radio";
 import SubHeader from "./dashboard_subheader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface NotificationSetting {
   header: string;
@@ -67,6 +68,7 @@ export default function DashboardNotificationSettings({
   settings,
   variant = "student",
 }: Props) {
+  const { t } = useI18n();
   const backFunc = () => {
     backFunction();
   };
@@ -78,7 +80,7 @@ export default function DashboardNotificationSettings({
   return (
     <>
       <div>
-        <SubHeader header="Notification" backFunction={backFunc} />
+        <SubHeader header={t("Notification")} backFunction={backFunc} />
         <div className="dashboard_content_mainbox flex flex-col gap-5">
           {notificationSettings.map((setting, i) => (
             <div
@@ -87,9 +89,9 @@ export default function DashboardNotificationSettings({
             >
               <div>
                 <h1 className="text-[14px] font-[600] dark:text-textSlightDark-0 text-lightBoldText-0">
-                  {setting.header}
+                  {t(setting.header)}
                 </h1>
-                <p className="text-[#71748C] text-[12px]">{setting.p}</p>
+                <p className="text-[#71748C] text-[12px]">{t(setting.p)}</p>
               </div>
               <DashboardRadio />
             </div>

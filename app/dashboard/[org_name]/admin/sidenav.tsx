@@ -16,10 +16,12 @@ import { FaRegUser, FaUser, FaCalendarAlt } from "react-icons/fa";
 import { useParams, usePathname } from "next/navigation";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import React, { useState } from "react";
+import { useI18n } from "@/app/context/I18nContext";
 interface Props {
   setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>
 }
 export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
+  const { t } = useI18n();
   const params = useParams<{ org_name: string }>();
   const { org_name } = params;
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -56,7 +58,7 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
           <div className={`${isCollapsed ? 'hidden' : 'block'}`}>
             <Image
               src={logo}
-              alt="logo"
+              alt={t("logo")}
               height={100}
               width={100}
               className="md:block hidden"
@@ -70,10 +72,10 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
           </span>
         </div>
         <nav className="flex md:items-start md:justify-start justify-between items-center md:flex-col md:gap-1 w-full mt-0 md:mt-[2rem]">
-          <div className="md:w-full">
+          <div className="ml-3 md:ml-0 md:w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/admin`}
-              label="Dashboard"
+              label={t("Dashboard")}
               icon={
                 pathname !== `/dashboard/${org_name}/admin` ? (
                   <GoHome size={20} />
@@ -87,7 +89,7 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
           <div className="md:w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/admin/course`}
-              label="Course"
+              label={t("Course")}
               icon={
                 pathname !== `/dashboard/${org_name}/admin/course` ? (
                   <IoSchoolOutline size={20} />
@@ -102,7 +104,7 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
           <div className="md:w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/admin/event`}
-              label="Events"
+              label={t("Events")}
               icon={
                 pathname !== `/dashboard/${org_name}/admin/event` ? (
                   <FaCalendarAlt size={20} />
@@ -117,7 +119,7 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
           <div className="md:w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/admin/organization`}
-              label="Organization"
+              label={t("Organization")}
               icon={
                 pathname !== `/dashboard/${org_name}/admin/organizations` ? (
                   <MdOutlineGroups size={20} />
@@ -131,7 +133,7 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
           <div className="md:w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/admin/community`}
-              label="Community"
+              label={t("Community")}
               icon={
                 pathname !== `/dashboard/${org_name}/admin/community` ? (
                   <RiCompass3Line size={20} />
@@ -145,7 +147,7 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
           <div className="md:w-full">
             <SidenavComponent
               path={`/dashboard/${org_name}/admin/profile`}
-              label="Profile"
+              label={t("Profile")}
               icon={
                 pathname !== `/dashboard/${org_name}/admin/profile` ? (
                   <FaRegUser size={20} />
@@ -162,7 +164,7 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
         <div className="mt-10 md:block hidden md:w-full" onClick={logout}>
           <SidenavComponent
             path="/"
-            label="Logout"
+            label={t("Logout")}
             icon={<MdLogout size={20} />}
             isCollapsed={isCollapsed}
           />

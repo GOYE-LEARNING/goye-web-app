@@ -17,6 +17,7 @@ import {
   HiOutlineCheck,
   HiOutlineXCircle,
   HiOutlineEye,
+  HiOutlineBadgeCheck,
 } from "react-icons/hi";
 import { FaSpinner } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
@@ -24,6 +25,7 @@ import Portal from "../Portal";
 import DashboardAdminUserDetails from "../admin_component/dashboard_admin_user_details";
 import { useModal } from "@/app/context/SimpleModalContext";
 import { useSocket } from "@/app/context/SocketContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Member {
   id: string;
@@ -45,6 +47,7 @@ interface ManageMembersProps {
 }
 
 export default function ManageMembers({ onBack }: ManageMembersProps) {
+  const { t } = useI18n();
   const params = useParams<{ org_name: string }>();
   const { showModal } = useModal();
   const { organizationOnlineUsers, joinOrganization } = useSocket();
@@ -99,7 +102,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
       }
     } catch (error) {
       console.error("Error fetching members:", error);
-      showModal("Error", "Failed to fetch members", "error");
+      showModal(t("Error"), t("Failed to fetch members"), "error");
     } finally {
       setLoading(false);
     }
@@ -107,7 +110,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
-      showModal("Invalid Email", "Please enter a valid email address", "error");
+      showModal(t("Invalid Email"), t("Please enter a valid email address"), "error");
       return;
     }
 
@@ -131,29 +134,29 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
         if (data.data?.alreadyMembers && data.data.alreadyMembers.length > 0) {
           const memberEmails = data.data.alreadyMembers.map((m: any) => m.email).join(", ");
           showModal(
-            "Already Members",
-            `The following users are already members: ${memberEmails}`,
+            t("Already Members"),
+            `${t("The following users are already members:")} ${memberEmails}`,
             "info"
           );
         } else if (data.data?.alreadyInvited && data.data.alreadyInvited.length > 0) {
           const invitedEmails = data.data.alreadyInvited.map((m: any) => m.email).join(", ");
           showModal(
-            "Already Invited",
-            `The following users already have active invitations: ${invitedEmails}`,
+            t("Already Invited"),
+            `${t("The following users already have active invitations:")} ${invitedEmails}`,
             "info"
           );
         } else if (data.data?.failed && data.data.failed.length > 0) {
           const failedEmails = data.data.failed.map((m: any) => m.email).join(", ");
           showModal(
-            "Invitation Failed",
-            `Failed to send invitations to: ${failedEmails}`,
+            t("Invitation Failed"),
+            `${t("Failed to send invitations to:")} ${failedEmails}`,
             "error"
           );
         } else {
           const successCount = data.data?.successful?.length || 0;
           showModal(
-            "Invitation Sent! 🎉",
-            `Successfully invited ${successCount} user(s) to the organization.`,
+            t("Invitation Sent! 🎉"),
+            `${t("Successfully invited")} ${successCount} ${t("user(s) to the organization.")}`,
             "success"
           );
         }
@@ -162,11 +165,11 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
         setShowInviteModal(false);
         fetchMembers();
       } else {
-        showModal("Error", data.message || "Failed to send invitation", "error");
+        showModal(t("Error"), data.message || t("Failed to send invitation"), "error");
       }
     } catch (error) {
       console.error("Error inviting user:", error);
-      showModal("Error", "An unexpected error occurred. Please try again.", "error");
+      showModal(t("Error"), t("An unexpected error occurred. Please try again."), "error");
     } finally {
       setIsInviting(false);
     }
@@ -197,16 +200,16 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
       if (data.success) {
         setSuspendUser(!suspendUser);
         showModal(
-          suspendUser ? "User Restored" : "User Suspended",
+          suspendUser ? t("User Restored") : t("User Suspended"),
           data.message,
           "success"
         );
         fetchMembers();
       } else {
-        showModal("Error", data.message || "Failed to update user status.", "error");
+        showModal(t("Error"), data.message || t("Failed to update user status."), "error");
       }
     } catch (error) {
-      showModal("Error", "An error occurred. Please try again.", "error");
+      showModal(t("Error"), t("An error occurred. Please try again."), "error");
     } finally {
       setShowSuspendUserModal(false);
     }
@@ -214,8 +217,8 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
 
   const handleRemoveMember = (member: Member) => {
     showModal(
-      "Remove Member",
-      `Are you sure you want to remove ${member.first_name} ${member.last_name} from the organization? This action cannot be undone.`,
+      t("Remove Member"),
+      `${t("Are you sure you want to remove")} ${member.first_name} ${member.last_name} ${t("from the organization? This action cannot be undone.")}`,
       "confirm",
       async () => {
         try {
@@ -228,13 +231,41 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
           );
           const data = await res.json();
           if (data.success) {
-            showModal("Success", `${member.first_name} has been removed from the organization.`, "success");
+            showModal(t("Success"), `${member.first_name} ${t("has been removed from the organization.")}`, "success");
             fetchMembers();
           } else {
-            showModal("Error", data.message || "Failed to remove member.", "error");
+            showModal(t("Error"), data.message || t("Failed to remove member."), "error");
           }
         } catch (error) {
-          showModal("Error", "Failed to remove member. Please try again.", "error");
+          showModal(t("Error"), t("Failed to remove member. Please try again."), "error");
+        }
+      }
+    );
+  };
+
+  const handlePromoteMember = (member: Member) => {
+    showModal(
+      t("Promote to Admin"),
+      `${t("Are you sure you want to make")} ${member.first_name} ${member.last_name} ${t("an organization admin? They'll gain full admin access to this organization.")}`,
+      "confirm",
+      async () => {
+        try {
+          const res = await fetch(
+            `${API_URL}/api/organizations/members/${organizationId}/${member.id}/promote`,
+            {
+              method: "PUT",
+              credentials: "include",
+            }
+          );
+          const data = await res.json();
+          if (data.success) {
+            showModal(t("Success"), `${member.first_name} ${t("is now an organization admin.")}`, "success");
+            fetchMembers();
+          } else {
+            showModal(t("Error"), data.message || t("Failed to promote member."), "error");
+          }
+        } catch (error) {
+          showModal(t("Error"), t("Failed to promote member. Please try again."), "error");
         }
       }
     );
@@ -279,10 +310,10 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                 <HiOutlineChevronDown className="w-5 h-5 rotate-90 text-gray-600 dark:text-gray-300" />
               </button>
               <h1 className="text-xl font-semibold dark:text-white">
-                Manage Members
+                {t("Manage Members")}
               </h1>
               <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:inline">
-                ({filteredMembers.length} members)
+                ({filteredMembers.length} {t("members")})
               </span>
             </div>
             <button
@@ -290,7 +321,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
               className="flex items-center gap-2 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm sm:text-base"
             >
               <HiOutlineUserAdd className="w-5 h-5" />
-              <span>Invite Member</span>
+              <span>{t("Invite Member")}</span>
             </button>
           </div>
         </div>
@@ -302,7 +333,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
               <HiOutlineSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search members..."
+                placeholder={t("Search members...")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
@@ -317,7 +348,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
               >
                 {roles.map((role) => (
                   <option key={role} value={role}>
-                    {role === "all" ? "All Roles" : role.charAt(0).toUpperCase() + role.slice(1).replace("_", " ")}
+                    {role === "all" ? t("All Roles") : role.charAt(0).toUpperCase() + role.slice(1).replace("_", " ")}
                   </option>
                 ))}
               </select>
@@ -335,7 +366,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
             <div className="flex flex-col items-center justify-center py-12">
               <HiOutlineUserGroup className="w-16 h-16 text-gray-300 dark:text-gray-600" />
               <p className="mt-4 text-gray-500 dark:text-gray-400">
-                No members found
+                {t("No members found")}
               </p>
             </div>
           ) : (
@@ -344,22 +375,22 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                 <thead>
                   <tr className="border-b border-[#ccc]/10 dark:border-[#ccc]/10">
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Member
+                      {t("Member")}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Email
+                      {t("Email")}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Role
+                      {t("Role")}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
+                      {t("Status")}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Joined
+                      {t("Joined")}
                     </th>
                     <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
+                      {t("Actions")}
                     </th>
                   </tr>
                 </thead>
@@ -403,8 +434,8 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                             member.role
                           )}`}
                         >
-                          {member.role === 'org_admin' ? 'MAIN ADMIN' : 
-                           member.role === 'invited_user' ? 'MEMBER' : 
+                          {member.role === 'org_admin' ? t('MAIN ADMIN') :
+                           member.role === 'invited_user' ? t('MEMBER') :
                            member.role}
                         </span>
                       </td>
@@ -421,7 +452,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                           ) : (
                             <HiOutlineXCircle className="w-3 h-3" />
                           )}
-                          {member.isActive ? "Active" : "Inactive"}
+                          {member.isActive ? t("Active") : t("Inactive")}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">
@@ -434,7 +465,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                               : "—"}
                           </span>
                           <span className="text-xs text-gray-400 dark:text-gray-500">
-                            via {member.joinedVia}
+                            {t("via")} {member.joinedVia}
                           </span>
                         </div>
                       </td>
@@ -443,20 +474,29 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                           <button
                             onClick={() => handleViewUser(member.id)}
                             className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                            title="View user details"
+                            title={t("View user details")}
                           >
                             <HiOutlineEye className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                           </button>
                           <button
                             className="p-2 hover:bg-gray-100 dark:hover:bg-shadyColor-0 rounded-lg transition-colors"
-                            title="Edit member"
+                            title={t("Edit member")}
                           >
                             <HiOutlinePencilAlt className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                           </button>
+                          {member.role !== "admin" && member.role !== "org_admin" && (
+                            <button
+                              onClick={() => handlePromoteMember(member)}
+                              className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+                              title={t("Promote to admin")}
+                            >
+                              <HiOutlineBadgeCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleRemoveMember(member)}
                             className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                            title="Remove member"
+                            title={t("Remove member")}
                           >
                             <HiOutlineTrash className="w-4 h-4 text-red-500" />
                           </button>
@@ -494,29 +534,29 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[90] p-4">
             <div className="bg-white dark:bg-secondaryColors-0 rounded-xl max-w-md w-full p-6 shadow-xl">
               <h3 className="text-xl font-semibold dark:text-white mb-2">
-                {suspendUser ? "Restore User" : "Suspend User"}
+                {suspendUser ? t("Restore User") : t("Suspend User")}
               </h3>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                {suspendUser 
-                  ? "Are you sure you want to restore this user's access? They will be able to access the platform again."
-                  : "Are you sure you want to suspend this user's access? They will not be able to access the platform until restored."}
+                {suspendUser
+                  ? t("Are you sure you want to restore this user's access? They will be able to access the platform again.")
+                  : t("Are you sure you want to suspend this user's access? They will not be able to access the platform until restored.")}
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowSuspendUserModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-shadyColor-0 transition-colors"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button
                   onClick={handleSuspendUser}
                   className={`flex-1 px-4 py-2 rounded-lg text-white transition-colors ${
-                    suspendUser 
-                      ? "bg-green-600 hover:bg-green-700" 
+                    suspendUser
+                      ? "bg-green-600 hover:bg-green-700"
                       : "bg-red-600 hover:bg-red-700"
                   }`}
                 >
-                  {suspendUser ? "Restore" : "Suspend"}
+                  {suspendUser ? t("Restore") : t("Suspend")}
                 </button>
               </div>
             </div>
@@ -531,7 +571,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
             <div className="bg-white dark:bg-secondaryColors-0 rounded-xl max-w-md w-full p-6 shadow-xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold dark:text-white">
-                  Invite Member
+                  {t("Invite Member")}
                 </h2>
                 <button
                   onClick={() => setShowInviteModal(false)}
@@ -543,28 +583,28 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email Address
+                    {t("Email Address")}
                   </label>
                   <input
                     type="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="Enter email address"
+                    placeholder={t("Enter email address")}
                     className="w-full pl-3 pr-4 py-2 border border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Role
+                    {t("Role")}
                   </label>
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
                     className="w-full pl-3 pr-4 py-2 border border-[#ccc]/10 rounded-lg bg-lightWhite-0 dark:bg-shadyColor-0 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                   >
-                    <option value="member">Member</option>
-                    <option value="instructor">Instructor</option>
-                    <option value="admin">Admin</option>
+                    <option value="member">{t("Member")}</option>
+                    <option value="instructor">{t("Instructor")}</option>
+                    <option value="admin">{t("Admin")}</option>
                   </select>
                 </div>
                 <button
@@ -577,7 +617,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                   ) : (
                     <>
                       <HiOutlineMail className="w-5 h-5" />
-                      <span>Send Invitation</span>
+                      <span>{t("Send Invitation")}</span>
                     </>
                   )}
                 </button>

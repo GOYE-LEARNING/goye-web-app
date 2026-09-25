@@ -1,7 +1,9 @@
+"use client";
+
 // components/dashboard_admin_user_details.tsx
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { FaAngleDoubleUp } from "react-icons/fa";
+import { FaAngleDoubleUp, FaRegCommentDots } from "react-icons/fa";
 import { MdOutlineCancel } from "react-icons/md";
 import DashboardAdminUsersDetailsGroup from "./dashboard_admin_user_group_details";
 import DashboardAdminUsersDetailsCourse from "./dashboard_admin_user_courses_details";
@@ -9,6 +11,8 @@ import Loader from "../loader";
 import { FaCircleUser } from "react-icons/fa6";
 import { FcCancel } from "react-icons/fc";
 import { IoMdRefresh } from "react-icons/io";
+import { useI18n } from "@/app/context/I18nContext";
+import MessagesModal from "../MessagesModal";
 
 interface Props {
   cancel: () => void;
@@ -81,11 +85,13 @@ export default function DashboardAdminUserDetails({
   suspendUserFunc,
   checkSuspendedUser,
 }: Props) {
+  const { t } = useI18n();
   const [showCourse, setShowCourse] = useState<boolean>(true);
   const [showGroups, setShowGroups] = useState<boolean>(false);
   const [userDetails, setUserDetails] = useState<UserDetailsResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showMessages, setShowMessages] = useState<boolean>(false);
 
   const fetchUserDetails = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -104,7 +110,7 @@ export default function DashboardAdminUserDetails({
       setIsLoading(false);
       
       if (!res.ok) {
-        setError(data.message || "An error occurred while fetching user details");
+        setError(data.message || t("An error occurred while fetching user details"));
         return;
       }
 
@@ -112,7 +118,7 @@ export default function DashboardAdminUserDetails({
       setUserDetails(data.data);
     } catch (error) {
       console.error("Error fetching user details:", error);
-      setError("Failed to load user details");
+      setError(t("Failed to load user details"));
       setIsLoading(false);
     }
   };
@@ -124,14 +130,14 @@ export default function DashboardAdminUserDetails({
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case "org_admin":
-        return "Organization Admin";
+        return t("Organization Admin");
       case "admin":
-        return "Admin";
+        return t("Admin");
       case "instructor":
       case "tutor":
-        return "Instructor";
+        return t("Instructor");
       case "student":
-        return "Student";
+        return t("Student");
       default:
         return role.charAt(0).toUpperCase() + role.slice(1);
     }
@@ -159,7 +165,7 @@ export default function DashboardAdminUserDetails({
           onClick={fetchUserDetails}
           className="mt-4 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
-          Retry
+          {t("Retry")}
         </button>
       </div>
     );
@@ -168,7 +174,7 @@ export default function DashboardAdminUserDetails({
   if (!userDetails) {
     return (
       <div className="md:w-[390px] w-full fixed top-0 right-0 h-full bg-white dark:bg-secondaryColors-0 drop-shadow-2xl p-[32px] border border-[#E3E3E833] transition-all duration-300 ease-in-out flex flex-col justify-center items-center">
-        <p className="text-gray-500 dark:text-gray-400">No user data available</p>
+        <p className="text-gray-500 dark:text-gray-400">{t("No user data available")}</p>
       </div>
     );
   }
@@ -179,7 +185,7 @@ export default function DashboardAdminUserDetails({
     <div className="md:w-[390px] w-full fixed top-0 right-0 h-full bg-white dark:bg-secondaryColors-0 drop-shadow-2xl p-[32px] border border-[#E3E3E833] transition-all duration-300 ease-in-out overflow-y-auto">
       <div className="flex justify-between items-center">
         <h1 className="text-textSlightDark-0 dark:text-white font-bold text-[24px]">
-          User Details
+          {t("User Details")}
         </h1>
         <span onClick={cancel} className="cursor-pointer">
           <MdOutlineCancel size={20} className="text-[18px] dark:text-gray-400" />
@@ -202,14 +208,14 @@ export default function DashboardAdminUserDetails({
           )}
         </div>
         <h1 className="font-semibold text-[22px] text-textSlightDark-0 dark:text-white">
-          {user?.full_name || "User"}
+          {user?.full_name || t("User")}
         </h1>
         <p className="text-[14px] text-textGrey-0 dark:text-gray-400">
-          {user?.email_address || "No email provided"}
+          {user?.email_address || t("No email provided")}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
           <span className="text-[13px] flex items-center gap-2 text-boldGreen-0 dark:text-green-400">
-            <FaAngleDoubleUp /> {user?.level || "Beginner"}
+            <FaAngleDoubleUp /> {user?.level || t("Beginner")}
           </span>
           <span className="text-xs md:text-[13px] flex items-center gap-2 text-purple-600 dark:text-purple-400">
             {getRoleDisplayName(user?.role || "member")}
@@ -217,29 +223,36 @@ export default function DashboardAdminUserDetails({
           {user?.isOnline && (
             <span className="text-xs flex items-center gap-1 text-green-500">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              Online
+              {t("Online")}
             </span>
           )}
         </div>
+
+        <button
+          onClick={() => setShowMessages(true)}
+          className="flex items-center gap-2 text-[13px] font-semibold text-primaryColors-0 border border-primaryColors-0/40 rounded-full px-4 py-[6px] hover:bg-primaryColors-0/10 transition-colors mt-3"
+        >
+          <FaRegCommentDots size={14} /> {t("Chat")}
+        </button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-2 my-4">
         <div className="bg-gray-50 dark:bg-shadyColor-0 p-3 rounded-lg text-center">
           <p className="text-xl font-bold text-primaryColors-0">{stats?.totalEnrolledCourses || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Enrolled</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t("Enrolled")}</p>
         </div>
         <div className="bg-gray-50 dark:bg-shadyColor-0 p-3 rounded-lg text-center">
           <p className="text-xl font-bold text-green-500">{stats?.completedCourses || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Completed</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t("Completed")}</p>
         </div>
         <div className="bg-gray-50 dark:bg-shadyColor-0 p-3 rounded-lg text-center">
           <p className="text-xl font-bold text-blue-500">{stats?.overallProgress || 0}%</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Progress</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t("Progress")}</p>
         </div>
         <div className="bg-gray-50 dark:bg-shadyColor-0 p-3 rounded-lg text-center">
           <p className="text-xl font-bold text-purple-500">{stats?.totalAchievements || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Achievements</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t("Achievements")}</p>
         </div>
       </div>
 
@@ -255,7 +268,7 @@ export default function DashboardAdminUserDetails({
               : "text-white/80 hover:text-white"
           }`}
         >
-          Courses ({stats?.totalEnrolledCourses || 0})
+          {t("Courses")} ({stats?.totalEnrolledCourses || 0})
         </button>
         <button
           onClick={() => {
@@ -268,7 +281,7 @@ export default function DashboardAdminUserDetails({
               : "text-white/80 hover:text-white"
           }`}
         >
-          Groups
+          {t("Groups")}
         </button>
       </div>
 
@@ -305,21 +318,36 @@ export default function DashboardAdminUserDetails({
           onClick={cancel}
           className="h-[50px] border border-[#D9D9D9] dark:border-gray-700 text-[14px] text-textSlightDark-0 dark:text-gray-300 font-[600] rounded-lg hover:bg-gray-50 dark:hover:bg-shadyColor-0 transition-colors"
         >
-          Done
+          {t("Done")}
         </button>
         {!checkSuspendedUser ? (
           <button
             className="h-[50px] border border-[#D9D9D9] dark:border-gray-700 text-[#DA0E29] text-[14px] flex justify-center items-center gap-2 font-[600] rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             onClick={suspendUserFunc}
           >
-            <FcCancel /> Suspend Access
+            <FcCancel /> {t("Suspend Access")}
           </button>
         ) : (
           <button className="h-[50px] border border-[#D9D9D9] dark:border-gray-700 text-[#065BCD] dark:text-blue-400 text-[14px] flex justify-center items-center gap-2 font-[600] rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-            <IoMdRefresh /> Restore User
+            <IoMdRefresh /> {t("Restore User")}
           </button>
         )}
       </div>
+
+      <MessagesModal
+        isOpen={showMessages}
+        onClose={() => setShowMessages(false)}
+        initialContact={
+          user
+            ? {
+                id: userId,
+                name: user.full_name,
+                first_name: user.first_name || user.full_name,
+                avatar: user.user_pic || undefined,
+              }
+            : null
+        }
+      />
     </div>
   );
 }

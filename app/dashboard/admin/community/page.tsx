@@ -11,6 +11,7 @@ import Image from "next/image";
 import pic2 from "@/public/images/notfound.png";
 import { IoMdRefresh } from "react-icons/io";
 import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface User {
   first_name: string;
@@ -34,6 +35,7 @@ interface GroupData {
 }
 
 export default function AdminCommunity() {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [group, setGroup] = useState<GroupData[]>([]);
   const [groupId, setGroupId] = useState<string>("");
@@ -47,10 +49,10 @@ export default function AdminCommunity() {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "Invalid Date";
+      if (isNaN(date.getTime())) return t("Invalid Date");
       return formatDistanceToNow(date, { addSuffix: true });
     } catch {
-      return "Invalid Date";
+      return t("Invalid Date");
     }
   };
 
@@ -72,7 +74,7 @@ export default function AdminCommunity() {
         if (res.status === 429) {
           dispatchAPIError({
             status: 429,
-            message: "Too many requests, please slow down and try again later.",
+            message: t("Too many requests, please slow down and try again later."),
             retryAfter: 5,
             endpoint: "/api/socials/get-groups-created-by-tutor"
           });
@@ -170,7 +172,7 @@ export default function AdminCommunity() {
           <>
             {" "}
             <div className="flex justify-between items-center">
-              <h1 className="dashboard_h1">Community</h1>
+              <h1 className="dashboard_h1">{t("Community")}</h1>
               <div className="flex items-center gap-3">
                 <span
                   className="text-white h-[35px] w-[35px] bg-primaryColors-0 rounded-full font-semibold flex items-center justify-center gap-2 md:hidden cursor-pointer"
@@ -187,7 +189,7 @@ export default function AdminCommunity() {
                   onChange={(e) => {
                     setSearch(e.target.value);
                   }}
-                  placeholder="Search community..."
+                  placeholder={t("Search community...")}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -203,11 +205,11 @@ export default function AdminCommunity() {
               <div>
                 {filterCourse.length == 0 ? (
                   <div className="flex justify-center items-center flex-col gap-1 md:mt-10 mt-[8rem]">
-                    <Image src={pic2} alt="pic" height={100} width={100} />
+                    <Image src={pic2} alt={t("pic")} height={100} width={100} />
                     <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
-                      No Community Found
+                      {t("No Community Found")}
                     </h1>
-                    <p className="text-textGrey-0">Create a Community</p>
+                    <p className="text-textGrey-0">{t("Create a Community")}</p>
                   </div>
                 ) : (
                   <div>
@@ -229,7 +231,7 @@ export default function AdminCommunity() {
 
                           <span className="">
                             <p className="text-textSlightDark-0 text-[12px] font-[600] cursor-pointer bg-[#F1F1F4] px-[4px]">
-                              Moderator
+                              {t("Moderator")}
                             </p>
                           </span>
                         </div>
@@ -240,7 +242,7 @@ export default function AdminCommunity() {
                         <p className="flex items-center gap-5 text-[#71748C] text-[14px]">
                           <span className="flex items-center gap-2">
                             <RiGroupLine />
-                            {data._count?.member || 0} members{" "}
+                            {data._count?.member || 0} {t("members")}{" "}
                             {/* FIXED: Optional chaining */}
                           </span>
                           <span className="flex items-center gap-2">
@@ -255,7 +257,7 @@ export default function AdminCommunity() {
                               <img
                                 src={data.createdBy.user_pic}
                                 className="h-full w-full object-cover"
-                                alt="Creator"
+                                alt={t("Creator")}
                               />
                             ) : (
                               <div className="h-full w-full bg-gray-200 flex items-center justify-center">

@@ -24,6 +24,7 @@ import { FaMessage, FaPeopleGroup, FaChalkboardUser } from "react-icons/fa6";
 import { IoExtensionPuzzle } from "react-icons/io5";
 import MessagesModal from "@/app/component/MessagesModal";
 import SocialMode from "@/app/component/dashboard_social_feed";
+import { useI18n } from "@/app/context/I18nContext";
 
 // Cache to prevent duplicate fetches
 let isFetching = false;
@@ -68,6 +69,7 @@ const getSmallLoaderProps = () => ({
 });
 
 export default function TutorCommunity() {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [group, setGroup] = useState<GroupData[]>([]);
   const [groupId, setGroupId] = useState<string>("");
@@ -120,8 +122,9 @@ export default function TutorCommunity() {
           if (res.status === 429) {
             dispatchAPIError({
               status: 429,
-              message:
+              message: t(
                 "Too many requests, please slow down and try again later.",
+              ),
               retryAfter: 5,
               endpoint: "/api/socials/get-groups-created-by-tutor",
             });
@@ -267,14 +270,14 @@ export default function TutorCommunity() {
               <DashboardSearch
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search groups..."
+                placeholder={t("Search groups...")}
               />
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={refreshGroup}
                 className="h-9 w-9 bg-primaryColors-0 rounded-full flex items-center justify-center cursor-pointer hover:bg-primaryColors-600 transition-colors flex-shrink-0"
-                aria-label="Refresh groups"
+                aria-label={t("Refresh groups")}
               >
                 {isRefreshing ? (
                   <Loader {...getSmallLoaderProps()} />
@@ -289,16 +292,16 @@ export default function TutorCommunity() {
             <div className="flex justify-center py-20">
               <Loader {...getLoaderProps()} />
               <p className="ml-3 text-gray-500 dark:text-gray-400">
-                Loading groups...
+                {t("Loading groups...")}
               </p>
             </div>
           ) : filteredGroups.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-20">
-              <Image src={pic2} alt="No groups" height={100} width={100} />
+              <Image src={pic2} alt={t("No groups")} height={100} width={100} />
               <h1 className="text-textSlightDark-0 font-semibold">
-                No Groups Found
+                {t("No Groups Found")}
               </h1>
-              <p className="text-textGrey-0">Create a Group</p>
+              <p className="text-textGrey-0">{t("Create a Group")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -317,7 +320,7 @@ export default function TutorCommunity() {
                       {data.group_title}
                     </h1>
                     <span className="bg-gray-100 dark:bg-gray-700 py-1 px-2 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-400">
-                      Moderator
+                      {t("Moderator")}
                     </span>
                   </div>
 
@@ -328,7 +331,7 @@ export default function TutorCommunity() {
                   <div className="flex items-center gap-4 text-[#71748C] text-xs">
                     <span className="flex items-center gap-1">
                       <RiGroupLine size={14} /> {data._count?.member || 0}{" "}
-                      members
+                      {t("members")}
                     </span>
                     <span className="flex items-center gap-1">
                       <FaRegClock size={12} />{" "}
@@ -372,16 +375,16 @@ export default function TutorCommunity() {
           <div className="text-center">
             <FaMessage className="text-6xl text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              Messages
+              {t("Messages")}
             </h3>
             <p className="text-gray-500 dark:text-gray-400 mt-2">
-              Connect with your students
+              {t("Connect with your students")}
             </p>
             <button
               onClick={() => setShowMessagesModal(true)}
               className="mt-6 px-6 py-2 bg-primaryColors-0 text-white rounded-full hover:bg-primaryColors-600 transition-colors font-semibold"
             >
-              Open Messages
+              {t("Open Messages")}
             </button>
           </div>
         </div>
@@ -416,23 +419,23 @@ export default function TutorCommunity() {
             {/* Header with Tabs - Matching Student Design */}
             <div className="flex justify-between items-center flex-wrap gap-4">
               <div className="flex items-start flex-col gap-3">
-                <h1 className="text-2xl font-bold">Community</h1>
+                <h1 className="text-2xl font-bold">{t("Community")}</h1>
                 <div className="flex items-center gap-3 flex-wrap">
                   {[
                     {
                       id: "live",
-                      label: "Live Community",
+                      label: t("Live Community"),
                       icon: <IoExtensionPuzzle size={16} />,
                     },
                     {
                       id: "groups",
-                      label: "My Groups",
+                      label: t("My Groups"),
                       icon: <FaPeopleGroup size={16} />,
                     },
 
                     {
                       id: "messages",
-                      label: "Messages",
+                      label: t("Messages"),
                       icon: <FaMessage size={16} />,
                     },
                   ].map((tab) => (
@@ -453,7 +456,7 @@ export default function TutorCommunity() {
                     onClick={showCreateGroup}
                     className="h-10 rounded-full font-semibold flex items-center justify-center gap-2 px-4 shadow-md border transition-all text-sm bg-green-500 text-white border-green-500 hover:bg-green-600"
                   >
-                    <MdAdd size={16} /> New Group
+                    <MdAdd size={16} /> {t("New Group")}
                   </button>
                 </div>
               </div>

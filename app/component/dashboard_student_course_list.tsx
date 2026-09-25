@@ -8,6 +8,7 @@ import confetti from "canvas-confetti";
 import SubHeader from "./dashboard_subheader";
 import Loader from "./loader";
 import VideoHelper from "../hook/videoHelper";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Lesson {
   id: string;
@@ -37,6 +38,7 @@ export default function DashboardStudentCourseList({
   course_title,
   onCourseCompleted, // ✅ Added this prop
 }: Props) {
+  const { t } = useI18n();
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
@@ -363,7 +365,7 @@ export default function DashboardStudentCourseList({
             {!selectedVideo ? (
               <div className="dashboard_content_mainbox flex justify-center items-center border-2 border-dashed border-nearTextColors-0/20 h-[374px]">
                 <h1 className="text-nearTextColors-0 text-center w-[300px] text-[20px] font-semibold uppercase">
-                  Select a module to start watching your first lesson.
+                  {t("Select a module to start watching your first lesson.")}
                 </h1>
               </div>
             ) : (
@@ -378,7 +380,7 @@ export default function DashboardStudentCourseList({
                         full_border_color="transparent"
                         small_border_color="#FFA500"
                       />
-                      <span className="text-gray-700">Loading lesson...</span>
+                      <span className="text-gray-700">{t("Loading lesson...")}</span>
                     </div>
                   </div>
                 )}
@@ -400,7 +402,7 @@ export default function DashboardStudentCourseList({
 
           <div key="Multiple-videos" className="w-full dashboard_content_mainbox">
             {modules.length === 0 ? (
-              <div className="p-4">No modules found for this course.</div>
+              <div className="p-4">{t("No modules found for this course.")}</div>
             ) : (
               modules.map((module) => (
                 <div
@@ -416,7 +418,7 @@ export default function DashboardStudentCourseList({
                         {module.module_title}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        {module.lesson?.length || 0} lessons •{" "}
+                        {module.lesson?.length || 0} {t("lessons")} •{" "}
                         {module.module_duration}
                       </p>
                     </div>
@@ -500,7 +502,7 @@ export default function DashboardStudentCourseList({
                                   </span>
                                   {isFinished && (
                                     <span className="ml-2 text-xs text-green-600 font-normal">
-                                      ✓ Completed
+                                      ✓ {t("Completed")}
                                     </span>
                                   )}
                                 </div>
@@ -531,8 +533,8 @@ export default function DashboardStudentCourseList({
                                 <GoVideo />
                                 <span>
                                   {lesson.duration
-                                    ? `${lesson.duration}min`
-                                    : "5min"}
+                                    ? `${lesson.duration}${t("min")}`
+                                    : `5${t("min")}`}
                                 </span>
                               </div>
                             </div>
@@ -568,31 +570,31 @@ export default function DashboardStudentCourseList({
             >
               <FaTrophy size={64} color="#FBB041" />
               <h1 className="text-[32px] text-white font-[600]">
-                Course Completed!
+                {t("Course Completed!")}
               </h1>
               <p className="text-[15px] text-white/90">
-                You finished &ldquo;{course_title}&rdquo; — well done.
+                {t("You finished")} &ldquo;{course_title}&rdquo; — {t("well done.")}
               </p>
 
               {typeof completionCelebration.pointsEarned === "number" && (
                 <p className="text-primaryColors-0 text-[15px] font-[600]">
-                  +{completionCelebration.pointsEarned} XP earned
+                  +{completionCelebration.pointsEarned} {t("XP earned")}
                 </p>
               )}
 
               {completionCelebration.leveledUp && (
                 <p className="text-boldGreen-0 text-[15px] font-[600]">
-                  🎉 You leveled up{completionCelebration.newLevel ? ` to ${completionCelebration.newLevel}` : ""}!
+                  🎉 {t("You leveled up")}{completionCelebration.newLevel ? ` ${t("to")} ${completionCelebration.newLevel}` : ""}!
                 </p>
               )}
 
               {completionCelebration.certificateUrl ? (
                 <p className="text-white/80 text-[13px]">
-                  Your certificate is ready — find it in your Growth tab.
+                  {t("Your certificate is ready — find it in your Growth tab.")}
                 </p>
               ) : (
                 <p className="text-white/60 text-[12px]">
-                  Your certificate is on its way — check your Growth tab shortly.
+                  {t("Your certificate is on its way — check your Growth tab shortly.")}
                 </p>
               )}
 
@@ -600,7 +602,7 @@ export default function DashboardStudentCourseList({
                 className="form_more bg-primaryColors-0 text-white w-full mt-2"
                 onClick={() => setCompletionCelebration(null)}
               >
-                Keep Going
+                {t("Keep Going")}
               </button>
             </motion.div>
           </motion.div>

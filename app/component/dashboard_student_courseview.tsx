@@ -15,6 +15,7 @@ import { FaVideo } from "react-icons/fa6";
 import { useQuiz } from "../context/quizContext";
 import { BiLock } from "react-icons/bi";
 import { motion, AnimatePresence } from "framer-motion";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunction: () => void;
@@ -71,6 +72,7 @@ const slideInFromRight = {
 };
 
 export default memo(function DashboardCourseView({ backFunction, courseId }: Props) {
+  const { t } = useI18n();
   const [showOverView, setShowOverView] = useState<boolean>(true);
   const [showQuizzes, setShowQuizzes] = useState<boolean>(false);
   const [showMaterials, setShowMaterials] = useState<boolean>(false);
@@ -398,10 +400,10 @@ export default memo(function DashboardCourseView({ backFunction, courseId }: Pro
                   <BiLock className="text-amber-500 text-xl" />
                   <div>
                     <p className="text-amber-700 dark:text-amber-400 font-medium">
-                      Course not enrolled
+                      {t("Course not enrolled")}
                     </p>
                     <p className="text-amber-600 dark:text-amber-500 text-sm">
-                      Please start the course to access quizzes, materials, and forums
+                      {t("Please start the course to access quizzes, materials, and forums")}
                     </p>
                   </div>
                 </div>
@@ -419,18 +421,18 @@ export default memo(function DashboardCourseView({ backFunction, courseId }: Pro
                     </div>
                     <div>
                       <p className="text-green-700 dark:text-green-400 font-medium">
-                        Your Progress
+                        {t("Your Progress")}
                       </p>
                       <p className="text-green-600 dark:text-green-500 text-sm">
-                        {enrollmentProgress.completed_lessons} of {enrollmentProgress.total_lessons} lessons
+                        {enrollmentProgress.completed_lessons} {t("of")} {enrollmentProgress.total_lessons} {t("lessons")}
                         {typeof enrollmentProgress.total_quizzes === "number" &&
                           enrollmentProgress.total_quizzes > 0 && (
                             <>
-                              {" "}• {enrollmentProgress.completed_quizzes} of{" "}
-                              {enrollmentProgress.total_quizzes} quizzes
+                              {" "}• {enrollmentProgress.completed_quizzes} {t("of")}{" "}
+                              {enrollmentProgress.total_quizzes} {t("quizzes")}
                             </>
                           )}
-                        {" "}completed
+                        {" "}{t("completed")}
                       </p>
                     </div>
                   </div>
@@ -446,7 +448,7 @@ export default memo(function DashboardCourseView({ backFunction, courseId }: Pro
                 </p>
               </span>
               <span className="flex items-center gap-2">
-                <FaVideo /> {totalLessons} Video Lessons
+                <FaVideo /> {totalLessons} {t("Video Lessons")}
               </span>
             </div>
             
@@ -455,7 +457,7 @@ export default memo(function DashboardCourseView({ backFunction, courseId }: Pro
                 {picRemove && (
                   <motion.img
                     src={(courseDetails.course_image as any) || overviewPic}
-                    alt="course image"
+                    alt={t("course image")}
                     className="object-cover h-[300px] w-full"
                     width={800}
                     height={300}
@@ -473,16 +475,16 @@ export default memo(function DashboardCourseView({ backFunction, courseId }: Pro
                       showOverView
                         ? "bg-primaryColors-0 text-white"
                         : "bg-white text-primaryColors-0 dark:bg-secondaryColors-0 dark:text-white"
-                    } dashboard_course_btns cursor-pointer`}
+                    } flex justify-center items-center dashboard_course_btns cursor-pointer`}
                     onClick={() => {
                       overview();
                     }}
                   >
-                    Overview
+                    {t("Overview")}
                   </button>
 
-                  <Tooltip 
-                    message="Enroll to access quizzes" 
+                  <Tooltip
+                    message={t("Enroll to access quizzes")}
                     show={showTooltip === "quizzes" && !isEnrolled}
                   >
                     <button
@@ -490,17 +492,17 @@ export default memo(function DashboardCourseView({ backFunction, courseId }: Pro
                         showQuizzes
                           ? "bg-primaryColors-0 text-white"
                           : "bg-white text-primaryColors-0 dark:bg-secondaryColors-0 dark:text-white"
-                      } dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                      }  flex justify-center items-center  dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                       onClick={() => handleTabClick("quizzes", quizzes)}
                       disabled={!isEnrolled}
                     >
                       {!isEnrolled && <BiLock className="inline mr-1" />}
-                      Quizzes
+                      {t("Quizzes")}
                     </button>
                   </Tooltip>
 
-                  <Tooltip 
-                    message="Enroll to access course materials" 
+                  <Tooltip
+                    message={t("Enroll to access course materials")}
                     show={showTooltip === "materials" && !isEnrolled}
                   >
                     <button
@@ -508,17 +510,17 @@ export default memo(function DashboardCourseView({ backFunction, courseId }: Pro
                         showMaterials
                           ? "bg-primaryColors-0 text-white"
                           : "bg-white text-primaryColors-0 dark:bg-secondaryColors-0 dark:text-white"
-                      } dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                      }  flex justify-center items-center  dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                       onClick={() => handleTabClick("materials", materials)}
                       disabled={!isEnrolled}
                     >
                       {!isEnrolled && <BiLock className="inline mr-1" />}
-                      Materials
+                      {t("Materials")}
                     </button>
                   </Tooltip>
 
-                  <Tooltip 
-                    message="Enroll to participate in forums" 
+                  <Tooltip
+                    message={t("Enroll to participate in forums")}
                     show={showTooltip === "forums" && !isEnrolled}
                   >
                     <button
@@ -526,12 +528,12 @@ export default memo(function DashboardCourseView({ backFunction, courseId }: Pro
                         showForums
                           ? "bg-primaryColors-0 text-white"
                           : "bg-white text-primaryColors-0 dark:bg-secondaryColors-0 dark:text-white"
-                      } dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                      }  flex justify-center items-center  dashboard_course_btns ${!isEnrolled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                       onClick={() => handleTabClick("forums", forums)}
                       disabled={!isEnrolled}
                     >
                       {!isEnrolled && <BiLock className="inline mr-1" />}
-                      Forums
+                      {t("Forums")}
                     </button>
                   </Tooltip>
                 </div>

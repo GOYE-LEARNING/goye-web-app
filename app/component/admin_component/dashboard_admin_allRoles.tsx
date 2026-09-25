@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { useI18n } from "@/app/context/I18nContext"
 
 interface Props {
     openUserDetails: (userId?: string) => void
@@ -17,6 +18,7 @@ interface User {
 }
 
 export default function AdminGetRoles({ openUserDetails }: Props) {
+    const { t } = useI18n()
     const params = useParams<{ org_name: string }>()
     const [invitedUsers, setInvitedUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(true)
@@ -30,7 +32,7 @@ export default function AdminGetRoles({ openUserDetails }: Props) {
             if (!organizationId) return
             if (!API_URL) {
                 console.error("NEXT_PUBLIC_API_URL is not defined")
-                setError("API URL not configured")
+                setError(t("API URL not configured"))
                 setLoading(false)
                 return
             }
@@ -47,11 +49,11 @@ export default function AdminGetRoles({ openUserDetails }: Props) {
 
                 if (!response.ok) {
                     if (response.status === 404) {
-                        setError("Organization not found")
+                        setError(t("Organization not found"))
                     } else if (response.status === 401) {
-                        setError("Unauthorized. Please login again.")
+                        setError(t("Unauthorized. Please login again."))
                     } else {
-                        setError("Failed to fetch invited users")
+                        setError(t("Failed to fetch invited users"))
                     }
                     return
                 }
@@ -61,11 +63,11 @@ export default function AdminGetRoles({ openUserDetails }: Props) {
                 if (result.success) {
                     setInvitedUsers(result.data?.users || [])
                 } else {
-                    setError(result.message || "Failed to fetch invited users")
+                    setError(result.message || t("Failed to fetch invited users"))
                 }
             } catch (err) {
                 console.error("Error fetching invited users:", err)
-                setError("Network error. Please check your connection.")
+                setError(t("Network error. Please check your connection."))
             } finally {
                 setLoading(false)
             }
@@ -78,7 +80,7 @@ export default function AdminGetRoles({ openUserDetails }: Props) {
         return (
             <div className="dashboard_content_mainbox">
                 <div className="flex justify-center items-center py-8">
-                    <p>Loading invited users...</p>
+                    <p>{t("Loading invited users...")}</p>
                 </div>
             </div>
         )
@@ -98,7 +100,7 @@ export default function AdminGetRoles({ openUserDetails }: Props) {
         <div className="dashboard_content_mainbox">
             {invitedUsers.length === 0 ? (
                 <div className="flex justify-center items-center py-8">
-                    <p>No invited users found</p>
+                    <p>{t("No invited users found")}</p>
                 </div>
             ) : (
                 invitedUsers.map((user) => (

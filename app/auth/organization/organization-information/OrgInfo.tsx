@@ -9,6 +9,7 @@ import DropDowns from "@/app/component/drop_downs";
 import { useRouter } from "next/navigation";
 import { useSignup } from "@/app/context/SignupContext";
 import { useLanguage } from "@/app/utils/checkLanguages";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface CountryType {
   name: string;
@@ -23,6 +24,7 @@ interface StateType {
 export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }) {
   const { formData, setFormData, isOrgInfoComplete } = OrgSignUp();
   const { translate } = useLanguage();
+  const { t } = useI18n();
   const dropDownCountryRef = useRef<HTMLDivElement | null>(null);
   const dropDownStateRef = useRef<HTMLDivElement | null>(null);
   const dropDownOrgType = useRef<HTMLDivElement | null>(null);
@@ -253,7 +255,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
                     name={data.name}
                     onClick={() => setCountryDropdown(true)}
                     className="bg-transparent border-none outline-none w-full py-2"
-                    placeholder={getTranslatedLabel("Search country...")}
+                    placeholder={t("Search country...")}
                   />
                   <span
                     className="absolute right-3 top-[28%] h-full"
@@ -299,7 +301,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
                     name={data.name}
                     onClick={() => selectedCountryISO && setStateDropdown(true)}
                     className="bg-transparent border-none outline-none w-full py-2"
-                    placeholder={getTranslatedLabel("Search state...")}
+                    placeholder={t("Search state...")}
                   />
                   <span
                     className="absolute right-3 top-[28%] h-full"
@@ -345,7 +347,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
                     name={data.name}
                     onClick={() => setOrgTypeDropdown(true)}
                     className="bg-transparent border-none outline-none w-full py-2"
-                    placeholder={getTranslatedLabel("Select organization type...")}
+                    placeholder={t("Select organization type...")}
                   />
                   <span
                     className="absolute right-3 top-[28%] h-full"

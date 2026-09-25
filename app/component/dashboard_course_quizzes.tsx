@@ -5,6 +5,7 @@ import { CiCircleQuestion, CiClock2 } from "react-icons/ci";
 import Loader from "./loader";
 import { useQuiz } from "../context/quizContext";
 import { number } from "framer-motion";
+import { useI18n } from "@/app/context/I18nContext";
 interface Props {
   openQuiz: (id?: string) => void;
   openViewQuiz: (id?: string) => void;
@@ -33,6 +34,7 @@ export default function DashboardCourseQuizzes({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [quiz, setQuiz] = useState<Quiz[]>([]);
   const { quizContext, setQuizContext } = useQuiz();
+  const { t } = useI18n();
   const [quizAttempted, setQuizAttempted] = useState<number | null>(null);
   const [quizPercentage, setQuizPercentage] = useState<number | null>(null)
   const fetchQuiz = async () => {
@@ -90,10 +92,10 @@ export default function DashboardCourseQuizzes({
             <div className="bg-[#FAF8F8] dark:bg-shadyColor-0 p-[16px]">
               <div className="flex justify-between items-center ">
                 <h1 className="text-[#41415A] text-[12px] font-[600]">
-                  Quiz Progress
+                  {t("Quiz Progress")}
                 </h1>
                 <span className="text-[#71748C] text-[12px] font-[500]">
-                  {quizAttempted}/{quiz.length} completed
+                  {quizAttempted}/{quiz.length} {t("completed")}
                 </span>
               </div>
               <div className="relative bg-[#E8E1E2] dark:bg-secondaryColors-0 h-[8px] my-2 w-full">
@@ -106,7 +108,7 @@ export default function DashboardCourseQuizzes({
 
             <div className="w-full gap-3">
               <h1 className="text-textSlightDark-0 font-[700] text-[18px] my-5">
-                All Quizzes
+                {t("All Quizzes")}
               </h1>
               {quiz.map((quiz, i) => (
                 <div className="flex flex-col w-full gap-3 mb-3" key={i}>
@@ -120,10 +122,10 @@ export default function DashboardCourseQuizzes({
                     <p className="flex gap-4">
                       <span className="flex items-center text-[14px] text-[#71748C] gap-2">
                         <CiCircleQuestion size={15} /> {quiz?.questions.length}{" "}
-                        questions
+                        {t("questions")}
                       </span>
                       <span className="flex items-center text-[14px] text-[#71748C] gap-2">
-                        <CiClock2 size={15} /> {quiz?.duration}min
+                        <CiClock2 size={15} /> {quiz?.duration}{t("min")}
                       </span>
                     </p>
 
@@ -135,7 +137,7 @@ export default function DashboardCourseQuizzes({
                               {quiz.QuizAttempt.map((q) => q.score)} / 100
                             </div>
                             <div className="bg-[#30A46F] text-white text-[12px] rounded px-1">
-                              Completed
+                              {t("Completed")}
                             </div>
                           </div>
                         </div>
@@ -146,7 +148,7 @@ export default function DashboardCourseQuizzes({
                             openViewQuiz(quiz.id as any);
                           }}
                         >
-                          View Quiz
+                          {t("View Quiz")}
                         </button>
                       </div>
                     ) : (
@@ -157,7 +159,7 @@ export default function DashboardCourseQuizzes({
                           openQuiz(quiz.id);
                         }}
                       >
-                        Start Quiz
+                        {t("Start Quiz")}
                       </button>
                     )}
                   </div>

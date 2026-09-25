@@ -6,12 +6,14 @@ import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { MdCancel, MdCheckCircle } from "react-icons/md";
 import { AnimatePresence, motion } from "framer-motion";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunction?: () => void;
 }
 
 export default function DashboardProfileResetPassword({ backFunction }: Props) {
+  const { t } = useI18n();
   const [formData, setFormData] = useState<{ password: string }>({
     password: "",
   });
@@ -25,9 +27,9 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
   const router = useRouter();
 
   const rules = [
-    { text: "At least 8 characters", test: /.{8,}/ },
-    { text: "At least one number", test: /\d/ },
-    { text: "At least one symbol", test: /[@$!%*?&]/ },
+    { text: t("At least 8 characters"), test: /.{8,}/ },
+    { text: t("At least one number"), test: /\d/ },
+    { text: t("At least one symbol"), test: /[@$!%*?&]/ },
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +42,7 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
     const allPassed = rules.every((rule) => rule.test.test(formData.password));
     if (!allPassed) {
       setMessage({
-        text: "Please meet all password requirements",
+        text: t("Please meet all password requirements"),
         type: "error",
       });
       return false;
@@ -82,11 +84,11 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
       console.log(data);
       if (!res.ok) {
         throw new Error(
-          data.message || data.error || "Failed to update password",
+          data.message || data.error || t("Failed to update password"),
         );
       }
 
-      setMessage({ text: "Password updated successfully!", type: "success" });
+      setMessage({ text: t("Password updated successfully!"), type: "success" });
       setFormData({ password: "" });
       setTouched(false);
 
@@ -100,7 +102,7 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
         text:
           error instanceof Error
             ? error.message
-            : "Failed to update password. Please try again.",
+            : t("Failed to update password. Please try again."),
         type: "error",
       });
     } finally {
@@ -141,10 +143,9 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
             transition={{ duration: 0.3, ease: "easeIn" }}
             className="form_container"
           >
-            <h1 className="form_h1">Reset Password</h1>
+            <h1 className="form_h1">{t("Reset Password")}</h1>
             <p className="form-p">
-              Your password must be at least 8 characters long, and include 1
-              symbol and 1 number.
+              {t("Your password must be at least 8 characters long, and include 1 symbol and 1 number.")}
             </p>
             <form noValidate className="form py-5" onSubmit={handleSubmit}>
               <div className="form_label relative">
@@ -167,7 +168,7 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
                       : "top-[15px] text-[16px]"
                   }`}
                 >
-                  Password
+                  {t("Password")}
                 </label>
 
                 <div
@@ -201,7 +202,7 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
                           <span
                             className={`text-sm ${passed ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}
                           >
-                            {rule.text}
+                            {t(rule.text)}
                           </span>
                         </div>
                       );
@@ -224,10 +225,10 @@ export default function DashboardProfileResetPassword({ backFunction }: Props) {
                       full_border_color="white"
                       small_border_color="#FFA500"
                     />
-                    <span>Updating...</span>
+                    <span>{t("Updating...")}</span>
                   </div>
                 ) : (
-                  "Update Password"
+                  t("Update Password")
                 )}
               </button>
             </form>

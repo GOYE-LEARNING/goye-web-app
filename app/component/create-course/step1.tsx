@@ -5,6 +5,7 @@ import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
 import DropDowns from "../drop_downs";
 import { FaCheck, FaChevronDown } from "react-icons/fa";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   formData: any;
@@ -28,6 +29,7 @@ export default function CourseStep1({
   setFormData,
   uploadCourseImage,
 }: Props) {
+  const { t } = useI18n();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [selectedValue, setSelectedValue] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState<boolean>(false);
@@ -100,34 +102,34 @@ export default function CourseStep1({
 
   const form: Form[] = [
     {
-      label: "Course Title",
+      label: t("Course Title"),
       type: "text",
       name: "course_title",
       value: formData.course_title,
       onchange: handleChange,
     },
     {
-      label: "Short Description",
+      label: t("Short Description"),
       type: "text",
       name: "course_short_description",
       value: formData.course_short_description,
       onchange: handleChange,
     },
     {
-      label: "Description",
+      label: t("Description"),
       name: "course_description",
       value: formData.course_description,
       onchange: handleChange,
     },
     {
-      label: "Level",
+      label: t("Level"),
       type: "text",
       name: "course_level",
       value: formData.course_level,
       onchange: handleChange,
     },
     {
-      label: "Course Thumbnail",
+      label: t("Course Thumbnail"),
       type: "file",
       name: "course_image",
       value: formData.course_image,
@@ -140,7 +142,7 @@ export default function CourseStep1({
   return (
     <div className="flex flex-col gap-4">
       <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
-        Course Information
+        {t("Course Information")}
       </h1>
       {form.map((data, i) => {
         return (
@@ -190,16 +192,16 @@ export default function CourseStep1({
                           <div className="text-center">
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primaryColors-0 mx-auto mb-2"></div>
                             <p className="text-textGrey-0 text-[12px]">
-                              Uploading...
+                              {t("Uploading...")}
                             </p>
                           </div>
                         ) : (
                           <>
                             <h1 className="text-nearTextColors-0 text-[14px] font-[500]">
-                              Upload thumbnail image
+                              {t("Upload thumbnail image")}
                             </h1>
                             <p className="text-textGrey-0 text-[12px]">
-                              Supports JPEG or PNG
+                              {t("Supports JPEG or PNG")}
                             </p>
                           </>
                         )}
@@ -217,7 +219,7 @@ export default function CourseStep1({
                     <div className="relative w-full h-full">
                       <img
                         src={formData.course_image}
-                        alt="Thumbnail preview"
+                        alt={t("Thumbnail preview")}
                         className="absolute top-0 left-0 w-full h-full object-cover rounded-md"
                       />
                       <div className="flex justify-center items-center gap-2 w-full h-full text-white absolute top-0 left-0 bg-[#0000004D]">
@@ -227,7 +229,7 @@ export default function CourseStep1({
                           className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66] hover:bg-[#FFFFFF99] transition-colors"
                           disabled={uploadingImage}
                         >
-                          <MdDelete /> Remove
+                          <MdDelete /> {t("Remove")}
                         </button>
                         <div>
                           <label
@@ -238,7 +240,7 @@ export default function CourseStep1({
                                 : ""
                             }`}
                           >
-                            <IoIosRefresh /> Replace
+                            <IoIosRefresh /> {t("Replace")}
                           </label>
                           <input
                             id="course-image-replace"
@@ -266,7 +268,7 @@ export default function CourseStep1({
                           : "text-textGrey-0"
                       }
                     >
-                      {courseLevel}
+                      {courseLevel ? t(courseLevel) : courseLevel}
                     </span>
                     <FaChevronDown
                       className={`transition-transform ${
@@ -294,7 +296,7 @@ export default function CourseStep1({
                                     : ""
                                 }
                               >
-                                {level}
+                                {t(level)}
                               </div>
                               {courseLevel === level && (
                                 <span className="text-primaryColors-0">

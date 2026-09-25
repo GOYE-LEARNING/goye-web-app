@@ -7,6 +7,7 @@ import { IoIosInformationCircle } from "react-icons/io";
 import VerifyEmail from "./verify_email";
 import DashboardProfileResetPassword from "../component/dashboard_profile_reset_password";
 import DashboardProfileVerifyEmail from "../component/dashboard_profile_verify_email";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface FormData {
   emailAddress: string;
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function DashboardChangePassword({ backFunction }: Props) {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
   const [mainContainer, setMainContainer] = useState<boolean>(true);
@@ -116,13 +118,13 @@ export default function DashboardChangePassword({ backFunction }: Props) {
 
         if (!res.ok) {
           console.log("Error updating password");
-          messageFunc("Error updating Password", 400);
+          messageFunc(t("Error updating Password"), 400);
           return;
         }
 
         setIsLoading(false);
 
-        messageFunc("We just send an OTP to your gmail", 200);
+        messageFunc(t("We just send an OTP to your gmail"), 200);
         setFormData({
           emailAddress: "",
         });
@@ -140,7 +142,7 @@ export default function DashboardChangePassword({ backFunction }: Props) {
   // Define all password input fields
   const forms = [
     {
-      label: "Email address",
+      label: t("Email address"),
       name: "email_address",
       key: "email" as const,
     },
@@ -171,12 +173,12 @@ export default function DashboardChangePassword({ backFunction }: Props) {
       </AnimatePresence>
       {mainContainer && (
         <div>
-          <SubHeader header="Verify Gmail" backFunction={backFunction} />
+          <SubHeader header={t("Verify Gmail")} backFunction={backFunction} />
           <div className="dashboard_content_mainbox">
             <div className="flex items-center gap-2 my-3">
               <IoIosInformationCircle color="gold" size={20} />
               <p className="text-nearTextColors-0 text-[12px]">
-                We will be sending you an OTP to this email
+                {t("We will be sending you an OTP to this email")}
               </p>
             </div>
             <form
@@ -197,7 +199,7 @@ export default function DashboardChangePassword({ backFunction }: Props) {
                       type="email"
                       name={form.name}
                       onChange={handleChange}
-                      value={isLoading ? "Loading..." : formData.emailAddress}
+                      value={isLoading ? t("Loading...") : formData.emailAddress}
                       disabled={true}
                       className={`text-[#1F2937]/20 dark:text-white/50 text-[16px] font-[500] outline-none border-none bg-transparent`}
                       required
@@ -217,7 +219,7 @@ export default function DashboardChangePassword({ backFunction }: Props) {
                       type="submit"
                       className="form_more text-white bg-primaryColors-0 md:mt-0"
                     >
-                      Send OTP
+                      {t("Send OTP")}
                     </button>
                   )}
                 </div>

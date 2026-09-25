@@ -8,6 +8,7 @@ import AIContainerComponent from "./ai_container_component";
 import ShekiAIOrb from "./ShekiAIOrb";
 import type { AssistantMode } from "@/app/hook/useShekiAI";
 import useWindowWidth from "@/app/hook/UseWindowWidth";
+import { useI18n } from "@/app/context/I18nContext";
 
 const DESKTOP_BREAKPOINT = 1024; // matches this app's lg: convention
 const PANEL_WIDTH = 380;
@@ -30,6 +31,7 @@ export default function ShekiAIWidget({
   // breakpoint, so this must never hide the mobile trigger.
   sidenavExpanded?: boolean;
 }) {
+  const { t } = useI18n();
   const width = useWindowWidth();
   const isDesktop = (width ?? 0) >= DESKTOP_BREAKPOINT;
 
@@ -62,7 +64,7 @@ export default function ShekiAIWidget({
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         onClick={() => onInteract?.()}
-        aria-label="Open ShekiAI assistant"
+        aria-label={t("Open ShekiAI assistant")}
         className="hidden lg:flex fixed bottom-8 right-8 z-40 h-14 w-14 rounded-full shadow-lg items-center justify-center"
         style={{ background: "radial-gradient(circle at 35% 30%, #FBB041, #FFA500 70%)" }}
       >
@@ -90,13 +92,13 @@ export default function ShekiAIWidget({
               setIsCollapsed(false);
               onInteract?.();
             }}
-            aria-label="Expand ShekiAI assistant"
+            aria-label={t("Expand ShekiAI assistant")}
             className="h-full w-full flex flex-col items-center gap-3 pt-5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
           >
             <ShekiAIOrb status="idle" size={30} />
             <FiChevronLeft className="text-nearTextColors-0" size={16} />
             <span className="text-[11px] tracking-widest text-nearTextColors-0 [writing-mode:vertical-rl]">
-              ShekiAI
+              {t("ShekiAI")}
             </span>
           </button>
         ) : (
@@ -125,7 +127,7 @@ export default function ShekiAIWidget({
             setIsOpen(true);
             onInteract?.();
           }}
-          aria-label="Open ShekiAI assistant"
+          aria-label={t("Open ShekiAI assistant")}
           className="fixed bottom-24 right-5 z-40 h-14 w-14 rounded-full shadow-lg flex items-center justify-center"
           style={{ background: "radial-gradient(circle at 35% 30%, #FBB041, #FFA500 70%)" }}
         >

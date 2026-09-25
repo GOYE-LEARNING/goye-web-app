@@ -6,6 +6,7 @@ import { BsHeartFill } from "react-icons/bs";
 import { IoSend } from "react-icons/io5";
 import { Reply } from "@/app/interface/discussion";
 import NestedReplyItem from "./nested_reply_item";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   reply: Reply;
@@ -48,6 +49,7 @@ export default function ReplyItem({
   onToggleNestedReplies,
   renderFormattedText,
 }: Props) {
+  const { t } = useI18n();
   const hasNested = reply.replies && reply.replies.length > 0;
 
   return (
@@ -57,7 +59,7 @@ export default function ReplyItem({
           <img
             src={reply.author.user_pic}
             className="h-full w-full object-cover"
-            alt="avatar"
+            alt={t("avatar")}
           />
         </div>
         <div className="flex-1">
@@ -100,7 +102,7 @@ export default function ReplyItem({
               }
               className="text-xs text-gray-400 hover:text-primaryColors-0 transition"
             >
-              Reply
+              {t("Reply")}
             </button>
 
             {hasNested && (
@@ -109,8 +111,8 @@ export default function ReplyItem({
                 className="text-xs text-primaryColors-0 hover:underline transition"
               >
                 {showNestedReplies
-                  ? "Hide replies"
-                  : `${reply.replies!.length} ${reply.replies!.length === 1 ? "reply" : "replies"}`}
+                  ? t("Hide replies")
+                  : `${reply.replies!.length} ${reply.replies!.length === 1 ? t("reply") : t("replies")}`}
               </button>
             )}
           </div>
@@ -122,14 +124,14 @@ export default function ReplyItem({
                 <img
                   src={userPic}
                   className="h-full w-full object-cover"
-                  alt="avatar"
+                  alt={t("avatar")}
                 />
               </div>
               <div className="flex-1 flex gap-2 relative items-center">
                 <input
                   id={`reply-input-${reply.id}`}
                   type="text"
-                  placeholder={`Reply to ${replyingTo.authorName}...`}
+                  placeholder={`${t("Reply to")} ${replyingTo.authorName}...`}
                   value={nestedCommentText}
                   onChange={(e) =>
                     onNestedTextChange(discussionId, e.target.value)
@@ -151,7 +153,7 @@ export default function ReplyItem({
                   onClick={() => onCancelReply(discussionId)}
                   className="text-xs text-gray-400 hover:text-red-500 whitespace-nowrap"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
               </div>
             </div>

@@ -7,8 +7,10 @@ import { useCallback, useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaArrowLeft, FaPen, FaRegCommentDots } from "react-icons/fa6";
 import { MdAdd } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function SocialMode() {
+  const { t } = useI18n();
   const [showPrivateMessages, setShowPrivateMessages] = useState<boolean>(false);
   const [showGeneralContainer, setShowGeneralContainer] = useState<boolean>(true);
   const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
@@ -57,7 +59,7 @@ export default function SocialMode() {
   const openPrivateMessage = useCallback(
     (userId?: string, userName?: string) => {
       if (userId) {
-        setSelectedUser({ id: userId, name: userName || "User" });
+        setSelectedUser({ id: userId, name: userName || t("User") });
         setShowPrivateMessages(true);
         setShowGeneralContainer(false);
         // Close the sidebar on mobile when opening a chat
@@ -154,7 +156,7 @@ export default function SocialMode() {
           >
             <FaArrowLeft size={18} className="text-gray-600 dark:text-gray-400" />
           </button>
-          <h1 className="font-semibold text-textSlightDark-0 dark:text-white">Messages</h1>
+          <h1 className="font-semibold text-textSlightDark-0 dark:text-white">{t("Messages")}</h1>
         </motion.div>
       );
     }

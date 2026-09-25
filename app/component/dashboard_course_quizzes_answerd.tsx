@@ -9,6 +9,7 @@ import DashboardPop from "./dashboard_popop";
 import DashboardQuizReview from "./dashboard_quiz_review";
 import Loader from "./loader";
 import { useQuiz } from "../context/quizContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunction: () => void;
@@ -91,6 +92,7 @@ export default function DashboardCourseQuizzesAnswered({
     attempt: QuizAttempt;
   } | null>(null);
   const { quizContext, setQuizContext } = useQuiz();
+  const { t } = useI18n();
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -296,7 +298,7 @@ export default function DashboardCourseQuizzesAnswered({
       setQuizId(quizId);
     } else {
       alert(
-        `Please answer all questions. You've answered ${answeredCount} out of ${totalQuestions}`,
+        `${t("Please answer all questions. You've answered")} ${answeredCount} ${t("out of")} ${totalQuestions}`,
       );
     }
   };
@@ -431,8 +433,8 @@ export default function DashboardCourseQuizzesAnswered({
                 <SubHeader
                   header={
                     isReviewMode
-                      ? `${activeQuiz?.title} - Review`
-                      : activeQuiz?.title || "Quiz"
+                      ? `${activeQuiz?.title} - ${t("Review")}`
+                      : activeQuiz?.title || t("Quiz")
                   }
                   backFunction={
                     isReviewMode ? exitReviewMode : testingBackFunction
@@ -453,7 +455,7 @@ export default function DashboardCourseQuizzesAnswered({
                       {/* Quiz Info */}
                       <div className="flex justify-between items-center my-3">
                         <span className="font-[600] text-[12px]">
-                          {answeredCount}/{totalQuestions} answered
+                          {answeredCount}/{totalQuestions} {t("answered")}
                         </span>
                         <span className="flex items-center gap-2 font-[500] text-[#71748C] text-[13px]">
                           <CiClock1 /> {formatTime(timeLeft)}
@@ -469,10 +471,10 @@ export default function DashboardCourseQuizzesAnswered({
                       <div className="flex justify-between items-center">
                         <div>
                           <h2 className="font-[700] text-[16px] dark:text-white text-lightBoldText-0">
-                            Your Results
+                            {t("Your Results")}
                           </h2>
                           <p className="text-[14px] text-[#71748C]">
-                            Score: {activeAttempt.score}% • Correct: {totalCorrectAnswers}/{totalAttemptAnswers}
+                            {t("Score:")} {activeAttempt.score}% • {t("Correct:")} {totalCorrectAnswers}/{totalAttemptAnswers}
                           </p>
                         </div>
                         <div
@@ -482,7 +484,7 @@ export default function DashboardCourseQuizzesAnswered({
                               : "bg-[#DA0E291A] text-[#DA0E29]"
                           }`}
                         >
-                          {(activeAttempt.score || 0) >= (activeQuiz?.passingScore || 70) ? "PASSED" : "YOU CAN DO BETTER NEXT TIME. NEVER GIVE UP"}
+                          {(activeAttempt.score || 0) >= (activeQuiz?.passingScore || 70) ? t("PASSED") : t("YOU CAN DO BETTER NEXT TIME. NEVER GIVE UP")}
                         </div>
                       </div>
                     </div>
@@ -518,7 +520,7 @@ export default function DashboardCourseQuizzesAnswered({
                             </h1>
                             <span className="text-[12px] text-gray-500 ml-auto">
                               {quizItem.points}{" "}
-                              {quizItem.points === 1 ? "point" : "points"}
+                              {quizItem.points === 1 ? t("point") : t("points")}
                             </span>
                           </div>
 
@@ -581,7 +583,7 @@ export default function DashboardCourseQuizzesAnswered({
                                     {option}
                                     {isReviewMode && isCorrectAnswer && (
                                       <span className="text-[11px] text-[#30A46F] font-[500]">
-                                        (Correct answer)
+                                        {t("(Correct answer)")}
                                       </span>
                                     )}
                                   </span>
@@ -613,7 +615,7 @@ export default function DashboardCourseQuizzesAnswered({
                         }}
                         className={`form_more bg-primaryColors-0 text-[#ffffff] w-full py-3 rounded-md mt-4`}
                       >
-                        Submit Quiz
+                        {t("Submit Quiz")}
                       </button>
                     )}
                   </form>
@@ -624,9 +626,9 @@ export default function DashboardCourseQuizzesAnswered({
           {popup && (
             <DashboardPop
               close={() => setPopup(false)}
-              header="Quiz Completed!"
-              paragraph="Your answers have been recorded successfully"
-              buttonFunc="Review Answers"
+              header={t("Quiz Completed!")}
+              paragraph={t("Your answers have been recorded successfully")}
+              buttonFunc={t("Review Answers")}
               backToCourse={backToCourse}
               reviewCourse={reviewCourse}
             />

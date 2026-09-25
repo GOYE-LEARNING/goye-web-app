@@ -172,13 +172,13 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
           {topCourse.course_image && (
             <img
               src={topCourse.course_image}
-              alt={topCourse.course_title}
+              alt={t(topCourse.course_title)}
               className="w-12 h-12 rounded-lg object-cover"
             />
           )}
           <div className="flex-1">
             <h1 className="font-bold text-[15px] dark:text-textSlightDark-0 text-lightBoldText-0 line-clamp-1">
-              {topCourse.course_title}
+              {t(topCourse.course_title)}
             </h1>
             <p className="text-textGrey-0 text-[11px] mt-0.5">
               {topCourse.course_level} • {topCourse.totalStudents} {t("students")}
@@ -187,7 +187,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
         </div>
 
         <p className="text-textGrey-0 text-[13px] md:line-clamp-none line-clamp-2 mt-1">
-          {topCourse.course_short_description}
+          {t(topCourse.course_short_description)}
         </p>
 
         <div className="dashboard_hr my-3"></div>

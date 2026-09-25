@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { BsFillSendFill } from "react-icons/bs";
 import { MdOutlineCancel } from "react-icons/md";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   cancel: () => void;
@@ -16,6 +17,7 @@ export default function DashboardTutorNewPost({
   courseId,
   onPostUpdate,
 }: Props) {
+  const { t } = useI18n();
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -72,7 +74,7 @@ setIsLoading(false)
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[24px]">
-            New Post
+            {t("New Post")}
           </h1>
           <span onClick={cancel} className="cursor-pointer">
             <MdOutlineCancel size={20} className="text-[18px]" />
@@ -90,13 +92,13 @@ setIsLoading(false)
           {/* Title Input */}
           <div className="w-full h-[63px] border border-[#ccc]/10 py-[8px] px-[12px] flex items-center relative">
             <div className="flex flex-col w-full">
-              <label className="text-[#71748C] text-[12px]">Title</label>
+              <label className="text-[#71748C] text-[12px]">{t("Title")}</label>
               <input
                 type="text"
                 name="title"
                 onChange={handleChange}
                 value={title}
-                className="text-[#1F2937] text-[16px] font-[500] outline-none border-none w-full bg-transparent"
+                className="text-[#1F2937] dark:text-white text-[16px] font-[500] outline-none border-none w-full bg-transparent"
               />
             </div>
           </div>
@@ -104,13 +106,13 @@ setIsLoading(false)
           {/* Content Input */}
           <div className="w-full h-[176px] border border-[#ccc]/10 py-[8px] px-[12px] flex relative">
             <div className="flex flex-col w-full h-full">
-              <label className="text-[#71748C] text-[12px]">Content</label>
+              <label className="text-[#71748C] text-[12px]">{t("Content")}</label>
               <textarea
                 name="content"
                 onChange={handleTextArea}
                 value={content}
                 cols={30}
-                className="text-[#1F2937] text-[16px] font-[500] outline-none border-none resize-none h-full bg-transparent"
+                className="text-[#1F2937] dark:text-white text-[16px] font-[500] outline-none border-none resize-none h-full bg-transparent"
               />
             </div>
           </div>
@@ -121,7 +123,7 @@ setIsLoading(false)
               type="submit"
               className="form_more bg-primaryColors-0 text-white flex items-center gap-2"
             >
-              Post <BsFillSendFill />
+              {t("Post")} <BsFillSendFill />
             </button>}
 
             <button
@@ -129,7 +131,7 @@ setIsLoading(false)
               onClick={cancel}
               className="form_more bg-[#F5F5F5] dark:bg-shadyColor-0 text-primaryColors-0 flex items-center gap-2"
             >
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         </form>

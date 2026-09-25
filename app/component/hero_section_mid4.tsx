@@ -3,8 +3,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { FaStar } from "react-icons/fa6";
 import pic2 from "@/public/images/pic12.png";
 import Image from "next/image";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function MidSection4() {
+  const { t } = useI18n();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -49,8 +51,7 @@ export default function MidSection4() {
               variants={itemVariants as any}
               className="font-medium md:text-[48px] text-[30px] dark:text-textSlightDark-0 text-lightBoldText-0/80 text-center"
             >
-              “As a tutor, I finally have a tool that makes discipleship
-              structured yet personal.”
+              {t("“As a tutor, I finally have a tool that makes discipleship structured yet personal.”")}
             </motion.h1>
             <motion.div
               variants={itemVariants as any}
@@ -59,13 +60,13 @@ export default function MidSection4() {
               <div className="h-[60px] w-[60px] rounded-[4px] bg-shadyColor-0 overflow-hidden">
                 <Image
                   src={pic2}
-                  alt="Ian Hunt"
+                  alt={t("Ian Hunt")}
                   className="h-full w-full object-cover"
                 />
               </div>
               <div className="flex flex-col gap-1 dark:text-textSlightDark-0 text-lightBoldText-0/80">
-                <h1 className="font-bold text-[24px]">Ian Hunt</h1>
-                <p className="text-[14px]">Tutor &amp; Church Pastor, GOYE Community</p>
+                <h1 className="font-bold text-[24px]">{t("Ian Hunt")}</h1>
+                <p className="text-[14px]">{t("Tutor & Church Pastor, GOYE Community")}</p>
               </div>
             </motion.div>
           </motion.div>

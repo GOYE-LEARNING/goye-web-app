@@ -11,8 +11,10 @@ import SuspendUserModal from "@/app/component/admin_component/dashboard_admin_su
 import { AnimatePresence, motion } from "framer-motion";
 import { PiPlus } from "react-icons/pi";
 import DashboardOrgAdminInviteMembers from "@/app/component/organization_component/dashboard_org_admin_invite_members";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function OrgAdminUsers() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<"all" | "member" | "instructor">(
     "all",
   );
@@ -68,13 +70,13 @@ export default function OrgAdminUsers() {
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.2, ease: "easeIn" }}
           >
-            <h1 className="dashboard_h1">Organization</h1>
+            <h1 className="dashboard_h1">{t("Organization")}</h1>
             <div className="flex items-center justify-between gap-5">
               <div className="w-[80%]">
                 <DashboardSearch
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search Members..."
+                  placeholder={t("Search Members...")}
                 />
               </div>
               <button
@@ -82,7 +84,7 @@ export default function OrgAdminUsers() {
                 className="bg-primaryColors-0 text-plainColors-0 w-[20%] py-2 rounded text-[0.9rem] hover:text-primaryColors-0 hover:bg-primaryColors-0/35 transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <PiPlus color="white" size={16} />
-                <p>Invite People</p>
+                <p>{t("Invite People")}</p>
               </button>
             </div>
             <DashboardAdminTab

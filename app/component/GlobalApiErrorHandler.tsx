@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MdWarning, MdRefresh, MdAccessTime, MdErrorOutline, MdCloudOff, MdSpeed } from "react-icons/md";
 import { FaSpinner, FaWifi, FaServer } from "react-icons/fa";
 import { registerErrorListener } from "@/app/hook/useAPIErrorHandler";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface ErrorContextType {
   showError: (error: any) => void;
@@ -23,43 +24,44 @@ export function useAPIError() {
 }
 
 // Helper to get user-friendly error message
-const getUserFriendlyMessage = (error: any): { title: string; message: string; icon: React.ReactNode } => {
+const getUserFriendlyMessage = (error: any, t: (text: string) => string): { title: string; message: string; icon: React.ReactNode } => {
   // Rate limiting error (429)
   if (error?.status === 429 || error?.message?.includes("Too Many Requests") || error?.message?.includes("too many requests")) {
     return {
-      title: "🌟 You're on fire! But let's take a breather",
-      message: "You've been quite active! Please wait a moment before continuing. This helps keep everything running smoothly for everyone.",
+      title: `🌟 ${t("You're on fire! But let's take a breather")}`,
+      message: t("You've been quite active! Please wait a moment before continuing. This helps keep everything running smoothly for everyone."),
       icon: <MdSpeed className="text-4xl" />
     };
   }
-  
+
   // Network/Connection errors
   if (error?.message?.includes("Failed to fetch") || error?.message?.includes("Network")) {
     return {
-      title: "📡 Connection Interrupted",
-      message: "We're having trouble connecting to the server. Please check your internet connection and try again.",
+      title: `📡 ${t("Connection Interrupted")}`,
+      message: t("We're having trouble connecting to the server. Please check your internet connection and try again."),
       icon: <FaWifi className="text-4xl" />
     };
   }
-  
+
   // Server errors (500, 502, 503)
   if (error?.status === 500 || error?.status === 502 || error?.status === 503) {
     return {
-      title: "🔧 Server Under Maintenance",
-      message: "Our servers are temporarily unavailable. Our team is working on it. Please try again in a few moments.",
+      title: `🔧 ${t("Server Under Maintenance")}`,
+      message: t("Our servers are temporarily unavailable. Our team is working on it. Please try again in a few moments."),
       icon: <FaServer className="text-4xl" />
     };
   }
-  
+
   // Default error
   return {
-    title: "⚠️ Oops! Something went wrong",
-    message: error?.message || "We encountered an unexpected issue. Please try again or contact support if the problem persists.",
+    title: `⚠️ ${t("Oops! Something went wrong")}`,
+    message: error?.message || t("We encountered an unexpected issue. Please try again or contact support if the problem persists."),
     icon: <MdErrorOutline className="text-4xl" />
   };
 };
 
 export function GlobalAPIErrorHandler({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [error, setError] = useState<any>(null);
   const [countdown, setCountdown] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -102,7 +104,7 @@ export function GlobalAPIErrorHandler({ children }: { children: ReactNode }) {
     }, 1000);
   };
 
-  const userFriendly = error ? getUserFriendlyMessage(error) : { title: "", message: "", icon: null };
+  const userFriendly = error ? getUserFriendlyMessage(error, t) : { title: "", message: "", icon: null };
   const isRateLimit = error?.status === 429 || error?.message?.includes("Too Many Requests");
 
   return (
@@ -138,7 +140,7 @@ export function GlobalAPIErrorHandler({ children }: { children: ReactNode }) {
                   {userFriendly.title}
                 </h2>
                 <p className="text-white/90 text-sm mt-2">
-                  {isRateLimit ? "Take a quick pause" : "Connection Issue"}
+                  {isRateLimit ? t("Take a quick pause") : t("Connection Issue")}
                 </p>
               </div>
 
@@ -162,7 +164,7 @@ export function GlobalAPIErrorHandler({ children }: { children: ReactNode }) {
                           ? "text-amber-800 dark:text-amber-400"
                           : "text-red-800 dark:text-red-400"
                       }`}>
-                        {isRateLimit ? "You're moving fast!" : "Connection Issue"}
+                        {isRateLimit ? t("You're moving fast!") : t("Connection Issue")}
                       </p>
                       <p>{userFriendly.message}</p>
                     </div>
@@ -173,7 +175,7 @@ export function GlobalAPIErrorHandler({ children }: { children: ReactNode }) {
                 {isRateLimit && (
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                     <p className="text-sm text-blue-800 dark:text-blue-300">
-                      💡 <span className="font-semibold">Quick Tip:</span> Try slowing down a bit between clicks. This helps everything load faster for you and others!
+                      💡 <span className="font-semibold">{t("Quick Tip:")}</span> {t("Try slowing down a bit between clicks. This helps everything load faster for you and others!")}
                     </p>
                   </div>
                 )}
@@ -187,7 +189,7 @@ export function GlobalAPIErrorHandler({ children }: { children: ReactNode }) {
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                      seconds until you can try again
+                      {t("seconds until you can try again")}
                     </p>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-3">
                       <div 
@@ -215,12 +217,12 @@ export function GlobalAPIErrorHandler({ children }: { children: ReactNode }) {
                     {isRetrying ? (
                       <>
                         <FaSpinner className="animate-spin" />
-                        Retrying...
+                        {t("Retrying...")}
                       </>
                     ) : (
                       <>
                         <MdRefresh />
-                        Try Again {countdown > 0 ? `(${countdown}s)` : ""}
+                        {t("Try Again")} {countdown > 0 ? `(${countdown}s)` : ""}
                       </>
                     )}
                   </button>
@@ -228,16 +230,16 @@ export function GlobalAPIErrorHandler({ children }: { children: ReactNode }) {
                     onClick={hideError}
                     className="px-5 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
-                    Dismiss
+                    {t("Dismiss")}
                   </button>
                 </div>
 
                 {/* Help Text */}
                 <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    {isRateLimit 
-                      ? "🔄 Still having issues? Try refreshing the page or contact support if the problem continues."
-                      : "🔄 Check your internet connection and try again. If the problem persists, please contact support."
+                    🔄 {isRateLimit
+                      ? t("Still having issues? Try refreshing the page or contact support if the problem continues.")
+                      : t("Check your internet connection and try again. If the problem persists, please contact support.")
                     }
                   </p>
                 </div>

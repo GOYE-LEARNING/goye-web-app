@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { useTheme } from "../context/theme_provider";
 import logo from '@/public/images/goye_final_logo.png'
 import ToogleDarkMode from "./toogleDarkMode";
 import { CiGlobe } from "react-icons/ci";
 import { FaChevronDown } from "react-icons/fa";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   openLanguage: () => void;
@@ -18,44 +18,14 @@ export default function AuthWelcomeHeader({
   hasLanguage,
 }: Props) {
   const { darkMode, setDarkMode } = useTheme();
-  const [language, setLanguage] = useState<string>("");
-  const [languageCode, setLanguageCode] = useState<string>("");
-
-  // Load language from localStorage on mount and when it changes
-  useEffect(() => {
-    const loadLanguage = () => {
-      const lang = localStorage.getItem("lang");
-      const langCode = localStorage.getItem("langCode");
-      if (lang) setLanguage(lang);
-      if (langCode) setLanguageCode(langCode);
-    };
-
-    loadLanguage();
-
-    // Listen for storage changes
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "lang" || e.key === "langCode") {
-        loadLanguage();
-      }
-    };
-
-    // Custom event for same-tab updates
-    const handleLanguageUpdate = () => loadLanguage();
-    window.addEventListener("languageUpdated", handleLanguageUpdate);
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("languageUpdated", handleLanguageUpdate);
-    };
-  }, []);
+  const { t, languageName: language, locale: languageCode } = useI18n();
 
   return (
     <>
       <div className="px-[48px] flex justify-between items-center font-[400] md:mb-7 my-7 md:mt-0 w-full">
         <Image
           src={logo}
-          alt="logo"
+          alt={t("logo")}
           height={100}
           width={100}
         />
@@ -71,7 +41,7 @@ export default function AuthWelcomeHeader({
             <span>
               {!hasLanguage ? (
                 <span className="text-[0.8rem] dark:text-white/80 text-lightBoldText-0">
-                  English (EN)
+                  {t("English (EN)")}
                 </span>
               ) : (
                 <span className="text-[0.8rem] dark:text-white/80 text-lightBoldText-0">

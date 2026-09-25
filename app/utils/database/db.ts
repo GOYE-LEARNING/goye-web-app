@@ -186,6 +186,14 @@ export async function clearUserProfile(): Promise<void> {
 
 // ==================== Device Management ====================
 export function generateDeviceId(): string {
+  // Deliberately does NOT include Date.now() or Math.random(): this must be
+  // the same value on every call for the same physical browser, or two
+  // concurrent callers (multiple tabs booting at once, or the several
+  // uncoordinated call sites in layout.tsx/globalFetch.ts) generate two
+  // different IDs before either has persisted, and the app ends up sending
+  // mismatched X-Device-Id headers on requests that should share one
+  // session. That mismatch is what caused fresh logins to immediately fail
+  // with "Session has been revoked" on unrelated requests.
   const fingerprint = [
     navigator.userAgent,
     navigator.platform,
@@ -203,29 +211,53 @@ export function generateDeviceId(): string {
     hash = hash & hash;
   }
 
-  return `device_${Math.abs(hash)}_${Date.now().toString(36)}`;
+  return `device_${Math.abs(hash)}`;
 }
 
+// getOrCreateDeviceId() is called concurrently and independently from
+// several places on page load (AuthGuard, DeviceIdSync, CrossTabSync's
+// syncDeviceIdAcrossTabs, and every globalFetch request). Dexie's
+// get-then-put is not atomic, so without memoizing the in-flight work here,
+// each concurrent caller would race its own read of an empty table and its
+// own write — the last write wins in IndexedDB, but earlier callers already
+// returned (and used) whatever they individually generated. Caching the
+// promise makes every caller within this page load await the exact same
+// creation instead of racing separate ones.
+let deviceIdPromise: Promise<string> | null = null;
+
 export async function getOrCreateDeviceId(): Promise<string> {
-  // Dexie/IndexedDB is the single source of truth for deviceId — it's
-  // genuinely per-device and persists reliably, unlike a cross-domain
-  // cookie which browsers like Safari/Firefox/Brave frequently block or
-  // expire for SameSite=None cookies set from a different origin.
-  let deviceInfo = await db.deviceInfo.get(CURRENT_DEVICE_ID);
+  if (deviceIdPromise) return deviceIdPromise;
 
-  if (!deviceInfo) {
-    const newDeviceId = generateDeviceId();
-    deviceInfo = {
-      id: CURRENT_DEVICE_ID,
-      deviceId: newDeviceId,
-      fingerprint: navigator.userAgent,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    await db.deviceInfo.put(deviceInfo);
+  deviceIdPromise = (async () => {
+    // Dexie/IndexedDB is the single source of truth for deviceId — it's
+    // genuinely per-device and persists reliably, unlike a cross-domain
+    // cookie which browsers like Safari/Firefox/Brave frequently block or
+    // expire for SameSite=None cookies set from a different origin.
+    let deviceInfo = await db.deviceInfo.get(CURRENT_DEVICE_ID);
+
+    if (!deviceInfo) {
+      const newDeviceId = generateDeviceId();
+      deviceInfo = {
+        id: CURRENT_DEVICE_ID,
+        deviceId: newDeviceId,
+        fingerprint: navigator.userAgent,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      await db.deviceInfo.put(deviceInfo);
+    }
+
+    return deviceInfo.deviceId;
+  })();
+
+  try {
+    return await deviceIdPromise;
+  } catch (err) {
+    // Let a failed attempt be retried instead of permanently poisoning
+    // every future call with a rejected promise.
+    deviceIdPromise = null;
+    throw err;
   }
-
-  return deviceInfo.deviceId;
 }
 
 // ✅ Helper: Get cookie

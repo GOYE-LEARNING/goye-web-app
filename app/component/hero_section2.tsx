@@ -5,8 +5,10 @@ import { BiSolidAlarm } from "react-icons/bi";
 import { FaBookBookmark } from "react-icons/fa6";
 import { IoIosPeople } from "react-icons/io";
 import { MdMessage } from "react-icons/md";
+import { useI18n, T } from "@/app/context/I18nContext";
 
 export default function HeroSection2() {
+  const { t } = useI18n();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -32,24 +34,24 @@ export default function HeroSection2() {
   const content = [
     {
       icon: <BiSolidAlarm />,
-      header: "Accessible",
-      text: "Learn and teach discipleship anywhere, on your schedule",
+      header: t("Accessible"),
+      text: t("Learn and teach discipleship anywhere, on your schedule"),
     },
     {
       icon: <FaBookBookmark />,
-      header: "Structured Pathways",
-      text: "Step-by-step learning modules aligned with biblical principles.",
+      header: t("Structured Pathways"),
+      text: t("Step-by-step learning modules aligned with biblical principles."),
     },
 
     {
       icon: <MdMessage />,
-      header: "Interactive Tools",
-      text: "Quizzes and group discussions to deepen understanding.",
+      header: t("Interactive Tools"),
+      text: t("Quizzes and group discussions to deepen understanding."),
     },
     {
       icon: <IoIosPeople />,
-      header: "Community Growth",
-      text: "Foster meaningful relationships between learners and mentors.",
+      header: t("Community Growth"),
+      text: t("Foster meaningful relationships between learners and mentors."),
     },
   ];
   return (
@@ -68,14 +70,14 @@ export default function HeroSection2() {
               variants={itemVariants as any}
               className="md:text-[48px] text-[32px] text-center font-medium dark:text-textSlightDark-0 text-lightBoldText-0/80"
             >
-              The Perfect Learning Experience
+              <T>The Perfect Learning Experience</T>
             </motion.h1>
             <motion.p
               variants={itemVariants as any}
               className="text-center text-[20px] dark:text-textSlightDark-0 text-lightBoldText-0/40"
             >
-              Everything you need to grow in faith and guide others on <br />{" "}
-              their spiritual journey.
+              {t("Everything you need to grow in faith and guide others on")} <br />{" "}
+              {t("their spiritual journey.")}
             </motion.p>
           </div>
           <motion.div className="flex justify-center items-center flex-wrap w-full gap-[24px]">

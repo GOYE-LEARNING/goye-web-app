@@ -1,12 +1,13 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTheme } from "../context/theme_provider";
 import logo from '@/public/images/goye_final_logo.png'
 import ToogleDarkMode from "./toogleDarkMode";
 import { CiGlobe } from "react-icons/ci";
 import { FaChevronDown } from "react-icons/fa";
 import TranslatedText from "../hook/translateText";
+import { useI18n } from "../context/I18nContext";
 
 interface Props {
   changeTextToLogin: () => void;
@@ -24,37 +25,9 @@ export default function AuthHeader({
   isSignupOpen,
 }: Props) {
   const [changeHeaderToLogin, setChangeHeaderToLogin] = useState<boolean>(false);
-  const [language, setLanguage] = useState<string>("");
-  const [languageCode, setLanguageCode] = useState<string>("");
   const [changeHeaderToSignin, setChangeHeaderToSignin] = useState<boolean>(true);
   const { darkMode, setDarkMode } = useTheme();
-
-  // Load language from localStorage on mount and when it changes
-  useEffect(() => {
-    const loadLanguage = () => {
-      const lang = localStorage.getItem("lang");
-      const langCode = localStorage.getItem("langCode");
-      if (lang) setLanguage(lang);
-      if (langCode) setLanguageCode(langCode);
-    };
-
-    loadLanguage();
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "lang" || e.key === "langCode") {
-        loadLanguage();
-      }
-    };
-
-    const handleLanguageUpdate = () => loadLanguage();
-    window.addEventListener("languageUpdated", handleLanguageUpdate);
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("languageUpdated", handleLanguageUpdate);
-    };
-  }, []);
+  const { languageName: language, locale: languageCode } = useI18n();
 
   // Language selector component - extracted to avoid duplication
   const LanguageSelector = () => (

@@ -10,8 +10,10 @@ import Link from "./sidenav_component"; // your updated Link component
 import { OrgSignUp } from "./BodyProvider";
 import { useState } from "react";
 import ErrorComponent from "@/app/component/organization_component/dashboard_error_component";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function Sidenav() {
+  const { t } = useI18n();
   const { formData, setFormData, isOrgInfoComplete, isUserComplete, isChurchComplete, isSchoolComplete, isClubComplete } = OrgSignUp();
   const [error, setError] = useState<{ message: string; show: boolean }>({ message: "", show: false });
 
@@ -61,7 +63,7 @@ export default function Sidenav() {
             path="/auth/organization/user-information"
             icon={<LuUserRound size={19} />}
             disabled={!isOrgInfoComplete}
-            onClick={() => handleNavigationClick("User Information", isOrgInfoComplete, "Please complete Organization Information first")}
+            onClick={() => handleNavigationClick("User Information", isOrgInfoComplete, t("Please complete Organization Information first"))}
           />
         </li>
 
@@ -71,7 +73,7 @@ export default function Sidenav() {
             path="/auth/organization/organization-church"
             icon={<LuChurch size={19} />}
             onClick={() => {
-              if (handleNavigationClick("Church", isOrgInfoComplete && isUserComplete, "Please complete Organization Information and User Information first")) {
+              if (handleNavigationClick("Church", isOrgInfoComplete && isUserComplete, t("Please complete Organization Information and User Information first"))) {
                 handleTypeClick("church");
               }
             }}
@@ -85,7 +87,7 @@ export default function Sidenav() {
             path="/auth/organization/organization-school"
             icon={<IoSchoolOutline size={19} />}
             onClick={() => {
-              if (handleNavigationClick("School", isOrgInfoComplete && isUserComplete, "Please complete Organization Information and User Information first")) {
+              if (handleNavigationClick("School", isOrgInfoComplete && isUserComplete, t("Please complete Organization Information and User Information first"))) {
                 handleTypeClick("school");
               }
             }}
@@ -99,7 +101,7 @@ export default function Sidenav() {
             path="/auth/organization/organization-club"
             icon={<SiClubhouse size={19} />}
             onClick={() => {
-              if (handleNavigationClick("Club", isOrgInfoComplete && isUserComplete, "Please complete Organization Information and User Information first")) {
+              if (handleNavigationClick("Club", isOrgInfoComplete && isUserComplete, t("Please complete Organization Information and User Information first"))) {
                 handleTypeClick("club");
               }
             }}
@@ -117,7 +119,7 @@ export default function Sidenav() {
               // "other" has no dedicated info step, so there's nothing
               // further to complete beyond Org Info + User Info.
               const typeComplete = formData.main_type === "church" ? isChurchComplete : formData.main_type === "school" ? isSchoolComplete : formData.main_type === "club" ? isClubComplete : formData.main_type === "other" ? true : false;
-              handleNavigationClick("Verification", isOrgInfoComplete && isUserComplete && typeComplete, "Please complete all previous forms first");
+              handleNavigationClick("Verification", isOrgInfoComplete && isUserComplete && typeComplete, t("Please complete all previous forms first"));
             }}
           />
         </li>

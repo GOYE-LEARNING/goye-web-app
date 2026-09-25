@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FaArrowRight } from "react-icons/fa";
 import { motion } from "framer-motion";
 import Step1 from "./step1";
@@ -13,6 +14,8 @@ import { useAuthContext } from "@/app/context/AuthContext";
 import { saveUserProfile } from "@/app/utils/database/db";
 import { useModal } from "@/app/context/SimpleModalContext";
 import { getFriendlyErrorMessage } from "@/app/utils/errorMessages";
+import { hasVerifiedOtp, clearOtpVerified } from "@/app/utils/signupFlowGuard";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function WelcomeMoreAuth() {
   const [step, setStep] = useState<number>(0);
@@ -24,6 +27,16 @@ export default function WelcomeMoreAuth() {
   const { formData, setFormData } = useSignup();
   const { authStatus } = useAuthContext();
   const { showModal } = useModal();
+  const router = useRouter();
+  const { t, refreshFromBackend } = useI18n();
+
+  // Block direct URL access — only reachable after OTP verification, unless the
+  // user already has a session requiring profile completion (e.g. social login).
+  useEffect(() => {
+    if (!hasVerifiedOtp() && !authStatus?.requiresProfileCompletion) {
+      router.replace("/auth");
+    }
+  }, [router, authStatus]);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const isInstructor = formData.role === "instructor";
@@ -88,13 +101,18 @@ export default function WelcomeMoreAuth() {
 
       const data = await res.json();
       if (!res.ok) {
-        showModal("Something went wrong", getFriendlyErrorMessage(new Error(data?.message || `: ${res.status}`), "finishing your signup"), "error");
+        showModal(t("Something went wrong"), getFriendlyErrorMessage(new Error(data?.message || `: ${res.status}`), "finishing your signup"), "error");
         return false;
       }
       await saveUserProfile({ first_name: authStatus.user?.first_name as any });
+      clearOtpVerified();
+      // The account (and its language, picked earlier in this flow) now
+      // exists server-side — adopt it as the authoritative value instead of
+      // continuing to trust the in-memory pick from before submission.
+      void refreshFromBackend();
       return true;
     } catch (error) {
-      showModal("Something went wrong", getFriendlyErrorMessage(error, "finishing your signup"), "error");
+      showModal(t("Something went wrong"), getFriendlyErrorMessage(error, "finishing your signup"), "error");
       return false;
     }
   };
@@ -177,13 +195,13 @@ export default function WelcomeMoreAuth() {
                 className="form_more dark:bg-secondaryColors-0 bg-white text-primaryColors-0"
                 onClick={prevStep}
               >
-                Back
+                {t("Back")}
               </span>
               <span
                 className={`form_more text-plainColors-0 bg-primaryColors-0 ${isSubmitting ? "opacity-60 pointer-events-none" : ""}`}
                 onClick={step === totalSteps - 1 && isComplete[step] ? openPopup : nextStep}
               >
-                {isSubmitting ? "Please wait…" : "Next"} <FaArrowRight />
+                {isSubmitting ? t("Please wait…") : t("Next")} <FaArrowRight />
               </span>
             </div>
           </div>

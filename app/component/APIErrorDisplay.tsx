@@ -2,6 +2,7 @@
 "use client";
 
 import { APIError } from "@/app/hook/useAPIErrorHandler";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface APIErrorDisplayProps {
   error: APIError | null;
@@ -10,6 +11,7 @@ interface APIErrorDisplayProps {
 }
 
 export function APIErrorDisplay({ error, onDismiss, onRetry }: APIErrorDisplayProps) {
+  const { t } = useI18n();
   if (!error) return null;
 
   const getErrorColor = (status: number) => {
@@ -29,12 +31,12 @@ export function APIErrorDisplay({ error, onDismiss, onRetry }: APIErrorDisplayPr
   };
 
   const getTitle = (status: number) => {
-    if (status === 429) return 'Rate Limit Exceeded';
-    if (status === 401) return 'Session Expired';
-    if (status === 403) return 'Access Denied';
-    if (status === 404) return 'Not Found';
-    if (status >= 500) return 'Server Error';
-    return 'Error';
+    if (status === 429) return t('Rate Limit Exceeded');
+    if (status === 401) return t('Session Expired');
+    if (status === 403) return t('Access Denied');
+    if (status === 404) return t('Not Found');
+    if (status >= 500) return t('Server Error');
+    return t('Error');
   };
 
   return (
@@ -47,12 +49,12 @@ export function APIErrorDisplay({ error, onDismiss, onRetry }: APIErrorDisplayPr
             <p className="text-sm mt-1">{error.message}</p>
             {error.retryAfter && (
               <p className="text-sm mt-1 opacity-75">
-                Please wait {error.retryAfter} seconds before retrying.
+                {t("Please wait")} {error.retryAfter} {t("seconds before retrying.")}
               </p>
             )}
             {error.endpoint && error.endpoint !== 'unknown' && (
               <p className="text-xs mt-1 opacity-50">
-                Endpoint: {error.endpoint}
+                {t("Endpoint:")} {error.endpoint}
               </p>
             )}
           </div>
@@ -63,7 +65,7 @@ export function APIErrorDisplay({ error, onDismiss, onRetry }: APIErrorDisplayPr
               onClick={onRetry}
               className="px-3 py-1 text-sm bg-white rounded border hover:bg-gray-50 transition-colors"
             >
-              Retry
+              {t("Retry")}
             </button>
           )}
           {onDismiss && (

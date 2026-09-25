@@ -9,6 +9,7 @@ import Image from "next/image";
 import Pic from "@/public/images/notfound.png";
 import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   formData: any;
@@ -35,6 +36,7 @@ interface Module {
 }
 
 export default function CourseStep2({ formData, setFormData }: Props) {
+  const { t } = useI18n();
   // Seeded from the wizard's own formData (owned by the parent, which stays
   // mounted across step navigation) rather than persisted to localStorage —
   // see the identical comment in step3.tsx: a picked lesson's `videoFile`
@@ -45,14 +47,14 @@ export default function CourseStep2({ formData, setFormData }: Props) {
   const [modules, setModules] = useState<Module[]>(formData.module || []);
 
   const modulesForm = [
-    { label: "Module Title", type: "text", name: "module_title" },
-    { label: "Description", type: "text", name: "module_description" },
-    { label: "Duration (Min)", type: "text", name: "module_time" },
+    { label: t("Module Title"), type: "text", name: "module_title" },
+    { label: t("Description"), type: "text", name: "module_description" },
+    { label: t("Duration (Min)"), type: "text", name: "module_time" },
   ];
 
   const lessonForm = [
-    { label: "Lesson Title", type: "text", name: "lesson_title" },
-    { label: "Lesson Video", type: "file", name: "lesson_video" },
+    { label: t("Lesson Title"), type: "text", name: "lesson_title" },
+    { label: t("Lesson Video"), type: "file", name: "lesson_video" },
   ];
 
   const createModule = () => {
@@ -157,7 +159,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
     if (file) {
       const MAX_VIDEO_SIZE = 95 * 1024 * 1024; // 95MB
       if (file.size > MAX_VIDEO_SIZE) {
-        alert(`Video must be 95MB or less. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+        alert(`${t("Video must be 95MB or less. Your file is")} ${(file.size / 1024 / 1024).toFixed(2)}MB`);
         e.target.value = '';
         return;
       }
@@ -283,23 +285,23 @@ export default function CourseStep2({ formData, setFormData }: Props) {
         <div key="module">
           <div className="flex justify-between items-center">
             <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0font-semibold text-[18px]">
-              Course Structure
+              {t("Course Structure")}
             </h1>
             <span
               className="flex items-center gap-2 cursor-pointer"
               onClick={createModule}
             >
-              <BsPlus /> Add Module
+              <BsPlus /> {t("Add Module")}
             </span>
           </div>
 
           {modules.length === 0 ? (
             <div className="flex justify-center items-center flex-col gap-1">
-              <Image src={Pic} alt="pic" height={100} width={100} />
+              <Image src={Pic} alt={t("pic")} height={100} width={100} />
               <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
-                No Course Found
+                {t("No Course Found")}
               </h1>
-              <p className="text-textGrey-0">Create a course</p>
+              <p className="text-textGrey-0">{t("Create a course")}</p>
             </div>
           ) : (
             <div>
@@ -310,7 +312,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                       <span className="h-[20px] w-[20px] bg-boldGreen-0 text-white flex justify-center items-center rounded-[2px]">
                         {i + 1}
                       </span>
-                      <h1>Module</h1>
+                      <h1>{t("Module")}</h1>
                       <div
                         className="flex flex-col text-[0.5em] cursor-pointer"
                         onClick={() => moduleShow(mod.id)}
@@ -366,7 +368,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                                 onChange={(e) => handleModuleChange(e, mod.id)}
                                 placeholder={`${
                                   form.name == "module_time"
-                                    ? "e.g(1hr 45min)"
+                                    ? t("e.g(1hr 45min)")
                                     : ""
                                 }`}
                                 className="border-none bg-transparent outline-none w-full text-textSlightDark-0 font-[500] text-[16px]"
@@ -403,10 +405,10 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                                           className="border-dashed border border-[#D2D5DA]/20 bg-white dark:bg-secondaryColors-0 py-[8px] px-[12px] h-[88px] flex flex-col items-center justify-center gap-[3px] cursor-pointer"
                                         >
                                           <h1 className="font-[500] text-[14px] text-textSlightDark-0">
-                                            Upload Lesson Video
+                                            {t("Upload Lesson Video")}
                                           </h1>
                                           <p className="text-textGrey-0 text-[12px]">
-                                            Support MP4 or MKV
+                                            {t("Support MP4 or MKV")}
                                           </p>
                                           <input
                                             id={`video-${lesson.id}`}
@@ -439,13 +441,13 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                                               }
                                               className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66]"
                                             >
-                                              <MdDelete /> Remove
+                                              <MdDelete /> {t("Remove")}
                                             </button>
                                             <label
                                               htmlFor={`video-replace-${lesson.id}`}
                                               className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66] cursor-pointer"
                                             >
-                                              <IoIosRefresh /> Retake
+                                              <IoIosRefresh /> {t("Retake")}
                                             </label>
                                             <input
                                               id={`video-replace-${lesson.id}`}
@@ -490,7 +492,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                                 onClick={() => deleteLesson(mod.id, lesson.id)}
                                 className="form_more bg-[#DA0E290D] text-[#DA0E29] text-[15px] font-[600] w-full flex items-center justify-center gap-2"
                               >
-                                <IoTrashOutline /> Delete
+                                <IoTrashOutline /> {t("Delete")}
                               </button>
                             </div>
                           );
@@ -501,7 +503,7 @@ export default function CourseStep2({ formData, setFormData }: Props) {
                         onClick={() => createLesson(mod.id)}
                         className="h-[48px] dark:bg-shadyColor-0 bg-lightWhite-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
                       >
-                        <BsPlus /> Add Lesson
+                        <BsPlus /> {t("Add Lesson")}
                       </span>
                     </motion.div>
                   )}

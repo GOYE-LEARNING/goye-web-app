@@ -5,6 +5,7 @@ import { memo } from "react";
 import Loader from "./loader";
 import CourseCard from "./dashboard_course_card_component";
 import { FiBookOpen, FiSearch, FiCompass } from "react-icons/fi";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Course {
   id: string;
@@ -61,10 +62,19 @@ export default memo(function CourseList({
   onViewCourse,
   loadingCourseId = null,
   isLoading = false,
-  emptyMessage = "No courses available",
-  emptySubMessage = "Check back later for new courses or explore other categories",
+  emptyMessage,
+  emptySubMessage,
   isToggling = null,
 }: CourseListProps) {
+  const { t } = useI18n();
+  // emptyMessage/emptySubMessage may already be pre-translated by the
+  // caller (a dynamic prop), so they are rendered as-is; only the
+  // component's own literal defaults are translated here.
+  const resolvedEmptyMessage = emptyMessage ?? t("No courses available");
+  const resolvedEmptySubMessage =
+    emptySubMessage ??
+    t("Check back later for new courses or explore other categories");
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -100,22 +110,22 @@ export default memo(function CourseList({
 
         <div className="text-center mt-8 space-y-3">
           <h3 className="text-2xl font-bold bg-gradient-to-r from-primaryColors-0 to-green-500 bg-clip-text text-transparent">
-            {emptyMessage}
+            {resolvedEmptyMessage}
           </h3>
           <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-            {emptySubMessage}
+            {resolvedEmptySubMessage}
           </p>
         </div>
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <span className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm text-gray-600 dark:text-gray-400">
-            🔍 Try different keywords
+            🔍 {t("Try different keywords")}
           </span>
           <span className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm text-gray-600 dark:text-gray-400">
-            📚 Check your enrolled courses
+            📚 {t("Check your enrolled courses")}
           </span>
           <span className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm text-gray-600 dark:text-gray-400">
-            ⭐ Browse saved courses
+            ⭐ {t("Browse saved courses")}
           </span>
         </div>
 

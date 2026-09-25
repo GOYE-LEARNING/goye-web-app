@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthContext } from "@/app/context/AuthContext";
 import AuthLoader from "@/app/auth/auth_loader";
+import AuthErrorScreen from "@/app/component/auth_error_screen";
 import { getUserProfile } from "@/app/utils/database/db";
 
 export default function DashboardTutorAuthContext({
@@ -13,10 +14,19 @@ export default function DashboardTutorAuthContext({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { authStatus, checkAuth, refreshToken, updateAuthStatus } = useAuthContext();
+  const {
+    authStatus,
+    checkAuth,
+    refreshToken,
+    updateAuthStatus,
+    authError,
+    clearAuthError,
+    getAuthError,
+  } = useAuthContext();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const authCheckedRef = useRef(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Allowed roles for tutor dashboard
   const allowedRoles = ["tutor", "instructor"];
@@ -132,6 +142,16 @@ export default function DashboardTutorAuthContext({
       }
 
       if (!isAuthenticated) {
+        // Same reasoning as the student dashboard guard: a failed refresh
+        // that came from a network/server error, not an explicit rejection,
+        // is not proof this session is invalid — don't sign the user out
+        // over it. getAuthError() reads a ref, so unlike the authError prop
+        // it reflects what refreshToken()/checkAuth() just did above.
+        if (getAuthError()) {
+          console.log("⚠️ Tutor Dashboard: Auth check errored, showing error screen instead of redirecting");
+          setIsCheckingAuth(false);
+          return;
+        }
         console.log("❌ Tutor Dashboard: Not authenticated, redirecting to login");
         router.push("/auth");
         setIsCheckingAuth(false);
@@ -171,7 +191,24 @@ export default function DashboardTutorAuthContext({
     };
 
     verifyAuth();
-  }, [authStatus.isExistingUser, authStatus.isProfileComplete, authStatus.user?.role, checkAuth, refreshToken, router, pathname, updateAuthStatus]);
+    // authError/getAuthError deliberately excluded from deps: authError is
+    // an *output* of this effect, and getAuthError is a stable ref-backed
+    // callback — neither should trigger a re-run on their own. retryCount
+    // is the only manual re-trigger.
+  }, [authStatus.isExistingUser, authStatus.isProfileComplete, authStatus.user?.role, checkAuth, refreshToken, router, pathname, updateAuthStatus, retryCount]);
+
+  if (!isAuthorized && !isCheckingAuth && authError) {
+    return (
+      <AuthErrorScreen
+        message={authError}
+        onRetry={() => {
+          clearAuthError();
+          authCheckedRef.current = false;
+          setRetryCount((c) => c + 1);
+        }}
+      />
+    );
+  }
 
   if (isCheckingAuth || !isAuthorized) {
     return <AuthLoader />;

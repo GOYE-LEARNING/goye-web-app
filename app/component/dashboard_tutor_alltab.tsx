@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import DashboardProgressBar from "./dashboard_progress_bar";
 import { CgProfile } from "react-icons/cg";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 interface StudentDetails {
   student_id: string;
   first_name: string;
@@ -24,6 +25,7 @@ export default function DashboardTutorAllTab({
   openStudent,
   search,
 }: Props) {
+  const { t } = useI18n();
   const [studentDetails, setStudentDetails] = useState<StudentDetails[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -86,15 +88,15 @@ export default function DashboardTutorAllTab({
   if (studentDetails.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-4">
-        <p className="text-textSlightDark-0 dark:text-white font-semibold">No students yet</p>
+        <p className="text-textSlightDark-0 dark:text-white font-semibold">{t("No students yet")}</p>
         <p className="text-textGrey-0 dark:text-gray-400 text-[13px]">
-          Students will appear here once they enroll in one of your courses.
+          {t("Students will appear here once they enroll in one of your courses.")}
         </p>
         <button
           onClick={() => router.push("/dashboard/tutor/course")}
           className="mt-2 bg-primaryColors-0 text-white text-[13px] font-semibold px-5 py-2 rounded-md"
         >
-          Create a Course
+          {t("Create a Course")}
         </button>
       </div>
     );
@@ -104,7 +106,7 @@ export default function DashboardTutorAllTab({
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-2 text-center px-4">
         <p className="text-textGrey-0 dark:text-gray-400 text-[13px]">
-          No students match your search.
+          {t("No students match your search.")}
         </p>
       </div>
     );
@@ -127,7 +129,7 @@ export default function DashboardTutorAllTab({
                   {s.profile_picture ? (
                     <img
                       src={s.profile_picture}
-                      alt="pic"
+                      alt={t("pic")}
                       className="h-full w-full"
                     />
                   ) : (
@@ -135,42 +137,42 @@ export default function DashboardTutorAllTab({
                   )}
                 </div>
                 <div>
-                  <h1 className="text-textSlightDark-0 font-bold text-[14px]">
+                  <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-bold text-[14px]">
                     {s.last_name} {s.first_name}
                   </h1>
-                  <p className="text-[13px] text-textSlightDark-0">{s.email}</p>
+                  <p className="text-[13px] text-lightBoldText-0/70 dark:text-textSlightDark-0/70">{s.email}</p>
                 </div>
               </div>
-              <p className="bg-boldGreen-0 text-white rounded-[2px] font-[600] text-[12px] px-[6px]">
-                {s.is_online == true ? "ACTIVE" : "NOT ACTIVE"}
+              <p className={`${s.is_online ? "bg-boldGreen-0" : "bg-gray-400"} text-white rounded-[2px] font-[600] text-[12px] px-[6px]`}>
+                {s.is_online == true ? t("ACTIVE") : t("NOT ACTIVE")}
               </p>
             </div>
 
             <div className="flex justify-between items-center">
-              <h1 className="font-[600] text-[13px] text-textSlightDark-0 capitalize">
+              <h1 className="font-[600] text-[13px] text-lightBoldText-0 dark:text-textSlightDark-0 capitalize">
                 {s.level}
               </h1>
-              <p className="text-[13px] text-textGrey-0">Last Active</p>
+              <p className="text-[13px] text-textGrey-0">{t("Last Active")}</p>
             </div>
             <DashboardProgressBar backgroundColor="#30A46F" width={s.total_in_progress_courses} />
             <div className="flex justify-around items-center w-full my-2">
-              <div className="flex flex-col gap-1 items-center text-textSlightDark-0">
+              <div className="flex flex-col gap-1 items-center text-lightBoldText-0 dark:text-textSlightDark-0">
                 <h1 className="font-[700]  text-[18px]">
                   {s.total_courses_enrolled}
                 </h1>
-                <p className="text-textGrey-0 text-[13px]">Enrolled</p>
+                <p className="text-textGrey-0 text-[13px]">{t("Enrolled")}</p>
               </div>
-              <div className="flex flex-col gap-1 items-center">
+              <div className="flex flex-col gap-1 items-center text-lightBoldText-0 dark:text-textSlightDark-0">
                 <h1 className="font-[700]  text-[18px]">
                   {s.total_completed_courses}
                 </h1>
-                <p className="text-textGrey-0 text-[13px]">Completed</p>
+                <p className="text-textGrey-0 text-[13px]">{t("Completed")}</p>
               </div>
-              <div className="flex flex-col gap-1 items-center">
+              <div className="flex flex-col gap-1 items-center text-lightBoldText-0 dark:text-textSlightDark-0">
                 <h1 className="font-[700]  text-[18px]">
                   {s.total_in_progress_courses}%
                 </h1>
-                <p className="text-textGrey-0 tedxt-[13px]">Avg Progress</p>
+                <p className="text-textGrey-0 text-[13px]">{t("Avg Progress")}</p>
               </div>
             </div>
             <div className="dashboard_thick_hr my-5"></div>

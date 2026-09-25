@@ -9,9 +9,12 @@ import QuizProvider from "@/app/context/quizContext";
 import { useEffect, useState, useRef } from "react";
 import { useAuthContext } from "@/app/context/AuthContext";
 import AuthLoader from "@/app/auth/auth_loader";
+import AuthErrorScreen from "@/app/component/auth_error_screen";
 import { SocketProvider } from "@/app/context/SocketContext";
 import ShekiAIWidget from "@/app/component/AI_component/ShekiAIWidget";
-import { getUserProfile } from "@/app/utils/database/db";
+import { AI_ENABLED } from "@/app/utils/featureFlags";
+import { getUserProfile, getAuthTokens } from "@/app/utils/database/db";
+import MobilePageTransition from "@/app/component/MobilePageTransition";
 
 export default function DashboardLayout({
   children,
@@ -20,10 +23,19 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { authStatus, checkAuth, refreshToken, updateAuthStatus } = useAuthContext();
+  const {
+    authStatus,
+    checkAuth,
+    refreshToken,
+    updateAuthStatus,
+    authError,
+    clearAuthError,
+    getAuthError,
+  } = useAuthContext();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const authCheckedRef = useRef(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   // Horizontal space the ShekiAI panel occupies, reported by the widget so
   // the content column can inset and sit beside it as a real third column.
@@ -47,10 +59,16 @@ export default function DashboardLayout({
       
       setIsCheckingAuth(true);
 
-      // Check for tokens in cookies
-      const hasAccessToken = document.cookie.includes("accessToken");
-      const hasRefreshToken = document.cookie.includes("refreshToken");
-      
+      // accessToken/refreshToken are httpOnly cookies set by the server —
+      // document.cookie can never see them, so that used to always read
+      // false here and this branch never actually ran except via the
+      // localStorage fast path below. The real client-side record of
+      // whether we have tokens is the copy IndexedDB keeps via
+      // saveAuthTokens() on login/refresh.
+      const storedTokens = await getAuthTokens();
+      const hasAccessToken = !!storedTokens?.accessToken;
+      const hasRefreshToken = !!storedTokens?.refreshToken;
+
       // Check localStorage for user data
       const userRole = localStorage.getItem("role");
       const userType = localStorage.getItem("type");
@@ -123,6 +141,18 @@ export default function DashboardLayout({
       }
 
       if (!isAuthenticated) {
+        // checkAuth()/refreshToken() distinguish "server explicitly said
+        // this session is invalid" from "the request never got an answer"
+        // (network drop, timeout, 5xx) and set authError only for the
+        // latter. Getting no answer isn't proof of a bad session, so don't
+        // sign the user out over it — show a retryable error instead.
+        // getAuthError() reads a ref, so it reflects what just happened
+        // above rather than a possibly stale render-time value.
+        if (getAuthError()) {
+          console.log("⚠️ Dashboard: Auth check errored, showing error screen instead of redirecting");
+          setIsCheckingAuth(false);
+          return;
+        }
         console.log("❌ Dashboard: Not authenticated, redirecting to login");
         router.push("/auth");
         setIsCheckingAuth(false);
@@ -136,7 +166,8 @@ export default function DashboardLayout({
     const verifyWithBackend = async () => {
       // Background verification - don't block UI
       try {
-        const hasTokens = document.cookie.includes("accessToken") || document.cookie.includes("refreshToken");
+        const storedTokens = await getAuthTokens();
+        const hasTokens = !!storedTokens?.accessToken || !!storedTokens?.refreshToken;
         if (hasTokens) {
           await checkAuth();
           console.log("✅ Dashboard: Background verification completed");
@@ -147,7 +178,10 @@ export default function DashboardLayout({
     };
 
     verifyAuth();
-  }, [authStatus.isExistingUser, checkAuth, refreshToken, router, updateAuthStatus]);
+    // authError/getAuthError deliberately excluded: authError is an output
+    // of this effect, not an input, and getAuthError is a stable ref-backed
+    // callback. retryCount is the only manual re-trigger.
+  }, [authStatus.isExistingUser, checkAuth, refreshToken, router, updateAuthStatus, retryCount]);
 
   // Check for mobile
   useEffect(() => {
@@ -172,6 +206,21 @@ export default function DashboardLayout({
     };
   }, [isChatPage, isMobile]);
 
+  // A confirmed network/server error, not a confirmed-invalid session:
+  // offer a retry instead of silently signing the user out.
+  if (!isAuthorized && !isCheckingAuth && authError) {
+    return (
+      <AuthErrorScreen
+        message={authError}
+        onRetry={() => {
+          clearAuthError();
+          authCheckedRef.current = false;
+          setRetryCount((c) => c + 1);
+        }}
+      />
+    );
+  }
+
   // Show loading state while checking authentication
   if (isCheckingAuth || !isAuthorized) {
     return <AuthLoader />;
@@ -183,7 +232,9 @@ export default function DashboardLayout({
         <ProgressProvider>
           <QuizProvider>
             <div className="min-h-screen w-full md:bg-transparent bg-primaryColors-0">
-              <ShekiAIWidget mode="student" setPanelWidth={setAiPanelWidth} onInteract={() => setSidenavCollapseSignal((n) => (n ?? 0) + 1)} sidenavExpanded={!isCollapsed} />
+              {AI_ENABLED && (
+                <ShekiAIWidget mode="student" setPanelWidth={setAiPanelWidth} onInteract={() => setSidenavCollapseSignal((n) => (n ?? 0) + 1)} sidenavExpanded={!isCollapsed} />
+              )}
               <Sidenav setIsCollapsedState={setIsCollapsed} forceCollapseSignal={sidenavCollapseSignal} />
               <div 
                 className={`${isCollapsed ? "lg:w-[95%]" : "lg:w-[80%]"} org_width_animation w-full min-w-0 max-w-full h-full md:absolute right-0`}
@@ -194,7 +245,7 @@ export default function DashboardLayout({
                   className={`
                     w-full flex md:items-center flex-col 
                     md:px-0 md:py-0 md:rounded-none rounded-tr-xl rounded-tl-xl 
-                    md:bg-lightSecondaryColor-0 mb-0 md:mb-5 overflow-auto px-7
+                    md:bg-lightSecondaryColor-0 mb-0 md:mb-5 overflow-auto px-3
                     ${
                       isChatPage
                         ? "dark:bg-shadyColor-0 bg-lightSecondaryColor-0 min-h-screen md:min-h-0 overflow-y-auto mt-[14%] md:mt-0"
@@ -220,7 +271,9 @@ export default function DashboardLayout({
                     `}
                     style={isChatPage && !isMobile ? { height: "100%" } : {}}
                   >
-                    {children}
+                    <MobilePageTransition enabled={isMobile}>
+                      {children}
+                    </MobilePageTransition>
                     <br/>
                     <br/>
                     <br/>

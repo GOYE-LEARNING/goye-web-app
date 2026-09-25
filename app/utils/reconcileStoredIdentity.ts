@@ -30,7 +30,7 @@ const IDENTITY_KEYS = [
 ] as const;
 
 /** Bump this to re-run the repair after changing what it does. */
-const RECONCILE_VERSION = "1";
+const RECONCILE_VERSION = "2";
 const VERSION_KEY = "goye_identity_reconciled";
 
 function remove(key: string) {

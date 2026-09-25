@@ -5,8 +5,10 @@ import pic2 from "@/public/images/bigframe3.png";
 import pic3 from "@/public/images/bigframe4.png";
 import pic4 from "@/public/images/bigframe5.png";
 import Image from "next/image";
+import { useI18n, T } from "@/app/context/I18nContext";
 
 export default function HeroSection3() {
+  const { t } = useI18n();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -31,25 +33,25 @@ export default function HeroSection3() {
   };
   const content = [
     {
-      image: <Image src={pic1} alt="Interactive Learning" />,
-      header: "Interactive Learning",
-      text: "Bite-sized lessons and quizzes that make learning engaging and memorable.",
+      image: <Image src={pic1} alt={t("Interactive Learning")} />,
+      header: t("Interactive Learning"),
+      text: t("Bite-sized lessons and quizzes that make learning engaging and memorable."),
     },
     {
-      image: <Image src={pic2} alt="Smart Tracking" />,
-      header: "Smart Tracking",
-      text: "Progress dashboards for students and tutors to visualize spiritual growth.",
+      image: <Image src={pic2} alt={t("Smart Tracking")} />,
+      header: t("Smart Tracking"),
+      text: t("Progress dashboards for students and tutors to visualize spiritual growth."),
     },
 
     {
-      image: <Image src={pic3} alt="Collaboration" />,
-      header: "Collaboration",
-      text: "Discussion boards, group reflections, and shared notes for community learning.",
+      image: <Image src={pic3} alt={t("Collaboration")} />,
+      header: t("Collaboration"),
+      text: t("Discussion boards, group reflections, and shared notes for community learning."),
     },
     {
-      image: <Image src={pic4} alt="Scalable Mentorship" />,
-      header: "Scalable Mentorship",
-      text: "One-to-one or group discipleship programs that grow with your community.",
+      image: <Image src={pic4} alt={t("Scalable Mentorship")} />,
+      header: t("Scalable Mentorship"),
+      text: t("One-to-one or group discipleship programs that grow with your community."),
     },
   ];
   return (
@@ -68,13 +70,13 @@ export default function HeroSection3() {
               variants={itemVariants as any}
               className="dark:text-white text-lightBoldText-0/80 font-medium md:text-[48px] text-[35px] text-center"
             >
-              Everything you need to grow together.
+              <T>Everything you need to grow together.</T>
             </motion.h1>
             <motion.p
               variants={itemVariants as any}
               className="dark:text-white text-lightBoldText-0/40 text-center text-[20px] md:mt-0 mt-[1rem]"
             >
-              Designed for meaningful discipleship in today's world.
+              <T>Designed for meaningful discipleship in today's world.</T>
             </motion.p>
           </div>
           <div className="flex flex-wrap justify-center items-center gap-[24px] md:w-full px-[45px] md:px-0">

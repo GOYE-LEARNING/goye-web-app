@@ -9,8 +9,10 @@ import DashboardAdminTab from "@/app/component/admin_component/dashboard_admin_a
 import DashboardAdminUserDetails from "@/app/component/admin_component/dashboard_admin_user_details";
 import SuspendUserModal from "@/app/component/admin_component/dashboard_admin_suspend_user";
 import { AnimatePresence, motion } from "framer-motion";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function AdminUsers() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<"all" | "student" | "instructor">(
     "all"
   );
@@ -46,11 +48,11 @@ export default function AdminUsers() {
         )}
       </AnimatePresence>
       <div>
-        <h1 className="dashboard_h1">Users</h1>
+        <h1 className="dashboard_h1">{t("Users")}</h1>
         <DashboardSearch
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search Users..."
+          placeholder={t("Search Users...")}
         />
         <DashboardAdminTab
           allFunc={() => handleClickTab("all")}

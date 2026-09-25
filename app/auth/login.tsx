@@ -221,9 +221,17 @@ export default function Login({
           // ✅ Store organization ID from JWT
           organizationId = decoded.organizationId;
 
-          // ✅ CRITICAL FIX: Get userType from organization object
-          // The JWT does NOT contain userType - it's only in the organization object
-          const userTypeFromOrg = responseData.organization?.userType || 'ORGANIZATION_OWNER';
+          // The access token's own payload never carries userType (only the
+          // refresh token does), so read it from the response body's `user`
+          // object instead, which every login branch populates with the
+          // real DB value. Only fall back to ORGANIZATION_OWNER when this
+          // account actually has an organization — defaulting unconditionally
+          // here mislabelled every plain student/tutor login as an org owner.
+          const orgId = decoded.organizationId || responseData.organization?.id;
+          const userTypeFromResponse =
+            responseData.user?.userType ||
+            responseData.organization?.userType ||
+            (orgId ? "ORGANIZATION_OWNER" : "");
           const orgName = responseData.organization?.organization_name || '';
 
           userData = {
@@ -231,15 +239,15 @@ export default function Login({
             email: decoded.email,
             first_name: firstName,
             last_name: lastName,
-            role: decoded.role || "org_admin",
-            userType: userTypeFromOrg, // ✅ NOW PROPERLY SET
+            role: decoded.role || (orgId ? "org_admin" : ""),
+            userType: userTypeFromResponse,
             organizationId: decoded.organizationId,
             organizationName: orgName,
             isProfileComplete: true,
           };
 
           console.log("✅ Built user data from JWT with userType:", userData);
-          console.log("✅ userType set to:", userTypeFromOrg);
+          console.log("✅ userType set to:", userTypeFromResponse);
         }
       }
 

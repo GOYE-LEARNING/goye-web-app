@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { FaUpload, FaTrash, FaImage } from "react-icons/fa";
 import { MdOutlineCancel } from "react-icons/md";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   cancel: () => void;
@@ -27,6 +28,7 @@ export default function DashboardTutorCreateGroup({
   onEditGroup,
 }: Props) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -128,12 +130,12 @@ export default function DashboardTutorCreateGroup({
 
   const validateAndSetImage = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file (JPG, PNG, GIF, etc.)');
+      alert(t('Please upload an image file (JPG, PNG, GIF, etc.)'));
       return;
     }
-    
+
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      alert(t('Image size should be less than 5MB'));
       return;
     }
     
@@ -222,7 +224,7 @@ export default function DashboardTutorCreateGroup({
 
       if (!createRes.ok) {
         console.error("Error creating group:", createData);
-        alert("Failed to create group. Please try again.");
+        alert(t("Failed to create group. Please try again."));
         setIsLoading(false);
         return;
       }
@@ -249,7 +251,7 @@ export default function DashboardTutorCreateGroup({
           }
         } catch (uploadError) {
           console.error("Error uploading image:", uploadError);
-          alert("Group created but image upload failed. You can add it later.");
+          alert(t("Group created but image upload failed. You can add it later."));
         }
       }
 
@@ -264,7 +266,7 @@ export default function DashboardTutorCreateGroup({
       cancel();
     } catch (error) {
       console.error("Error creating group:", error);
-      alert("Failed to create group. Please try again.");
+      alert(t("Failed to create group. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -290,7 +292,7 @@ export default function DashboardTutorCreateGroup({
 
       if (!updateRes.ok) {
         console.error("Error updating group:", updateData);
-        alert("Failed to update group. Please try again.");
+        alert(t("Failed to update group. Please try again."));
         setIsLoading(false);
         return;
       }
@@ -313,7 +315,7 @@ export default function DashboardTutorCreateGroup({
           });
         } catch (uploadError) {
           console.error("Error uploading image:", uploadError);
-          alert("Group updated but image upload failed.");
+          alert(t("Group updated but image upload failed."));
         }
       }
 
@@ -328,7 +330,7 @@ export default function DashboardTutorCreateGroup({
       cancel();
     } catch (error) {
       console.error("Error updating group:", error);
-      alert("Failed to update group. Please try again.");
+      alert(t("Failed to update group. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -354,7 +356,7 @@ export default function DashboardTutorCreateGroup({
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-textSlightDark-0 dark:text-white font-bold text-[24px]">
-            {isEditMode ? "Edit Group" : "Create Group"}
+            {isEditMode ? t("Edit Group") : t("Create Group")}
           </h1>
           <button onClick={cancel} className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
             <MdOutlineCancel size={20} className="text-[18px] text-gray-500 dark:text-gray-400" />
@@ -371,13 +373,13 @@ export default function DashboardTutorCreateGroup({
         >
           {/* Group Title */}
           <div className="border border-[#ccc]/10 dark:border-gray-700 rounded-lg flex flex-col w-full py-[8px] px-[12px] hover:border-primaryColors-0 transition-colors">
-            <label className="text-textGrey-0 dark:text-gray-400 text-[12px] font-medium">Group Title *</label>
+            <label className="text-textGrey-0 dark:text-gray-400 text-[12px] font-medium">{t("Group Title")} *</label>
             <input
               type="text"
               name="group_title"
               value={formData.group_title}
               onChange={handleChange}
-              placeholder="Enter group name"
+              placeholder={t("Enter group name")}
               className="border-none outline-none w-full text-textSlightDark-0 dark:text-white font-[500] text-[16px] placeholder:text-gray-400 bg-transparent"
               required
             />
@@ -385,13 +387,13 @@ export default function DashboardTutorCreateGroup({
 
           {/* Short Description */}
           <div className="border border-[#ccc]/10 dark:border-gray-700 rounded-lg flex flex-col w-full py-[8px] px-[12px] hover:border-primaryColors-0 transition-colors">
-            <label className="text-textGrey-0 dark:text-gray-400 text-[12px] font-medium">Short Description *</label>
+            <label className="text-textGrey-0 dark:text-gray-400 text-[12px] font-medium">{t("Short Description")} *</label>
             <input
               type="text"
               name="group_short_description"
               value={formData.group_short_description}
               onChange={handleChange}
-              placeholder="Brief description (max 100 chars)"
+              placeholder={t("Brief description (max 100 chars)")}
               maxLength={100}
               className="border-none outline-none w-full text-textSlightDark-0 dark:text-white bg-transparent font-[500] text-[16px] placeholder:text-gray-400"
               required
@@ -400,12 +402,12 @@ export default function DashboardTutorCreateGroup({
 
           {/* Full Description */}
           <div className="border border-[#ccc]/10 dark:border-gray-700 rounded-lg flex flex-col w-full py-[8px] px-[12px] hover:border-primaryColors-0 transition-colors">
-            <label className="text-textGrey-0 dark:text-gray-400 text-[12px] font-medium">Full Description *</label>
+            <label className="text-textGrey-0 dark:text-gray-400 text-[12px] font-medium">{t("Full Description")} *</label>
             <textarea
               name="group_description"
               value={formData.group_description}
               onChange={handleChange}
-              placeholder="Detailed description of your group..."
+              placeholder={t("Detailed description of your group...")}
               rows={4}
               className="border-none outline-none text-textSlightDark-0 dark:text-white bg-transparent font-[500] resize-none placeholder:text-gray-400"
               required
@@ -415,7 +417,7 @@ export default function DashboardTutorCreateGroup({
           {/* Group Image Upload Section */}
           <div className="mt-2">
             <label className="text-textGrey-0 dark:text-gray-400 text-[12px] font-medium mb-2 block">
-              Group Image
+              {t("Group Image")}
             </label>
             
             {/* Image Preview */}
@@ -424,7 +426,7 @@ export default function DashboardTutorCreateGroup({
                 <div className="relative w-full h-[180px] bg-gray-100 dark:bg-gray-800">
                   <img
                     src={imagePreview}
-                    alt="Group preview"
+                    alt={t("Group preview")}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -464,16 +466,16 @@ export default function DashboardTutorCreateGroup({
               {isUploading ? (
                 <div className="flex flex-col items-center gap-2">
                   <Loader height={32} width={32} full_border_color="#E5E7EB" small_border_color="#3B82F6" border_width={3} />
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Uploading image...</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{t("Uploading image...")}</p>
                 </div>
               ) : (
                 <>
                   <FaImage className="mx-auto text-gray-400 dark:text-gray-500 text-3xl mb-2" />
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    <span className="font-semibold text-primaryColors-0">Click to upload</span> or drag and drop
+                    <span className="font-semibold text-primaryColors-0">{t("Click to upload")}</span> {t("or drag and drop")}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500">
-                    PNG, JPG, GIF up to 5MB
+                    {t("PNG, JPG, GIF up to 5MB")}
                   </p>
                   {!imagePreview && (
                     <button
@@ -485,16 +487,16 @@ export default function DashboardTutorCreateGroup({
                       }}
                     >
                       <FaUpload size={12} />
-                      Browse Files
+                      {t("Browse Files")}
                     </button>
                   )}
                 </>
               )}
             </div>
-            
+
             {!imagePreview && (
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                Recommended: Square image, at least 200x200px
+                {t("Recommended: Square image, at least 200x200px")}
               </p>
             )}
           </div>
@@ -515,7 +517,7 @@ export default function DashboardTutorCreateGroup({
                   border_width={2}
                 />
               ) : null}
-              {isEditMode ? "Update Group" : "Create Group"}
+              {isEditMode ? t("Update Group") : t("Create Group")}
             </button>
 
             <button
@@ -523,7 +525,7 @@ export default function DashboardTutorCreateGroup({
               onClick={cancel}
               className="form_more bg-[#F5F5F5] dark:bg-gray-800 text-primaryColors-0 dark:text-primaryColors-0 flex items-center gap-2 justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         </form>

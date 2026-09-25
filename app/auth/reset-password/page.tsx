@@ -6,8 +6,10 @@ import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { MdCancel, MdCheckCircle } from "react-icons/md";
 import { AnimatePresence, motion } from "framer-motion";
 import Loader from "@/app/component/loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function ResetPassword() {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState<{ password: string }>({
@@ -29,7 +31,7 @@ export default function ResetPassword() {
       setToken(tokenParam);
     } else {
       setMessage({
-        text: "No reset token found. Please request a new password reset.",
+        text: t("No reset token found. Please request a new password reset."),
         type: "error",
       });
     }
@@ -51,7 +53,7 @@ export default function ResetPassword() {
     const allPassed = rules.every((rule) => rule.test.test(formData.password));
     if (!allPassed) {
       setMessage({
-        text: "Please meet all password requirements",
+        text: t("Please meet all password requirements"),
         type: "error",
       });
       return false;
@@ -64,7 +66,7 @@ export default function ResetPassword() {
 
     if (!token) {
       setMessage({
-        text: "No reset token found. Please request a new password reset.",
+        text: t("No reset token found. Please request a new password reset."),
         type: "error",
       });
       return;
@@ -99,7 +101,7 @@ export default function ResetPassword() {
         );
       }
 
-      setMessage({ text: "Password reset successfully!", type: "success" });
+      setMessage({ text: t("Password reset successfully!"), type: "success" });
       setFormData({ password: "" });
       setTouched(false);
       
@@ -113,7 +115,7 @@ export default function ResetPassword() {
         text:
           error instanceof Error
             ? error.message
-            : "Failed to reset password. Please try again.",
+            : t("Failed to reset password. Please try again."),
         type: "error",
       });
     } finally {
@@ -154,10 +156,9 @@ export default function ResetPassword() {
             transition={{ duration: 0.3, ease: "easeIn" }}
             className="form_container"
           >
-            <h1 className="form_h1">Reset Password</h1>
+            <h1 className="form_h1">{t("Reset Password")}</h1>
             <p className="form-p">
-              Your password must be at least 8 characters long, and include 1
-              symbol and 1 number.
+              {t("Your password must be at least 8 characters long, and include 1 symbol and 1 number.")}
             </p>
             <form noValidate className="form py-5" onSubmit={handleSubmit}>
               <div className="form_label relative">
@@ -180,7 +181,7 @@ export default function ResetPassword() {
                       : "top-[15px] text-[16px]"
                   }`}
                 >
-                  Password
+                  {t("Password")}
                 </label>
 
                 <div
@@ -214,7 +215,7 @@ export default function ResetPassword() {
                           <span
                             className={`text-sm ${passed ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}
                           >
-                            {rule.text}
+                            {t(rule.text)}
                           </span>
                         </div>
                       );
@@ -237,10 +238,10 @@ export default function ResetPassword() {
                       full_border_color="white"
                       small_border_color="#FFA500"
                     />
-                    <span>Resetting...</span>
+                    <span>{t("Resetting...")}</span>
                   </div>
                 ) : (
-                  "Reset Password"
+                  t("Reset Password")
                 )}
               </button>
             </form>

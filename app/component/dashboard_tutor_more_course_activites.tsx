@@ -5,6 +5,7 @@ import { CiClock1 } from "react-icons/ci";
 import { formatDate } from "../hook/formatDate";
 import { HiOutlineBookOpen } from "react-icons/hi";
 import { IoArrowBack } from "react-icons/io5";
+import { useI18n } from "@/app/context/I18nContext";
 interface Props {
   courseId: string;
   backFunc?: () => void;
@@ -21,6 +22,7 @@ export default function DashboardTutorMoreCourseActivities({
   backFunc,
   isAlone,
 }: Props) {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activities, setActivities] = useState<Activities[]>([]);
   const [showActivities, setShowActivities] = useState<string[]>([]);
@@ -68,14 +70,14 @@ export default function DashboardTutorMoreCourseActivities({
           {isAlone && <IoArrowBack onClick={backFunc} />}
         </div>
         <h1 className="font-semibold  dark:text-textSlightDark-0 text-[14px]">
-          Activities
+          {t("Activities")}
         </h1>
       </div>
 
       <div>
         {activities.length == 0 ? (
           <div className="text-center text-nearTextColors-0">
-            No activities yet
+            {t("No activities yet")}
           </div>
         ) : (
           <div>

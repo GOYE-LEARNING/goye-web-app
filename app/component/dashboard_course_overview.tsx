@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { CiGlobe } from "react-icons/ci";
+import { CiGlobe, CiUser } from "react-icons/ci";
 import { GoPeople, GoTrophy, GoVideo } from "react-icons/go";
 import { HiOutlineBookOpen } from "react-icons/hi";
 import { MdChevronRight } from "react-icons/md";
@@ -10,6 +10,7 @@ import { SlBadge } from "react-icons/sl";
 import Loader from "./loader";
 import { BiLogOut } from "react-icons/bi";
 import { useModal } from "../context/SimpleModalContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   removeFunc: () => void;
@@ -60,6 +61,7 @@ export default function DashboardCourseOverView({
   setCheckIfEnrolled,
 }: Props) {
   const { showModal } = useModal();
+  const { t } = useI18n();
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [course, setCourse] = useState<boolean>(true);
   const [coursesPlace, setCoursesPlace] = useState<boolean>(true);
@@ -124,16 +126,16 @@ export default function DashboardCourseOverView({
       if (!res.ok) {
         console.log(data);
         showModal(
-          "Enrollment Failed",
-          data.message || "Unable to enroll in this course. Please try again.",
+          t("Enrollment Failed"),
+          data.message || t("Unable to enroll in this course. Please try again."),
           "error",
         );
         return;
       }
 
       showModal(
-        "Enrollment Successful! 🎉",
-        "You have successfully enrolled in this course. Start your learning journey now!",
+        t("Enrollment Successful! 🎉"),
+        t("You have successfully enrolled in this course. Start your learning journey now!"),
         "success",
         () => {
           setCourse(false);
@@ -150,8 +152,8 @@ export default function DashboardCourseOverView({
     } catch (error) {
       console.error(error);
       showModal(
-        "Enrollment Failed",
-        "Failed to start course. Please check your connection and try again.",
+        t("Enrollment Failed"),
+        t("Failed to start course. Please check your connection and try again."),
         "error",
       );
     } finally {
@@ -188,8 +190,8 @@ export default function DashboardCourseOverView({
       if (!res.ok) {
         console.log(data);
         showModal(
-          "Exit Failed",
-          data.message || "Failed to exit course. Please try again.",
+          t("Exit Failed"),
+          data.message || t("Failed to exit course. Please try again."),
           "error",
         );
         return;
@@ -204,9 +206,9 @@ export default function DashboardCourseOverView({
       }
 
       showModal(
-        "Course Exited Successfully",
+        t("Course Exited Successfully"),
         data.message ||
-          "You have successfully exited the course. Your progress has been saved.",
+          t("You have successfully exited the course. Your progress has been saved."),
         "success",
         () => {
           // Refresh after modal closes
@@ -215,8 +217,8 @@ export default function DashboardCourseOverView({
     } catch (error) {
       console.error("Error exiting course:", error);
       showModal(
-        "Exit Failed",
-        "An error occurred while exiting the course. Please try again.",
+        t("Exit Failed"),
+        t("An error occurred while exiting the course. Please try again."),
         "error",
       );
     } finally {
@@ -226,12 +228,12 @@ export default function DashboardCourseOverView({
 
   const handleExitClick = useCallback(() => {
     showModal(
-      "Exit Course?",
-      "Are you sure you want to exit this course? Your progress will be saved, and you can re-enroll later to continue from where you left off.",
+      t("Exit Course?"),
+      t("Are you sure you want to exit this course? Your progress will be saved, and you can re-enroll later to continue from where you left off."),
       "confirm",
       exitCourse,
     );
-  }, [showModal, exitCourse]);
+  }, [showModal, exitCourse, t]);
 
   // ✅ Fetch course - only once
   const fetchCourse = useCallback(async () => {
@@ -259,8 +261,8 @@ export default function DashboardCourseOverView({
     } catch (error) {
       console.error("Error fetching course:", error);
       showModal(
-        "Error",
-        "Failed to load course details. Please refresh the page.",
+        t("Error"),
+        t("Failed to load course details. Please refresh the page."),
         "error",
       );
     } finally {
@@ -268,7 +270,7 @@ export default function DashboardCourseOverView({
         setIsLoading(false);
       }
     }
-  }, [courseId, API_URL, showModal]);
+  }, [courseId, API_URL, showModal, t]);
 
   // ✅ Only fetch on initial mount
   useEffect(() => {
@@ -311,14 +313,14 @@ export default function DashboardCourseOverView({
       {course ? (
         <div>
           <div className="cr_box">
-            <div className="cr_p">
-              <div>{courseDetails?.course_description}</div>
+            <div className="cr_p font-semibold">
+              <div>{t(courseDetails?.course_description || "")}</div>
             </div>
 
             <p className="cr_p flex items-center gap-4 my-5">
               <span className="flex items-center justify-center gap-2">
                 <CiGlobe />
-                English (Auto)
+                {t("English (Auto)")}
               </span>
               <span className="flex items-center justify-center gap-2">
                 <GoPeople />
@@ -329,8 +331,8 @@ export default function DashboardCourseOverView({
             <div className="h-[1px] w-full bg-[#ccc]/10"></div>
 
             <ol className="my-5 flex flex-col gap-1">
-              <h1 className="text-primaryColors-0 font-[700]">
-                Learning Objectives
+              <h1 className="dark:text-white text-lightBoldText-0 font-[700]">
+                {t("Learning Objectives")}
               </h1>
               <ul className="pl-[24px] flex flex-col gap-1">
                 <div>
@@ -356,7 +358,7 @@ export default function DashboardCourseOverView({
                     disabled={startIsLoading}
                   >
                     {!startIsLoading ? (
-                      "Start Course"
+                      t("Start Course")
                     ) : (
                       <Loader
                         height={25}
@@ -376,7 +378,7 @@ export default function DashboardCourseOverView({
                     {!exitIsLoading ? (
                       <div className="flex items-center justify-center gap-2">
                         <BiLogOut />
-                        Exit Course
+                        {t("Exit Course")}
                       </div>
                     ) : (
                       <Loader
@@ -396,7 +398,7 @@ export default function DashboardCourseOverView({
                   className="h-[48px] bg-primaryColors-0 w-full text-center text-white rounded-md hover:bg-primaryColors-0/90 transition-colors"
                   onClick={showVideoLessonsCourse}
                 >
-                  Let's Begin
+                  {t("Let's Begin")}
                 </button>
               )}
             </div>
@@ -406,18 +408,18 @@ export default function DashboardCourseOverView({
             {coursesPlace && (
               <>
                 <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[16px] font-[700]">
-                  Modules
+                  {t("Modules")}
                 </h1>
                 {courseDetails?.module?.map((data, i) => {
                   return (
                     <div className="w-full cursor-pointer" key={i}>
                       <h2
-                        className="text-[14px] dark:text-textSlightDark-0 text-lightBoldText-0 flex justify-between items-center"
+                        className="text-[14px] dark:text-white text-lightBoldText-0 flex justify-between items-center"
                         onClick={() => {
                           toggleAccordion(i);
                         }}
                       >
-                        <p className="font-[600]">{data.module_title}</p>
+                        <p className="font-[600] capitalize">{data.module_title}</p>
                         <span className="text-[1.3rem]">
                           <div
                             className={`${activeIndex === i ? "rotate-90" : ""} transition-transform duration-200`}
@@ -433,22 +435,22 @@ export default function DashboardCourseOverView({
                           animate={{ opacity: 1, y: 0 }}
                           className="my-3 flex flex-col gap-2 items-start"
                         >
-                          <p className="text-[#71748C] text-[14px] font-[400]">
+                          <p className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[400]">
                             {data.module_description}
                           </p>
                           <span className="flex items-center gap-3">
                             <GoVideo />
-                            <p className="text-[#71748C] text-[14px] font-[400]">
-                              {data.module_duration} to complete this course
+                            <p className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[400]">
+                               {data.module_duration} {t("to complete this course")}
                             </p>
                           </span>
                           <span className="flex items-center gap-3">
                             <HiOutlineBookOpen />
-                            <div className="text-[#71748C] text-[14px] font-[400]">
+                            <div className="dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px] font-[400]">
                               {data.lesson?.length == 1 ? (
-                                <div>{data.lesson.length} video</div>
+                                <div>{data.lesson.length} {t("video")}</div>
                               ) : (
-                                <div>{data.lesson?.length} videos</div>
+                                <div>{data.lesson?.length} {t("videos")}</div>
                               )}
                             </div>
                           </span>
@@ -466,37 +468,36 @@ export default function DashboardCourseOverView({
           {course && (
             <>
               <div className="cr_box">
-                <h1 className="font-[700] text-[16px]">Instructor</h1>
+                <h1 className="font-[700] text-[16px]">{t("Instructor")}</h1>
                 <div className="flex gap-2 items-center my-4">
                   <span className="h-[40px] w-[40px] rounded-full bg-secondaryColors-0 overflow-hidden">
-                    <img
+                    {courseDetails?.createdByDetails.user_pic ? <img
                       src={
-                        courseDetails?.createdByDetails?.user_pic ||
-                        "/default-avatar.png"
+                        courseDetails?.createdByDetails?.user_pic
                       }
-                      alt="profile-pic"
+                      alt={t("profile-pic")}
                       className="h-full w-full object-cover"
-                    />
+                    /> : <div className="h-full w-full bg-primaryColors-0"><CiUser /></div>}
                   </span>
                   <span className="flex items-start flex-col gap-1">
                     <h1 className="text-[13px] text-primaryColors-0 font-[600]">
                       {courseDetails?.createdBy}
                     </h1>
                     <p className="text-[12px] font-[400] text-[#71748C]">
-                      GOYE Instructor
+                      {t("GOYE Instructor")}
                     </p>
                   </span>
                 </div>
               </div>
               <div className="cr_box flex items-start flex-col gap-1">
-                <h1 className="font-[700] text-[16px]">Outcomes & Reward</h1>
+                <h1 className="font-[700] text-[16px]">{t("Outcomes & Reward")}</h1>
                 <span className="flex items-center gap-3 text-[13px]">
                   <GoTrophy color="#FE9900" />
-                  Certificate of Completion
+                  {t("Certificate of Completion")}
                 </span>
                 <span className="flex items-center gap-3 text-[13px]">
                   <SlBadge color="#2C7FFF" />
-                  Achievement Badge
+                  {t("Achievement Badge")}
                 </span>
               </div>
             </>

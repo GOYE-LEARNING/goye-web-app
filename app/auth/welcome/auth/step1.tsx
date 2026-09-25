@@ -4,6 +4,7 @@ import DropDowns from "@/app/component/drop_downs";
 import React, { useEffect, useState } from "react";
 import { FaCheck, FaChevronDown } from "react-icons/fa";
 import { Country, State, City } from "country-state-city";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface CountryType {
   name: string;
@@ -17,6 +18,7 @@ export default function Step1({
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
 }) {
+  const { t } = useI18n();
   const [countries, setCountries] = useState<CountryType[]>([]);
   const [cities, setCities] = useState<any[]>([]);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
@@ -90,9 +92,9 @@ export default function Step1({
 
   return (
     <div className="w-full">
-      <h1 className="form_h1">Tell us more about you.</h1>
+      <h1 className="form_h1">{t("Tell us more about you.")}</h1>
       <p className="form-p my-5">
-        Share your contact where you are coming from.
+        {t("Share your contact where you are coming from.")}
       </p>
 
       <form className="flex flex-col gap-4 my-4">
@@ -102,7 +104,7 @@ export default function Step1({
             type="text"
             value={searchCountry || selectedCountry || ""}
             onChange={handleChangeSearchCountry}
-            placeholder="Select Country"
+            placeholder={t("Select Country")}
             className="form_input flex justify-between items-center cursor-pointer"
             onClick={() => setShowCountryDropdown(true)}
           />
@@ -136,7 +138,7 @@ export default function Step1({
             type="text"
             value={searchCity || selectedCity || ""}
             onChange={handleChangeSearchCity}
-            placeholder="Select City"
+            placeholder={t("Select City")}
             className={`form_input peer flex justify-between items-center cursor-pointer ${
               !cities.length ? "opacity-50 cursor-not-allowed" : ""
             }`}
@@ -182,7 +184,7 @@ export default function Step1({
               phoneNumber ? "top-[2px] text-[14px]" : "top-[15px] text-[16px]"
             }`}
           >
-            Phone Number
+            {t("Phone Number")}
           </label>
         </div>
       </form>

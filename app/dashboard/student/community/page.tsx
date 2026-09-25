@@ -26,6 +26,7 @@ import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
 import { FaMessage, FaPeopleGroup } from "react-icons/fa6";
 import { IoExtensionPuzzle } from "react-icons/io5";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useI18n } from "@/app/context/I18nContext";
 
 const SocialMode = lazy(() => import("@/app/component/dashboard_social_feed"));
 
@@ -74,7 +75,9 @@ const GroupCard = reactMemo(
     onJoin: (e: React.MouseEvent) => void;
     onClick: () => void;
     formatDate: (date?: string) => string;
-  }) => (
+  }) => {
+    const { t } = useI18n();
+    return (
     <div
       className="cursor-pointer border border-[#ccc]/10 bg-white dark:bg-secondaryColors-0 py-4 px-4 rounded-xl my-3 transition-all hover:shadow-md"
       onClick={onClick}
@@ -94,24 +97,24 @@ const GroupCard = reactMemo(
               <Loader {...getSmallLoaderProps()} />
             ) : (
               <>
-                <MdAdd size={16} /> Join
+                <MdAdd size={16} /> {t("Join")}
               </>
             )}
           </button>
         ) : (
           <span className="bg-green-100 dark:bg-green-900/30 py-1 px-2 rounded-full text-xs font-semibold text-green-600 dark:text-green-400">
-            Joined ✓
+            {t("Joined")} ✓
           </span>
         )}
       </div>
 
       <p className="text-[#71748C] dark:text-gray-400 text-sm my-1 line-clamp-2">
-        {data.group_short_description || data.group_description || "No description provided."}
+        {data.group_short_description || data.group_description || t("No description provided.")}
       </p>
 
       <div className="flex items-center gap-4 text-[#71748C] text-xs">
         <span className="flex items-center gap-1">
-          <GroupIcon size={14} /> {data._count?.member ?? 0} members
+          <GroupIcon size={14} /> {data._count?.member ?? 0} {t("members")}
         </span>
         <span className="flex items-center gap-1">
           <FaRegClock size={12} /> {formatDate(data.updatedAt)}
@@ -126,7 +129,7 @@ const GroupCard = reactMemo(
             <img
               src={data.createdBy.user_pic}
               className="h-full w-full object-cover"
-              alt="creator"
+              alt={t("creator")}
               loading="lazy"
             />
           ) : (
@@ -138,16 +141,18 @@ const GroupCard = reactMemo(
         <p className="text-[#71748C] dark:text-gray-400 text-xs truncate">
           {data.createdBy?.first_name || data.createdBy?.last_name
             ? `${data.createdBy?.first_name || ""} ${data.createdBy?.last_name || ""}`
-            : "Community Admin"}
+            : t("Community Admin")}
         </p>
       </div>
     </div>
-  )
+    );
+  }
 );
 
 GroupCard.displayName = "GroupCard";
 
 export default function StudentCommunity() {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [group, setGroup] = useState<GroupData[]>([]);
   const [groupId, setGroupId] = useState<string>("");
@@ -175,15 +180,15 @@ export default function StudentCommunity() {
   }, [searchParams, router]);
 
   const formatDate = useCallback((dateString?: string) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return t("N/A");
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "N/A";
+      if (isNaN(date.getTime())) return t("N/A");
       return formatDistanceToNow(date, { addSuffix: true });
     } catch {
-      return "N/A";
+      return t("N/A");
     }
-  }, []);
+  }, [t]);
 
   const fetchGroups = useCallback(async () => {
     if (!API_URL) return;
@@ -199,7 +204,7 @@ export default function StudentCommunity() {
         if (res.status === 429) {
           dispatchAPIError({
             status: 429,
-            message: "Too many requests, please slow down.",
+            message: t("Too many requests, please slow down."),
             retryAfter: 5,
             endpoint: "/api/socials/get-groups",
           });
@@ -324,22 +329,22 @@ export default function StudentCommunity() {
           {/* Header */}
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div className="flex items-start flex-col gap-3">
-              <h1 className="text-2xl font-bold">Community</h1>
+              <h1 className="text-2xl font-bold">{t("Community")}</h1>
               <div className="flex items-center gap-3 flex-wrap">
                 {[
                   {
                     id: "live",
-                    label: "Live Community",
+                    label: t("Live Community"),
                     icon: <IoExtensionPuzzle size={16} />,
                   },
                   {
                     id: "groups",
-                    label: "Groups",
+                    label: t("Groups"),
                     icon: <FaPeopleGroup size={16} />,
                   },
                   {
                     id: "messages",
-                    label: "Messages",
+                    label: t("Messages"),
                     icon: <FaMessage size={16} />,
                   },
                 ].map((tab) => (
@@ -378,16 +383,16 @@ export default function StudentCommunity() {
                 <div className="text-center">
                   <FaMessage className="text-6xl text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-                    Messages
+                    {t("Messages")}
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400 mt-2">
-                    Open your message inbox
+                    {t("Open your message inbox")}
                   </p>
                   <button
                     onClick={() => setShowMessagesModal(true)}
                     className="mt-6 px-6 py-2 bg-primaryColors-0 text-white rounded-full hover:bg-primaryColors-600 transition-colors font-semibold"
                   >
-                    Open Messages
+                    {t("Open Messages")}
                   </button>
                 </div>
               </div>
@@ -400,13 +405,13 @@ export default function StudentCommunity() {
                     <DashboardSearch
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search groups..."
+                      placeholder={t("Search groups...")}
                     />
                   </div>
                   <button
                     onClick={() => fetchGroups()}
                     className="h-9 w-9 bg-primaryColors-0 rounded-full flex items-center justify-center cursor-pointer hover:bg-primaryColors-600 transition-colors flex-shrink-0"
-                    aria-label="Refresh groups"
+                    aria-label={t("Refresh groups")}
                   >
                     <IoMdRefresh className="text-white" size={18} />
                   </button>
@@ -418,11 +423,11 @@ export default function StudentCommunity() {
                   </div>
                 ) : filteredGroups.length === 0 ? (
                   <div className="flex flex-col items-center gap-2 py-20">
-                    <Image src={pic2} alt="No groups" height={100} width={100} />
+                    <Image src={pic2} alt={t("No groups")} height={100} width={100} />
                     <h1 className="text-textSlightDark-0 font-semibold">
-                      No Groups Found
+                      {t("No Groups Found")}
                     </h1>
-                    <p className="text-textGrey-0">Join or Create a Group</p>
+                    <p className="text-textGrey-0">{t("Join or Create a Group")}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">

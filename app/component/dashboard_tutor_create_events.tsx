@@ -5,6 +5,7 @@ import { FaCheck, FaChevronDown } from "react-icons/fa";
 import { MdOutlineCancel } from "react-icons/md";
 import DropDowns from "./drop_downs";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   cancel: () => void;
@@ -49,6 +50,7 @@ export default function DashboardTutorCreateEvent({
   eventId,
 }: Props) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const { t } = useI18n();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [updateEventValues, setUpdateEventValues] = useState<Event>({
     event_name: "",
@@ -237,49 +239,52 @@ export default function DashboardTutorCreateEvent({
 
   const form: FormType[] = [
     {
-      label: "Event Title",
+      label: t("Event Title"),
       type: "text",
       name: "event_title",
       value: formData.event_title,
       onchange: handleChange,
     },
     {
-      label: "Description",
+      label: t("Description"),
       type: "text",
       name: "event_description",
       value: formData.event_description,
       onchange: handleChange,
     },
     {
-      label: "Time",
+      label: t("Time"),
       type: "text",
       name: "event_time",
       value: formData.event_time,
       onchange: handleChange,
     },
     {
-      label: "Date",
+      label: t("Date"),
       type: "date",
       name: "event_date",
       value: formData.event_date,
       onchange: handleChange,
     },
     {
-      label: "Event Type",
+      label: t("Event Type"),
       type: "text",
       name: "event_type",
       value: formData.event_type,
       onchange: handleChange,
     },
     {
-      label: "Event Link",
+      label: t("Event Link"),
       type: "text",
       name: "event_link",
       value: formData.event_link,
       onchange: handleChange,
     },
   ];
-  
+
+  // Not translated: these are stored/sent as the raw event_type value
+  // (formData.event_type, compared via handleChangeType/eventType), so
+  // translating them would change the data submitted to the backend.
   const type = ["Meetings", "Prayer", "Fellowship"];
 
   return (
@@ -290,9 +295,9 @@ export default function DashboardTutorCreateEvent({
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-textSlightDark-0 dark:text-white font-bold text-[24px]">
-            {isEditMode ? "Edit Event" : "Create Event"}
+            {isEditMode ? t("Edit Event") : t("Create Event")}
           </h1>
-          <button onClick={cancel} className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+          <button onClick={cancel} className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-shadyColor-0 rounded-full transition-colors">
             <MdOutlineCancel size={20} className="text-[18px] text-gray-500 dark:text-gray-400" />
           </button>
         </div>
@@ -327,7 +332,7 @@ export default function DashboardTutorCreateEvent({
                       onChange={data.onchange}
                       rows={3}
                       className="border-none outline-none text-textSlightDark-0 dark:text-white font-[500] resize-none bg-transparent w-full"
-                      placeholder="Describe your event..."
+                      placeholder={t("Describe your event...")}
                     />
                   ) : data.name === "event_type" ? (
                     <div className="relative w-full">
@@ -341,10 +346,10 @@ export default function DashboardTutorCreateEvent({
                                 <div
                                   key={idx}
                                   onClick={() => handleChangeType(typeItem)}
-                                  className="flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 dark:hover:bg-gray-800 cursor-pointer rounded-lg"
+                                  className="flex justify-between items-center w-full p-3 hover:bg-secondaryColors-0 dark:hover:bg-shadyColor-0 cursor-pointer rounded-lg"
                                 >
                                   <div className="text-textSlightDark-0 dark:text-white">
-                                    {typeItem}
+                                    {t(typeItem)}
                                   </div>
                                   {eventType === typeItem && (
                                     <span className="text-primaryColors-0">
@@ -358,7 +363,7 @@ export default function DashboardTutorCreateEvent({
                         </div>
                       )}
                       <span className="text-textSlightDark-0 dark:text-white capitalize">
-                        {selectedValue[0] || "Select event type"}
+                        {selectedValue[0] ? t(selectedValue[0]) : t("Select event type")}
                       </span>
                     </div>
                   ) : (
@@ -369,7 +374,7 @@ export default function DashboardTutorCreateEvent({
                       onChange={data.onchange}
                       placeholder={
                         data.name === "event_time"
-                          ? "e.g., 6:00 AM - 12:00 PM"
+                          ? t("e.g., 6:00 AM - 12:00 PM")
                           : data.name === "event_link"
                           ? "https://..."
                           : ""
@@ -397,15 +402,15 @@ export default function DashboardTutorCreateEvent({
               className="form_more bg-primaryColors-0 text-white flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primaryColors-0/90 transition-colors py-3 rounded-lg font-semibold"
             >
               {isLoading && <Loader height={20} width={20} full_border_color="white" small_border_color="transparent" border_width={2} />}
-              {isEditMode ? "Update Event" : "Create Event"}
+              {isEditMode ? t("Update Event") : t("Create Event")}
             </button>
 
             <button
               type="button"
               onClick={cancel}
-              className="form_more bg-[#F5F5F5] dark:bg-gray-800 text-primaryColors-0 dark:text-primaryColors-0 flex items-center gap-2 justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors py-3 rounded-lg font-semibold"
+              className="form_more bg-[#F5F5F5] dark:bg-shadyColor-0 text-primaryColors-0 dark:text-primaryColors-0 flex items-center gap-2 justify-center hover:bg-gray-200 dark:hover:bg-shadyColor-0/70 transition-colors py-3 rounded-lg font-semibold"
             >
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         </form>

@@ -6,6 +6,7 @@ import { CiCalendar } from "react-icons/ci";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import { GoVideo } from "react-icons/go";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Event {
   id: string;
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export default function UpcomingEvents({ backFunc }: Props) {
+  const { t } = useI18n();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,14 +55,14 @@ export default function UpcomingEvents({ backFunc }: Props) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch events");
+        throw new Error(data.message || t("Failed to fetch events"));
       }
 
       console.log("Events data:", data);
       setEvents(data.data || []);
     } catch (error) {
       console.error("Error fetching events:", error);
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : t("An error occurred"));
     } finally {
       setIsLoading(false);
     }
@@ -71,19 +73,19 @@ export default function UpcomingEvents({ backFunc }: Props) {
   }, []);
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "Date TBD";
-    
+    if (!dateString) return t("Date TBD");
+
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "Date TBD";
-      
+      if (isNaN(date.getTime())) return t("Date TBD");
+
       return date.toLocaleDateString("en-US", {
         weekday: "short",
         month: "short",
         day: "numeric",
       });
     } catch {
-      return "Date TBD";
+      return t("Date TBD");
     }
   };
 
@@ -103,7 +105,7 @@ export default function UpcomingEvents({ backFunc }: Props) {
   if (isLoading) {
     return (
       <div>
-        <SubHeader header="Upcoming Events" backFunction={backFunction} />
+        <SubHeader header={t("Upcoming Events")} backFunction={backFunction} />
         <div className="bg-[#ffffff] dark:bg-secondaryColors-0 drop-shadow-sm w-full p-[24px] my-5 flex flex-col gap-2">
           <div className="flex justify-center items-center h-64">
             <Loader
@@ -122,7 +124,7 @@ export default function UpcomingEvents({ backFunc }: Props) {
   if (error) {
     return (
       <div>
-        <SubHeader header="Upcoming Events" backFunction={backFunction} />
+        <SubHeader header={t("Upcoming Events")} backFunction={backFunction} />
         <div className="bg-[#ffffff] dark:bg-secondaryColors-0 drop-shadow-sm w-full p-[24px] my-5 flex flex-col gap-2">
           <div className="text-center py-8">
             <p className="text-red-500 dark:text-red-400">{error}</p>
@@ -130,7 +132,7 @@ export default function UpcomingEvents({ backFunc }: Props) {
               onClick={fetchEvents}
               className="mt-4 px-4 py-2 bg-primaryColors-0 text-white rounded-lg hover:bg-primaryColors-0/90"
             >
-              Try Again
+              {t("Try Again")}
             </button>
           </div>
         </div>
@@ -140,7 +142,7 @@ export default function UpcomingEvents({ backFunc }: Props) {
 
   return (
     <div>
-      <SubHeader header="Upcoming Events" backFunction={backFunction} />
+      <SubHeader header={t("Upcoming Events")} backFunction={backFunction} />
       <div className="bg-[#ffffff] dark:bg-secondaryColors-0 drop-shadow-sm w-full p-[24px] my-5 flex flex-col gap-2">
         {events.length === 0 ? (
           <div className="text-center py-12">
@@ -148,10 +150,10 @@ export default function UpcomingEvents({ backFunc }: Props) {
               <CiCalendar className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              No Upcoming Events
+              {t("No Upcoming Events")}
             </h3>
             <p className="text-gray-500 dark:text-gray-400">
-              Join a group to see events from your communities
+              {t("Join a group to see events from your communities")}
             </p>
           </div>
         ) : (
@@ -159,27 +161,27 @@ export default function UpcomingEvents({ backFunc }: Props) {
             <div key={event.id || i} className="w-full flex flex-col gap-1">
               <div className="w-full flex items-center justify-between">
                 <h1 className="text-[14px] font-[600] text-textSlightDark-0 dark:text-white">
-                  {event.event_name || "Untitled Event"}
+                  {event.event_name || t("Untitled Event")}
                 </h1>
                 <span
                   className={`${getEventTypeColor(
                     event.event_type
                   )} text-[#ffffff] px-[8px] py-[2px] text-[12px] rounded-[2px] capitalize`}
                 >
-                  {event.event_type || "Event"}
+                  {event.event_type || t("Event")}
                 </span>
               </div>
               
               <p className="text-[14px] text-[#71748C] dark:text-gray-400 font-[400] line-clamp-2">
-                {event.event_description || "No description available"}
+                {event.event_description || t("No description available")}
               </p>
-              
+
               <div className="flex gap-3 items-center text-[14px] font-[400] text-[#71748C] dark:text-gray-400 my-2">
                 <span className="flex items-center gap-1">
                   <CiCalendar className="mb-1" /> {formatDate(event.event_date)}
                 </span>
                 <span className="flex items-center gap-1">
-                  <GoVideo className="mb-1" /> {event.event_time || "Time TBD"}
+                  <GoVideo className="mb-1" /> {event.event_time || t("Time TBD")}
                 </span>
               </div>
               
@@ -190,7 +192,7 @@ export default function UpcomingEvents({ backFunc }: Props) {
                   </span>
                 </div>
                 <p className="text-[#71748C] dark:text-gray-400 text-[14px] font-[400]">
-                  {event.group?.group_title || "Group"}
+                  {event.group?.group_title || t("Group")}
                 </p>
               </div>
               
@@ -203,7 +205,7 @@ export default function UpcomingEvents({ backFunc }: Props) {
                     }
                   }}
                 >
-                  <p className="mt-1">Event Link</p>
+                  <p className="mt-1">{t("Event Link")}</p>
                   <FaExternalLinkAlt size={12} />
                 </button>
               )}

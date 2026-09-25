@@ -6,6 +6,7 @@ import { HiOutlineBookOpen } from "react-icons/hi";
 import { IoMdGlobe } from "react-icons/io";
 import { MdOutlineQuiz, MdPeople } from "react-icons/md";
 import { formatDate } from "../hook/formatDate";
+import { useI18n } from "@/app/context/I18nContext";
 interface Props {
   createQuiz: () => void;
   createModule: () => void;
@@ -42,6 +43,7 @@ export default function DashboardTutorTabOverview({
   openViewContent,
   openActivities,
 }: Props) {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [courseDetails, setCourseDetails] = useState<Course | null>(null);
   const [showActivities, setShowActivities] = useState<string[]>([]);
@@ -143,17 +145,17 @@ export default function DashboardTutorTabOverview({
         <div className="flex items-center gap-5 text-textGrey-0 my-3">
           <span className="flex items-center gap-2 text-[14px]">
             <IoMdGlobe />
-            <span>English(Auto)</span>
+            <span>{t("English(Auto)")}</span>
           </span>
           <span className="flex items-center gap-2 text-[14px]">
             <MdPeople />
-            <span>{courseDetails?._count.enrollment} Student</span>
+            <span>{courseDetails?._count.enrollment} {t("Student")}</span>
           </span>
         </div>
 
         <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px]">
           <h1 className="font-semibold text-[14px] dark:text-textSlightDark-0 text-lightBoldText-0">
-            Quick Action
+            {t("Quick Action")}
           </h1>
           <div className="grid grid-cols-2 gap-[10px] my-4">
             <div
@@ -162,7 +164,7 @@ export default function DashboardTutorTabOverview({
             >
               <HiOutlineBookOpen color="#71748C" />
               <span className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[12px]">
-                Add Module
+                {t("Add Module")}
               </span>
             </div>
             <div
@@ -171,7 +173,7 @@ export default function DashboardTutorTabOverview({
             >
               <MdOutlineQuiz color="#71748C" />
               <span className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[12px]">
-                Create Quiz
+                {t("Create Quiz")}
               </span>
             </div>
           </div>
@@ -181,13 +183,13 @@ export default function DashboardTutorTabOverview({
               <span className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
                 {courseDetails?._count.enrollment}
               </span>
-              <p className="text-textGrey-0 text-[12px]">Enrolled</p>
+              <p className="text-textGrey-0 text-[12px]">{t("Enrolled")}</p>
             </div>
             <div className="flex justify-center items-center flex-col gap-1">
               <span className="dark:text-textSlightDark-0 font-bold text-[18px]">
                 {courseDetails?._count.post}
               </span>
-              <p className="text-textGrey-0 text-[12px]">Discussion</p>
+              <p className="text-textGrey-0 text-[12px]">{t("Discussion")}</p>
             </div>
             <div className="flex justify-center items-center flex-col gap-1">
               <span className="dark:text-textSlightDark-0 text-lightBoldText-0 font-bold text-[18px]">
@@ -195,37 +197,35 @@ export default function DashboardTutorTabOverview({
                   ? `${overviewData.avgCompletionPercentage}%`
                   : "0%"}
               </span>
-              <p className="text-textGrey-0 text-[12px]">Avg. Completion</p>
+              <p className="text-textGrey-0 text-[12px]">{t("Avg. Completion")}</p>
             </div>
           </div>
           <button
-            className="h-[36px] bg-white dark:bg-boldShadyColor-0 text-primaryColors-0 w-full text-[12px]"
+            className="h-[46px] bg-primaryColors-0 text-white w-full text-[12px]"
             onClick={openViewContent}
           >
-            View Content
+            {t("View Content")}
           </button>
         </div>
-        <button className="bg-primaryColors-0 text-white text-[14px] w-full h-[48px] my-5">
-          Start Course
-        </button>
+     
         <div className="dashboard_hr"></div>
         <div className="my-5">
           <div className="flex justify-between items-center w-full">
             <h1 className="font-semibold  dark:text-textSlightDark-0 text-[14px] mb-3">
-              Activities
+              {t("Activities")}
             </h1>
             <div
               className="text-primaryColors-0 cursor-pointer"
               onClick={openActivities}
             >
-              See all
+              {t("See all")}
             </div>
           </div>
 
           <div>
             {activities.length == 0 ? (
               <div className="text-center text-nearTextColors-0">
-                No activities yet
+                {t("No activities yet")}
               </div>
             ) : (
               <div>

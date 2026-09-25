@@ -9,74 +9,11 @@ import { MdClose, MdMenu } from "react-icons/md";
 import ToogleDarkMode from "./toogleDarkMode";
 import { useTheme } from "../context/theme_provider";
 import { useAuthContext } from "../context/AuthContext";
-import { getCookie } from "../utils/getCookie";
+import { useI18n } from "@/app/context/I18nContext";
+import { getRoleRedirectPath, getProfileRedirectPath } from "@/app/utils/roleRedirect";
+import InstallPwaPrompt from "./InstallPwaPrompt";
 
-/**
- * Get the correct dashboard redirect path based on user role
- * Uses localStorage values set during login
- */
-export function getRoleRedirectPath(): string {
-  // Only run on client-side
-  if (typeof window === "undefined") return "/auth";
-  
-  const role = localStorage.getItem("role");
-  const org_name = localStorage.getItem("org_name");
-  const type = localStorage.getItem("type")?.toLowerCase();
-  
-  // Admin check (highest priority)
-  if (role === "goye_admin" || type === "admin") {
-    return "/dashboard/admin";
-  }
-  
-  // Organization admin
-  if (role === "org_admin") {
-    if (!org_name) return "/auth";
-    return `/dashboard/${org_name}/admin`;
-  }
-  
-  // Invited user (organization member)
-  if (role === "invited_user" || type === "invited_user") {
-    if (!org_name) return "/auth";
-    return `/dashboard/${org_name}/organization`;
-  }
-  
-  // Instructor/Tutor
-  if (role === "instructor" || role === "tutor") {
-    return "/dashboard/tutor";
-  }
-  
-  // Default: Student
-  if (role === "student") {
-    return "/dashboard/student";
-  }
-  
-  // Fallback for any other role or no role
-  return "/auth";
-}
-
-/**
- * Get profile-specific redirect path (more granular)
- */
-export function getProfileRedirectPath(): string {
-  if (typeof window === "undefined") return "/auth";
-  
-  const role = localStorage.getItem("role");
-  const org_name = localStorage.getItem("org_name");
-  
-  if (role === "student") {
-    return "/dashboard/student/profile";
-  } else if (role === "instructor" || role === "tutor") {
-    return "/dashboard/tutor/profile";
-  } else if (role === "invited_user") {
-    return org_name ? `/dashboard/${org_name}/organization/profile` : "/auth";
-  } else if (role === "org_admin") {
-    return org_name ? `/dashboard/${org_name}/admin/profile` : "/auth";
-  } else if (role === "goye_admin") {
-    return "/dashboard/admin/profile";
-  }
-  
-  return "/auth";
-}
+export { getRoleRedirectPath, getProfileRedirectPath };
 
 const NAV_LINKS = [
   { label: "Home", href: "#home" },
@@ -88,28 +25,35 @@ const NAV_LINKS = [
 ];
 
 export default function LandingPageNavBar() {
+  const { t } = useI18n();
   const [box, showBox] = useState<boolean>(false);
   const { darkMode, setDarkMode } = useTheme();
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [activeSection, setActiveSection] = useState<string>("#home");
   const [scrolled, setScrolled] = useState(false);
   const [dashboardHref, setDashboardHref] = useState<string>("/auth");
-  
-  const { authStatus } = useAuthContext();
-  const router = useRouter();
-  
-  // Check if user is signed in by checking for accessToken cookie
-  const isSignedIn = !!getCookie("accessToken");
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
-  // Update dashboard href when auth status changes or component mounts
+  const { checkPublicSession } = useAuthContext();
+  const router = useRouter();
+
+  // The old check here read document.cookie for "accessToken" — but that
+  // cookie is set httpOnly by the backend, so JS can never actually see it,
+  // and this silently always evaluated false. A real session check needs an
+  // actual request; checkPublicSession() does that without ever redirecting
+  // the visitor (an anonymous visitor on the marketing page is expected,
+  // not an error).
   useEffect(() => {
-    if (isSignedIn) {
-      const path = getRoleRedirectPath();
-      setDashboardHref(path);
-    } else {
-      setDashboardHref("/auth");
-    }
-  }, [isSignedIn, authStatus]);
+    let cancelled = false;
+    checkPublicSession().then(({ authenticated, redirectPath }) => {
+      if (cancelled) return;
+      setIsSignedIn(authenticated);
+      setDashboardHref(authenticated && redirectPath ? redirectPath : "/auth");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [checkPublicSession]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -184,10 +128,10 @@ export default function LandingPageNavBar() {
     document.getElementById(href.slice(1))?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Handle dashboard navigation with role-based routing
+  // Handle dashboard navigation — dashboardHref is set from the real
+  // checkPublicSession() result above, not a localStorage guess.
   const handleDashboardNavigation = () => {
-    const path = getRoleRedirectPath();
-    router.push(path);
+    router.push(dashboardHref);
   };
 
   return (
@@ -228,13 +172,14 @@ export default function LandingPageNavBar() {
                   : "dark:text-textSlightDark-0 text-lightBoldText-0/60 hover:text-primaryColors-0"
               }`}
             >
-              {link.label}
+              {t(link.label)}
             </a>
           ))}
         </motion.nav>
 
         {/* Main Buttons (Desktop) */}
         <div className="hidden md:flex items-center md:flex-row flex-col md:justify-start justify-center gap-3 flex-shrink-0">
+          <InstallPwaPrompt />
           <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
           {isSignedIn ? (
             <motion.button
@@ -242,7 +187,7 @@ export default function LandingPageNavBar() {
               className="nav_btn md:w-[160px] w-full md:bg-primaryColors-0 md:text-white text-primaryColors-0"
               onClick={handleDashboardNavigation}
             >
-              Go to Dashboard
+              {t("Go to Dashboard")}
             </motion.button>
           ) : (
             <>
@@ -253,7 +198,7 @@ export default function LandingPageNavBar() {
                   router.push("/auth");
                 }}
               >
-                Login
+                {t("Login")}
               </motion.button>
               <motion.button
                 variants={itemVariants as any}
@@ -262,7 +207,7 @@ export default function LandingPageNavBar() {
                   router.push("/auth");
                 }}
               >
-                Signup
+                {t("Signup")}
               </motion.button>
             </>
           )}
@@ -283,6 +228,7 @@ export default function LandingPageNavBar() {
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 className="absolute top-[calc(100%+16px)] right-0 dark:bg-secondaryColors-0 bg-white flex flex-col justify-center items-stretch w-[220px] py-4 px-4 drop-shadow-lg rounded-md gap-1"
               >
+                <InstallPwaPrompt className="mb-2 self-center" />
                 {NAV_LINKS.map((link) => (
                   <a
                     key={link.href}
@@ -297,7 +243,7 @@ export default function LandingPageNavBar() {
                         : "dark:text-textSlightDark-0 text-lightBoldText-0/70"
                     }`}
                   >
-                    {link.label}
+                    {t(link.label)}
                   </a>
                 ))}
                 <div className="h-[1px] bg-[#ccc]/10 my-2" />
@@ -306,7 +252,7 @@ export default function LandingPageNavBar() {
                     className="nav_btn w-full bg-primaryColors-0 text-white"
                     onClick={handleDashboardNavigation}
                   >
-                    Go to Dashboard
+                    {t("Go to Dashboard")}
                   </button>
                 ) : (
                   <>
@@ -316,7 +262,7 @@ export default function LandingPageNavBar() {
                         router.push("/auth");
                       }}
                     >
-                      Login
+                      {t("Login")}
                     </button>
                     <button
                       className="nav_btn w-full bg-primaryColors-0 text-white"
@@ -324,7 +270,7 @@ export default function LandingPageNavBar() {
                         router.push("/auth");
                       }}
                     >
-                      Signup
+                      {t("Signup")}
                     </button>
                   </>
                 )}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Loader from "@/app/component/loader";
 import DashboardSearch from "@/app/component/dashboard_search";
+import { useI18n } from "@/app/context/I18nContext";
 import { formatDistanceToNow } from "date-fns";
 import { HiOutlineBookOpen, HiOutlineTrash } from "react-icons/hi";
 import { FaSpinner, FaAngleDoubleUp } from "react-icons/fa";
@@ -22,6 +23,7 @@ interface Course {
 }
 
 export default function SuperAdminCourses() {
+  const { t } = useI18n();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -50,7 +52,7 @@ export default function SuperAdminCourses() {
   }, []);
 
   const handleDelete = async (course: Course) => {
-    if (!confirm(`Delete "${course.title}"? This permanently removes the course and all its enrollments. This cannot be undone.`)) return;
+    if (!confirm(`${t('Delete')} "${course.title}"? ${t("This permanently removes the course and all its enrollments. This cannot be undone.")}`)) return;
     try {
       setPendingId(course.id);
       const res = await fetch(`${API_URL}/api/super-admin/courses/${course.id}`, {
@@ -61,11 +63,11 @@ export default function SuperAdminCourses() {
       if (data.success) {
         setCourses((prev) => prev.filter((c) => c.id !== course.id));
       } else {
-        alert(data.message || "Failed to delete course");
+        alert(data.message || t("Failed to delete course"));
       }
     } catch (err) {
       console.error("Error deleting course:", err);
-      alert("An error occurred. Please try again.");
+      alert(t("An error occurred. Please try again."));
     } finally {
       setPendingId("");
     }
@@ -81,16 +83,16 @@ export default function SuperAdminCourses() {
   return (
     <div className="w-full">
       <div className="flex justify-between items-center">
-        <h1 className="dashboard_h1">All Courses</h1>
-        <span className="text-textGrey-0 text-[13px]">{courses.length} total</span>
+        <h1 className="dashboard_h1">{t("All Courses")}</h1>
+        <span className="text-textGrey-0 text-[13px]">{courses.length} {t("total")}</span>
       </div>
-      <p className="text-textGrey-0 text-[13px] mb-4">Every course across the platform.</p>
+      <p className="text-textGrey-0 text-[13px] mb-4">{t("Every course across the platform.")}</p>
 
       <div className="mb-4">
         <DashboardSearch
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by title, creator, or organization..."
+          placeholder={t("Search by title, creator, or organization...")}
         />
       </div>
 
@@ -101,7 +103,7 @@ export default function SuperAdminCourses() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2">
           <HiOutlineBookOpen className="text-3xl text-textGrey-0" />
-          <p className="text-textGrey-0 text-sm">No courses found</p>
+          <p className="text-textGrey-0 text-sm">{t("No courses found")}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -120,15 +122,15 @@ export default function SuperAdminCourses() {
                   {c.organizationName && <span className="truncate">🏢 {c.organizationName}</span>}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-[11px] text-textGrey-0">
-                  <span>{c.enrollmentCount} enrolled</span>
-                  <span>{c.moduleCount} modules</span>
+                  <span>{c.enrollmentCount} {t("enrolled")}</span>
+                  <span>{c.moduleCount} {t("modules")}</span>
                   <span>{formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}</span>
                 </div>
               </div>
               <button
                 onClick={() => handleDelete(c)}
                 disabled={pendingId === c.id}
-                title="Delete course"
+                title={t("Delete course")}
                 className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors flex-shrink-0 disabled:opacity-50"
               >
                 {pendingId === c.id ? <FaSpinner className="animate-spin text-red-500" /> : <HiOutlineTrash className="w-5 h-5 text-red-500" />}

@@ -11,10 +11,12 @@ import Loader from "@/app/component/loader";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IoMdRefresh } from "react-icons/io";
+import { useI18n } from "@/app/context/I18nContext";
 
 type TabType = "all" | "enrolled" | "saved" | "done";
 
 export default function MainContainer() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [showCoursePage, setShowCoursePage] = useState<boolean>(true);
   const [showCourse, setShowCourse] = useState<boolean>(false);
@@ -105,7 +107,7 @@ export default function MainContainer() {
 
     const fetchCourse = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/course/get-all-courses`, {
+        const res = await fetch(`${API_URL}/api/course/get-all-courses-level`, {
           method: "GET",
           credentials: "include",
           headers: {
@@ -204,14 +206,14 @@ export default function MainContainer() {
       {showCoursePage && (
         <div>
           <div className="flex justify-between items-center">
-            <h1 className="dashboard_h1">Course</h1>
+            <h1 className="dashboard_h1">{t("Course")}</h1>
           </div>
           <div className="flex justify-between items-center gap-4">
             <div className="md:w-[75%] w-full">
               <DashboardSearch
                 value={search}
                 onChange={handleSearchChange}
-                placeholder="Search courses..."
+                placeholder={t("Search courses...")}
               />
             </div>
             <div className="flex items-center gap-2">

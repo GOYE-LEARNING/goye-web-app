@@ -14,8 +14,9 @@ import {
   MdNotifications,
   MdSecurity,
 } from "react-icons/md";
-import { useRouter } from "next/navigation";
 import DashboardChangePassword from "@/app/auth/dashboard_change_password";
+import { useI18n } from "@/app/context/I18nContext";
+import { useAuthContext } from "@/app/context/AuthContext";
 
 interface Church {
   church_min_name?: string;
@@ -100,6 +101,8 @@ interface User {
 }
 
 export default function OrgProfile() {
+  const { t } = useI18n();
+  const { logout } = useAuthContext();
   const [showProfile, setShowProfile] = useState<boolean>(true);
   const [file, setFile] = useState<File | null>(null);
   const [profilePic, setProfilePic] = useState<string>("");
@@ -133,26 +136,6 @@ export default function OrgProfile() {
     "edit" | "password" | "notification" | "language"
   >();
   const [showActivePages, setShowActivePages] = useState<boolean>(false);
-  const logout = async () => {
-    const router = useRouter();
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    try {
-      const res = await fetch(`${API_URL}/api/user/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        return;
-      }
-
-      const data = await res.json();
-      router.push("/");
-      console.log(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
   const handleClickPage = (
     tab: "edit" | "password" | "notification" | "language",
   ) => {
@@ -249,7 +232,7 @@ export default function OrgProfile() {
     <>
       {showProfile && (
         <>
-          <h1 className="dashboard_h1 ">Profile</h1>
+          <h1 className="dashboard_h1 ">{t("Profile")}</h1>
           <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] w-full my-5">
             <div className="flex justify-center items-center flex-col">
               <label className="relative cursor-pointer">
@@ -262,7 +245,7 @@ export default function OrgProfile() {
                 {profilePic ? (
                   <img
                     src={profilePic}
-                    alt="Profile"
+                    alt={t("Profile")}
                     className="h-[130px] w-[130px] object-cover rounded-full"
                   />
                 ) : (
@@ -272,13 +255,13 @@ export default function OrgProfile() {
                   <IoIosAddCircle color="#30A46F" />
                 </span>
               </label>
-              <p className="dark:text-white text-lightBoldText-0/80 my-2">Upload profile picture</p>
+              <p className="dark:text-white text-lightBoldText-0/80 my-2">{t("Upload profile picture")}</p>
             </div>
 
             <div className="dark:bg-shadyColor-0 bg-lightWhite-0 p-[16px] flex flex-col gap-3">
               <div className="flex justify-between items-center">
                 <p className="dark:text-white text-lightBoldText-0 text-[14px]">
-                  Email
+                  {t("Email")}
                 </p>
                 <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
@@ -291,7 +274,7 @@ export default function OrgProfile() {
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
                 <p className="dark:text-white text-lightBoldText-0 text-[14px]">
-                  Phone Number
+                  {t("Phone Number")}
                 </p>
                 <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
@@ -304,7 +287,7 @@ export default function OrgProfile() {
               <div className="dashboard_hr"></div>
               <div className="flex justify-between items-center">
                 <p className="dark:text-white text-lightBoldText-0 text-[14px]">
-                  Location
+                  {t("Location")}
                 </p>
                 <span className="dark:text-white text-lightBoldText-0 font-[600] text-[14px]">
                   {loading ? (
@@ -330,10 +313,10 @@ export default function OrgProfile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
-                      Profile
+                      {t("Profile")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      Edit personal information
+                      {t("Edit personal information")}
                     </p>
                   </div>
                 </div>
@@ -351,10 +334,10 @@ export default function OrgProfile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
-                      Password
+                      {t("Password")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      Last changed 1 day ago
+                      {t("Last changed 1 day ago")}
                     </p>
                   </div>
                 </div>
@@ -372,10 +355,10 @@ export default function OrgProfile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
-                      Notifications
+                      {t("Notifications")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      Manage in-app and email notifications
+                      {t("Manage in-app and email notifications")}
                     </p>
                   </div>
                 </div>
@@ -393,10 +376,10 @@ export default function OrgProfile() {
                   </div>
                   <div className="flex justify-start items-start flex-col gap-1">
                     <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-[600] text-[14px]">
-                      Language
+                      {t("Language")}
                     </h1>
                     <p className="text-[#71748C] text-[12px] font-[400]">
-                      English
+                      {t("English")}
                     </p>
                   </div>
                 </div>
@@ -408,7 +391,7 @@ export default function OrgProfile() {
                 className="text-[#DA0E29] border border-[#ccc]/20 h-[48px] w-full flex justify-center items-center gap-2 font-[600] text-[13px]"
                 onClick={logout}
               >
-                <MdLogout /> Logout
+                <MdLogout /> {t("Logout")}
               </button>
             </div>
           </div>

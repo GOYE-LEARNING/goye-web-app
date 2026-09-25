@@ -15,6 +15,7 @@ import { IoReload } from 'react-icons/io5';
 import { FaCheck } from 'react-icons/fa6';
 import { useModal } from '@/app/context/SimpleModalContext';
 import { saveOtpToken, getOtpToken, clearOtpToken } from '@/app/utils/database/db';
+import { useI18n } from '@/app/context/I18nContext';
 
 interface AcceptInviteFormProps {
   token: string;
@@ -59,6 +60,7 @@ export function AcceptInviteForm({
   const router = useRouter();
   const params = useParams();
   const { showModal } = useModal();
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -211,7 +213,7 @@ export function AcceptInviteForm({
       const data = await response.json();
 
       if (!response.ok) {
-        showModal('Error', data.message || 'Failed to send OTP', 'error');
+        showModal(t('Error'), data.message || t('Failed to send OTP'), 'error');
         return false;
       }
 
@@ -223,7 +225,7 @@ export function AcceptInviteForm({
       return true;
     } catch (error: any) {
       console.error('Error sending OTP:', error);
-      showModal('Error', error.message || 'Failed to send OTP', 'error');
+      showModal(t('Error'), error.message || t('Failed to send OTP'), 'error');
       return false;
     }
   };
@@ -284,7 +286,7 @@ export function AcceptInviteForm({
       const data = await response.json();
 
       if (!response.ok) {
-        setOtpError(data.message || 'Failed to resend OTP');
+        setOtpError(data.message || t('Failed to resend OTP'));
         return;
       }
 
@@ -293,14 +295,14 @@ export function AcceptInviteForm({
       setResendCount((prev) => prev + 1);
       setTimeLeft(600);
       setCanResend(false);
-      setOtpSuccess('New OTP sent successfully!');
+      setOtpSuccess(t('New OTP sent successfully!'));
 
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
 
       setTimeout(() => setOtpSuccess(''), 3000);
     } catch (error: any) {
-      setOtpError(error.message || 'Failed to resend OTP');
+      setOtpError(error.message || t('Failed to resend OTP'));
     }
   };
 
@@ -308,7 +310,7 @@ export function AcceptInviteForm({
     const otpString = otp.join('');
 
     if (otpString.length !== 6) {
-      setOtpError('Please enter a valid 6-digit OTP');
+      setOtpError(t('Please enter a valid 6-digit OTP'));
       return;
     }
 
@@ -323,7 +325,7 @@ export function AcceptInviteForm({
       const otpSessionToken = await getOtpToken();
 
       if (!otpSessionToken) {
-        setOtpError('No OTP session found. Please request a new OTP.');
+        setOtpError(t('No OTP session found. Please request a new OTP.'));
         setIsVerifyingOTP(false);
         return;
       }
@@ -342,25 +344,25 @@ export function AcceptInviteForm({
       const data = await response.json();
 
       if (!response.ok) {
-        setOtpError(data.message || 'Invalid OTP. Please try again.');
+        setOtpError(data.message || t('Invalid OTP. Please try again.'));
         return;
       }
 
-      setOtpSuccess('OTP verified successfully!');
+      setOtpSuccess(t('OTP verified successfully!'));
 
       await clearOtpToken();
 
       setTimeout(() => {
         setShowOTPModal(false);
         showModal(
-          'Verification Complete',
-          'Your account has been successfully verified! You can now access the dashboard.',
+          t('Verification Complete'),
+          t('Your account has been successfully verified! You can now access the dashboard.'),
           'success'
         );
         router.push('/auth');
       }, 1500);
     } catch (error: any) {
-      setOtpError(error.message || 'Failed to verify OTP');
+      setOtpError(error.message || t('Failed to verify OTP'));
     } finally {
       setIsVerifyingOTP(false);
     }
@@ -377,25 +379,25 @@ export function AcceptInviteForm({
 
     if (!invitedEmail) {
       setError(
-        'Unable to verify invitation. Please try again or contact support.'
+        t('Unable to verify invitation. Please try again or contact support.')
       );
       return;
     }
 
     if (!orgId) {
       setError(
-        'Organization ID not found. Please try again or contact support.'
+        t('Organization ID not found. Please try again or contact support.')
       );
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('Passwords do not match'));
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(t('Password must be at least 6 characters'));
       return;
     }
 
@@ -427,7 +429,7 @@ export function AcceptInviteForm({
 
         if (checkUserData.hasOrganization) {
           setError(
-            'This user is already associated with an organization. Please contact support.'
+            t('This user is already associated with an organization. Please contact support.')
           );
           setIsLoading(false);
           return;
@@ -440,18 +442,14 @@ export function AcceptInviteForm({
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              organizationId: orgId,
-              invited: true,
-              role: 'invited_user',
-            }),
+            body: JSON.stringify({ token }),
           }
         );
 
         const updateData = await updateUserResponse.json();
 
         if (!updateUserResponse.ok) {
-          setError(updateData.message || 'Failed to update user invitation');
+          setError(updateData.message || t('Failed to update user invitation'));
           setIsLoading(false);
           return;
         }
@@ -463,7 +461,7 @@ export function AcceptInviteForm({
           setTempUserId(userId);
           setShowOTPModal(true);
         } else {
-          setError('Failed to send verification OTP. Please try again.');
+          setError(t('Failed to send verification OTP. Please try again.'));
         }
         setIsLoading(false);
         return;
@@ -520,28 +518,28 @@ export function AcceptInviteForm({
           if (otpSent) {
             setShowOTPModal(true);
           } else {
-            setError('Failed to send verification OTP. Please try again.');
+            setError(t('Failed to send verification OTP. Please try again.'));
           }
         } else {
-          setError('User created but no user ID returned');
+          setError(t('User created but no user ID returned'));
         }
       } else {
         if (data.error?.includes('email') || data.message?.includes('email')) {
           setError(
-            'This email is already registered. Please try logging in instead.'
+            t('This email is already registered. Please try logging in instead.')
           );
         } else {
-          setError(data.message || data.error || 'Failed to create account');
+          setError(data.message || data.error || t('Failed to create account'));
         }
       }
     } catch (err: any) {
       console.error('❌ Error details:', err);
       if (err.message === 'Failed to fetch') {
         setError(
-          'Unable to connect to the server. Please check your internet connection and try again.'
+          t('Unable to connect to the server. Please check your internet connection and try again.')
         );
       } else {
-        setError(err.message || 'An error occurred. Please try again.');
+        setError(err.message || t('An error occurred. Please try again.'));
       }
     } finally {
       setIsLoading(false);
@@ -574,7 +572,7 @@ export function AcceptInviteForm({
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primaryColors-0 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">
-            Verifying your invitation...
+            {t('Verifying your invitation...')}
           </p>
         </div>
       </div>
@@ -596,16 +594,16 @@ export function AcceptInviteForm({
             </div>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-            Invalid Invitation
+            {t('Invalid Invitation')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {fetchError || 'This invitation link is invalid or has expired.'}
+            {fetchError ? t(fetchError) : t('This invitation link is invalid or has expired.')}
           </p>
           <button
             onClick={() => router.push('/')}
             className="px-6 py-3 bg-primaryColors-0 text-white rounded-lg font-semibold hover:bg-primaryColors-600 transition-colors"
           >
-            Go to Homepage
+            {t('Go to Homepage')}
           </button>
         </motion.div>
       </div>
@@ -627,17 +625,16 @@ export function AcceptInviteForm({
             </div>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-            Invitation Data Missing
+            {t('Invitation Data Missing')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Unable to load invitation details. Please make sure you have a valid
-            invitation link.
+            {t('Unable to load invitation details. Please make sure you have a valid invitation link.')}
           </p>
           <button
             onClick={() => router.push('/')}
             className="px-6 py-3 bg-primaryColors-0 text-white rounded-lg font-semibold hover:bg-primaryColors-600 transition-colors"
           >
-            Go to Homepage
+            {t('Go to Homepage')}
           </button>
         </motion.div>
       </div>
@@ -670,14 +667,14 @@ export function AcceptInviteForm({
                     <FaCheck className="text-orange-500 text-2xl" />
                   </div>
                   <h2 className="text-2xl font-bold text-white">
-                    Verify Your Account
+                    {t('Verify Your Account')}
                   </h2>
                   <p className="text-[#B8BCC8] text-sm mt-2">
-                    Enter the 6-digit code sent to{' '}
+                    {t('Enter the 6-digit code sent to')}{' '}
                     <span className="text-orange-500">{emailForOTP}</span>
                   </p>
                   <p className="text-[#9CA3B0] text-xs mt-1">
-                    Please check your email or paste the code below
+                    {t('Please check your email or paste the code below')}
                   </p>
                 </div>
 
@@ -743,8 +740,8 @@ export function AcceptInviteForm({
                       className={`${isVerifyingOTP ? 'animate-spin' : ''}`}
                     />
                     {canResend
-                      ? 'Resend OTP'
-                      : `Resend in ${formatTime(timeLeft)}`}
+                      ? t('Resend OTP')
+                      : `${t('Resend in')} ${formatTime(timeLeft)}`}
                   </button>
                 </div>
 
@@ -756,26 +753,25 @@ export function AcceptInviteForm({
                   {isVerifyingOTP ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="animate-spin rounded-full h-4 w-4 border-2 border-[#121318] border-t-transparent"></span>
-                      Verifying...
+                      {t('Verifying...')}
                     </span>
                   ) : (
-                    'Verify OTP'
+                    t('Verify OTP')
                   )}
                 </button>
 
                 <div className="mt-4 text-center">
                   <p className="text-[#9CA3B0] text-xs">
-                    Didn't receive the code? Check your spam folder or contact
-                    support
+                    {t("Didn't receive the code? Check your spam folder or contact support")}
                   </p>
                   <button
                     onClick={() => {
                       setShowOTPModal(false);
-                      setError('Verification cancelled. Please try again.');
+                      setError(t('Verification cancelled. Please try again.'));
                     }}
                     className="text-[#9CA3B0] text-sm hover:text-white transition-colors mt-2"
                   >
-                    Cancel
+                    {t('Cancel')}
                   </button>
                 </div>
               </div>
@@ -804,7 +800,7 @@ export function AcceptInviteForm({
 
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-              You're Invited!
+              {t("You're Invited!")}
             </h1>
 
             {organizationName && (
@@ -817,7 +813,7 @@ export function AcceptInviteForm({
             )}
 
             <p className="text-gray-600 dark:text-gray-400">
-              Complete your account setup to join
+              {t('Complete your account setup to join')}
             </p>
 
             <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg inline-flex items-center gap-2">
@@ -829,7 +825,7 @@ export function AcceptInviteForm({
 
             {fetchedData?.invitation?.remainingTime && (
               <div className="mt-2 text-xs text-gray-500 dark:text-gray-500">
-                This invitation expires in{' '}
+                {t('This invitation expires in')}{' '}
                 {fetchedData.invitation.remainingTime.hours}h{' '}
                 {fetchedData.invitation.remainingTime.minutes}m
               </div>
@@ -850,7 +846,7 @@ export function AcceptInviteForm({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  First Name *
+                  {t('First Name')} *
                 </label>
                 <input
                   type="text"
@@ -859,12 +855,12 @@ export function AcceptInviteForm({
                   value={formData.first_name}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primaryColors-0 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="John"
+                  placeholder={t('John')}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Last Name *
+                  {t('Last Name')} *
                 </label>
                 <input
                   type="text"
@@ -873,14 +869,14 @@ export function AcceptInviteForm({
                   value={formData.last_name}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primaryColors-0 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="Doe"
+                  placeholder={t('Doe')}
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Phone Number *
+                {t('Phone Number')} *
               </label>
               <input
                 type="tel"
@@ -896,7 +892,7 @@ export function AcceptInviteForm({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Country *
+                  {t('Country')} *
                 </label>
                 <input
                   type="text"
@@ -905,12 +901,12 @@ export function AcceptInviteForm({
                   value={formData.country}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primaryColors-0 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="United States"
+                  placeholder={t('United States')}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  State *
+                  {t('State')} *
                 </label>
                 <input
                   type="text"
@@ -919,14 +915,14 @@ export function AcceptInviteForm({
                   value={formData.state}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primaryColors-0 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="California"
+                  placeholder={t('California')}
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Password *
+                {t('Password')} *
               </label>
               <input
                 type="password"
@@ -935,16 +931,16 @@ export function AcceptInviteForm({
                 value={formData.password}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primaryColors-0 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="Create a password"
+                placeholder={t('Create a password')}
               />
               <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                Minimum 6 characters
+                {t('Minimum 6 characters')}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Confirm Password *
+                {t('Confirm Password')} *
               </label>
               <input
                 type="password"
@@ -953,7 +949,7 @@ export function AcceptInviteForm({
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primaryColors-0 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="Confirm your password"
+                placeholder={t('Confirm your password')}
               />
             </div>
 
@@ -984,16 +980,16 @@ export function AcceptInviteForm({
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Creating Account...
+                  {t('Creating Account...')}
                 </span>
               ) : (
-                'Accept Invitation & Verify'
+                t('Accept Invitation & Verify')
               )}
             </button>
           </form>
 
           <p className="text-center text-xs text-gray-500 dark:text-gray-500 mt-6">
-            By signing up, you agree to our Terms of Service and Privacy Policy
+            {t('By signing up, you agree to our Terms of Service and Privacy Policy')}
           </p>
         </motion.div>
       </div>

@@ -15,6 +15,7 @@ import { useModal } from "@/app/context/SimpleModalContext";
 import Portal from "@/app/component/Portal";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/app/utils/checkLanguages";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function PreviewVerification() {
   const {
@@ -28,6 +29,7 @@ export default function PreviewVerification() {
 
   const { showModal } = useModal();
   const { translate } = useLanguage();
+  const { t, languageName, locale } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const modalRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -379,14 +381,14 @@ export default function PreviewVerification() {
 
       if (!res.ok) {
         const errorMsg = await translate("Failed to send OTP");
-        showModal("OTP Error", data.message || errorMsg, "error");
+        showModal(t("OTP Error"), data.message || errorMsg, "error");
         return false;
       }
 
       return true;
     } catch (error: any) {
       const errorMsg = await translate("Failed to send OTP");
-      showModal("Error", error.message || errorMsg, "error");
+      showModal(t("Error"), error.message || errorMsg, "error");
       return false;
     }
   };
@@ -547,139 +549,139 @@ export default function PreviewVerification() {
   const validateForm = () => {
     // Check organization fields
     if (!formData.org_name?.trim()) {
-      const errorMsg = "Organization name is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("Organization name is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.org_type?.trim()) {
-      const errorMsg = "Organization type is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("Organization type is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.org_email?.trim()) {
-      const errorMsg = "Organization email is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("Organization email is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.org_phone_number?.trim()) {
-      const errorMsg = "Organization phone number is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("Organization phone number is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.org_country?.trim()) {
-      const errorMsg = "Organization country is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("Organization country is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.org_state?.trim()) {
-      const errorMsg = "Organization state is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("Organization state is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.org_description?.trim()) {
-      const errorMsg = "Organization description is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("Organization description is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.org_year?.trim()) {
-      const errorMsg = "Organization year is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("Organization year is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
 
     // Check user fields
     if (!formData.user_first_name?.trim()) {
-      const errorMsg = "User first name is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("User first name is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.user_last_name?.trim()) {
-      const errorMsg = "User last name is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("User last name is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.user_email_address?.trim()) {
-      const errorMsg = "User email address is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("User email address is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.user_phone_number?.trim()) {
-      const errorMsg = "User phone number is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("User phone number is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.user_country?.trim()) {
-      const errorMsg = "User country is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("User country is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
     if (!formData.user_state?.trim()) {
-      const errorMsg = "User state is required";
-      showModal("Missing Information", errorMsg, "error");
+      const errorMsg = t("User state is required");
+      showModal(t("Missing Information"), errorMsg, "error");
       return false;
     }
 
     // Check type-specific fields
     if (formData.main_type === "church") {
       if (!formData.church_min_name?.trim()) {
-        const errorMsg = "Church ministry name is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("Church ministry name is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
       if (!formData.church_ld_pastor?.trim()) {
-        const errorMsg = "Church lead pastor is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("Church lead pastor is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
       if (!formData.church_address?.trim()) {
-        const errorMsg = "Church address is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("Church address is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
       if (!formData.church_email?.trim()) {
-        const errorMsg = "Church email is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("Church email is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
     }
 
     if (formData.main_type === "school") {
       if (!formData.school_name?.trim()) {
-        const errorMsg = "School name is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("School name is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
       if (!formData.school_type?.trim()) {
-        const errorMsg = "School type is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("School type is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
       if (!formData.school_address?.trim()) {
-        const errorMsg = "School address is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("School address is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
       if (!formData.school_admin_name?.trim()) {
-        const errorMsg = "School admin name is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("School admin name is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
     }
 
     if (formData.main_type === "club") {
       if (!formData.club_name?.trim()) {
-        const errorMsg = "Club name is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("Club name is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
       if (!formData.club_type?.trim()) {
-        const errorMsg = "Club type is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("Club type is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
       if (!formData.club_leader_name?.trim()) {
-        const errorMsg = "Club leader name is required";
-        showModal("Missing Information", errorMsg, "error");
+        const errorMsg = t("Club leader name is required");
+        showModal(t("Missing Information"), errorMsg, "error");
         return false;
       }
     }
@@ -693,9 +695,9 @@ export default function PreviewVerification() {
     }
 
     setLoading(true);
-  // Get language from localStorage
-  const language = localStorage.getItem('lang') || 'English';
-  const languageCode = localStorage.getItem('langCode') || 'en';
+  // Language selected during this auth flow, held in I18nContext (no localStorage)
+  const language = languageName || 'English';
+  const languageCode = locale || 'en';
     const bodyDTO = {
       organization_name: formData.org_name,
       organization_type: formData.main_type,
@@ -769,7 +771,7 @@ export default function PreviewVerification() {
       const orgData = await res.json();
 console.log(orgData)
       if (!res.ok) {
-        const errorMessage = orgData.message || orgData.error || "Failed to create organization";
+        const errorMessage = orgData.message || orgData.error || t("Failed to create organization");
         const translatedError = await translate("Creation Failed");
         showModal(translatedError, errorMessage, "error");
         setLoading(false);
@@ -778,7 +780,7 @@ console.log(orgData)
 
       const orgId = orgData.data?.id;
       if (!orgId) {
-        const errorMsg = orgData.message || "No organization ID returned";
+        const errorMsg = orgData.message || t("No organization ID returned");
         const translatedError = await translate("Error");
         showModal(translatedError, errorMsg, "error");
         setLoading(false);
@@ -864,7 +866,7 @@ console.log(orgData)
 
       if (uploadErrors.length > 0) {
         const warningTitle = await translate("Upload Warnings");
-        const warningMsg = `Organization created but some files failed to upload:\n${uploadErrors.join("\n")}`;
+        const warningMsg = `${t("Organization created but some files failed to upload:")}\n${uploadErrors.join("\n")}`;
         showModal(warningTitle, warningMsg, "error");
       }
 
@@ -872,7 +874,7 @@ console.log(orgData)
       setShowOTPModal(true);
     } catch (error: any) {
       const errorTitle = await translate("Error");
-      const errorMsg = error.message || "An unexpected error occurred";
+      const errorMsg = error.message || t("An unexpected error occurred");
       showModal(errorTitle, errorMsg, "error");
     } finally {
       setLoading(false);
@@ -1019,8 +1021,8 @@ console.log(orgData)
                         setShowPasswordModal(false);
                         setIsVerifyingComplete(true);
                         showModal(
-                          "Verification Complete",
-                          `Organization "${orgName || formData.org_name}" has been successfully verified!`,
+                          t("Verification Complete"),
+                          `${t('Organization "')}${orgName || formData.org_name}${t('" has been successfully verified!')}`,
                           "success",
                         );
                         router.push("/auth");
@@ -1352,7 +1354,7 @@ console.log(orgData)
                     {isClient && logoPreviewUrl ? (
                       <img
                         src={logoPreviewUrl}
-                        alt="Church Logo"
+                        alt={t("Church Logo")}
                         className="h-[100px] object-contain"
                       />
                     ) : (

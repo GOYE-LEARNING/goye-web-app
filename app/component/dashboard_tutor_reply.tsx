@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { FaReply } from "react-icons/fa";
 import { MdOutlineCancel } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   cancel: () => void;
@@ -17,6 +18,7 @@ export default function DashboardTutorReply({
   parentReplyId,
   onReplyUpdate,
 }: Props) {
+  const { t } = useI18n();
   const [content, setContent] = useState<string>("");
 
   const handleTextArea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -26,7 +28,7 @@ export default function DashboardTutorReply({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   if (!content.trim()) {
-    alert("Please write something before replying!");
+    alert(t("Please write something before replying!"));
     return;
   }
 
@@ -62,7 +64,7 @@ export default function DashboardTutorReply({
     <div className="w-full min-h-full p-[32px] dark:bg-secondaryColors-0">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-textSlightDark-0 font-bold text-[24px]">New Reply</h1>
+        <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-bold text-[24px]">{t("New Reply")}</h1>
         <span onClick={cancel} className="cursor-pointer">
           <MdOutlineCancel size={20} className="text-[18px]" />
         </span>
@@ -75,13 +77,13 @@ export default function DashboardTutorReply({
         {/* Content Input */}
         <div className="w-full h-[176px] border border-[#D2D5DA] py-[8px] px-[12px] flex relative">
           <div className="flex flex-col w-full h-full">
-            <label className="text-[#71748C] text-[12px]">Content</label>
+            <label className="text-[#71748C] text-[12px]">{t("Content")}</label>
             <textarea
               name="content"
               onChange={handleTextArea}
               value={content}
               cols={30}
-              className="text-[#1F2937] text-[16px] font-[500] outline-none border-none resize-none h-full"
+              className="text-[#1F2937] dark:text-white text-[16px] font-[500] outline-none border-none resize-none h-full bg-transparent"
             />
           </div>
         </div>
@@ -92,7 +94,7 @@ export default function DashboardTutorReply({
             type="submit"
             className="form_more bg-primaryColors-0 text-white flex items-center gap-2"
           >
-            Reply <FaReply />
+            {t("Reply")} <FaReply />
           </button>
 
           <button
@@ -100,7 +102,7 @@ export default function DashboardTutorReply({
             onClick={cancel}
             className="form_more bg-[#F5F5F5] text-primaryColors-0 flex items-center gap-2"
           >
-            Cancel
+            {t("Cancel")}
           </button>
         </div>
       </form>

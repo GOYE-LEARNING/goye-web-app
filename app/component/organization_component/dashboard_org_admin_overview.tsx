@@ -7,6 +7,7 @@ import { LuChartLine } from "react-icons/lu";
 import { MdOutlineShowChart, MdPeople } from "react-icons/md";
 import { useSocket } from "@/app/context/SocketContext";
 import { useAuthContext } from "@/app/context/AuthContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 type RangeOption = "Today" | "This week" | "Last week" | "Last month" | "Select a date";
 
@@ -21,6 +22,7 @@ interface OverviewStats {
 }
 
 export default function DashboardOrgAdminOverview() {
+  const { t } = useI18n();
   const boxRef = useRef<HTMLDivElement | null>(null);
   const dateInputRef = useRef<HTMLInputElement | null>(null);
   const [showBox, setShowBox] = useState<boolean>(false);
@@ -100,14 +102,14 @@ export default function DashboardOrgAdminOverview() {
         },
       );
 
-      if (!res.ok) throw new Error("Failed to load organization stats");
+      if (!res.ok) throw new Error(t("Failed to load organization stats"));
 
       const json = await res.json();
-      if (!json.success) throw new Error(json.message || "Failed to load stats");
+      if (!json.success) throw new Error(json.message || t("Failed to load stats"));
 
       setStats(json.data);
     } catch (err: any) {
-      setError(err.message ?? "Unable to load stats");
+      setError(err.message ?? t("Unable to load stats"));
     } finally {
       setLoading(false);
     }
@@ -138,7 +140,7 @@ export default function DashboardOrgAdminOverview() {
     <div className="dashboard_content_box">
       <div className="flex justify-between items-center">
         <h1 className="font-semibold dark:text-textSlightDark-0 text-lightBoldText-0 text-[14px]">
-          Overview
+          {t("Overview")}
         </h1>
         <div className="relative">
           <button
@@ -154,22 +156,22 @@ export default function DashboardOrgAdminOverview() {
             >
               <ul className="flex flex-col gap-2">
                 <li className="admin_data_date_select" onClick={() => selectValue("Today")}>
-                  Today
+                  {t("Today")}
                 </li>
                 <li className="admin_data_date_select" onClick={() => selectValue("This week")}>
-                  This week
+                  {t("This week")}
                 </li>
                 <li className="admin_data_date_select" onClick={() => selectValue("Last week")}>
-                  Last week
+                  {t("Last week")}
                 </li>
                 <li className="admin_data_date_select" onClick={() => selectValue("Last month")}>
-                  Last Month
+                  {t("Last Month")}
                 </li>
                 <label
                   className="admin_data_date_select relative"
                   onClick={() => dateInputRef.current?.showPicker?.()}
                 >
-                  Select previous date
+                  {t("Select previous date")}
                 </label>
                 <input
                   type="date"
@@ -199,7 +201,7 @@ export default function DashboardOrgAdminOverview() {
                   isConnected ? "bg-green-500 animate-pulse" : "bg-gray-400"
                 }`}
               />
-              Active Members
+              {t("Active Members")}
             </span>
           </div>
           <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-[#ccc]/20">
@@ -214,7 +216,7 @@ export default function DashboardOrgAdminOverview() {
               {loading ? "..." : stats.total_members}
             </h1>
             <span className="dark:text-white text-lightBoldText-0 text-[12px]">
-              Total Members
+              {t("Total Members")}
             </span>
           </div>
           <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-[#ccc]/20">
@@ -229,7 +231,7 @@ export default function DashboardOrgAdminOverview() {
               {loading ? "..." : stats.new_members_in_range}
             </h1>
             <span className="dark:text-white text-lightBoldText-0 text-[12px]">
-              New Members ({displayLabel})
+              {t("New Members")} ({displayLabel})
             </span>
           </div>
           <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-[#ccc]/20">
@@ -244,7 +246,7 @@ export default function DashboardOrgAdminOverview() {
               {loading ? "..." : `${stats.avg_completion}%`}
             </h1>
             <span className="dark:text-white text-lightBoldText-0 text-[12px]">
-              Avg. Completion
+              {t("Avg. Completion")}
             </span>
           </div>
           <div className="flex items-center justify-center h-[32px] w-[32px] dark:bg-shadyColor-0 bg-white text-primaryColors-0 rounded-md border border-[#ccc]/20">

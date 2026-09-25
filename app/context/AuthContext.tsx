@@ -3,6 +3,7 @@
 import React from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
+import { useI18n } from "@/app/context/I18nContext";
 import {
   getUserProfile,
   clearUserProfile,
@@ -14,6 +15,8 @@ import {
   getAuthTokens,
   saveAuthTokens,
 } from "@/app/utils/database/db";
+import { isPublicRoute as isPublicRoutePath } from "@/app/utils/publicRoutes";
+import { resolveRedirectPathFromProfile } from "@/app/utils/roleRedirect";
 
 interface Props {
   children: React.ReactNode;
@@ -62,25 +65,45 @@ interface AuthState {
   logout: () => Promise<void>;
   getDeviceId: () => Promise<string>;
   login: (userData: any, orgData?: any) => Promise<boolean>;
+  // A read-only session probe for public pages (the landing page) — unlike
+  // checkAuth()/runAuthCheck(), it never redirects on failure. A visitor
+  // with no session is a normal, expected outcome here, not an error state.
+  checkPublicSession: () => Promise<{ authenticated: boolean; redirectPath: string | null }>;
+  // Set when an auth check failed because we couldn't reliably talk to the
+  // server (network drop, timeout, 5xx) — as opposed to the server
+  // explicitly saying the session is invalid. Callers should show this as
+  // an error state with a retry option instead of bouncing to /auth: a
+  // request that never got an answer is not proof the user is logged out.
+  authError: string | null;
+  clearAuthError: () => void;
+  // Synchronous read of the same value, backed by a ref rather than state —
+  // for callers that need the up-to-the-moment result right after awaiting
+  // checkAuth()/refreshToken(), where the `authError` prop from this same
+  // render would still be one render behind.
+  getAuthError: () => string | null;
 }
 
 const AuthContext = React.createContext<AuthState | undefined>(undefined);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const PUBLIC_ROUTES = [
-  "/login",
-  "/signup",
-  "/auth",
-  "/",
-  "/about",
-  "/contact",
-  "/forgot-password",
-];
-
 export default function AuthProvider({ children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const { setLanguage, refreshFromBackend } = useI18n();
+  // Any backend response that carries a real language/languageCode adopts it
+  // into I18nContext right away — this is the "fetch the backend and
+  // retrieve the language" step, run wherever a session gets resolved
+  // (initial check, refresh, login) instead of trusting localStorage.
+  const syncLanguageFromProfile = React.useCallback(
+    (data: any) => {
+      const code = data?.languageCode;
+      if (code && code !== "unknown") {
+        setLanguage(data?.language || code, code);
+      }
+    },
+    [setLanguage],
+  );
   const [authStatus, setAuthStatus] = React.useState<AuthContextType>({
     isExistingUser: false,
     isProfileComplete: false,
@@ -92,10 +115,22 @@ export default function AuthProvider({ children }: Props) {
 
   const isInitializedRef = React.useRef(false);
   const isCheckingRef = React.useRef(false);
+  const [authError, setAuthErrorState] = React.useState<string | null>(null);
+  // Mirrors authError for synchronous reads within the same async chain —
+  // the state setter's update isn't visible to a closure later in the same
+  // function, but this ref is, which is what lets runAuthCheck tell "the
+  // server rejected this" apart from "refreshToken never got an answer"
+  // immediately after calling it.
+  const authErrorRef = React.useRef<string | null>(null);
+  const setAuthError = React.useCallback((message: string | null) => {
+    authErrorRef.current = message;
+    setAuthErrorState(message);
+  }, []);
+  const clearAuthError = React.useCallback(() => setAuthError(null), [setAuthError]);
+  const getAuthError = React.useCallback(() => authErrorRef.current, []);
 
   const isPublicRoute = React.useCallback(() => {
-    if (!pathname) return true;
-    return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+    return isPublicRoutePath(pathname);
   }, [pathname]);
 
   const getDeviceId = React.useCallback(async (): Promise<string> => {
@@ -148,12 +183,30 @@ export default function AuthProvider({ children }: Props) {
           isAuthenticated: true,
           lastActivity: new Date().toISOString(),
         });
+        setAuthError(null);
         return true;
       }
+
       console.log("❌ Token refresh failed with status:", response.status);
+
+      // A 401/403 here is the server explicitly saying the refresh token is
+      // gone, expired, or revoked — that's a real "you are logged out."
+      // Anything else (5xx, a proxy timeout page, etc.) is the server
+      // failing to answer the question, not answering "no" — treat that as
+      // an error to retry, not as proof the session is invalid.
+      if (response.status !== 401 && response.status !== 403) {
+        setAuthError(
+          "We're having trouble reaching the server. Please try again.",
+        );
+      }
       return false;
     } catch (error) {
       console.error("Token refresh failed:", error);
+      // The request itself never completed — offline, DNS, CORS, backend
+      // down. Same reasoning as a 5xx above: not evidence of a bad session.
+      setAuthError(
+        "We couldn't reach the server. Check your connection and try again.",
+      );
       return false;
     }
   }, [isPublicRoute]);
@@ -173,7 +226,59 @@ export default function AuthProvider({ children }: Props) {
     return "individual";
   }, []);
 
+  // Read-only session probe for public pages: tries the individual-user
+  // profile endpoint, then the organization one, and never redirects or
+  // mutates auth state — a visitor with no session at all is the normal
+  // case here, not a failure to recover from.
+  const checkPublicSession = React.useCallback(async (): Promise<{
+    authenticated: boolean;
+    redirectPath: string | null;
+  }> => {
+    try {
+      const headers = await authHeaders();
+
+      const userRes = await fetch(`${API_URL}/api/user/profile`, {
+        credentials: "include",
+        headers,
+      });
+      if (userRes.ok) {
+        const data = await userRes.json();
+        const userData = data.user;
+        return {
+          authenticated: true,
+          redirectPath: resolveRedirectPathFromProfile(userData),
+        };
+      }
+
+      const orgRes = await fetch(`${API_URL}/api/organizations/profile`, {
+        credentials: "include",
+        headers,
+      });
+      if (orgRes.ok) {
+        const data = await orgRes.json();
+        const orgData = data.organization || data.data?.organization || data;
+        const pseudoUser = {
+          role: "org_admin",
+          userType: orgData?.userType || "ORGANIZATION_OWNER",
+        };
+        return {
+          authenticated: true,
+          redirectPath: resolveRedirectPathFromProfile(pseudoUser, orgData),
+        };
+      }
+
+      return { authenticated: false, redirectPath: null };
+    } catch (error) {
+      console.error("Public session check failed:", error);
+      return { authenticated: false, redirectPath: null };
+    }
+  }, [authHeaders]);
+
   const runAuthCheck = React.useCallback(async (): Promise<boolean> => {
+    // Start clean so a stale error from a previous, now-resolved check
+    // doesn't stick around and keep showing an error screen.
+    setAuthError(null);
+
     const session = await getSessionState();
     if (!session?.isAuthenticated) {
       setAuthStatus({
@@ -185,7 +290,7 @@ export default function AuthProvider({ children }: Props) {
         organization: undefined,
       });
       if (!isPublicRoute()) {
-        router.push("/login");
+        router.push("/auth");
       }
       return false;
     }
@@ -215,74 +320,104 @@ export default function AuthProvider({ children }: Props) {
 
     // Individual
     if (userType === "individual") {
-      const headers = await authHeaders();
-      const response = await fetch(`${API_URL}/api/user/profile`, {
-        credentials: "include",
-        headers,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const userData = data.user;
-
-        await saveUserProfile({
-          userId: userData?.id,
-          first_name: userData?.first_name,
-          last_name: userData?.last_name,
-          email_address: userData?.email_address,
-          userType: "user",
-          role: userData?.role || "student",
+      try {
+        const headers = await authHeaders();
+        const response = await fetch(`${API_URL}/api/user/profile`, {
+          credentials: "include",
+          headers,
         });
 
-        setAuthStatus({
-          isExistingUser: true,
-          isProfileComplete: userData?.isProfileComplete || false,
-          requiresProfileCompletion: !userData?.isProfileComplete,
-          isLoading: false,
-          user: userData,
-          organization: undefined,
-        });
-        return true;
-      }
+        if (response.ok) {
+          const data = await response.json();
+          const userData = data.user;
 
-      if (response.status === 401) {
-        const refreshed = await refreshToken();
-        if (refreshed) {
-          const retryHeaders = await authHeaders();
-          const retryResponse = await fetch(`${API_URL}/api/user/profile`, {
-            credentials: "include",
-            headers: retryHeaders,
+          await saveUserProfile({
+            userId: userData?.id,
+            first_name: userData?.first_name,
+            last_name: userData?.last_name,
+            email_address: userData?.email_address,
+            userType: "user",
+            role: userData?.role || "student",
           });
 
-          if (retryResponse.ok) {
-            const data = await retryResponse.json();
-            const userData = data.user;
-
-            await saveUserProfile({
-              userId: userData?.id,
-              first_name: userData?.first_name,
-              last_name: userData?.last_name,
-              email_address: userData?.email_address,
-              userType: "user",
-              role: userData?.role || "student",
-            });
-
-            setAuthStatus({
-              isExistingUser: true,
-              isProfileComplete: userData?.isProfileComplete || false,
-              requiresProfileCompletion: !userData?.isProfileComplete,
-              isLoading: false,
-              user: userData,
-              organization: undefined,
-            });
-            return true;
-          }
+          setAuthStatus({
+            isExistingUser: true,
+            isProfileComplete: userData?.isProfileComplete || false,
+            requiresProfileCompletion: !userData?.isProfileComplete,
+            isLoading: false,
+            user: userData,
+            organization: undefined,
+          });
+          syncLanguageFromProfile(userData);
+          return true;
         }
+
+        if (response.status === 401) {
+          const refreshed = await refreshToken();
+          if (refreshed) {
+            const retryHeaders = await authHeaders();
+            const retryResponse = await fetch(`${API_URL}/api/user/profile`, {
+              credentials: "include",
+              headers: retryHeaders,
+            });
+
+            if (retryResponse.ok) {
+              const data = await retryResponse.json();
+              const userData = data.user;
+
+              await saveUserProfile({
+                userId: userData?.id,
+                first_name: userData?.first_name,
+                last_name: userData?.last_name,
+                email_address: userData?.email_address,
+                userType: "user",
+                role: userData?.role || "student",
+              });
+
+              setAuthStatus({
+                isExistingUser: true,
+                isProfileComplete: userData?.isProfileComplete || false,
+                requiresProfileCompletion: !userData?.isProfileComplete,
+                isLoading: false,
+                user: userData,
+                organization: undefined,
+              });
+              syncLanguageFromProfile(userData);
+              return true;
+            }
+          }
+
+          // refreshToken() itself already distinguished "server said no"
+          // from "couldn't reach the server" and set authError accordingly.
+          // If it's set, this isn't a confirmed logout — surface the error
+          // instead of falling through to a full sign-out below.
+          if (authErrorRef.current) {
+            setAuthStatus((prev) => ({ ...prev, isLoading: false }));
+            return false;
+          }
+          // Otherwise the refresh was explicitly rejected — genuinely logged out.
+        } else {
+          // Non-401 failure (5xx, etc.) from a server that did answer — not
+          // proof the session is bad, just proof something's wrong right now.
+          setAuthError(
+            "We're having trouble reaching the server. Please try again.",
+          );
+          setAuthStatus((prev) => ({ ...prev, isLoading: false }));
+          return false;
+        }
+      } catch (error) {
+        console.error("Profile check failed:", error);
+        setAuthError(
+          "We couldn't reach the server. Check your connection and try again.",
+        );
+        setAuthStatus((prev) => ({ ...prev, isLoading: false }));
+        return false;
       }
     }
 
     // Organization
     if (userType === "organization") {
+      try {
       const headers = await authHeaders();
       const response = await fetch(`${API_URL}/api/organizations/profile`, {
         credentials: "include",
@@ -401,6 +536,28 @@ export default function AuthProvider({ children }: Props) {
             return true;
           }
         }
+
+        // Same reasoning as the individual branch: only fall through to a
+        // full sign-out when refreshToken() explicitly rejected the
+        // session, not when it merely failed to get an answer.
+        if (authErrorRef.current) {
+          setAuthStatus((prev) => ({ ...prev, isLoading: false }));
+          return false;
+        }
+      } else {
+        setAuthError(
+          "We're having trouble reaching the server. Please try again.",
+        );
+        setAuthStatus((prev) => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      } catch (error) {
+        console.error("Organization profile check failed:", error);
+        setAuthError(
+          "We couldn't reach the server. Check your connection and try again.",
+        );
+        setAuthStatus((prev) => ({ ...prev, isLoading: false }));
+        return false;
       }
     }
 
@@ -415,10 +572,10 @@ export default function AuthProvider({ children }: Props) {
       organization: undefined,
     });
     if (!isPublicRoute()) {
-      router.push("/login");
+      router.push("/auth");
     }
     return false;
-  }, [isPublicRoute, getUserType, router, authHeaders, refreshToken]);
+  }, [isPublicRoute, getUserType, router, authHeaders, refreshToken, syncLanguageFromProfile]);
 
   const checkAuth = React.useCallback(async (): Promise<boolean> => {
     if (isPublicRoute()) {
@@ -544,13 +701,18 @@ export default function AuthProvider({ children }: Props) {
           userWithType.userType,
         );
         console.log("✅ Auth status user:", userWithType);
+
+        // Login responses don't reliably carry language/languageCode, so
+        // rather than guess at their shape, ask the backend directly for
+        // the account's stored language right after a session exists.
+        void refreshFromBackend();
         return true;
       } catch (error) {
         console.error("Login error:", error);
         return false;
       }
     },
-    [],
+    [refreshFromBackend],
   );
   React.useEffect(() => {
     if (isPublicRoute()) {
@@ -604,11 +766,11 @@ export default function AuthProvider({ children }: Props) {
         organization: undefined,
       });
 
-      router.push("/login");
+      router.push("/auth");
     } catch (error) {
       console.error("Logout error:", error);
       await clearAllData();
-      router.push("/login");
+      router.push("/auth");
     }
   }, [router, authHeaders]);
 
@@ -640,6 +802,10 @@ export default function AuthProvider({ children }: Props) {
     logout,
     getDeviceId,
     login,
+    checkPublicSession,
+    authError,
+    clearAuthError,
+    getAuthError,
   };
 
   return (

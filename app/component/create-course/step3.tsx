@@ -9,6 +9,7 @@ import Image from "next/image";
 import Pic from "@/public/images/notfound.png";
 import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   formData: any;
@@ -33,6 +34,7 @@ interface Material {
 }
 
 export default function CourseStep3({ formData, setFormData }: Props) {
+  const { t } = useI18n();
   // Seeded from the wizard's own formData (owned by the parent, which stays
   // mounted across step navigation) rather than persisted to localStorage.
   // A picked document's `documentFile` is a real File object, and File
@@ -47,9 +49,9 @@ export default function CourseStep3({ formData, setFormData }: Props) {
   }, [material])
 
   const materialForm = [
-    { label: "Material title", type: "text", name: "material_title" },
-    { label: "Description", type: "text", name: "material_description" },
-    { label: "Number of pages", type: "number", name: "material_page" },
+    { label: t("Material title"), type: "text", name: "material_title" },
+    { label: t("Description"), type: "text", name: "material_description" },
+    { label: t("Number of pages"), type: "number", name: "material_page" },
   ];
 
   const createMaterial = () => {
@@ -185,23 +187,23 @@ export default function CourseStep3({ formData, setFormData }: Props) {
         <div key="module">
           <div className="flex justify-between items-center">
             <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px]">
-              Material
+              {t("Material")}
             </h1>
             <span
               className="flex items-center gap-2 cursor-pointer"
               onClick={createMaterial}
             >
-              <BsPlus /> Add Material
+              <BsPlus /> {t("Add Material")}
             </span>
           </div>
 
           {material.length === 0 ? (
             <div className="flex justify-center items-center flex-col gap-1">
-              <Image src={Pic} alt="pic" height={100} width={100} />
+              <Image src={Pic} alt={t("pic")} height={100} width={100} />
               <h1 className="text-textSlightDark-0 font-semibold text-[18px]">
-                No Materials Found
+                {t("No Materials Found")}
               </h1>
-              <p className="text-textGrey-0">Create a Material</p>
+              <p className="text-textGrey-0">{t("Create a Material")}</p>
             </div>
           ) : (
             <div>
@@ -212,7 +214,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                       <span className="h-[20px] w-[20px] bg-boldGreen-0 text-white flex justify-center items-center rounded-[2px]">
                         {i + 1}
                       </span>
-                      <h1>Material</h1>
+                      <h1>{t("Material")}</h1>
                       <div
                         className="flex flex-col text-[0.5em] cursor-pointer"
                         onClick={() => handleMaterialShow(mat.id)}
@@ -283,10 +285,10 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                                 className="border-dashed border border-[#D2D5DA] bg-transparent py-[8px] px-[12px] h-[88px] flex flex-col items-center justify-center gap-[3px] cursor-pointer"
                               >
                                 <h1 className="font-[500] text-[14px] text-textSlightDark-0">
-                                  Upload Document
+                                  {t("Upload Document")}
                                 </h1>
                                 <p className="text-textGrey-0 text-[12px]">
-                                  Supports PDF, DOC, DOCX
+                                  {t("Supports PDF, DOC, DOCX")}
                                 </p>
                                 <input
                                   id={`document-${doc.id}`}
@@ -303,7 +305,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                                 <iframe
                                   src={documentUrl}
                                   className="object-cover w-full h-full"
-                                  title="Document preview"
+                                  title={t("Document preview")}
                                 ></iframe>
                                 <div className="flex justify-center items-center gap-2 w-full h-full text-white absolute top-0 left bg-[#0000004D]">
                                   <button
@@ -312,13 +314,13 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                                     }
                                     className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66]"
                                   >
-                                    <MdDelete /> Remove
+                                    <MdDelete /> {t("Remove")}
                                   </button>
                                   <label
                                     htmlFor={`document-replace-${doc.id}`}
                                     className="h-[30px] w-[113px] flex items-center justify-center gap-2 bg-[#FFFFFF66] cursor-pointer"
                                   >
-                                    <IoIosRefresh /> Retake
+                                    <IoIosRefresh /> {t("Retake")}
                                   </label>
                                   <input
                                     id={`document-replace-${doc.id}`}
@@ -336,7 +338,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                               onClick={() => deleteDocument(mat.id, doc.id)}
                               className="form_more bg-[#DA0E290D] text-[#DA0E29] text-[15px] font-[600] w-full flex items-center justify-center gap-2"
                             >
-                              <IoTrashOutline /> Delete
+                              <IoTrashOutline /> {t("Delete")}
                             </button>
                           </div>
                           )
@@ -347,7 +349,7 @@ export default function CourseStep3({ formData, setFormData }: Props) {
                         onClick={() => createDocument(mat.id)}
                         className="h-[48px] dark:bg-shadyColor-0 bg-lightWhite-0 text-primaryColors-0 text-[15px] font-semibold flex justify-center items-center gap-2 w-full"
                       >
-                        <BsPlus /> Add Document
+                        <BsPlus /> {t("Add Document")}
                       </span>
                     </motion.div>
                   )}

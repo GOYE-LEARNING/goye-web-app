@@ -1,11 +1,16 @@
+"use client";
+
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { FaAngleDoubleUp } from "react-icons/fa";
-import { MdOutlineCancel } from "react-icons/md";
+import { FaAngleDoubleUp, FaRegCommentDots } from "react-icons/fa";
+import { MdOutlineCancel, MdNotificationsActive } from "react-icons/md";
 import DashboardTutorStudentDetailsCourse from "./dashboard_tutor_student_details_course";
 import DashboardTutorStudentDetailsGroup from "./dashboard_tutor_student_details_groups";
 import Loader from "./loader";
 import { FaCircleUser } from "react-icons/fa6";
+import MessagesModal from "./MessagesModal";
+import { useModal } from "@/app/context/SimpleModalContext";
+import { useI18n } from "@/app/context/I18nContext";
 interface Props {
   cancel: () => void;
   studentId: string;
@@ -43,6 +48,46 @@ export default function DashboardTutorStudentDetails({
   const [showGroups, setShowGroups] = useState<boolean>(false);
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showMessages, setShowMessages] = useState<boolean>(false);
+  const [isNotifying, setIsNotifying] = useState<boolean>(false);
+  const { showModal } = useModal();
+  const { t } = useI18n();
+
+  const notifyStudent = async () => {
+    if (isNotifying) return;
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    setIsNotifying(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/api/enroll/notify-student/${studentId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({}),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        showModal(
+          t("Couldn't send"),
+          data?.message || t("Failed to notify this student. Please try again."),
+          "error",
+        );
+        return;
+      }
+      showModal(
+        t("Notification sent"),
+        `${studentData?.student?.full_name || t("The student")} ${t("has been reminded to keep learning.")}`,
+        "success",
+      );
+    } catch (error) {
+      console.error("Error notifying student:", error);
+      showModal(t("Error"), t("An unexpected error occurred."), "error");
+    } finally {
+      setIsNotifying(false);
+    }
+  };
 
   const fetchStudentDetails = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -89,14 +134,14 @@ export default function DashboardTutorStudentDetails({
   }, [studentId]);
 
   return (
-    <>
+    <div className="w-full h-full bg-white dark:bg-secondaryColors-0 border border-[#E3E3E833] p-[32px] overflow-y-auto">
       {!isLoading ? (
-        <div className="md:w-[390px] w-full fixed top-0 right-0 h-full bg-white dark:bg-secondaryColors-0 drop-shadow-2xl p-[32px] border border-[#E3E3E833] transition-all duration-300 ease-in-out overflow-y-auto">
+        <>
           <div className="flex justify-between items-center">
-            <h1 className="text-textSlightDark-0 dark:text-white font-bold text-[24px]">
-              Student Details
+            <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-bold text-[24px]">
+              {t("Student Details")}
             </h1>
-            <span onClick={cancel} className="cursor-pointer">
+            <span onClick={cancel} className="cursor-pointer text-lightBoldText-0 dark:text-textSlightDark-0">
               <MdOutlineCancel size={20} className="text-[18px]" />
             </span>
           </div>
@@ -107,22 +152,40 @@ export default function DashboardTutorStudentDetails({
               {studentData?.student?.profile_pic ? (
                 <img
                   src={studentData?.student?.profile_pic}
-                  alt="pic"
+                  alt={t("pic")}
                   className="h-full w-full object-cover"
                 />
               ) : (
                 <FaCircleUser size={40} className="text-gray-400"/>
               )}
             </div>
-            <h1 className="font-semibold text-[22px] text-textSlightDark-0 dark:text-white">
+            <h1 className="font-semibold text-[22px] text-lightBoldText-0 dark:text-textSlightDark-0">
               {studentData?.student?.full_name || "—"}
             </h1>
-            <p className="text-[14px] text-textGrey-0 dark:text-gray-400">
+            <p className="text-[14px] text-textGrey-0">
               {studentData?.student?.email || ""}
             </p>
             <span className="text-[13px] flex items-center gap-2 text-boldGreen-0">
               <FaAngleDoubleUp /> {studentData?.student?.level || "—"}
             </span>
+
+            {/* Communicate with / notify this student */}
+            <div className="flex items-center gap-3 mt-3">
+              <button
+                onClick={() => setShowMessages(true)}
+                className="flex items-center gap-2 text-[13px] font-semibold text-primaryColors-0 border border-primaryColors-0/40 rounded-full px-4 py-[6px] hover:bg-primaryColors-0/10 transition-colors"
+              >
+                <FaRegCommentDots size={14} /> {t("Chat")}
+              </button>
+              <button
+                onClick={notifyStudent}
+                disabled={isNotifying}
+                className="flex items-center gap-2 text-[13px] font-semibold text-primaryColors-0 border border-primaryColors-0/40 rounded-full px-4 py-[6px] hover:bg-primaryColors-0/10 transition-colors disabled:opacity-50"
+              >
+                <MdNotificationsActive size={15} />
+                {isNotifying ? t("Sending…") : t("Notify")}
+              </button>
+            </div>
           </div>
 
           <div className="bg-primaryColors-0 grid grid-cols-2 h-[32px] p-[4px] text-[12px] gap-2">
@@ -133,7 +196,7 @@ export default function DashboardTutorStudentDetails({
               }}
               className={` ${showCourse && "bg-[#ffffff] text-secondaryColors-0 drop-shadow-sm"}`}
             >
-              Courses
+              {t("Courses")}
             </button>
             <button
               onClick={() => {
@@ -142,7 +205,7 @@ export default function DashboardTutorStudentDetails({
               }}
               className={` ${showGroups && "bg-[#ffffff] text-secondaryColors-0 drop-shadow-sm"}`}
             >
-              Group
+              {t("Group")}
             </button>
           </div>
 
@@ -170,9 +233,9 @@ export default function DashboardTutorStudentDetails({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </>
       ) : (
-        <div className="mt-9">
+        <div className="flex justify-center items-center h-full mt-9">
           <Loader
             full_border_color="transparent"
             height={30}
@@ -182,6 +245,21 @@ export default function DashboardTutorStudentDetails({
           />
         </div>
       )}
-    </>
+
+      <MessagesModal
+        isOpen={showMessages}
+        onClose={() => setShowMessages(false)}
+        initialContact={
+          studentData?.student
+            ? {
+                id: studentId,
+                name: studentData.student.full_name,
+                first_name: studentData.student.full_name.split(" ")[0] || studentData.student.full_name,
+                avatar: studentData.student.profile_pic,
+              }
+            : null
+        }
+      />
+    </div>
   );
 }

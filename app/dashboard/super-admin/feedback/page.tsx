@@ -8,6 +8,7 @@ import {
   HiOutlineUserGroup,
   HiOutlineChatAlt2,
 } from "react-icons/hi";
+import { useI18n } from "@/app/context/I18nContext";
 
 type FeedbackType = "COURSE" | "GROUP" | "OTHER";
 
@@ -33,6 +34,7 @@ const FEEDBACK_COLOR: Record<FeedbackType, string> = {
 };
 
 export default function SuperAdminFeedback() {
+  const { t } = useI18n();
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -41,7 +43,7 @@ export default function SuperAdminFeedback() {
     const fetchFeedback = async () => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       if (!API_URL) {
-        setError("API URL not configured");
+        setError(t("API URL not configured"));
         setIsLoading(false);
         return;
       }
@@ -54,7 +56,7 @@ export default function SuperAdminFeedback() {
         const data = await res.json();
 
         if (!res.ok) {
-          setError(data.message || "Failed to load feedback");
+          setError(data.message || t("Failed to load feedback"));
           setIsLoading(false);
           return;
         }
@@ -62,7 +64,7 @@ export default function SuperAdminFeedback() {
         setFeedback(data.data || []);
       } catch (err) {
         console.error("Error fetching feedback:", err);
-        setError("We couldn't reach the server. Please try again.");
+        setError(t("We couldn't reach the server. Please try again."));
       } finally {
         setIsLoading(false);
       }
@@ -73,9 +75,9 @@ export default function SuperAdminFeedback() {
 
   return (
     <div className="w-full">
-      <h1 className="dashboard_h1">User Feedback</h1>
+      <h1 className="dashboard_h1">{t("User Feedback")}</h1>
       <p className="text-textGrey-0 text-[13px] mb-4">
-        Feedback submitted by students, tutors, and organizations across GOYE.
+        {t("Feedback submitted by students, tutors, and organizations across GOYE.")}
       </p>
 
       {isLoading ? (
@@ -90,7 +92,7 @@ export default function SuperAdminFeedback() {
       ) : feedback.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2">
           <HiOutlineChatAlt2 className="text-3xl text-textGrey-0" />
-          <p className="text-textGrey-0 text-sm">No feedback submitted yet</p>
+          <p className="text-textGrey-0 text-sm">{t("No feedback submitted yet")}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-1">
@@ -98,7 +100,7 @@ export default function SuperAdminFeedback() {
             const name =
               `${item.user?.first_name || ""} ${item.user?.last_name || ""}`.trim() ||
               item.user?.email_address ||
-              "Unknown user";
+              t("Unknown user");
             return (
               <div
                 key={item.id}

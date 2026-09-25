@@ -7,6 +7,7 @@ import { OrgSignUp } from "../BodyProvider";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/app/utils/checkLanguages";
+import { useI18n } from "@/app/context/I18nContext";
 
 export default function ChurchInfo({
   hideButton = false,
@@ -16,6 +17,7 @@ export default function ChurchInfo({
   const router = useRouter();
   const { formData, setFormData, isChurchComplete } = OrgSignUp();
   const { translate } = useLanguage();
+  const { t } = useI18n();
   const [logoUrl, setLogoUrl] = useState<string>("");
 
   // Translation states
@@ -253,7 +255,7 @@ export default function ChurchInfo({
                       <div className="relative w-full h-full">
                         <img
                           src={logoUrl}
-                          alt="Church logo"
+                          alt={t("Church logo")}
                           className="w-full h-full object-cover"
                         />
 

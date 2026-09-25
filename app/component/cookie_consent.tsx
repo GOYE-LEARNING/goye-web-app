@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MdCookie } from "react-icons/md";
+import { useI18n } from "@/app/context/I18nContext";
 
 const STORAGE_KEY = "goye_cookie_consent";
 const EXIT_MS = 300;
@@ -22,6 +23,7 @@ export function getCookieChoice(): CookieChoice | null {
 }
 
 export default function CookieConsent() {
+  const { t } = useI18n();
   // Two flags rather than framer's <AnimatePresence>: `mounted` owns whether
   // the node is in the DOM at all, `shown` drives the CSS transition.
   //
@@ -58,7 +60,7 @@ export default function CookieConsent() {
     <div
       role="dialog"
       aria-live="polite"
-      aria-label="Cookie preferences"
+      aria-label={t("Cookie preferences")}
       className="pointer-events-none fixed bottom-0 left-0 right-0 z-[60] p-[16px] md:p-[24px] flex justify-center"
     >
       <div
@@ -74,12 +76,10 @@ export default function CookieConsent() {
           </span>
           <div>
             <h2 className="font-semibold text-[15px] dark:text-white text-lightBoldText-0 mb-[4px]">
-              We use cookies
+              {t("We use cookies")}
             </h2>
             <p className="text-[13px] leading-relaxed dark:text-textSlightDark-0 text-lightBoldText-0/60">
-              Some are essential to keep you signed in and can&apos;t be turned
-              off. The rest help us understand how the platform is used so we can
-              improve it — you can decline those and everything will still work.
+              {t("Some are essential to keep you signed in and can't be turned off. The rest help us understand how the platform is used so we can improve it — you can decline those and everything will still work.")}
             </p>
           </div>
         </div>
@@ -89,13 +89,13 @@ export default function CookieConsent() {
             onClick={() => choose("declined")}
             className="flex-1 md:flex-none px-[20px] h-[42px] rounded-[6px] text-[14px] font-medium border border-[#ccc]/30 dark:border-[#ccc]/20 dark:text-white text-lightBoldText-0 hover:bg-lightSecondaryColor-0 dark:hover:bg-shadyColor-0 transition-colors"
           >
-            Decline
+            {t("Decline")}
           </button>
           <button
             onClick={() => choose("accepted")}
             className="flex-1 md:flex-none px-[20px] h-[42px] rounded-[6px] text-[14px] font-semibold bg-primaryColors-0 text-white hover:opacity-90 transition-opacity"
           >
-            Accept
+            {t("Accept")}
           </button>
         </div>
       </div>

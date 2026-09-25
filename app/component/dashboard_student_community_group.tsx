@@ -13,6 +13,7 @@ import Loader from "./loader";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBuiltInTab } from "../context/BuiltinTabContext";
 import { dispatchAPIError } from "@/app/hook/useAPIErrorHandler";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backToMainPage: () => void;
@@ -52,6 +53,7 @@ export default function StudentCommunityGroup({
   backToMainPage,
   groupId,
 }: Props) {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [group, setGroup] = useState<GroupData | null>(null);
   const [hasJoined, setHasJoined] = useState<boolean>(false);
@@ -64,30 +66,30 @@ export default function StudentCommunityGroup({
   const { openInBuiltTab } = useBuiltInTab();
 
   const formatDate = useCallback((dateString?: string) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return t("N/A");
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "Invalid Date";
+      if (isNaN(date.getTime())) return t("Invalid Date");
       return formatDistanceToNow(date, { addSuffix: true });
     } catch {
-      return "Invalid Date";
+      return t("Invalid Date");
     }
-  }, []);
+  }, [t]);
 
   const formatDate2 = useCallback((dateString?: string) => {
-    if (!dateString) return "TBA";
+    if (!dateString) return t("TBA");
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "TBA";
+      if (isNaN(date.getTime())) return t("TBA");
       return date.toLocaleDateString("en-us", {
         day: "numeric",
         month: "short",
         weekday: "short",
       });
     } catch {
-      return "TBA";
+      return t("TBA");
     }
-  }, []);
+  }, [t]);
 
   const loadEventDetails = useCallback((eventId: string) => {
     setLoadEvents((prev) =>
@@ -114,7 +116,7 @@ export default function StudentCommunityGroup({
         if (res.status === 429) {
           dispatchAPIError({
             status: 429,
-            message: "Too many requests, please slow down.",
+            message: t("Too many requests, please slow down."),
             retryAfter: 5,
             endpoint: "/api/socials/get-groups",
           });
@@ -171,7 +173,7 @@ export default function StudentCommunityGroup({
         if (res.status === 429) {
           dispatchAPIError({
             status: 429,
-            message: "Too many requests, please slow down.",
+            message: t("Too many requests, please slow down."),
             retryAfter: 5,
             endpoint: `/api/socials/join-group/${groupId}`,
           });
@@ -199,7 +201,7 @@ export default function StudentCommunityGroup({
       if (error?.status !== 429) {
         dispatchAPIError({
           status: error?.status || 500,
-          message: error?.message || "Failed to join group",
+          message: error?.message || t("Failed to join group"),
           endpoint: `/api/socials/join-group/${groupId}`,
         });
       }
@@ -224,7 +226,7 @@ export default function StudentCommunityGroup({
         if (res.status === 429) {
           dispatchAPIError({
             status: 429,
-            message: "Too many requests, please slow down.",
+            message: t("Too many requests, please slow down."),
             retryAfter: 5,
             endpoint: `/api/socials/exit-group/${groupId}`,
           });
@@ -252,7 +254,7 @@ export default function StudentCommunityGroup({
       if (error?.status !== 429) {
         dispatchAPIError({
           status: error?.status || 500,
-          message: error?.message || "Failed to exit group",
+          message: error?.message || t("Failed to exit group"),
           endpoint: `/api/socials/exit-group/${groupId}`,
         });
       }
@@ -266,7 +268,7 @@ export default function StudentCommunityGroup({
   const handleOpenEventLink = useCallback(
     (eventLink?: string, eventName?: string) => {
       if (eventLink) {
-        openInBuiltTab(eventLink, eventName || "Event");
+        openInBuiltTab(eventLink, eventName || t("Event"));
       }
     },
     [openInBuiltTab]
@@ -322,20 +324,20 @@ export default function StudentCommunityGroup({
               border_width={3}
             />
             <p className="text-gray-500 dark:text-gray-400 text-sm animate-pulse">
-              Loading group details...
+              {t("Loading group details...")}
             </p>
           </motion.div>
         ) : (
           <motion.div initial="hidden" animate="visible" variants={fadeIn}>
             <div>
               <SubHeader
-                header={group?.group_title || "Group Community"}
+                header={group?.group_title || t("Group Community")}
                 backFunction={backToMainPage}
               />
               <p className="flex items-center gap-5 text-[#71748C] text-[14px]">
                 <span className="flex items-center gap-2">
                   <RiGroupLine />
-                  {group?._count?.member ?? 0} members
+                  {group?._count?.member ?? 0} {t("members")}
                 </span>
                 <span className="flex items-center gap-2">
                   <FaRegClock />
@@ -346,26 +348,26 @@ export default function StudentCommunityGroup({
                 <span className="h-[35px] w-[35px] bg-plainColors-0 rounded-full overflow-hidden">
                   <img
                     src={group?.createdBy?.user_pic || "/default-avatar.png"}
-                    alt="creator_pic"
+                    alt={t("creator_pic")}
                     className="w-full h-full object-cover"
                   />
                 </span>
                 <p className="text-[#71748C] text-[14px] font-[400]">
                   {group?.createdBy?.first_name || group?.createdBy?.last_name
                     ? `${group?.createdBy?.last_name || ""} ${group?.createdBy?.first_name || ""}`
-                    : "Community Admin"}
+                    : t("Community Admin")}
                 </p>
               </div>
               <div className="bg-[#ffffff] dark:bg-secondaryColors-0 p-[24px] drop-shadow-sm">
                 <div className="w-full h-[220px] relative">
                   <img
                     src={group?.group_image || "/default-group-image.png"}
-                    alt="pic_info"
+                    alt={t("pic_info")}
                     className="h-full w-full object-cover rounded"
                   />
                 </div>
                 <p className="text-[14px] text-[#71748C] font-[400] my-4">
-                  {group?.group_description || group?.group_short_description || "No description provided."}
+                  {group?.group_description || group?.group_short_description || t("No description provided.")}
                 </p>
 
                 {!hasJoined ? (
@@ -383,10 +385,10 @@ export default function StudentCommunityGroup({
                           width={20}
                           border_width={2}
                         />
-                        Joining...
+                        {t("Joining...")}
                       </div>
                     ) : (
-                      "+ Join Group"
+                      t("+ Join Group")
                     )}
                   </button>
                 ) : (
@@ -405,11 +407,11 @@ export default function StudentCommunityGroup({
                             width={20}
                             border_width={2}
                           />
-                          Exiting...
+                          {t("Exiting...")}
                         </div>
                       ) : (
                         <>
-                          <MdLogout /> Exit Group
+                          <MdLogout /> {t("Exit Group")}
                         </>
                       )}
                     </button>
@@ -422,7 +424,7 @@ export default function StudentCommunityGroup({
                       0
                     </span>
                     <p className="text-[#71748C] text-[14px] font-[400]">
-                      Posts this Week
+                      {t("Posts this Week")}
                     </p>
                   </div>
                   <div className="flex justify-center items-center flex-col">
@@ -430,7 +432,7 @@ export default function StudentCommunityGroup({
                       {group?._count?.member ?? 0}
                     </span>
                     <p className="text-[#71748C] text-[14px] font-[400]">
-                      Members
+                      {t("Members")}
                     </p>
                   </div>
                   <div className="flex justify-center items-center flex-col">
@@ -438,7 +440,7 @@ export default function StudentCommunityGroup({
                       {group?._count?.event ?? 0}
                     </span>
                     <p className="text-[#71748C] text-[14px] font-[400]">
-                      Upcoming Events
+                      {t("Upcoming Events")}
                     </p>
                   </div>
                 </section>
@@ -454,7 +456,7 @@ export default function StudentCommunityGroup({
                   >
                     <IoMdCalendar size={80} className="text-nearTextColors-0" />
                     <p className="text-[0.9rem] text-textSlightDark-0">
-                      No Events here yet
+                      {t("No Events here yet")}
                     </p>
                   </motion.div>
                 ) : (
@@ -469,10 +471,10 @@ export default function StudentCommunityGroup({
                       >
                         <div className="w-full flex items-center justify-between">
                           <h1 className="text-[14px] font-[600] text-textSlightDark-0">
-                            {e.event_name || "Untitled Event"}
+                            {e.event_name || t("Untitled Event")}
                           </h1>
                           <span className="bg-[#FF6B30] text-[#ffffff] px-[4px] text-[12px] rounded-[2px]">
-                            {e.event_type || "General"}
+                            {e.event_type || t("General")}
                           </span>
                         </div>
                         <p
@@ -491,13 +493,13 @@ export default function StudentCommunityGroup({
                             {formatDate2(e.event_date)}
                           </span>
                           <span className="flex items-center gap-1">
-                            <VideoIcon className="mb-1" /> {e.event_time || "TBA"}
+                            <VideoIcon className="mb-1" /> {e.event_time || t("TBA")}
                           </span>
                         </div>
 
                         {!hasJoined ? (
                           <button className="h-[40px] bg-lightWhite-0 dark:bg-shadyColor-0 dark:text-white text-primaryColors-0 my-3 flex items-center justify-center gap-2 text-[13px] font-[600] cursor-not-allowed opacity-60 w-full">
-                            <p className="mt-1">Event Link</p>
+                            <p className="mt-1">{t("Event Link")}</p>
                             <CiLock />
                           </button>
                         ) : (
@@ -508,7 +510,7 @@ export default function StudentCommunityGroup({
                               }
                               className="h-[40px] bg-lightWhite-0 dark:bg-shadyColor-0 dark:text-white text-primaryColors-0 my-3 flex items-center justify-center gap-2 text-[13px] font-[600] w-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                             >
-                              <p className="mt-1">Event Link</p>
+                              <p className="mt-1">{t("Event Link")}</p>
                               <FaExternalLinkAlt />
                             </button>
                             <button className="h-[40px] w-[40px] bg-primaryColors-0 border border-[#ccc]/20 flex justify-center items-center rounded hover:bg-primaryColors-600 transition-colors flex-shrink-0">

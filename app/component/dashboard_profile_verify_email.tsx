@@ -5,6 +5,7 @@ import { useTimer } from "use-timer";
 import OtpLength from "../component/auth_otp_input";
 import DashboardProfileResetPassword from "./dashboard_profile_reset_password";
 import MessageComponent from "../component/message_component";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   openSignup: () => void;
@@ -19,6 +20,7 @@ export default function DashboardProfileVerifyEmail({
   openCreateNewPassword,
   backFunction,
 }: Props) {
+  const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -49,9 +51,9 @@ export default function DashboardProfileVerifyEmail({
     
     // Check for network connection
     if (!navigator.onLine) {
-      showMessagePopup("No internet connection. Please check your network and try again.", "bad");
+      showMessagePopup(t("No internet connection. Please check your network and try again."), "bad");
     }
-    
+
     return () => {
       // Abort any ongoing requests on unmount
       if (abortControllerRef.current) {
@@ -63,11 +65,11 @@ export default function DashboardProfileVerifyEmail({
   // Listen for online/offline events
   useEffect(() => {
     const handleOnline = () => {
-      showMessagePopup("Internet connection restored!", "good");
+      showMessagePopup(t("Internet connection restored!"), "good");
     };
-    
+
     const handleOffline = () => {
-      showMessagePopup("Internet connection lost. Please check your network.", "bad");
+      showMessagePopup(t("Internet connection lost. Please check your network."), "bad");
     };
     
     window.addEventListener('online', handleOnline);
@@ -103,10 +105,10 @@ export default function DashboardProfileVerifyEmail({
       
       // Check for internet connection
       if (!navigator.onLine) {
-        showMessagePopup("No internet connection. Please check your network and try again.", "bad");
+        showMessagePopup(t("No internet connection. Please check your network and try again."), "bad");
         return;
       }
-      
+
       setIsLoading(true);
       setIsTimeout(false);
       
@@ -117,10 +119,10 @@ export default function DashboardProfileVerifyEmail({
         if (abortControllerRef.current) {
           abortControllerRef.current.abort();
         }
-        showMessagePopup("Request timed out. Please check your internet connection and try again.", "bad");
+        showMessagePopup(t("Request timed out. Please check your internet connection and try again."), "bad");
         setIsLoading(false);
       }, 30000); // 30 second timeout
-      
+
       try {
         const res = await fetch(`${API_URL}/api/user/verify-otp`, {
           method: "POST",
@@ -134,7 +136,7 @@ export default function DashboardProfileVerifyEmail({
         if (!res.ok) {
           const data = await res.json();
           showMessagePopup(
-            data.message || "An error occurred while verifying OTP",
+            data.message || t("An error occurred while verifying OTP"),
             "bad",
           );
           setIsLoading(false);
@@ -146,7 +148,7 @@ export default function DashboardProfileVerifyEmail({
         pause();
         setShowVerificationPage(false);
         setShowPasswordPage(true);
-        showMessagePopup("OTP verified successfully!", "good");
+        showMessagePopup(t("OTP verified successfully!"), "good");
         openCreateNewPassword();
 
         setIsLoading(false);
@@ -156,13 +158,13 @@ export default function DashboardProfileVerifyEmail({
         if (error.name === 'AbortError') {
           // Don't show duplicate message if timeout already handled
           if (!isTimeout) {
-            showMessagePopup("Request took too long. Please check your internet connection and try again.", "bad");
+            showMessagePopup(t("Request took too long. Please check your internet connection and try again."), "bad");
           }
         } else if (error.message === 'Failed to fetch') {
-          showMessagePopup("Network error. Please check your internet connection and try again.", "bad");
+          showMessagePopup(t("Network error. Please check your internet connection and try again."), "bad");
         } else {
           console.log(error);
-          showMessagePopup(error.message || "An error occurred while verifying OTP", "bad");
+          showMessagePopup(error.message || t("An error occurred while verifying OTP"), "bad");
         }
         setIsLoading(false);
       }
@@ -185,12 +187,12 @@ export default function DashboardProfileVerifyEmail({
     const email = localStorage.getItem("otp-email");
     
     if (!email) {
-      showMessagePopup("Email not found. Please try again.", "bad");
+      showMessagePopup(t("Email not found. Please try again."), "bad");
       return;
     }
-    
+
     if (!navigator.onLine) {
-      showMessagePopup("No internet connection. Please check your network and try again.", "bad");
+      showMessagePopup(t("No internet connection. Please check your network and try again."), "bad");
       return;
     }
 
@@ -200,7 +202,7 @@ export default function DashboardProfileVerifyEmail({
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => {
       abortController.abort();
-      showMessagePopup("Request timed out. Please check your internet connection and try again.", "bad");
+      showMessagePopup(t("Request timed out. Please check your internet connection and try again."), "bad");
       setIsLoading(false);
     }, 30000);
     
@@ -218,7 +220,7 @@ export default function DashboardProfileVerifyEmail({
       const data = await res.json();
 
       if (!res.ok) {
-        showMessagePopup(data.message || "Failed to resend OTP", "bad");
+        showMessagePopup(data.message || t("Failed to resend OTP"), "bad");
         setIsLoading(false);
         return;
       }
@@ -226,18 +228,18 @@ export default function DashboardProfileVerifyEmail({
       localStorage.setItem("otp-token", data.sessionToken);
       reset(); // Reset timer
       start(); // Start again
-      showMessagePopup("OTP resent successfully!", "good");
+      showMessagePopup(t("OTP resent successfully!"), "good");
       setIsLoading(false);
     } catch (error: any) {
       clearTimeout(timeoutId);
       
       if (error.name === 'AbortError') {
-        showMessagePopup("Request took too long. Please check your internet connection and try again.", "bad");
+        showMessagePopup(t("Request took too long. Please check your internet connection and try again."), "bad");
       } else if (error.message === 'Failed to fetch') {
-        showMessagePopup("Network error. Please check your internet connection and try again.", "bad");
+        showMessagePopup(t("Network error. Please check your internet connection and try again."), "bad");
       } else {
         console.log(error);
-        showMessagePopup(error.message || "An error occurred while resending OTP", "bad");
+        showMessagePopup(error.message || t("An error occurred while resending OTP"), "bad");
       }
       setIsLoading(false);
     }
@@ -263,7 +265,7 @@ export default function DashboardProfileVerifyEmail({
   // Time display
   const timeDisplay = useMemo(() => {
     if (time === 0) {
-      return <span className="text-red-600">Your OTP has expired. Click "Resend OTP" to get a new code.</span>;
+      return <span className="text-red-600">{t('Your OTP has expired. Click "Resend OTP" to get a new code.')}</span>;
     }
     return <span>{formatTime()}</span>;
   }, [time, formatTime]);
@@ -278,16 +280,15 @@ export default function DashboardProfileVerifyEmail({
       {/* Verification Page */}
       {showVerificationPage && (
         <div className="form_container">
-          <h1 className="form_h1">Verify Email</h1>
+          <h1 className="form_h1">{t("Verify Email")}</h1>
           <p className="form-p">
-            A one-time password has been sent to your email. Please check your
-            inbox and enter the OTP below.
+            {t("A one-time password has been sent to your email. Please check your inbox and enter the OTP below.")}
           </p>
 
           {/* Network status indicator */}
           {!navigator.onLine && (
             <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">⚠️ No internet connection. Please check your network.</p>
+              <p className="text-sm">⚠️ {t("No internet connection. Please check your network.")}</p>
             </div>
           )}
 
@@ -297,7 +298,7 @@ export default function DashboardProfileVerifyEmail({
 
               <div className="text-[15px] w-full flex items-start justify-start flex-col my-4 gap-2">
                 <div className="flex items-center gap-1">
-                  <div className="text-[#71748C]">Resend OTP in:</div>
+                  <div className="text-[#71748C]">{t("Resend OTP in:")}</div>
                   <span className="font-semibold text-primaryColors-0">
                     {timeDisplay}
                   </span>
@@ -306,11 +307,11 @@ export default function DashboardProfileVerifyEmail({
                 {/* Show network tips */}
                 {message && message.includes("timed out") && (
                   <div className="text-sm text-gray-500 mt-2">
-                    <p>💡 Tips:</p>
+                    <p>💡 {t("Tips:")}</p>
                     <ul className="list-disc list-inside ml-2">
-                      <li>Check your internet connection</li>
-                      <li>Try switching between WiFi and mobile data</li>
-                      <li>Refresh the page and try again</li>
+                      <li>{t("Check your internet connection")}</li>
+                      <li>{t("Try switching between WiFi and mobile data")}</li>
+                      <li>{t("Refresh the page and try again")}</li>
                     </ul>
                   </div>
                 )}
@@ -325,12 +326,12 @@ export default function DashboardProfileVerifyEmail({
                 {isLoading ? (
                   <div className="flex items-center gap-2 justify-center">
                     <div className="animate-spin h-[25px] w-[25px] border-4 border-t-white border-r-primaryColors-0 border-b-white border-l-white bg-transparent rounded-full"></div>
-                    <span>Processing...</span>
+                    <span>{t("Processing...")}</span>
                   </div>
                 ) : time === 0 ? (
-                  "Resend OTP"
+                  t("Resend OTP")
                 ) : (
-                  "Enter OTP above"
+                  t("Enter OTP above")
                 )}
               </button>
             </div>

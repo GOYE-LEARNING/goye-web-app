@@ -9,6 +9,7 @@ import Loader from "./loader";
 import { useParams } from "next/navigation";
 import { IoDocumentText } from "react-icons/io5";
 import { saveUserProfile } from "@/app/utils/database/db";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunction: () => void;
@@ -187,6 +188,7 @@ export default function DashboardEditProfile({
 
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { t } = useI18n();
 
   // Check if user is invited_user
   const isInvitedUser = typeFromLocalStorage === "invited_user";
@@ -266,10 +268,10 @@ export default function DashboardEditProfile({
         onProfileUpdate(formData);
       }
 
-      alert("Profile updated successfully!");
+      alert(t("Profile updated successfully!"));
     } catch (error) {
       console.error(error);
-      alert("Failed to update profile. Please try again.");
+      alert(t("Failed to update profile. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -282,7 +284,7 @@ export default function DashboardEditProfile({
 
     if (!organizationId) {
       console.error("Organization ID not found");
-      alert("Organization ID not found");
+      alert(t("Organization ID not found"));
       return;
     }
 
@@ -396,13 +398,13 @@ export default function DashboardEditProfile({
             organization_type,
           });
         }
-        alert("Profile updated successfully!");
+        alert(t("Profile updated successfully!"));
       } else {
-        alert("Organization updated successfully!");
+        alert(t("Organization updated successfully!"));
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile. Please try again.");
+      alert(t("Failed to update profile. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -425,7 +427,7 @@ export default function DashboardEditProfile({
   ) => {
     // Prevent document upload for invited users
     if (isInvitedUser) {
-      alert("You don't have permission to upload documents.");
+      alert(t("You don't have permission to upload documents."));
       return;
     }
 
@@ -492,10 +494,10 @@ export default function DashboardEditProfile({
         }));
       }
 
-      alert("Document uploaded successfully!");
+      alert(t("Document uploaded successfully!"));
     } catch (error) {
       console.error("Error uploading document:", error);
-      alert("Failed to upload document. Please try again.");
+      alert(t("Failed to upload document. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -534,7 +536,7 @@ export default function DashboardEditProfile({
   ) => {
     // Prevent nested changes for invited users
     if (isInvitedUser) {
-      alert("You don't have permission to edit organization data.");
+      alert(t("You don't have permission to edit organization data."));
       return;
     }
 
@@ -830,12 +832,12 @@ export default function DashboardEditProfile({
     return (
       <div className="w-full mb-6">
         <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
-          Organization Information
+          {t("Organization Information")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Organization Name
+              {t("Organization Name")}
             </label>
             <input
               type="text"
@@ -846,87 +848,87 @@ export default function DashboardEditProfile({
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Organization Email
+              {t("Organization Email")}
             </label>
             <input
               type="text"
-              value={formData.organization_email || "N/A"}
+              value={formData.organization_email || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Phone Number
+              {t("Phone Number")}
             </label>
             <input
               type="text"
-              value={formData.organization_phone_number || "N/A"}
+              value={formData.organization_phone_number || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Role
+              {t("Role")}
             </label>
             <input
               type="text"
-              value={formData.organization_role || "N/A"}
+              value={formData.organization_role || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Country
+              {t("Country")}
             </label>
             <input
               type="text"
-              value={formData.organization_country || "N/A"}
+              value={formData.organization_country || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              State
+              {t("State")}
             </label>
             <input
               type="text"
-              value={formData.organization_state || "N/A"}
+              value={formData.organization_state || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Year Established
+              {t("Year Established")}
             </label>
             <input
               type="text"
-              value={formData.organization_year || "N/A"}
+              value={formData.organization_year || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Organization Type
+              {t("Organization Type")}
             </label>
             <input
               type="text"
-              value={formData.organization_type || "N/A"}
+              value={formData.organization_type || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full md:col-span-2 border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Description
+              {t("Description")}
             </label>
             <textarea
-              value={formData.organization_description || "N/A"}
+              value={formData.organization_description || t("N/A")}
               disabled
               rows={3}
               className="w-full resize-none border-none outline-none text-[14px] bg-transparent disabled:opacity-60"
@@ -943,71 +945,71 @@ export default function DashboardEditProfile({
     return (
       <div className="w-full mb-6">
         <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
-          Church Information
+          {t("Church Information")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Ministry Name
+              {t("Ministry Name")}
             </label>
             <input
               type="text"
-              value={formData.Church.church_min_name || "N/A"}
+              value={formData.Church.church_min_name || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Lead Pastor
+              {t("Lead Pastor")}
             </label>
             <input
               type="text"
-              value={formData.Church.church_ld_pastor || "N/A"}
+              value={formData.Church.church_ld_pastor || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Email
+              {t("Email")}
             </label>
             <input
               type="text"
-              value={formData.Church.church_email || "N/A"}
+              value={formData.Church.church_email || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Address
+              {t("Address")}
             </label>
             <input
               type="text"
-              value={formData.Church.church_address || "N/A"}
+              value={formData.Church.church_address || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Weekly Service
+              {t("Weekly Service")}
             </label>
             <input
               type="text"
-              value={formData.Church.church_weekly_service || "N/A"}
+              value={formData.Church.church_weekly_service || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Website
+              {t("Website")}
             </label>
             <input
               type="text"
-              value={formData.Church.church_website || "N/A"}
+              value={formData.Church.church_website || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
@@ -1023,93 +1025,93 @@ export default function DashboardEditProfile({
     return (
       <div className="w-full mb-6">
         <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
-          School Information
+          {t("School Information")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              School Name
+              {t("School Name")}
             </label>
             <input
               type="text"
-              value={formData.school.school_name || "N/A"}
+              value={formData.school.school_name || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              School Type
+              {t("School Type")}
             </label>
             <input
               type="text"
-              value={formData.school.school_type || "N/A"}
+              value={formData.school.school_type || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Email
+              {t("Email")}
             </label>
             <input
               type="text"
-              value={formData.school.school_email || "N/A"}
+              value={formData.school.school_email || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Address
+              {t("Address")}
             </label>
             <input
               type="text"
-              value={formData.school.school_address || "N/A"}
+              value={formData.school.school_address || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Admin Name
+              {t("Admin Name")}
             </label>
             <input
               type="text"
-              value={formData.school.school_admin_name || "N/A"}
+              value={formData.school.school_admin_name || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Website
+              {t("Website")}
             </label>
             <input
               type="text"
-              value={formData.school.school_website || "N/A"}
+              value={formData.school.school_website || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Accreditation Number
+              {t("Accreditation Number")}
             </label>
             <input
               type="text"
-              value={formData.school.school_accreditation_number || "N/A"}
+              value={formData.school.school_accreditation_number || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Role
+              {t("Role")}
             </label>
             <input
               type="text"
-              value={formData.school.school_role || "N/A"}
+              value={formData.school.school_role || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
@@ -1117,7 +1119,7 @@ export default function DashboardEditProfile({
           {formData.school.school_document && (
             <div className="w-full md:col-span-2 border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
               <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-                Document
+                {t("Document")}
               </label>
               <a
                 href={formData.school.school_document}
@@ -1125,7 +1127,7 @@ export default function DashboardEditProfile({
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline text-[14px]"
               >
-                View Document
+                {t("View Document")}
               </a>
             </div>
           )}
@@ -1140,91 +1142,91 @@ export default function DashboardEditProfile({
     return (
       <div className="w-full mb-6">
         <h2 className="text-[16px] font-semibold dark:text-white mb-4">
-          Club Information
+          {t("Club Information")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Club Name
+              {t("Club Name")}
             </label>
             <input
               type="text"
-              value={formData.Club.club_name || "N/A"}
+              value={formData.Club.club_name || t("N/A")}
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none "
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Club Type
+              {t("Club Type")}
             </label>
             <input
               type="text"
-              value={formData.Club.club_type || "N/A"}
+              value={formData.Club.club_type || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Leader Name
+              {t("Leader Name")}
             </label>
             <input
               type="text"
-              value={formData.Club.club_leader_name || "N/A"}
+              value={formData.Club.club_leader_name || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Meeting Frequency
+              {t("Meeting Frequency")}
             </label>
             <input
               type="text"
-              value={formData.Club.club_meeting_frequency || "N/A"}
+              value={formData.Club.club_meeting_frequency || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Social Link
+              {t("Social Link")}
             </label>
             <input
               type="text"
-              value={formData.Club.club_social_link || "N/A"}
+              value={formData.Club.club_social_link || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Parent Organization
+              {t("Parent Organization")}
             </label>
             <input
               type="text"
-              value={formData.Club.club_parent_org || "N/A"}
+              value={formData.Club.club_parent_org || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Role
+              {t("Role")}
             </label>
             <input
               type="text"
-              value={formData.Club.club_role || "N/A"}
+              value={formData.Club.club_role || t("N/A")}
               disabled
               className="w-full bg-transparent text-lightBoldText-0 dark:text-white/80 text-[14px] font-[500] outline-none border-none disabled:opacity-60"
             />
           </div>
           <div className="w-full md:col-span-2 border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
             <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-              Description
+              {t("Description")}
             </label>
             <textarea
-              value={formData.Club.club_description || "N/A"}
+              value={formData.Club.club_description || t("N/A")}
               disabled
               rows={3}
               className="w-full resize-none border-none outline-none text-[14px] bg-transparent disabled:opacity-60"
@@ -1233,7 +1235,7 @@ export default function DashboardEditProfile({
           {formData.Club.club_document && (
             <div className="w-full md:col-span-2 border border-[#ccc]/20 dark:border-[#ccc]/10 py-[8px] px-[12px]">
               <label className="text-lightBoldText-0 dark:text-white text-[12px] block">
-                Document
+                {t("Document")}
               </label>
               <a
                 href={formData.Club.club_document}
@@ -1241,7 +1243,7 @@ export default function DashboardEditProfile({
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline text-[14px]"
               >
-                View Document
+                {t("View Document")}
               </a>
             </div>
           )}
@@ -1259,7 +1261,7 @@ export default function DashboardEditProfile({
             <div className="h-[72px] w-[72px] bg-[#D9D9D9] rounded-full overflow-hidden">
               <img
                 src={profile_pic || "/default-avatar.png"}
-                alt="pic"
+                alt={t("profile picture")}
                 className="h-full w-full object-cover"
               />
             </div>
@@ -1268,9 +1270,8 @@ export default function DashboardEditProfile({
           {isInvitedUser && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-lg my-4">
               <p className="text-blue-700 dark:text-blue-300 text-sm flex items-center gap-2">
-                <span className="font-semibold">👤 Invited User:</span>
-                You can only edit your personal information. Organization data
-                is read-only.
+                <span className="font-semibold">👤 {t("Invited User:")}</span>{" "}
+                {t("You can only edit your personal information. Organization data is read-only.")}
               </p>
             </div>
           )}
@@ -1281,7 +1282,7 @@ export default function DashboardEditProfile({
               {/* Show organization info as read-only with disabled inputs */}
 
               <h2 className="text-[16px] font-semibold text-lightBoldText-0 dark:text-white mb-4">
-                Your Personal Information
+                {t("Your Personal Information")}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1293,7 +1294,7 @@ export default function DashboardEditProfile({
                   >
                     <div className="flex flex-col w-full">
                       <label className="text-lightBoldText-0 dark:text-white text-[12px]">
-                        {form.label}
+                        {t(form.label)}
                       </label>
                       <input
                         type={form.type}
@@ -1391,7 +1392,7 @@ export default function DashboardEditProfile({
                   onClick={backFunc}
                   className="form_more bg-[#ffffff] dark:bg-shadyColor-0 text-lightBoldText-0 dark:text-white border border-[#D9D9D9] dark:border-[#ccc]/10"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -1407,7 +1408,7 @@ export default function DashboardEditProfile({
                       small_border_color="#FFA500"
                     />
                   ) : (
-                    "Save Changes"
+                    t("Save Changes")
                   )}
                 </button>
               </div>
@@ -1426,7 +1427,7 @@ export default function DashboardEditProfile({
                 >
                   <div className="flex flex-col w-full">
                     <label className="text-lightBoldText-0 dark:text-white text-[12px]">
-                      {form.label}
+                      {t(form.label)}
                     </label>
                     <input
                       type={form.type}
@@ -1515,7 +1516,7 @@ export default function DashboardEditProfile({
                   onClick={backFunc}
                   className="form_more bg-[#ffffff] dark:bg-shadyColor-0 text-lightBoldText-0 dark:text-white border border-[#D9D9D9] dark:border-[#ccc]/10"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -1531,7 +1532,7 @@ export default function DashboardEditProfile({
                       small_border_color="#FFA500"
                     />
                   ) : (
-                    "Save Changes"
+                    t("Save Changes")
                   )}
                 </button>
               </div>
@@ -1541,7 +1542,7 @@ export default function DashboardEditProfile({
             <form onSubmit={handleSubmit}>
               <div>
                 <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[20px] md:mb-4 my-3">
-                  Organization Information
+                  {t("Organization Information")}
                 </h1>
                 <div className="md:grid md:grid-cols-2 flex flex-col md:gap-2 gap-3">
                   {orgForms.map((form, i) => (
@@ -1552,7 +1553,7 @@ export default function DashboardEditProfile({
                       {form.name == "organization_description" ? (
                         <div className="flex flex-col w-full">
                           <label className="text-lightBoldText-0 dark:text-white text-[12px]">
-                            {form.label}
+                            {t(form.label)}
                           </label>
                           <textarea
                             onChange={handleChange}
@@ -1565,7 +1566,7 @@ export default function DashboardEditProfile({
                       ) : (
                         <div className="flex flex-col w-full">
                           <label className="text-lightBoldText-0 dark:text-white text-[12px]">
-                            {form.label}
+                            {t(form.label)}
                           </label>
                           <input
                             type={form.type}
@@ -1655,7 +1656,7 @@ export default function DashboardEditProfile({
               <div className="dashboard_hr mt-4"></div>
               <div>
                 <div className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[20px] my-3">
-                  User Information
+                  {t("User Information")}
                 </div>
                 <div className="md:grid md:grid-cols-2 flex flex-col md:gap-2 gap-3">
                   {forms.map((form, i) => (
@@ -1665,7 +1666,7 @@ export default function DashboardEditProfile({
                     >
                       <div className="flex flex-col w-full">
                         <label className="text-lightBoldText-0 dark:text-white text-[12px]">
-                          {form.label}
+                          {t(form.label)}
                         </label>
                         <input
                           type={form.type}
@@ -1757,7 +1758,7 @@ export default function DashboardEditProfile({
               {organization_type == "CHURCH" && (
                 <div>
                   <div className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[20px] my-3">
-                    Church Information
+                    {t("Church Information")}
                   </div>
                   <div className="md:grid md:grid-cols-2 flex flex-col md:gap-2 gap-3">
                     {orgFormChurchType.map((form, i) => (
@@ -1767,7 +1768,7 @@ export default function DashboardEditProfile({
                       >
                         <div className="flex flex-col w-full">
                           <label className="text-lightBoldText-0 dark:text-white text-[12px]">
-                            {form.label}
+                            {t(form.label)}
                           </label>
                           <input
                             type={form.type}
@@ -1796,7 +1797,7 @@ export default function DashboardEditProfile({
               {organization_type == "SCHOOL" && (
                 <div>
                   <div className="text-textSlightDark-0 font-semibold text-[20px] my-3">
-                    School Information
+                    {t("School Information")}
                   </div>
                   <div className="md:grid md:grid-cols-2 flex flex-col md:gap-2 gap-3">
                     {orgFormTypeSchool.map((form, i) => (
@@ -1821,20 +1822,20 @@ export default function DashboardEditProfile({
                                 <div className="text-center">
                                   <IoDocumentText size={40} color="#4F46E5" />
                                   <span className="text-[16px] text-[#4F46E5] block mt-2">
-                                    Document Uploaded
+                                    {t("Document Uploaded")}
                                   </span>
                                   <span className="text-[12px] text-lightBoldText-0 dark:text-white">
-                                    Click to replace
+                                    {t("Click to replace")}
                                   </span>
                                 </div>
                               ) : (
                                 <>
                                   <IoDocumentText size={30} color="#D2D5DA" />
                                   <span className="text-[14px] text-[#D2D5DA] mt-2">
-                                    Click to upload document
+                                    {t("Click to upload document")}
                                   </span>
                                   <span className="text-[12px] text-[#D2D5DA]">
-                                    PDF, DOC, DOCX (Max 5MB)
+                                    {t("PDF, DOC, DOCX (Max 5MB)")}
                                   </span>
                                 </>
                               )}
@@ -1843,7 +1844,7 @@ export default function DashboardEditProfile({
                         ) : (
                           <div className="flex flex-col w-full">
                             <label className="text-lightBoldText-0 dark:text-white text-[12px]">
-                              {form.label}
+                              {t(form.label)}
                             </label>
                             <input
                               type={form.type}
@@ -1871,7 +1872,7 @@ export default function DashboardEditProfile({
               {organization_type == "CLUB" && (
                 <div>
                   <div className="text-textSlightDark-0 font-semibold text-[20px] my-3">
-                    Club Information
+                    {t("Club Information")}
                   </div>
                   <div className="md:grid md:grid-cols-2 flex flex-col md:gap-2 gap-3">
                     {orgFormTypeClub.map((form, i) => (
@@ -1896,20 +1897,20 @@ export default function DashboardEditProfile({
                                 <div className="text-center">
                                   <IoDocumentText size={40} color="#4F46E5" />
                                   <span className="text-[16px] text-[#4F46E5] block mt-2">
-                                    Document Uploaded
+                                    {t("Document Uploaded")}
                                   </span>
                                   <span className="text-[12px] text-lightBoldText-0 dark:text-white">
-                                    Click to replace
+                                    {t("Click to replace")}
                                   </span>
                                 </div>
                               ) : (
                                 <>
                                   <IoDocumentText size={30} color="#D2D5DA" />
                                   <span className="text-[14px] text-[#D2D5DA] mt-2">
-                                    Click to upload document
+                                    {t("Click to upload document")}
                                   </span>
                                   <span className="text-[12px] text-[#D2D5DA]">
-                                    PDF, DOC, DOCX (Max 5MB)
+                                    {t("PDF, DOC, DOCX (Max 5MB)")}
                                   </span>
                                 </>
                               )}
@@ -1918,7 +1919,7 @@ export default function DashboardEditProfile({
                         ) : (
                           <div className="flex flex-col w-full">
                             <label className="text-lightBoldText-0 dark:text-white text-[12px]">
-                              {form.label}
+                              {t(form.label)}
                             </label>
                             <input
                               type={form.type}
@@ -1944,7 +1945,7 @@ export default function DashboardEditProfile({
                   onClick={backFunc}
                   className="form_more bg-[#ffffff] dark:bg-shadyColor-0 text-lightBoldText-0 dark:text-white border border-[#D9D9D9]/20"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -1960,7 +1961,7 @@ export default function DashboardEditProfile({
                       small_border_color="#FFA500"
                     />
                   ) : (
-                    "Save Changes"
+                    t("Save Changes")
                   )}
                 </button>
               </div>

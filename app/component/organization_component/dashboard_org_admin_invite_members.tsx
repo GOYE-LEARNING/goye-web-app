@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import SubHeader from "../dashboard_subheader";
 import { CgChevronDown } from "react-icons/cg";
@@ -10,6 +12,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import Loader from "../loader";
 import { useModal } from "@/app/context/SimpleModalContext";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   backFunction: () => void;
@@ -48,6 +51,7 @@ interface FormData {
 export default function DashboardOrgAdminInviteMembers({
   backFunction,
 }: Props) {
+  const { t } = useI18n();
   const { showModal } = useModal();
   const dropDownRef = useRef<HTMLDivElement | null>(null);
   const [memberData, setMemberData] = useState<MemberData[]>([]);
@@ -138,7 +142,7 @@ export default function DashboardOrgAdminInviteMembers({
       
     } catch (error) {
       console.error("Error fetching users:", error);
-      showModal("Error", "Failed to fetch users", "error");
+      showModal(t("Error"), t("Failed to fetch users"), "error");
     } finally {
       setIsFetching(false);
     }
@@ -161,14 +165,14 @@ export default function DashboardOrgAdminInviteMembers({
 
       const data = await response.json();
       if (response.ok && data.success) {
-        showModal("Success", `New invitation sent to ${email}`, "success");
+        showModal(t("Success"), `${t("New invitation sent to")} ${email}`, "success");
         fetchUsers();
       } else {
-        showModal("Error", data.message || "Failed to resend invitation", "error");
+        showModal(t("Error"), data.message || t("Failed to resend invitation"), "error");
       }
     } catch (error) {
       console.error("Error resending invitation:", error);
-      showModal("Error", "Failed to resend invitation", "error");
+      showModal(t("Error"), t("Failed to resend invitation"), "error");
     } finally {
       setIsResending(null);
     }
@@ -187,13 +191,13 @@ export default function DashboardOrgAdminInviteMembers({
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     if (!formData.email || formData.email.trim() === "") {
-      showModal("Error", "Please enter an email address", "error");
+      showModal(t("Error"), t("Please enter an email address"), "error");
       setIsLoading(false);
       return;
     }
 
     if (!roles || roles === "") {
-      showModal("Error", "Please select a role", "error");
+      showModal(t("Error"), t("Please select a role"), "error");
       setIsLoading(false);
       return;
     }
@@ -222,7 +226,7 @@ export default function DashboardOrgAdminInviteMembers({
       const data = await res.json();
 
       if (!res.ok) {
-        showModal("Error", data.message || "Failed to invite user", "error");
+        showModal(t("Error"), data.message || t("Failed to invite user"), "error");
         setIsLoading(false);
         return;
       }
@@ -232,22 +236,22 @@ export default function DashboardOrgAdminInviteMembers({
         if (data.data?.alreadyMembers && data.data.alreadyMembers.length > 0) {
           const memberEmails = data.data.alreadyMembers.map((m: any) => m.email).join(", ");
           showModal(
-            "Already Members",
-            `The following users are already members: ${memberEmails}`,
+            t("Already Members"),
+            `${t("The following users are already members:")} ${memberEmails}`,
             "info"
           );
         } else if (data.data?.alreadyInvited && data.data.alreadyInvited.length > 0) {
           const invitedEmails = data.data.alreadyInvited.map((m: any) => m.email).join(", ");
           showModal(
-            "Already Invited",
-            `The following users already have active invitations: ${invitedEmails}`,
+            t("Already Invited"),
+            `${t("The following users already have active invitations:")} ${invitedEmails}`,
             "info"
           );
         } else if (data.data?.failed && data.data.failed.length > 0) {
           const failedEmails = data.data.failed.map((m: any) => m.email).join(", ");
           showModal(
-            "Invitation Failed",
-            `Failed to send invitations to: ${failedEmails}`,
+            t("Invitation Failed"),
+            `${t("Failed to send invitations to:")} ${failedEmails}`,
             "error"
           );
         } else {
@@ -255,19 +259,19 @@ export default function DashboardOrgAdminInviteMembers({
           setFormData({ role: "", email: "" });
           setRoles("Member");
           showModal(
-            "Invitation Sent! 🎉",
-            `Successfully invited ${successCount} user(s) to the organization.`,
+            t("Invitation Sent! 🎉"),
+            `${t("Successfully invited")} ${successCount} ${t("user(s) to the organization.")}`,
             "success"
           );
           fetchUsers();
         }
       } else {
-        showModal("Error", data.message || "Failed to invite user", "error");
+        showModal(t("Error"), data.message || t("Failed to invite user"), "error");
       }
-      
+
     } catch (error) {
       console.error("Error details:", error);
-      showModal("Error", "An error occurred while inviting user", "error");
+      showModal(t("Error"), t("An error occurred while inviting user"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -285,7 +289,7 @@ export default function DashboardOrgAdminInviteMembers({
     );
 
     if (validMembers.length === 0) {
-      showModal("Error", "Please add at least one valid email", "error");
+      showModal(t("Error"), t("Please add at least one valid email"), "error");
       setIsMultipleLoading(false);
       return;
     }
@@ -313,7 +317,7 @@ export default function DashboardOrgAdminInviteMembers({
       const data = await res.json();
 
       if (!res.ok) {
-        showModal("Error", data.message || "Failed to invite users", "error");
+        showModal(t("Error"), data.message || t("Failed to invite users"), "error");
         setIsMultipleLoading(false);
         return;
       }
@@ -323,8 +327,8 @@ export default function DashboardOrgAdminInviteMembers({
         if (data.data?.alreadyMembers && data.data.alreadyMembers.length > 0) {
           const memberEmails = data.data.alreadyMembers.map((m: any) => m.email).join(", ");
           showModal(
-            "Already Members",
-            `The following users are already members: ${memberEmails}`,
+            t("Already Members"),
+            `${t("The following users are already members:")} ${memberEmails}`,
             "info"
           );
         }
@@ -332,8 +336,8 @@ export default function DashboardOrgAdminInviteMembers({
         if (data.data?.alreadyInvited && data.data.alreadyInvited.length > 0) {
           const invitedEmails = data.data.alreadyInvited.map((m: any) => m.email).join(", ");
           showModal(
-            "Already Invited",
-            `The following users already have active invitations: ${invitedEmails}`,
+            t("Already Invited"),
+            `${t("The following users already have active invitations:")} ${invitedEmails}`,
             "info"
           );
         }
@@ -341,8 +345,8 @@ export default function DashboardOrgAdminInviteMembers({
         if (data.data?.failed && data.data.failed.length > 0) {
           const failedEmails = data.data.failed.map((m: any) => m.email).join(", ");
           showModal(
-            "Invitation Failed",
-            `Failed to send invitations to: ${failedEmails}`,
+            t("Invitation Failed"),
+            `${t("Failed to send invitations to:")} ${failedEmails}`,
             "error"
           );
         }
@@ -350,29 +354,29 @@ export default function DashboardOrgAdminInviteMembers({
         const successCount = data.data?.successful?.length || 0;
         if (successCount > 0) {
           const successfulEmails = data.data.successful.map((s: any) => s.email);
-          setMemberData((prev) => 
+          setMemberData((prev) =>
             prev.filter((member) => !successfulEmails.includes(member.email))
           );
-          
+
           if (currentMemberCount === successCount) {
             setShowMultipleUsersBox(false);
             setInviteShowMemberSingle(true);
           }
-          
+
           showModal(
-            "Invitation Sent! 🎉",
-            `Successfully invited ${successCount} user(s) to the organization.`,
+            t("Invitation Sent! 🎉"),
+            `${t("Successfully invited")} ${successCount} ${t("user(s) to the organization.")}`,
             "success"
           );
           fetchUsers();
         }
       } else {
-        showModal("Error", data.message || "Failed to invite users", "error");
+        showModal(t("Error"), data.message || t("Failed to invite users"), "error");
       }
-      
+
     } catch (error) {
       console.error("Error details:", error);
-      showModal("Error", "An error occurred while inviting users", "error");
+      showModal(t("Error"), t("An error occurred while inviting users"), "error");
     } finally {
       setIsMultipleLoading(false);
     }
@@ -477,18 +481,17 @@ export default function DashboardOrgAdminInviteMembers({
 
   return (
     <div className="relative">
-      <SubHeader header="Invite Members" backFunction={backFunction} />
+      <SubHeader header={t("Invite Members")} backFunction={backFunction} />
       <div>
         <p className="text-textGrey-0">
-          Easily add new members to your team by entering their email address
-          below. Once invited, they'll receive an email with a link to join.
+          {t("Easily add new members to your team by entering their email address below. Once invited, they'll receive an email with a link to join.")}
         </p>
 
         <form className="mt-5 bg-white dark:bg-secondaryColors-0 py-4 px-6">
           {inviteShowMembersSingle && (
             <div>
               <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0/80 font-semibold">
-                Upload a member
+                {t("Upload a member")}
               </h1>
               <div className="w-full flex justify-between items-center gap-2 my-3 z-20">
                 <input
@@ -497,7 +500,7 @@ export default function DashboardOrgAdminInviteMembers({
                   value={formData.email}
                   onChange={handleChangeSingle}
                   className="w-full h-[40px] px-3 border-none outline-none text-[0.9rem] rounded dark:bg-shadyColor-0 bg-lightWhite-0"
-                  placeholder="Email Address"
+                  placeholder={t("Email Address")}
                   disabled={isLoading}
                 />
                 <div
@@ -510,7 +513,7 @@ export default function DashboardOrgAdminInviteMembers({
                     }`}
                   >
                     <p className="text-nearTextColors-0 text-[0.8rem]">
-                      {roles}
+                      {t(roles)}
                     </p>
                     <CgChevronDown color="#41415a" />
                   </div>
@@ -525,7 +528,7 @@ export default function DashboardOrgAdminInviteMembers({
                           onClick={() => setRoleFunc(r)}
                           className="text-textGrey-0 text-[0.9rem] px-3 py-1 hover:bg-primaryColors-0 hover:text-white transition-all duration-200 cursor-pointer"
                         >
-                          {r}
+                          {t(r)}
                         </div>
                       ))}
                     </div>
@@ -546,7 +549,7 @@ export default function DashboardOrgAdminInviteMembers({
                       small_border_color="transparent"
                     />
                   ) : (
-                    `Add ${roles}`
+                    `${t("Add")} ${t(roles)}`
                   )}
                 </button>
                 <div className="relative justify-center items-center">
@@ -571,7 +574,7 @@ export default function DashboardOrgAdminInviteMembers({
                           setInviteShowMemberSingle(false);
                         }}
                       >
-                        Invite multiple persons
+                        {t("Invite multiple persons")}
                       </p>
                     </div>
                   )}
@@ -592,7 +595,7 @@ export default function DashboardOrgAdminInviteMembers({
                   className="w-full bg-white dark:bg-secondaryColors-0 p-4 top-[50px] drop-shadow-xl rounded left-0 overflow-hidden"
                 >
                   <div className="flex justify-between items-center mb-4">
-                    <h1>Invite Multiple Members</h1>
+                    <h1>{t("Invite Multiple Members")}</h1>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -617,7 +620,7 @@ export default function DashboardOrgAdminInviteMembers({
                             small_border_color="transparent"
                           />
                         ) : (
-                          "Invite All"
+                          t("Invite All")
                         )}
                       </button>
                       <button
@@ -629,7 +632,7 @@ export default function DashboardOrgAdminInviteMembers({
                         }}
                         disabled={isMultipleLoading}
                       >
-                        Go Back
+                        {t("Go Back")}
                       </button>
                     </div>
                   </div>
@@ -638,7 +641,7 @@ export default function DashboardOrgAdminInviteMembers({
                     {memberData.length === 0 ? (
                       <div>
                         <p className="text-textGrey-0 text-center my-3">
-                          No member added here
+                          {t("No member added here")}
                         </p>
                       </div>
                     ) : (
@@ -662,7 +665,7 @@ export default function DashboardOrgAdminInviteMembers({
                                 onChange={(e) =>
                                   handleChange(m.id, e.target.value)
                                 }
-                                placeholder="Enter member email"
+                                placeholder={t("Enter member email")}
                                 className="h-[40px] w-full bg-lightWhite-0 dark:bg-shadyColor-0 border-none outline-none text-[0.8rem] px-3"
                                 disabled={isMultipleLoading}
                               />
@@ -680,7 +683,7 @@ export default function DashboardOrgAdminInviteMembers({
                                   }
                                 >
                                   <p className="text-nearTextColors-0 text-[0.8rem] capitalize">
-                                    {m.role}
+                                    {t(m.role)}
                                   </p>
                                   <CgChevronDown color="#41415a" />
                                 </div>
@@ -698,7 +701,7 @@ export default function DashboardOrgAdminInviteMembers({
                                         }}
                                         className="text-textGrey-0 text-[0.9rem] px-3 py-2 hover:bg-primaryColors-0 hover:text-white transition-all duration-200 cursor-pointer"
                                       >
-                                        {r.role}
+                                        {t(r.role)}
                                       </div>
                                     ))}
                                   </div>
@@ -732,14 +735,14 @@ export default function DashboardOrgAdminInviteMembers({
         {/* People with Access Section */}
         <div className="bg-white dark:bg-secondaryColors-0 py-4 px-6 my-5">
           <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0/80 font-semibold">
-            People with Access ({usersWithAccess.length})
+            {t("People with Access")} ({usersWithAccess.length})
           </h1>
           {isFetching ? (
             <div className="flex justify-center py-8">
               <Loader height={30} width={30} border_width={1} full_border_color="transparent" small_border_color="orange"/>
             </div>
           ) : usersWithAccess.length === 0 ? (
-            <p className="text-textGrey-0 text-center py-4">No users with access yet</p>
+            <p className="text-textGrey-0 text-center py-4">{t("No users with access yet")}</p>
           ) : (
             <div className="flex flex-col items-start justify-start gap-4 w-full">
               {usersWithAccess.map((user) => (
@@ -769,7 +772,7 @@ export default function DashboardOrgAdminInviteMembers({
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="px-3 py-1 text-[0.9rem] border border-nearTextColors-0/20 rounded-full dark:text-textSlightDark-0 text-lightBoldText-0/80 capitalize">
-                      {user.role}
+                      {t(user.role)}
                     </div>
                     <BsThreeDots className="cursor-pointer" />
                   </div>
@@ -782,14 +785,14 @@ export default function DashboardOrgAdminInviteMembers({
         {/* Invited People Section */}
         <div className="bg-white dark:bg-secondaryColors-0 py-4 px-6">
           <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0/80 font-semibold">
-            Invited People ({invitedUsers.length})
+            {t("Invited People")} ({invitedUsers.length})
           </h1>
           {isFetching ? (
             <div className="flex justify-center py-8">
               <Loader height={30} width={30} border_width={1} full_border_color="transparent" small_border_color="orange"/>
             </div>
           ) : invitedUsers.length === 0 ? (
-            <p className="text-textGrey-0 text-center py-4">No pending invitations</p>
+            <p className="text-textGrey-0 text-center py-4">{t("No pending invitations")}</p>
           ) : (
             <div className="flex flex-col items-start justify-start gap-4 w-full">
               {invitedUsers.map((user) => (
@@ -809,14 +812,14 @@ export default function DashboardOrgAdminInviteMembers({
                       </p>
                       {user.expiresIn && (
                         <p className="text-xs text-gray-400">
-                          Expires: {new Date(user.expiresIn).toLocaleDateString()}
+                          {t("Expires:")} {new Date(user.expiresIn).toLocaleDateString()}
                         </p>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="px-3 py-1 text-[0.9rem] border border-nearTextColors-0/20 rounded-full dark:text-textSlightDark-0 text-lightBoldText-0/80 capitalize">
-                      {user.role}
+                      {t(user.role)}
                     </div>
                     <button
                       onClick={() => resendInvitation(user.id, user.email)}
@@ -828,7 +831,7 @@ export default function DashboardOrgAdminInviteMembers({
                       ) : (
                         <MdRefresh className="text-sm" />
                       )}
-                      Resend
+                      {t("Resend")}
                     </button>
                   </div>
                 </div>

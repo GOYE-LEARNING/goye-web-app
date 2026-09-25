@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CgProfile } from "react-icons/cg";
 import DashboardProgressBar from "./dashboard_progress_bar";
 import Loader from "./loader";
+import { useI18n } from "@/app/context/I18nContext";
 
 interface Props {
   openStudent?: (studentId: string) => void;
@@ -23,6 +24,7 @@ interface StudentDetails {
 }
 
 export default function DashboardTutorActive({ openStudent }: Props) {
+  const { t } = useI18n();
   const [studentDetails, setStudentDetails] = useState<StudentDetails[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -86,7 +88,7 @@ export default function DashboardTutorActive({ openStudent }: Props) {
                         {s.profile_picture ? (
                           <img
                             src={s.profile_picture}
-                            alt="pic"
+                            alt={t("pic")}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -94,36 +96,36 @@ export default function DashboardTutorActive({ openStudent }: Props) {
                         )}
                       </div>
                       <div>
-                        <h1 className="text-textSlightDark-0 dark:text-white font-bold text-[14px]">
+                        <h1 className="text-lightBoldText-0 dark:text-textSlightDark-0 font-bold text-[14px]">
                           {s.last_name} {s.first_name}
                         </h1>
-                        <p className="text-[13px] text-textSlightDark-0 dark:text-gray-400">{s.email}</p>
+                        <p className="text-[13px] text-lightBoldText-0/70 dark:text-textSlightDark-0/70">{s.email}</p>
                       </div>
                     </div>
                     <p className="bg-green-500 text-white rounded-[2px] font-[600] text-[12px] px-[8px] py-[4px]">
-                      🟢 ONLINE
+                      🟢 {t("ONLINE")}
                     </p>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <h1 className="font-[600] text-[13px] text-textSlightDark-0 dark:text-gray-300 capitalize">
+                    <h1 className="font-[600] text-[13px] text-lightBoldText-0 dark:text-textSlightDark-0 capitalize">
                       {s.level}
                     </h1>
-                    <p className="text-[13px] text-textGrey-0 dark:text-gray-400">Last Active: Now</p>
+                    <p className="text-[13px] text-textGrey-0">{t("Last Active: Now")}</p>
                   </div>
                   <DashboardProgressBar backgroundColor="#30A46F" width={s.total_in_progress_courses} />
                   <div className="flex justify-around items-center w-full my-2">
-                    <div className="flex flex-col gap-1 items-center text-textSlightDark-0 dark:text-white">
+                    <div className="flex flex-col gap-1 items-center text-lightBoldText-0 dark:text-textSlightDark-0">
                       <h1 className="font-[700] text-[18px]">{s.total_courses_enrolled}</h1>
-                      <p className="text-textGrey-0 dark:text-gray-400 text-[13px]">Enrolled</p>
+                      <p className="text-textGrey-0 text-[13px]">{t("Enrolled")}</p>
                     </div>
-                    <div className="flex flex-col gap-1 items-center text-textSlightDark-0 dark:text-white">
+                    <div className="flex flex-col gap-1 items-center text-lightBoldText-0 dark:text-textSlightDark-0">
                       <h1 className="font-[700] text-[18px]">{s.total_completed_courses}</h1>
-                      <p className="text-textGrey-0 dark:text-gray-400 text-[13px]">Completed</p>
+                      <p className="text-textGrey-0 text-[13px]">{t("Completed")}</p>
                     </div>
-                    <div className="flex flex-col gap-1 items-center text-textSlightDark-0 dark:text-white">
+                    <div className="flex flex-col gap-1 items-center text-lightBoldText-0 dark:text-textSlightDark-0">
                       <h1 className="font-[700] text-[18px]">{s.total_in_progress_courses}%</h1>
-                      <p className="text-textGrey-0 dark:text-gray-400 text-[13px]">Avg Progress</p>
+                      <p className="text-textGrey-0 text-[13px]">{t("Avg Progress")}</p>
                     </div>
                   </div>
                   <div className="dashboard_thick_hr my-5"></div>
@@ -132,7 +134,7 @@ export default function DashboardTutorActive({ openStudent }: Props) {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-textGrey-0 dark:text-gray-400">No active students at the moment</p>
+              <p className="text-textGrey-0 dark:text-gray-400">{t("No active students at the moment")}</p>
             </div>
           )}
         </>

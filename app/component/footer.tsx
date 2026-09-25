@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import {
   FaFacebookF,
@@ -10,8 +12,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import logo from '@/public/images/goye_final_logo.png'
 
 import { useTheme } from "../context/theme_provider";
+import { useI18n } from "@/app/context/I18nContext";
 export default function Footer() {
   const {darkMode} = useTheme()
+  const { t } = useI18n();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -49,7 +53,7 @@ export default function Footer() {
                 variants={itemVariants as any}
                 className="text-[20px] "
               >
-                Learn More
+                {t("Learn More")}
               </motion.h1>
               <div className="flex items-center gap-3 text-[25px]">
                 <motion.span variants={itemVariants as any} className="cursor-pointer transition-colors hover:text-primaryColors-0">
@@ -70,13 +74,13 @@ export default function Footer() {
             <div className="flex md:justify-between text-center md:text-left items-center md:flex-row flex-col">
               <motion.div variants={itemVariants as any}>
                 {" "}
-                <Image src={logo} height={80} width={80} alt="logo" />
+                <Image src={logo} height={80} width={80} alt={t("logo")} />
               </motion.div>
               <motion.p
                 variants={itemVariants as any}
                 className="text-[14px] dark:text-white text-lightBoldText-0"
               >
-                © 2025 Disciple Training School. All Right Reserved
+                © 2025 {t("Disciple Training School. All Right Reserved")}
               </motion.p>
             </div>
           </motion.div>

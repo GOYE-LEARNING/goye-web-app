@@ -4,6 +4,7 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
 import Image, { StaticImageData } from 'next/image';
+import { useI18n } from '@/app/context/I18nContext';
 
 // Import styles
 import 'swiper/css';
@@ -14,6 +15,7 @@ interface ImageSliderProps {
 }
 
 export const ImageSlider = ({ images }: ImageSliderProps) => {
+  const { t } = useI18n();
   return (
     <Swiper
       modules={[Pagination, Autoplay]}
@@ -43,7 +45,7 @@ export const ImageSlider = ({ images }: ImageSliderProps) => {
           <div className="relative w-full h-full flex justify-center items-center gap-5">
             <Image 
               src={image} 
-              alt={`Slide ${index + 1}`}
+              alt={`${t('Slide')} ${index + 1}`}
               fill // Use fill instead of fixed dimensions
       
               style={{ 
