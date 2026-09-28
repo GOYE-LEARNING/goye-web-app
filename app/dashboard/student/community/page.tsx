@@ -157,6 +157,10 @@ export default function StudentCommunity() {
   const [group, setGroup] = useState<GroupData[]>([]);
   const [groupId, setGroupId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMoreGroups, setIsLoadingMoreGroups] = useState(false);
+  const [groupsPage, setGroupsPage] = useState(1);
+  const [groupsHasMore, setGroupsHasMore] = useState(true);
+  const loadMoreGroupsRef = useRef<HTMLDivElement | null>(null);
   const [activeTab, setActiveTab] = useState("live");
   const [showCommunityGroup, setShowCommunityGroup] = useState(false);
   const [showMessagesModal, setShowMessagesModal] = useState(false);
@@ -190,15 +194,22 @@ export default function StudentCommunity() {
     }
   }, [t]);
 
-  const fetchGroups = useCallback(async () => {
+  const fetchGroups = useCallback(async (pageNum: number = 1, append: boolean = false) => {
     if (!API_URL) return;
-    setIsLoading(true);
+    if (append) {
+      setIsLoadingMoreGroups(true);
+    } else {
+      setIsLoading(true);
+    }
 
     try {
-      const res = await fetch(`${API_URL}/api/socials/get-groups`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${API_URL}/api/socials/get-groups?page=${pageNum}&limit=20`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
 
       if (!res.ok) {
         if (res.status === 429) {
@@ -220,13 +231,16 @@ export default function StudentCommunity() {
         : [];
 
       if (isMounted.current) {
-        setGroup(groupsArray);
+        setGroup((prev) => (append ? [...prev, ...groupsArray] : groupsArray));
+        setGroupsPage(pageNum);
+        setGroupsHasMore(!!data?.pagination?.hasMore);
       }
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
       if (isMounted.current) {
         setIsLoading(false);
+        setIsLoadingMoreGroups(false);
       }
     }
   }, [API_URL]);
@@ -312,6 +326,25 @@ export default function StudentCommunity() {
       g.group_title.toLowerCase().includes(searchLower)
     );
   }, [group, search]);
+
+  // Infinite scroll for the groups tab, same sentinel pattern as the feed.
+  useEffect(() => {
+    if (activeTab !== "groups" || !loadMoreGroupsRef.current) return;
+    const node = loadMoreGroupsRef.current;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && groupsHasMore && !isLoadingMoreGroups && !isLoading) {
+          fetchGroups(groupsPage + 1, true);
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, groupsHasMore, isLoadingMoreGroups, isLoading, groupsPage]);
 
   return (
     <AnimatePresence mode="wait">
@@ -445,6 +478,12 @@ export default function StudentCommunity() {
                         formatDate={formatDate}
                       />
                     ))}
+                  </div>
+                )}
+
+                {!isLoading && filteredGroups.length > 0 && (
+                  <div ref={loadMoreGroupsRef} className="flex justify-center py-6">
+                    {isLoadingMoreGroups && <Loader {...getLoaderProps()} />}
                   </div>
                 )}
               </>

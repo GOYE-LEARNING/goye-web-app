@@ -167,7 +167,7 @@ const CourseCard = memo(function CourseCard({
         <div className="w-full min-w-0 flex flex-col gap-2">
           <div className="flex justify-between items-start w-full gap-2">
             <h1 className="text-[13px] sm:text-[14px] font-[700] text-[#41415A] dark:text-white flex-1 min-w-0 line-clamp-2">
-              {t(course.course_title)}
+              {course.course_title}
             </h1>
             <span className="text-[9px] sm:text-[10px] text-[#41415A] bg-[#F1F1F4] dark:bg-gray-700 dark:text-white px-[4px] rounded whitespace-nowrap flex-shrink-0">
               {enrollmentCount} {t("students")}
@@ -175,7 +175,7 @@ const CourseCard = memo(function CourseCard({
           </div>
 
           <p className="text-[#71748C] text-[12px] sm:text-[13px] font-[600] line-clamp-2">
-            {t(course.course_short_description || course.course_description)}
+            {course.course_short_description || course.course_description}
           </p>
 
           {showProgressBar && (

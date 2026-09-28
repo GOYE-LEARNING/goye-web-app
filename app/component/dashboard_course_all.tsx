@@ -1,12 +1,14 @@
 // components/dashboard_course_all.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModal } from "../context/SimpleModalContext";
 import CourseList from "./dashboard_courselist_component";
 import Loader from "./loader";
 import { useI18n } from "@/app/context/I18nContext";
+
+const PAGE_LIMIT = 12;
 
 interface Props {
   openCourse: (id: string) => void;
@@ -20,31 +22,42 @@ export default function DashboardCourseAllProvider({ openCourse, search, isRefre
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
   const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const { showModal } = useModal();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter();
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchCourses = async () => {
+  const fetchCourses = async (pageNum: number = 1, append: boolean = false) => {
     try {
-      setInitialLoading(true);
-      
-      const res = await fetch(`${API_URL}/api/course/get-all-courses-level`, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setInitialLoading(true);
+      }
+
+      const res = await fetch(
+        `${API_URL}/api/course/get-all-courses-level?page=${pageNum}&limit=${PAGE_LIMIT}`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
         },
-      });
-      
+      );
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(data.message || "Failed to fetch courses");
       }
-      
+
       console.log("Courses data:", data);
-      
+
       const coursesData = data.data?.getAllCourses || [];
       
       // Transform the data to match the CourseCard interface
@@ -88,17 +101,23 @@ export default function DashboardCourseAllProvider({ openCourse, search, isRefre
       });
       
       console.log("Transformed courses:", transformedCourses);
-      
-      setCourses(transformedCourses);
-      
-      // Fetch bookmarked IDs
-      await fetchSavedIds();
-      
+
+      setCourses((prev) => (append ? [...prev, ...transformedCourses] : transformedCourses));
+      setPage(pageNum);
+      setHasMore(!!data.data?.hasMore);
+
+      // Bookmarked ids cover every saved course regardless of what's
+      // currently loaded, so this only needs fetching once, not per page.
+      if (!append) {
+        await fetchSavedIds();
+      }
+
     } catch (error) {
       console.error(error);
       showModal(t("Error"), t("Could not load courses"), "error");
     } finally {
       setInitialLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -130,14 +149,34 @@ export default function DashboardCourseAllProvider({ openCourse, search, isRefre
   };
 
   useEffect(() => {
-    fetchCourses();
+    fetchCourses(1, false);
   }, []);
 
   useEffect(() => {
     if (isRefreshing) {
-      fetchCourses();
+      fetchCourses(1, false);
     }
   }, [isRefreshing]);
+
+  // Infinite scroll: fetch the next page when the sentinel below the grid
+  // scrolls into view, the same pattern the community feed uses.
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const node = loadMoreRef.current;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !initialLoading) {
+          fetchCourses(page + 1, true);
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, isLoadingMore, initialLoading, page]);
 
   const toggleBookmark = async (id: string) => {
     try {
@@ -183,14 +222,30 @@ export default function DashboardCourseAllProvider({ openCourse, search, isRefre
   );
 
   return (
-    <CourseList
-      courses={filteredCourses}
-      bookmarkedIds={bookmarkedIds}
-      onBookmarkToggle={toggleBookmark}
-      onViewCourse={handleViewCourse}
-      loadingCourseId={loadingCourseId}
-      isLoading={initialLoading || isRefreshing}
-      emptyMessage={t("No courses found")}
-    />
+    <>
+      <CourseList
+        courses={filteredCourses}
+        bookmarkedIds={bookmarkedIds}
+        onBookmarkToggle={toggleBookmark}
+        onViewCourse={handleViewCourse}
+        loadingCourseId={loadingCourseId}
+        isLoading={initialLoading || isRefreshing}
+        emptyMessage={t("No courses found")}
+      />
+
+      {!initialLoading && courses.length > 0 && (
+        <div ref={loadMoreRef} className="flex justify-center py-6">
+          {isLoadingMore && (
+            <Loader
+              height={28}
+              width={28}
+              border_width={3}
+              full_border_color="transparent"
+              small_border_color="#30A46F"
+            />
+          )}
+        </div>
+      )}
+    </>
   );
 }

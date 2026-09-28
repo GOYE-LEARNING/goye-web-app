@@ -7,7 +7,7 @@ import { IoChevronDown, IoLanguage } from "react-icons/io5";
 import { MdNotifications, MdOutlineFeedback } from "react-icons/md";
 import DashboardNotification from "./dashboard_notification";
 import FeedbackModal from "./feedback_modal";
-import { FaBell } from "react-icons/fa";
+import { FaBell, FaSync } from "react-icons/fa";
 import { HiUserCircle } from "react-icons/hi";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../context/theme_provider";
@@ -120,6 +120,16 @@ export default function DashboardHeader() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [getHours, setGetHours] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // A page-agnostic "reload this page" affordance — every dashboard page
+  // renders this header, but each one fetches its own data in its own way,
+  // so there's no single refetch function to call generically. A full
+  // reload is the one thing guaranteed to work the same everywhere.
+  const handleRefreshPage = () => {
+    setIsRefreshing(true);
+    window.location.reload();
+  };
 
   // ✅ Auth state
   const [authUser, setAuthUser] = useState<any>(null);
@@ -406,6 +416,16 @@ export default function DashboardHeader() {
           <ToogleDarkMode toogleDarkMode={() => setDarkMode(!darkMode)} />
 
           <button
+            onClick={handleRefreshPage}
+            disabled={isRefreshing}
+            title={t("Refresh page")}
+            aria-label={t("Refresh page")}
+            className="text-gray-700 dark:text-gray-200 hover:text-primaryColors-0 transition-colors disabled:opacity-50"
+          >
+            <FaSync size={18} className={isRefreshing ? "animate-spin" : ""} />
+          </button>
+
+          <button
             onClick={openLanguageSelector}
             title="Change language"
             aria-label="Change language"
@@ -533,6 +553,16 @@ export default function DashboardHeader() {
               className="text-gray-700 dark:text-white hover:text-primaryColors-0 dark:hover:text-gray-200 transition-colors"
             >
               {darkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
+            </button>
+
+            <button
+              onClick={handleRefreshPage}
+              disabled={isRefreshing}
+              title={t("Refresh page")}
+              aria-label={t("Refresh page")}
+              className="text-gray-700 dark:text-white hover:text-primaryColors-0 dark:hover:text-gray-200 transition-colors disabled:opacity-50"
+            >
+              <FaSync size={16} className={isRefreshing ? "animate-spin" : ""} />
             </button>
 
             <button

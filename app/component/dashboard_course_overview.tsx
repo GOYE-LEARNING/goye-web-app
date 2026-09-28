@@ -11,6 +11,9 @@ import Loader from "./loader";
 import { BiLogOut } from "react-icons/bi";
 import { useModal } from "../context/SimpleModalContext";
 import { useI18n } from "@/app/context/I18nContext";
+import { translateBatch } from "@/app/utils/translator";
+import { MdTranslate } from "react-icons/md";
+import { FaSpinner } from "react-icons/fa";
 
 interface Props {
   removeFunc: () => void;
@@ -61,7 +64,7 @@ export default function DashboardCourseOverView({
   setCheckIfEnrolled,
 }: Props) {
   const { showModal } = useModal();
-  const { t } = useI18n();
+  const { t, locale, hasLanguage } = useI18n();
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [course, setCourse] = useState<boolean>(true);
   const [coursesPlace, setCoursesPlace] = useState<boolean>(true);
@@ -72,6 +75,20 @@ export default function DashboardCourseOverView({
   const [exitIsLoading, setExitIsLoading] = useState<boolean>(false);
   const [courseDetails, setCourseDetails] = useState<Course | null>(null);
   const [checkEnroll, setCheckEnroll] = useState<boolean | null>(null);
+
+  // A tutor's course content is their own authored text, often in whatever
+  // language they wrote it in — translating it unconditionally on every load
+  // (the way UI labels are translated via t()) is wasteful and sometimes
+  // wrong. This is an explicit, opt-in "Translate this course" toggle
+  // instead, translating description/objectives/module titles together in
+  // one batch and caching the result so toggling back and forth is instant.
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translated, setTranslated] = useState<{
+    description: string;
+    objectives: string[][];
+    moduleTitles: string[];
+  } | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const isMounted = useRef<boolean>(true);
@@ -257,6 +274,8 @@ export default function DashboardCourseOverView({
       console.log("Fetched course details Innit:", data);
       if (isMounted.current) {
         setCourseDetails(data.data);
+        setTranslated(null);
+        setShowTranslation(false);
       }
     } catch (error) {
       console.error("Error fetching course:", error);
@@ -294,6 +313,57 @@ export default function DashboardCourseOverView({
     }
   }, [activeIndex]);
 
+  const handleToggleTranslation = async () => {
+    if (showTranslation) {
+      setShowTranslation(false);
+      return;
+    }
+    if (translated !== null) {
+      setShowTranslation(true);
+      return;
+    }
+    if (!courseDetails) return;
+
+    setIsTranslating(true);
+    try {
+      const objectives = courseDetails.objectives ?? [];
+      const modules = courseDetails.module ?? [];
+
+      // One batch request for everything on the page, in a fixed order, so
+      // the flat translated array can be sliced back into the same shape.
+      const texts = [
+        courseDetails.course_description || "",
+        ...objectives.flatMap((obj) => [
+          obj.objective_title1,
+          obj.objective_title2,
+          obj.objective_title3,
+          obj.objective_title4,
+          obj.objective_title5,
+        ]),
+        ...modules.map((m) => m.module_title),
+      ];
+
+      const results = await translateBatch(texts, locale);
+
+      let cursor = 1;
+      const translatedObjectives = objectives.map(() => {
+        const chunk = results.slice(cursor, cursor + 5);
+        cursor += 5;
+        return chunk;
+      });
+      const translatedModuleTitles = results.slice(cursor, cursor + modules.length);
+
+      setTranslated({
+        description: results[0] ?? courseDetails.course_description,
+        objectives: translatedObjectives,
+        moduleTitles: translatedModuleTitles,
+      });
+      setShowTranslation(true);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="mt-10 flex justify-center">
@@ -314,7 +384,11 @@ export default function DashboardCourseOverView({
         <div>
           <div className="cr_box">
             <div className="cr_p font-semibold">
-              <div>{t(courseDetails?.course_description || "")}</div>
+              <div>
+                {showTranslation && translated
+                  ? translated.description
+                  : courseDetails?.course_description || ""}
+              </div>
             </div>
 
             <p className="cr_p flex items-center gap-4 my-5">
@@ -326,6 +400,25 @@ export default function DashboardCourseOverView({
                 <GoPeople />
                 {courseDetails?.enrollment?.length || 0}
               </span>
+              {hasLanguage && locale !== "en" && (
+                <button
+                  onClick={handleToggleTranslation}
+                  disabled={isTranslating}
+                  className="flex items-center gap-1.5 text-primaryColors-0 hover:underline disabled:opacity-60"
+                >
+                  {isTranslating ? (
+                    <>
+                      <FaSpinner className="animate-spin" size={12} />
+                      {t("Translating...")}
+                    </>
+                  ) : (
+                    <>
+                      <MdTranslate size={14} />
+                      {showTranslation ? t("See original") : t("Translate course")}
+                    </>
+                  )}
+                </button>
+              )}
             </p>
 
             <div className="h-[1px] w-full bg-[#ccc]/10"></div>
@@ -336,15 +429,25 @@ export default function DashboardCourseOverView({
               </h1>
               <ul className="pl-[24px] flex flex-col gap-1">
                 <div>
-                  {courseDetails?.objectives?.map((obj, i) => (
-                    <div key={i}>
-                      <li className="cr_list">{obj.objective_title1}</li>
-                      <li className="cr_list">{obj.objective_title2}</li>
-                      <li className="cr_list">{obj.objective_title3}</li>
-                      <li className="cr_list">{obj.objective_title4}</li>
-                      <li className="cr_list">{obj.objective_title5}</li>
-                    </div>
-                  ))}
+                  {courseDetails?.objectives?.map((obj, i) => {
+                    const shown =
+                      showTranslation && translated
+                        ? translated.objectives[i]
+                        : [
+                            obj.objective_title1,
+                            obj.objective_title2,
+                            obj.objective_title3,
+                            obj.objective_title4,
+                            obj.objective_title5,
+                          ];
+                    return (
+                      <div key={i}>
+                        {shown.map((title, j) => (
+                          <li className="cr_list" key={j}>{title}</li>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </ul>
             </ol>
@@ -419,7 +522,9 @@ export default function DashboardCourseOverView({
                           toggleAccordion(i);
                         }}
                       >
-                        <p className="font-[600] capitalize">{data.module_title}</p>
+                        <p className="font-[600] capitalize">
+                          {showTranslation && translated ? translated.moduleTitles[i] : data.module_title}
+                        </p>
                         <span className="text-[1.3rem]">
                           <div
                             className={`${activeIndex === i ? "rotate-90" : ""} transition-transform duration-200`}

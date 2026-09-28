@@ -30,13 +30,13 @@ const languages: LanguageOption[] = [
   { name: "Dutch", code: "nl", nativeName: "Nederlands", flag: "🇳🇱" },
   {
     name: "Chinese (Simplified)",
-    code: "zh_CN",
+    code: "zh-CN",
     nativeName: "简体中文",
     flag: "🇨🇳",
   },
   {
     name: "Chinese (Traditional)",
-    code: "zh_TW",
+    code: "zh-TW",
     nativeName: "繁體中文",
     flag: "🇹🇼",
   },
@@ -58,6 +58,7 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
     useState<LanguageOption | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   // Set initial selected language
   useEffect(() => {
@@ -86,18 +87,26 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
 
     setIsSaving(true);
     setSaveSuccess(false);
+    setSaveError(false);
 
     try {
-      // Save language
-      saveLanguage(selectedLanguage.name, selectedLanguage.code);
+      const persisted = await saveLanguage(selectedLanguage.name, selectedLanguage.code);
 
-      // Show success   
-      setSaveSuccess(true);
-      setTimeout(() => {
-        setSaveSuccess(false);
-      }, 3000);
+      if (persisted) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        // The in-memory locale still switched (setLanguage ran either way),
+        // but the account-level preference didn't reach the backend — a
+        // reload or a different device would fall back to whatever's there
+        // instead of this pick, so say so instead of a false "saved".
+        setSaveError(true);
+        setTimeout(() => setSaveError(false), 5000);
+      }
     } catch (error) {
       console.error("Failed to save language:", error);
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 5000);
     } finally {
       setIsSaving(false);
     }
@@ -185,10 +194,10 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
               disabled={
                 !selectedLanguage ||
                 isSaving ||
-                selectedLanguage?.code === languageCode
+                (selectedLanguage?.code === languageCode && !saveError)
               }
               className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 ${
-                !selectedLanguage || selectedLanguage?.code === languageCode
+                !selectedLanguage || (selectedLanguage?.code === languageCode && !saveError)
                   ? "bg-[#252830] text-[#9CA3B0] cursor-not-allowed"
                   : "bg-orange-500 text-[#121318] hover:bg-orange-400 hover:scale-[1.02] active:scale-[0.98]"
               }`}
@@ -198,7 +207,7 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-[#121318] border-t-transparent"></span>
                   {t("Saving...")}
                 </span>
-              ) : selectedLanguage?.code === languageCode ? (
+              ) : selectedLanguage?.code === languageCode && !saveError ? (
                 t("Current Language Selected")
               ) : (
                 `${t("Save")} ${selectedLanguage ? t(selectedLanguage.name) : t("Language")}`
@@ -215,6 +224,20 @@ export default function DashboardChangeLanguage({ backFunction }: Props) {
                   className="text-center text-green-400 text-sm"
                 >
                   ✅ {t("Language saved successfully!")}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Error Message */}
+            <AnimatePresence>
+              {saveError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-center text-red-400 text-sm"
+                >
+                  ⚠️ {t("Applied for this session, but couldn't save to your account. Check your connection and try again.")}
                 </motion.div>
               )}
             </AnimatePresence>

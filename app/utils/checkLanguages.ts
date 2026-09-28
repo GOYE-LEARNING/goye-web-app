@@ -13,20 +13,25 @@ export function useLanguage() {
 
   // Update the in-memory language immediately, and — when a session exists —
   // persist it to the backend so it follows the account to other devices.
-  // Logged out or offline, the PUT is silently ignored and the choice still
-  // applies for the rest of this session via context state.
-  const saveLanguage = useCallback((language: string, languageCode: string) => {
+  // Logged out or offline, the PUT fails and the choice still applies for
+  // the rest of this session via context state — but the caller gets a real
+  // answer instead of an assumed success, so a UI that wants to tell the
+  // person "this didn't save" (as opposed to always claiming success) can.
+  const saveLanguage = useCallback(async (language: string, languageCode: string): Promise<boolean> => {
     setLanguage(language, languageCode);
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    fetch(`${API_URL}/api/user/update-user`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ language, languageCode }),
-    }).catch(() => {
-      /* not logged in, or offline — context state still holds it for this session */
-    });
+    try {
+      const res = await fetch(`${API_URL}/api/user/update-user`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ language, languageCode }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   }, [setLanguage]);
 
   const clearLanguage = useCallback(() => {

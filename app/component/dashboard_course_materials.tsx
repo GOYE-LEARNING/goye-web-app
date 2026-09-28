@@ -51,11 +51,24 @@ function getViewablePDFUrl(url: string): string | null {
   return `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`;
 }
 
-// Helper to get download URL (forces attachment)
-function getDownloadUrl(url: string): string {
+// Helper to get download URL (forces attachment, named after the material)
+//
+// The <a download="..."> attribute below only works for same-origin URLs —
+// browsers ignore it for a cross-origin host like Cloudinary and save
+// whatever filename the server's own Content-Disposition header specifies
+// instead, which for a bare `fl_attachment=1` is Cloudinary's internal
+// public_id (an opaque generated string, not the material's name). Passing
+// the desired name directly in the flag (`fl_attachment=<name>`) makes
+// Cloudinary itself set that filename, which the browser does respect.
+function getDownloadUrl(url: string, desiredFileName?: string): string {
   if (url.includes('cloudinary.com')) {
     const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}fl_attachment=1`;
+    const safeName = desiredFileName
+      ?.replace(/\.[^./]+$/, "") // Cloudinary appends the original extension itself
+      .replace(/[^\w.\- ]/g, "")
+      .trim();
+    const attachment = safeName ? `fl_attachment=${encodeURIComponent(safeName)}` : 'fl_attachment=1';
+    return `${url}${separator}${attachment}`;
   }
   return url;
 }
@@ -212,7 +225,7 @@ export default function DashboardCourseMaterials({ courseId }: Props) {
   const handleDownloadPDF = (pdfUrl: string, fileName: string) => {
     setDownloading(fileName);
     try {
-      const downloadUrl = getDownloadUrl(pdfUrl);
+      const downloadUrl = getDownloadUrl(pdfUrl, fileName);
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = fileName;
