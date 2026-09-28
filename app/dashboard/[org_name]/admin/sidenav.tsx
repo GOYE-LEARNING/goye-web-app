@@ -2,6 +2,7 @@
 
 import SidenavComponent from "@/app/component/sidenav_component";
 import Image from "next/image";
+import Link from "next/link";
 import logo from "@/public/images/goye_final_logo.png";
 import {
   MdGroups,
@@ -17,6 +18,7 @@ import { useParams, usePathname } from "next/navigation";
 import { LuPanelLeftClose, LuPanelRightClose } from "react-icons/lu";
 import React, { useState } from "react";
 import { useI18n } from "@/app/context/I18nContext";
+import { useAuthContext } from "@/app/context/AuthContext";
 interface Props {
   setIsCollapsedState: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -25,25 +27,11 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
   const params = useParams<{ org_name: string }>();
   const { org_name } = params;
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
-  const logout = async () => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    try {
-      const res = await fetch(`${API_URL}`, {
-        method: "POST",
-        credentials: "include",
-      });
+  // Was posting to the API root with no path at all — never actually hit
+  // the logout endpoint, never cleared the session. Same broken pattern
+  // already fixed in the other sidenavs; this one had been missed.
+  const { logout } = useAuthContext();
 
-      if (!res.ok) {
-        return;
-      }
-
-      await res.json();     
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  
   const pathname = usePathname();
   
   const toggleSidebar = () => {
@@ -56,13 +44,15 @@ export default function OrgAdminSidenav({setIsCollapsedState}: Props) {
       <div className={`sidenav ${isCollapsed ? 'collapsed w-[5%]' : 'md:w-[20%]'}`}>
         <div className={`w-full flex ${isCollapsed ? 'justify-center' : 'justify-between'} items-center`}>
           <div className={`${isCollapsed ? 'hidden' : 'block'}`}>
-            <Image
-              src={logo}
-              alt={t("logo")}
-              height={100}
-              width={100}
-              className="md:block hidden"
-            />
+            <Link href={`/dashboard/${org_name}/admin`}>
+              <Image
+                src={logo}
+                alt={t("logo")}
+                height={100}
+                width={100}
+                className="md:block hidden cursor-pointer"
+              />
+            </Link>
           </div>
           <span 
             className="text-[#ccc] md:block hidden cursor-pointer hover:text-white transition-colors"

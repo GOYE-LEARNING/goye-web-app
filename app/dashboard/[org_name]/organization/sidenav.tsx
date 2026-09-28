@@ -2,6 +2,7 @@
 
 import SidenavComponent from "@/app/component/sidenav_component";
 import Image from "next/image";
+import Link from "next/link";
 import logo from "@/public/images/goye_final_logo.png";
 import {
   MdGroup,
@@ -47,13 +48,15 @@ export default function OrgSidenav({ setIsCollapsedState }: Props) {
       <div className={`sidenav ${isCollapsed ? "collapsed w-[5%]" : "md:w-[20%]"}`}>
         <div className={`w-full flex ${isCollapsed ? "justify-center" : "justify-between"} items-center`}>
           <div className={`${isCollapsed ? "hidden" : "block"}`}>
-            <Image
-              src={logo}
-              alt={t("logo")}
-              height={100}
-              width={100}
-              className="md:block hidden"
-            />
+            <Link href={`/dashboard/${org_name}/organization`}>
+              <Image
+                src={logo}
+                alt={t("logo")}
+                height={100}
+                width={100}
+                className="md:block hidden cursor-pointer"
+              />
+            </Link>
           </div>
           <span
             className="text-[#ccc] md:block hidden cursor-pointer hover:text-white transition-colors"
