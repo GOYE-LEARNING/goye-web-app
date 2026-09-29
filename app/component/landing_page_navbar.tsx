@@ -139,7 +139,7 @@ export default function LandingPageNavBar() {
       <motion.div
         variants={containerVariants}
         initial="hidden"
-        whileInView="visible"
+        animate="visible"
         className={`fixed top-0 left-0 w-full py-[16px] px-[24px] md:py-[18px] md:px-[48px] gap-6 flex justify-between items-center z-40 transition-all duration-300 ${
           scrolled
             ? "backdrop-blur-md dark:bg-secondaryColors-0/70 bg-white/70 drop-shadow-sm"

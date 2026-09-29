@@ -27,6 +27,7 @@ export default function DashboardNotification({
   const [showFullMessage, setShowFullMessage] = useState<string[]>([]);
   const [isMarkingSpecific, setIsMarkingSpecific] = useState<string | null>(null);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   
   // Local state to prevent blinking
@@ -169,6 +170,7 @@ export default function DashboardNotification({
 
   const deleteAllNotifications = async () => {
     if (!confirm(t("Are you sure you want to delete all notifications?"))) return;
+    setIsDeletingAll(true);
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       if (!API_URL) {
@@ -187,6 +189,8 @@ export default function DashboardNotification({
       }
     } catch (error) {
       console.error('Error clearing notifications:', error);
+    } finally {
+      setIsDeletingAll(false);
     }
   };
 
@@ -343,6 +347,25 @@ export default function DashboardNotification({
             )}
 
             <span>{t("Mark All Read")}</span>
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteAllNotifications();
+            }}
+            disabled={isDeletingAll || localNotifications.length === 0}
+            title={t("Clear All")}
+            aria-label={t("Clear all notifications")}
+            className="h-[36px] py-[17px] px-[10px] border border-[#D9D9D9]/10 flex justify-center items-center text-red-500 text-[13px] gap-2 hover:bg-red-500/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
+          >
+            {isDeletingAll ? (
+              <FaSpinner className="animate-spin" size={14} />
+            ) : (
+              <FaTrash size={14} />
+            )}
+
+            <span className="hidden md:inline">{t("Clear All")}</span>
           </button>
         </div>
       </div>

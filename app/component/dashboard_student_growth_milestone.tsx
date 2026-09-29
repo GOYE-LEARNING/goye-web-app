@@ -172,7 +172,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
                   <span className="text-xs font-semibold text-primaryColors-0">
                     {growthData.user.xpForCurrentLevel > 0 ? (
                       <>
-                        {growthData.user.totalXP} /{" "}
+                        {growthData.user.currentLevelXP} /{" "}
                         {growthData.user.xpForCurrentLevel} XP
                       </>
                     ) : (
