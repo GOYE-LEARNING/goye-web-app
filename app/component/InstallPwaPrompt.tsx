@@ -95,18 +95,22 @@ export default function InstallPwaPrompt({
     : t("Open your browser menu and choose Install App / Add to Home Screen");
 
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
-      <div className="flex items-center gap-2 rounded-full border border-primaryColors-0/30 bg-primaryColors-0/10 px-3 py-1.5 text-[13px] text-primaryColors-0">
-        <MdInstallMobile size={18} />
-        <button onClick={install} className="font-medium">
+    // inline-flex (not flex) so this sizes to its content — a plain `flex`
+    // block defaults to filling 100% of whatever it's dropped into (here,
+    // the hero section's whole text column), which stretched the rounded
+    // pill below into one long bar instead of a normal-sized button.
+    <div className={`inline-flex flex-col gap-1 max-w-full ${className}`}>
+      <div className="inline-flex items-center gap-2 rounded-full border border-primaryColors-0/30 bg-primaryColors-0/10 px-3 py-1.5 text-[13px] text-primaryColors-0">
+        <MdInstallMobile size={18} className="shrink-0" />
+        <button onClick={install} className="font-medium whitespace-nowrap">
           {t("Install App")}
         </button>
-        <button onClick={dismiss} aria-label={t("Dismiss")}>
+        <button onClick={dismiss} aria-label={t("Dismiss")} className="shrink-0">
           <MdClose size={16} />
         </button>
       </div>
       {showManualHint && !deferredPrompt && (
-        <span className="px-3 text-[12px] text-gray-500 dark:text-gray-400">
+        <span className="px-3 max-w-[260px] text-[12px] text-gray-500 dark:text-gray-400">
           {manualInstructions}
         </span>
       )}
