@@ -273,14 +273,18 @@ export default function DashboardNotification({
         </div>
       </div>
 
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-5">
+      {/* flex-wrap so the action buttons drop to their own row instead of
+          overflowing off-screen on narrow viewports — with three action
+          buttons plus two tabs, a single non-wrapping row no longer fits
+          under ~400px wide. */}
+      <div className="flex flex-wrap justify-between items-center gap-y-2">
+        <div className="flex items-center gap-2 md:gap-5">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setActiveTab("all");
             }}
-            className={`dark:bg-secondaryColors-0 bg-lightWhite-0 p-[10px] flex gap-3 items-center justify-center transition-all rounded-lg ${
+            className={`dark:bg-secondaryColors-0 bg-lightWhite-0 px-2 py-2 md:p-[10px] flex gap-2 md:gap-3 items-center justify-center transition-all rounded-lg ${
               activeTab === "all" ? "opacity-100" : "opacity-70"
             }`}
           >
@@ -302,7 +306,7 @@ export default function DashboardNotification({
               e.stopPropagation();
               setActiveTab("unread");
             }}
-            className={`dark:bg-secondaryColors-0 bg-lightWhite-0 p-[10px] flex gap-3 items-center justify-center transition-all rounded-lg ${
+            className={`dark:bg-secondaryColors-0 bg-lightWhite-0 px-2 py-2 md:p-[10px] flex gap-2 md:gap-3 items-center justify-center transition-all rounded-lg ${
               activeTab === "unread" ? "opacity-100" : "opacity-70"
             }`}
           >
@@ -327,7 +331,9 @@ export default function DashboardNotification({
               handleRefresh();
             }}
             disabled={loading}
-            className="h-[36px] w-[36px] flex justify-center items-center border border-[#D9D9D9]/10 hover:bg-primaryColors-0/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
+            title={t("Refresh")}
+            aria-label={t("Refresh")}
+            className="h-[36px] w-[36px] flex-shrink-0 flex justify-center items-center border border-[#D9D9D9]/10 hover:bg-primaryColors-0/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
           >
             <FaSpinner className={`${loading ? 'animate-spin' : ''}`} size={14} />
           </button>
@@ -338,7 +344,9 @@ export default function DashboardNotification({
               markAllNotificationsAsRead();
             }}
             disabled={isMarkingAll || unreadNotifications.length === 0}
-            className="h-[36px] py-[17px] px-[10px] border border-[#D9D9D9]/10 flex justify-center items-center text-primaryColors-0 text-[13px] gap-2 hover:bg-primaryColors-0/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
+            title={t("Mark All Read")}
+            aria-label={t("Mark All Read")}
+            className="h-[36px] py-[17px] px-[10px] flex-shrink-0 border border-[#D9D9D9]/10 flex justify-center items-center text-primaryColors-0 text-[13px] gap-2 hover:bg-primaryColors-0/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
           >
             {isMarkingAll ? (
               <FaSpinner className="animate-spin" size={14} />
@@ -346,7 +354,7 @@ export default function DashboardNotification({
               <RiCheckDoubleFill />
             )}
 
-            <span>{t("Mark All Read")}</span>
+            <span className="hidden md:inline">{t("Mark All Read")}</span>
           </button>
 
           <button
@@ -357,7 +365,7 @@ export default function DashboardNotification({
             disabled={isDeletingAll || localNotifications.length === 0}
             title={t("Clear All")}
             aria-label={t("Clear all notifications")}
-            className="h-[36px] py-[17px] px-[10px] border border-[#D9D9D9]/10 flex justify-center items-center text-red-500 text-[13px] gap-2 hover:bg-red-500/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
+            className="h-[36px] py-[17px] px-[10px] flex-shrink-0 border border-[#D9D9D9]/10 flex justify-center items-center text-red-500 text-[13px] gap-2 hover:bg-red-500/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
           >
             {isDeletingAll ? (
               <FaSpinner className="animate-spin" size={14} />
