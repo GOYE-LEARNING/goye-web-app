@@ -282,7 +282,7 @@ export default function DashboardStudentGrowth({ openGrowth }: Props) {
               <span>
                 <FaRocket size={60} color="#FFA500" />
               </span>
-              <h1 className="text-textSlightDark-0 font-semibold text-[18px] mt-4">
+              <h1 className="dark:text-textSlightDark-0 text-lightBoldText-0 font-semibold text-[18px] mt-4">
                 {t("Start Your Spiritual Growth Journey")}
               </h1>
               <p className="text-gray-500 text-sm text-center max-w-md">

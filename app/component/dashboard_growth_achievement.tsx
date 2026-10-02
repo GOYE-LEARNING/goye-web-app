@@ -201,7 +201,7 @@ export default function DashboardGrowthAchievement() {
               <div><FaTrophy color="gold" size={20}/></div>
             ) : (
               <span className="w-[45px] h-[22px] flex-shrink-0 flex justify-center items-center bg-[#30A46F] text-[#ffffff] rounded-[4px] text-[11px] font-semibold">
-                +{achievement.point}
+                +{Math.round(achievement.point)}
               </span>
             )}
           </span>
