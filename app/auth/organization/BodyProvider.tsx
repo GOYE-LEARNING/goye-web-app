@@ -49,6 +49,11 @@ interface FormData {
   user_role: string; //As an admin
   user_phone_number: string;
   user_form_type: string; // organizaton
+  // Set once the owner authenticates via Google instead of typing a
+  // first/last name + email manually — carries the verified Google ID
+  // token through to the final submit, which calls a dedicated
+  // Google-auth organization-creation endpoint instead of the plain one.
+  googleIdToken?: string;
   // For church
   church_min_name?: string;
   church_ld_pastor?: string;
@@ -118,6 +123,7 @@ export const INITIAL_FORM_DATA: FormData = {
   user_phone_number: "",
   user_role: "organization_admin",
   user_form_type: "organization",
+  googleIdToken: "",
   church_min_name: "",
   church_ld_pastor: "",
   church_leader_ship_role: "",

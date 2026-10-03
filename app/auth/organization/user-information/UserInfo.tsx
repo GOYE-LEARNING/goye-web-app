@@ -9,6 +9,9 @@ import DropDowns from "@/app/component/drop_downs";
 import { usePathname, useRouter } from "next/navigation";
 import { useLanguage } from "@/app/utils/checkLanguages";
 import { useI18n } from "@/app/context/I18nContext";
+import { auth, googleProvider, signInWithPopup } from "@/app/config/firebase";
+import Image from "next/image";
+import googleIcon from "@/public/images/google_logo2.png";
 
 interface CountryType {
   name: string;
@@ -171,6 +174,36 @@ export default function UserInfo({ hideButton = false }: Props) {
   const handleSubmit = (e: React.ChangeEvent<HTMLFormElement>) =>
     e.preventDefault();
 
+  const [googleSigningIn, setGoogleSigningIn] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  const handleGoogleSignIn = async () => {
+    setGoogleError(null);
+    setGoogleSigningIn(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      const nameParts = (result.user.displayName || "").trim().split(" ");
+      setFormData({
+        ...formData,
+        googleIdToken: idToken,
+        user_first_name: nameParts[0] || "",
+        user_last_name: nameParts.slice(1).join(" ") || "",
+        user_email_address: result.user.email || "",
+      });
+    } catch (err: any) {
+      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+        // User closed the popup themselves - not an error worth showing.
+      } else {
+        setGoogleError(err.message || t("Google sign-in failed. Please try again."));
+      }
+    } finally {
+      setGoogleSigningIn(false);
+    }
+  };
+
+  const useGoogleIdentity = !!formData.googleIdToken;
+
   // Helper function to get translated label
   const getTranslatedLabel = (originalLabel: string): string => {
     return translationsLoaded ? translatedLabels[originalLabel] || originalLabel : originalLabel;
@@ -216,6 +249,60 @@ export default function UserInfo({ hideButton = false }: Props) {
       <h1 className="md:text-[24px] text-[20px] font-semibold pb-5">
         {translatedTitle}
       </h1>
+
+      {useGoogleIdentity ? (
+        <div className="flex items-center justify-between gap-3 mb-5 p-3 rounded-xl bg-white/10 border border-white/20">
+          <div className="flex items-center gap-2 text-[0.9rem]">
+            <Image src={googleIcon} alt="google_icon" height={22} width={22} />
+            <span>
+              {t("Signed in as")} <span className="font-semibold">{formData.user_email_address}</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              setFormData({
+                ...formData,
+                googleIdToken: "",
+                user_first_name: "",
+                user_last_name: "",
+                user_email_address: "",
+              })
+            }
+            className="text-[0.8rem] underline text-white/70 hover:text-white"
+          >
+            {t("Use a different account")}
+          </button>
+        </div>
+      ) : (
+        <div className="mb-5">
+          {googleError && (
+            <div className="mb-2 p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-[0.85rem]">
+              {googleError}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={googleSigningIn}
+            className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl transition-all disabled:opacity-50"
+          >
+            <div className="flex items-center justify-center gap-2 py-3">
+              {googleSigningIn ? (
+                <>
+                  <div className="animate-spin h-[18px] w-[18px] border-[2px] border-white border-t-transparent rounded-full"></div>
+                  <span>{t("Signing in...")}</span>
+                </>
+              ) : (
+                <>
+                  <Image src={googleIcon} alt="google_icon" height={22} width={22} />
+                  <span>{t("Fill in with Google instead")}</span>
+                </>
+              )}
+            </div>
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="py-3" noValidate>
         <div className="md:grid md:grid-cols-2 flex flex-col gap-5">
@@ -352,7 +439,16 @@ export default function UserInfo({ hideButton = false }: Props) {
                   onChange={handleChange}
                   name={data.name}
                   maxLength={data.type === "tel" ? 15 : undefined}
-                  className="glass_input focus:ring-2 focus:ring-primaryColors-0 focus:ring-offset-0 focus:bg-white/40"
+                  disabled={
+                    useGoogleIdentity &&
+                    ["user_first_name", "user_last_name", "user_email_address"].includes(data.name)
+                  }
+                  className={`glass_input focus:ring-2 focus:ring-primaryColors-0 focus:ring-offset-0 focus:bg-white/40 ${
+                    useGoogleIdentity &&
+                    ["user_first_name", "user_last_name", "user_email_address"].includes(data.name)
+                      ? "opacity-70 cursor-not-allowed"
+                      : ""
+                  }`}
                   placeholder={
                     data.type === "tel" ? translatedPlaceholder : ""
                   }

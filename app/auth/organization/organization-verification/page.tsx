@@ -46,6 +46,11 @@ export default function PreviewVerification() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [orgName, setOrgName] = useState("");
+  // Captured at submit time, before formData gets reset to INITIAL_FORM_DATA
+  // further down verifyFunc — handleVerifyOTP (fired later, after the user
+  // types the OTP) needs to know which creation endpoint was used without
+  // formData.googleIdToken still being around to check.
+  const [isGoogleOrgSignup, setIsGoogleOrgSignup] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -486,6 +491,19 @@ export default function PreviewVerification() {
       const successMsg = await translate("Organization verified successfully!");
       setOtpSuccess(successMsg);
 
+      // A Google-authed org owner has no password - create-organization-google
+      // already issued real session tokens/cookies up front, so there's
+      // nothing to generate and nowhere to "log in" to afterward; skip
+      // straight to the authenticated app instead of the password modal.
+      if (isGoogleOrgSignup) {
+        setTimeout(() => {
+          setShowOTPModal(false);
+          setIsVerifyingComplete(true);
+          router.push("/loading");
+        }, 1500);
+        return;
+      }
+
       try {
         const passRes = await fetch(
           `${API_URL}/api/organizations/organization-password-generated/${newOrganizationId}`,
@@ -698,7 +716,10 @@ export default function PreviewVerification() {
   // Language selected during this auth flow, held in I18nContext (no localStorage)
   const language = languageName || 'English';
   const languageCode = locale || 'en';
+    const isGoogleSignup = !!formData.googleIdToken;
+    setIsGoogleOrgSignup(isGoogleSignup);
     const bodyDTO = {
+      ...(isGoogleSignup ? { idToken: formData.googleIdToken } : {}),
       organization_name: formData.org_name,
       organization_type: formData.main_type,
       organization_email: formData.org_email,
@@ -710,14 +731,20 @@ export default function PreviewVerification() {
          language: language,
     languageCode: languageCode,
       organization_year: formData.org_year,
-      user_first_name: formData.user_first_name,
-      user_last_name: formData.user_last_name,
-      user_email_address: formData.user_email_address,
+      // A Google signup derives the owner's name/email from the verified
+      // Google token server-side rather than trusting these form fields
+      // (which are only pre-filled/read-only display here), so they're
+      // left out of that request entirely.
+      ...(!isGoogleSignup && {
+        user_first_name: formData.user_first_name,
+        user_last_name: formData.user_last_name,
+        user_email_address: formData.user_email_address,
+        user_role: formData.user_role,
+        user_form_type: formData.user_form_type,
+      }),
       user_country: formData.user_country,
       user_state: formData.user_state,
-      user_role: formData.user_role,
       user_phone_number: formData.user_phone_number,
-      user_form_type: formData.user_form_type,
       ...(formData.main_type === "church" && {
         church: {
           church_ministry_name: formData.church_min_name,
@@ -759,7 +786,7 @@ export default function PreviewVerification() {
 
     try {
       const res = await fetch(
-        `${API_URL}/api/organizations/auth/create-organization`,
+        `${API_URL}/api/organizations/auth/${isGoogleSignup ? "create-organization-google" : "create-organization"}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
