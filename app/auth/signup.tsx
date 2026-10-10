@@ -60,7 +60,7 @@ export default function Signin({changeContentLogin} : Props) {
       const res = await fetch(`${API_URL}/api/user/sendOtp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email }),
+        body: JSON.stringify({ email: formData.email, purpose: "signup" }),
       });
 
       const data = await res.json();

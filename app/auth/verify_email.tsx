@@ -99,7 +99,9 @@ export default function VerifyEmail({ openSignup, type, openCreateNewPassword }:
       const res = await fetch(`${API_URL}/api/user/sendOtp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email }),
+        body: JSON.stringify(
+          type == "signing_up" ? { email: email, purpose: "signup" } : { email: email },
+        ),
       });
 
       const data = await res.json();
