@@ -44,6 +44,23 @@ export default function DashboardStudentAnnouncement({ backFunc }: Props) {
     fetchAnnouncements();
   }, [API_URL]);
 
+  // Cancel: hide it right away, then mark it read on the server so it does not
+  // come back on the next visit or on another device.
+  const dismiss = async (id: string) => {
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    try {
+      await fetch(`${API_URL}/api/notifications/${id}/read`, {
+        method: "PUT",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Failed to dismiss announcement:", error);
+    }
+    backFunc();
+  };
+
+  if (announcements.length === 0) return null;
+
   return (
     <div className="dark:bg-[#30A46F1A]/10 bg-shadyGrreen-0/10 backdrop-blur-md p-[16px] space-y-4">
       {announcements.slice(0, 1).map((announcement) => (
@@ -53,10 +70,14 @@ export default function DashboardStudentAnnouncement({ backFunc }: Props) {
               <PiSpeakerSimpleNoneFill color="#30A46F" />
               <h1 className="text-[12px] ml-1">{t("Announcement")}</h1>
             </div>
-            {/* Cancel button always visible */}
-            <span onClick={backFunc} className="cursor-pointer">
+            <button
+              type="button"
+              aria-label="Dismiss announcement"
+              onClick={() => dismiss(announcement.id)}
+              className="cursor-pointer"
+            >
               <MdOutlineCancel size={19} />
-            </span>
+            </button>
           </div>
           <div>
             <h1 className="font-[700] mt-3">{announcement.title}</h1>
