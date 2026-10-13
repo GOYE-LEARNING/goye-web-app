@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { FaReply } from "react-icons/fa";
 import { MdOutlineCancel } from "react-icons/md";
 import { useI18n } from "@/app/context/I18nContext";
+import { moderationNotice } from "@/app/utils/moderationNotice";
 
 interface Props {
   cancel: () => void;
@@ -51,8 +52,11 @@ export default function DashboardTutorReply({
       return;
     }
 
+    const notice = moderationNotice(data);
+    if (notice.held) alert(notice.text);
+
     setContent("");
-    if (onReplyUpdate) onReplyUpdate(data.data);
+    if (onReplyUpdate && !notice.held) onReplyUpdate(data.data);
     cancel();
   } catch (error) {
     console.error(error);

@@ -5,6 +5,7 @@ import { BsFillSendFill } from "react-icons/bs";
 import { MdOutlineCancel } from "react-icons/md";
 import Loader from "./loader";
 import { useI18n } from "@/app/context/I18nContext";
+import { moderationNotice } from "@/app/utils/moderationNotice";
 
 interface Props {
   cancel: () => void;
@@ -50,10 +51,13 @@ export default function DashboardTutorNewPost({
       const data = await res.json();
 
       if (!res.ok) {
-        console.log("An error occured");
+        alert(data.message || "Could not submit your post. Please try again.");
+        return;
       }
-      console.log(data);
-      if (onPostUpdate && data.data) {
+      const notice = moderationNotice(data);
+      if (notice.held) alert(notice.text);
+      // A post that is still being checked must not appear in the public list yet.
+      if (onPostUpdate && data.data && !notice.held) {
         onPostUpdate(data.data);
       }
       setIsLoading(false)

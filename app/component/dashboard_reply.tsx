@@ -1,5 +1,6 @@
 "use client";
 
+import { moderationNotice } from "@/app/utils/moderationNotice";
 import React, { useState } from "react";
 import { FaReply } from "react-icons/fa";
 import { MdOutlineCancel } from "react-icons/md";
@@ -70,9 +71,11 @@ export default function DashboardNewReply({
         return;
       }
 
-      console.log("Reply created successfully:", data);
-      
-      if (onReplyUpdate && data.data) {
+      const notice = moderationNotice(data);
+      if (notice.held) alert(notice.text);
+
+      // A reply that is still being checked must not appear in the thread yet.
+      if (onReplyUpdate && data.data && !notice.held) {
         onReplyUpdate(data.data);
       }
       
