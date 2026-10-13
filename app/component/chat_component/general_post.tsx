@@ -32,6 +32,7 @@ import { FaBookBible, FaMessage, FaPen, FaRegCommentDots } from "react-icons/fa6
 import { GiPrayerBeads, GiPearlNecklace } from "react-icons/gi";
 import Portal from "@/app/component/Portal";
 import { useI18n } from "@/app/context/I18nContext";
+import { moderationNotice } from "@/app/utils/moderationNotice";
 
 interface Props {
   openPrivateMessages: () => void;
@@ -703,12 +704,12 @@ export default function GeneralPost({
   const [nestedCommentText, setNestedCommentText] = useState<{ [replyId: string]: string }>({});
   const [replyingTo, setReplyingTo] = useState<{ [discussionId: string]: { replyId: string; authorName: string } }>({});
 
-  const showToast = (message: string, type: ToastType = "info") => {
+  const showToast = (message: string, type: ToastType = "info", durationMs = 3500) => {
     const id = `${Date.now()}-${Math.random()}`;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3500);
+    }, durationMs);
   };
 
   const dismissToast = (id: string) => {
@@ -937,7 +938,9 @@ export default function GeneralPost({
       if (data.success !== false) {
         setShowPost(false);
         setShowPeoplePost(true);
-        showToast(t("Post shared successfully!"), "success");
+        const notice = moderationNotice(data);
+        if (notice.held) showToast(notice.text, notice.tone, 9000);
+        else showToast(t("Post shared successfully!"), "success");
         setDiscussions([]);
         setHasMore(true);
         await fetchDiscussions(1, false);
@@ -999,6 +1002,11 @@ export default function GeneralPost({
       const data = await res.json();
       if (res.ok) {
         setCommentText((prev) => ({ ...prev, [discussionId]: "" }));
+        const notice = moderationNotice(data);
+        if (notice.held) {
+          showToast(notice.text, notice.tone, 9000);
+          return;
+        }
         setDiscussions((prev) =>
           prev.map((d) => d.id === discussionId ? { ...d, _count: { ...d._count, replies: (d._count?.replies || 0) + 1 } } : d)
         );
@@ -1035,6 +1043,8 @@ export default function GeneralPost({
       if (res.ok) {
         setNestedCommentText((prev) => { const s = { ...prev }; delete s[parentReplyId]; return s; });
         cancelReply(discussionId);
+        const notice = moderationNotice(data);
+        if (notice.held) showToast(notice.text, notice.tone, 9000);
         fetchDiscussionWithReplies(discussionId);
       } else {
         showToast(data.message || t("Failed to add reply"), "error");
@@ -1103,6 +1113,12 @@ export default function GeneralPost({
       });
       const data = await response.json();
       if (response.ok && data.success !== false) {
+        const notice = moderationNotice(data);
+        if (notice.held) {
+          // The old text stays public until the new text is approved.
+          showToast(notice.text, notice.tone, 9000);
+          return;
+        }
         setDiscussions((prev) => prev.map((d) => d.id === discussionId ? { ...d, content: newContent, isEdited: true } : d));
         showToast(t("Post updated successfully!"), "success");
       } else {

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { BsFillSendFill } from "react-icons/bs";
 import { MdOutlineCancel } from "react-icons/md";
 import { useI18n } from "@/app/context/I18nContext";
+import { moderationNotice } from "@/app/utils/moderationNotice";
 
 interface Props {
   cancel: () => void;
@@ -39,10 +40,11 @@ export default function DashboardNewPost({ cancel,  courseId }: Props) {
 
     const data = await res.json();
     if (!res.ok) {
-      console.log("An erro occured while submitting the post");
+      alert(data.message || t("Could not submit your post. Please try again."));
+      return;
     }
-    console.log(data.message);
-    console.log({ title, content });
+    const notice = moderationNotice(data);
+    if (notice.held) alert(notice.text);
     setTitle("");
     setContent("");
     cancel(); // Close sidebar after successful post
