@@ -254,15 +254,7 @@ export default function OrgAdminCourse() {
                           </p>
                         </div>
                       </div>
-                      <button
-                        className="h-[40px] text-[14px] dark:bg-secondaryColors-0 bg-lightWhite-0 text-primaryColors-0 my-3 w-full cursor-pointer"
-                        onClick={() =>
-                          showCourseDetailsFunc(course.id || i.toString())
-                        }
-                      >
-                        {t("View Course")}
-                      </button>
-                      <div className="h-[1px] w-full bg-[#ccc]/20"></div>
+                      <div className="h-[1px] w-full bg-[#ccc]/20 mt-3"></div>
                     </div>
                   ))}
                 </div>

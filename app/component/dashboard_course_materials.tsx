@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { FaRegFileAlt } from "react-icons/fa";
 import { GoDownload } from "react-icons/go";
 import { HiOutlineBookOpen } from "react-icons/hi";
@@ -84,11 +85,29 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
     setLoadError(false);
   }, [pdfUrl]);
 
-  if (!isOpen) return null;
+  // Rendered straight into <body>: inside the dashboard it sat under the sidebar and header
+  // (their stacking context beat z-50), so it could never cover the whole screen.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
-      <div className="bg-white dark:bg-secondaryColors-0 rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col shadow-xl">
+  // Escape closes it, and the page behind stops scrolling while it is open.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex bg-black/70">
+      <div className="bg-white dark:bg-secondaryColors-0 w-screen h-[100dvh] flex flex-col">
         {/* Modal Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
@@ -103,11 +122,11 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
         </div>
 
         {/* PDF Viewer */}
-        <div className="flex-1 p-4">
+        <div className="flex-1 min-h-0 p-4 flex flex-col">
           {!viewableUrl ? (
             // No document was ever stored against this material. Say so
             // plainly instead of handing the student Google's 400 page.
-            <div className="flex flex-col items-center justify-center h-[70vh] text-center px-6">
+            <div className="flex flex-col items-center justify-center flex-1 text-center px-6">
               <FaRegFileAlt className="text-4xl text-gray-400 dark:text-gray-500 mb-4" />
               <p className="text-gray-800 dark:text-gray-100 font-semibold mb-2">
                 {t("No document has been uploaded for this material yet.")}
@@ -117,7 +136,7 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
               </p>
             </div>
           ) : loadError ? (
-            <div className="flex flex-col items-center justify-center h-[70vh] text-center">
+            <div className="flex flex-col items-center justify-center flex-1 text-center">
               <p className="text-red-500 dark:text-red-400 mb-4">{t("Failed to load PDF preview.")}</p>
               <button
                 onClick={() => window.open(pdfUrl, '_blank')}
@@ -129,7 +148,7 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
           ) : (
             <iframe
               src={viewableUrl}
-              className="w-full h-[70vh] border rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              className="w-full flex-1 min-h-0 border rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               title={materialTitle}
               onError={() => setLoadError(true)}
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"
@@ -138,7 +157,7 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-lg flex gap-3">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex gap-3">
           {/*
             Always offered, not just on error. The embedded viewer can fail
             without ever telling us: an iframe pointed at Google's viewer
@@ -163,7 +182,8 @@ function PDFModal({ isOpen, onClose, pdfUrl, materialTitle }: PDFModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
