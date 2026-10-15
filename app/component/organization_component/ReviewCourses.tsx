@@ -17,6 +17,7 @@ import { PiStudent } from "react-icons/pi";
 import DashboardTutorCourseBreakdown from "../dashboard_tutor_course_breakdown";
 import DashboardTutorCreateCourse from "../dashboard_tutor_create-course";
 import { useI18n } from "@/app/context/I18nContext";
+import InfoTip from "../InfoTip";
 
 interface Course {
   id: string;
@@ -419,6 +420,10 @@ export default function ReviewCourses({ onBack }: ReviewCoursesProps) {
           </div>
           <div className="flex items-center gap-2">
             <HiOutlineFilter className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <InfoTip
+              title={t("Course status")}
+              text={t("Published: students can see and join it. Draft: still being written, only you can see it. Archived: hidden from students but kept so nothing is lost.")}
+            />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}

@@ -18,6 +18,7 @@ import {
   HiOutlineXCircle,
   HiOutlineEye,
   HiOutlineBadgeCheck,
+  HiOutlineMinusCircle,
 } from "react-icons/hi";
 import { FaSpinner } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
@@ -26,6 +27,8 @@ import DashboardAdminUserDetails from "../admin_component/dashboard_admin_user_d
 import { useModal } from "@/app/context/SimpleModalContext";
 import { useSocket } from "@/app/context/SocketContext";
 import { useI18n } from "@/app/context/I18nContext";
+import InfoTip from "../InfoTip";
+import { getUserProfile } from "@/app/utils/database/db";
 
 interface Member {
   id: string;
@@ -40,6 +43,8 @@ interface Member {
   joinedVia?: string;
   isActive?: boolean;
   isSuspended?: boolean;
+  membershipRole?: string;
+  isOwner?: boolean;
 }
 
 interface ManageMembersProps {
@@ -63,6 +68,8 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [showSuspendUserModal, setShowSuspendUserModal] = useState(false);
   const [suspendUser, setSuspendUser] = useState(false);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [viewerId, setViewerId] = useState<string | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const organizationId = params.org_name;
@@ -89,6 +96,10 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
     fetchMembers();
   }, [organizationId]);
 
+  useEffect(() => {
+    getUserProfile().then((p) => setViewerId(p?.userId ?? p?.id ?? null)).catch(() => {});
+  }, []);
+
   const fetchMembers = async () => {
     try {
       setLoading(true);
@@ -99,6 +110,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
       const data = await res.json();
       if (data.success) {
         setMembers(data.data.users || []);
+        setOwnerId(data.data.stats?.ownerId ?? null);
       }
     } catch (error) {
       console.error("Error fetching members:", error);
@@ -271,6 +283,35 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
     );
   };
 
+  const handleDemoteMember = (member: Member) => {
+    showModal(
+      t("Remove admin rights"),
+      `${member.first_name} ${member.last_name} ${t("will go back to being an ordinary member of this organization. They keep their account and everything they have done.")}`,
+      "confirm",
+      async () => {
+        try {
+          const res = await fetch(
+            `${API_URL}/api/organizations/members/${organizationId}/${member.id}/demote`,
+            { method: "PUT", credentials: "include" }
+          );
+          const data = await res.json();
+          if (data.success) {
+            showModal(t("Success"), `${member.first_name} ${t("is no longer an admin.")}`, "success");
+            fetchMembers();
+          } else {
+            showModal(t("Error"), data.message || t("Failed to remove admin rights."), "error");
+          }
+        } catch (error) {
+          showModal(t("Error"), t("Failed to remove admin rights. Please try again."), "error");
+        }
+      }
+    );
+  };
+
+  const viewerIsOwner = !!viewerId && viewerId === ownerId;
+  const isAdminHere = (m: Member) =>
+    !!m.isOwner || m.membershipRole === "admin" || m.membershipRole === "org_admin";
+
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
       member.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -312,6 +353,10 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
               <h1 className="text-xl font-semibold dark:text-white">
                 {t("Manage Members")}
               </h1>
+              <InfoTip
+                title={t("Manage Members")}
+                text={t("Everyone who belongs to this organization. Invite people, give someone admin rights, or remove them. Admins can manage members; only the owner can manage other admins.")}
+              />
               <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:inline">
                 ({filteredMembers.length} {t("members")})
               </span>
@@ -381,16 +426,39 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                       {t("Email")}
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {t("Role")}
+                      <span className="inline-flex items-center gap-1">
+                        {t("Role")}
+                        <InfoTip
+                          title={t("Roles")}
+                          text={t("MAIN ADMIN is the owner who created the organization. ADMIN can manage members, courses and events. MEMBER can learn and take part but can't manage anything.")}
+                        />
+                      </span>
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {t("Status")}
+                      <span className="inline-flex items-center gap-1">
+                        {t("Status")}
+                        <InfoTip
+                          title={t("Status")}
+                          text={t("Active means the person can log in and use the organization. Inactive means they can't right now, for example because they were suspended.")}
+                        />
+                      </span>
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {t("Joined")}
+                      <span className="inline-flex items-center gap-1">
+                        {t("Joined")}
+                        <InfoTip
+                          text={t("When the person joined. \"via INVITE\" means they accepted an invitation; \"via CREATED\" means they started the organization.")}
+                        />
+                      </span>
                     </th>
                     <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {t("Actions")}
+                      <span className="inline-flex items-center gap-1">
+                        {t("Actions")}
+                        <InfoTip
+                          title={t("What the icons do")}
+                          text={t("Eye: see their details, and suspend or restore them. Green badge: make them an admin. Red minus: remove admin rights (owner only). Bin: remove them from the organization. The owner can't be removed.")}
+                        />
+                      </span>
                     </th>
                   </tr>
                 </thead>
@@ -431,11 +499,12 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                       <td className="py-3 px-4">
                         <span
                           className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${getRoleBadgeColor(
-                            member.role
+                            isAdminHere(member) ? "admin" : member.role === "org_admin" ? "member" : member.role
                           )}`}
                         >
-                          {member.role === 'org_admin' ? t('MAIN ADMIN') :
-                           member.role === 'invited_user' ? t('MEMBER') :
+                          {member.isOwner ? t('MAIN ADMIN') :
+                           isAdminHere(member) ? t('ADMIN') :
+                           member.role === 'invited_user' || member.role === 'org_admin' ? t('MEMBER') :
                            member.role}
                         </span>
                       </td>
@@ -484,7 +553,7 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                           >
                             <HiOutlinePencilAlt className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                           </button>
-                          {member.role !== "admin" && member.role !== "org_admin" && (
+                          {!isAdminHere(member) && (
                             <button
                               onClick={() => handlePromoteMember(member)}
                               className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors"
@@ -493,13 +562,24 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                               <HiOutlineBadgeCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
                             </button>
                           )}
-                          <button
-                            onClick={() => handleRemoveMember(member)}
-                            className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                            title={t("Remove member")}
-                          >
-                            <HiOutlineTrash className="w-4 h-4 text-red-500" />
-                          </button>
+                          {viewerIsOwner && isAdminHere(member) && !member.isOwner && (
+                            <button
+                              onClick={() => handleDemoteMember(member)}
+                              className="p-2 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
+                              title={t("Remove admin rights")}
+                            >
+                              <HiOutlineMinusCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                            </button>
+                          )}
+                          {!member.isOwner && (viewerIsOwner || !isAdminHere(member)) && (
+                            <button
+                              onClick={() => handleRemoveMember(member)}
+                              className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                              title={t("Remove member")}
+                            >
+                              <HiOutlineTrash className="w-4 h-4 text-red-500" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -595,7 +675,10 @@ export default function ManageMembers({ onBack }: ManageMembersProps) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {t("Role")}
+                    {t("Role")}{" "}
+                    <InfoTip
+                      text={t("Member: can learn and take part. Instructor: can also create and teach courses. Admin: can manage members, courses and events, so only choose this for people you fully trust.")}
+                    />
                   </label>
                   <select
                     value={inviteRole}
