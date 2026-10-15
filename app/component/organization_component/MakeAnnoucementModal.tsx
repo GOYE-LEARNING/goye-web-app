@@ -15,6 +15,7 @@ import {
 import { FaSpinner } from "react-icons/fa";
 import Portal from "../Portal";
 import { useI18n } from "@/app/context/I18nContext";
+import InfoTip from "../InfoTip";
 
 interface MakeAnnouncementModalProps {
   isOpen: boolean;
@@ -147,7 +148,10 @@ export default function MakeAnnouncementModal({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {t("Audience")}
+                    {t("Audience")}{" "}
+                    <InfoTip
+                      text={t("Who receives this announcement. Everyone: all members. Students or Instructors: only people with that role. They get it as a notification and it shows on their dashboard until they dismiss it.")}
+                    />
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     <button
