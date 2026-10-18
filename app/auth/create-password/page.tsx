@@ -57,10 +57,42 @@ export default function CreatePassword() {
   };
 
   // ✅ Fixed: e.preventDefault() called correctly
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    router.push("./auth/welcome");
-    //const allPassed = rules.every((rule) => rule.test.test(password))
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/user/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: formData.firstname,
+          last_name: formData.lastname,
+          email_address: formData.email,
+          password: formData.password,
+          country: formData.country,
+          state: formData.city,
+          language: formData.language,
+          languageCode: formData.languageCode,
+          phone_number: formData.phone,
+          role: formData.role,
+          level: formData.level,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Signup failed");
+      }
+
+      router.push("/auth/welcome");
+    } catch (error) {
+      console.error("Signup error:", error);
+      // Show error to user - you might want to use a toast or modal here
+      alert(error.message || "Failed to create account. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

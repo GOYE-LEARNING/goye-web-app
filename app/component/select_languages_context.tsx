@@ -67,16 +67,12 @@ export default function SelectLanguageContext({ closeLanguage }: Props) {
     setError(null);
 
     try {
-      // Your submission logic here
-      console.log("Language selected:", selectedLanguage, selectedCode);
-      
-      // Close language selector after saving
-      setTimeout(() => {
-        closeLanguage();
-      }, 500);
+      // Language is already saved via handleLanguageSelect when user selects a language
+      // Close the language selector immediately
+      closeLanguage();
     } catch (error) {
-      console.error("Submission error:", error);
-      setError("Failed to submit. Please try again.");
+      console.error("Error closing language selector:", error);
+      setError("Failed to save language. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
