@@ -79,8 +79,20 @@ export default function Signin({changeContentLogin} : Props) {
         return;
       }
 
-      localStorage.setItem("otp-token", data.sessionToken);
-      localStorage.setItem("otp-email", data.email);
+      try {
+        localStorage.setItem("otp-token", data.sessionToken);
+        localStorage.setItem("otp-email", data.email);
+      } catch (storageError) {
+        console.error("Failed to store OTP data:", storageError);
+        showModal(
+          "Error",
+          "Failed to save session data. Please try again.",
+          "error"
+        );
+        setShowSignup(true);
+        setIsLoading(false);
+        return;
+      }
 
       console.log(data);
       setIsLoading(false);
