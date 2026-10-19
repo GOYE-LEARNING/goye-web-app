@@ -19,6 +19,9 @@ export default function CreatePassword() {
   const { formData, setFormData } = useSignup();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [touched, setTouched] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter();
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showSignin, setShowSignin] = useState<boolean>(false);
@@ -60,6 +63,7 @@ export default function CreatePassword() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     try {
       const res = await fetch(`${API_URL}/api/user/signup`, {
         method: "POST",
@@ -82,14 +86,20 @@ export default function CreatePassword() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Signup failed");
+        // Handle specific error cases
+        if (res.status === 409 || res.status === 400) {
+          // Assuming 409 Conflict or 400 Bad Request for existing user
+          setError(data.message || "User with this email already exists");
+        } else {
+          setError(data.message || "Signup failed");
+        }
+        return;
       }
 
       router.push("/auth/welcome");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
-      // Show error to user - you might want to use a toast or modal here
-      alert(error.message || "Failed to create account. Please try again.");
+      setError(error.message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +124,11 @@ export default function CreatePassword() {
               {t("Your password must be at least 8 characters long, and include 1 symbol and 1 number.")}
             </p>
             <form noValidate className="form py-5" onSubmit={handleSubmit}>
+              {error && (
+                <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-200 text-red-800">
+                  {error}
+                </div>
+              )}
               <div className="form_label relative">
                 <input
                   type={!showPassword ? "password" : "text"}
@@ -122,7 +137,7 @@ export default function CreatePassword() {
                   onChange={handleChange}
                   onBlur={() => setTouched(true)}
                   placeholder=" "
-                  className={`form_input peer focus:outline-none`}
+                  className={`form_input peer focus:outline-none ${isLoading ? 'opacity-50' : ''}`}
                 />
 
                 <label
@@ -170,8 +185,9 @@ export default function CreatePassword() {
 
               <input
                 type="submit"
-                value={t("Submit")}
+                value={isLoading ? t("Creating...") : t("Submit")}
                 className="form_btn md:mt-0 mt-[8rem]"
+                disabled={isLoading}
               />
             </form>
           </div>
