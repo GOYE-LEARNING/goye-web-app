@@ -221,7 +221,7 @@ export default function Signin({changeContentLogin} : Props) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
           >
-            <TranslatedText text="Signin" />
+            <TranslatedText text="Signinoo" />
           </motion.h1>
           
           <motion.p 
