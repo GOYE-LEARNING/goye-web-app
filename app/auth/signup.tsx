@@ -64,7 +64,7 @@ export default function Signin({changeContentLogin} : Props) {
       });
 
       const data = await res.json();
-
+console.log("Response from sendOtp:", data);
       // ✅ Handle errors from backend
       if (!res.ok) {
         // Display error using modal

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FaArrowRight } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -11,7 +11,7 @@ import Step4 from "./step4";
 import Finished from "../../finished";
 import { useSignup } from "../../../context/SignupContext";
 import { useAuthContext } from "@/app/context/AuthContext";
-import { saveUserProfile } from "@/app/utils/database/db";
+import { saveAuthTokens, saveUserProfile } from "@/app/utils/database/db";
 import { useModal } from "@/app/context/SimpleModalContext";
 import { getFriendlyErrorMessage } from "@/app/utils/errorMessages";
 import { hasVerifiedOtp, clearOtpVerified } from "@/app/utils/signupFlowGuard";
@@ -25,14 +25,20 @@ export default function WelcomeMoreAuth() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // ✅ store all step data
   const { formData, setFormData } = useSignup();
-  const { authStatus } = useAuthContext();
+  const { authStatus,setAuthStatus, login } = useAuthContext();
   const { showModal } = useModal();
   const router = useRouter();
   const { t, refreshFromBackend } = useI18n();
 
   // Block direct URL access — only reachable after OTP verification, unless the
   // user already has a session requiring profile completion (e.g. social login).
+ 
+  // Set after a successful signup so the guard below doesn't treat the
+  // now-cleared OTP flag as "direct URL access" and kick the user to /auth.
+  const signupCompletedRef = useRef(false);
+ 
   useEffect(() => {
+    if (signupCompletedRef.current) return;
     if (!hasVerifiedOtp() && !authStatus?.requiresProfileCompletion) {
       router.replace("/auth");
     }
@@ -44,85 +50,147 @@ export default function WelcomeMoreAuth() {
 
   //To send register the user — returns whether it actually succeeded, so
   // the caller doesn't advance past the form on a failed attempt.
-  const signupUser = async (): Promise<boolean> => {
+ const signupUser = async (): Promise<boolean> => {
     try {
+      const isCompletingProfile = authStatus.requiresProfileCompletion == true;
+ 
+      const tutorFields = isInstructor
+        ? {
+            bio: formData.bio,
+            church_name: formData.church_name,
+            church_role: formData.church_role,
+            social_media: formData.social_media,
+          }
+        : {};
+ 
+      const common = {
+        password: formData.password,
+        country: formData.country,
+        state: formData.city,
+        language: formData.language,
+        languageCode: formData.languageCode,
+        phone_number: formData.phone,
+        role: formData.role,
+        level: formData.level,
+        ...tutorFields,
+      };
+ 
+      const payload = isCompletingProfile
+        ? {
+            first_name: authStatus.user?.first_name,
+            last_name: authStatus.user?.last_name,
+            ...common,
+          }
+        : {
+            first_name: formData.firstname,
+            last_name: formData?.lastname,
+            email_address: formData.email,
+            ...common,
+          };
+ 
       const res = await fetch(
-        `${API_URL}${authStatus.requiresProfileCompletion ? "/api/user/complete-profile" : "/api/user/signup"}`,
+        `${API_URL}${isCompletingProfile ? "/api/user/complete-profile" : "/api/user/signup"}`,
         {
           method: "POST",
           headers: { "Content-type": "application/json" },
-          body: JSON.stringify(
-            authStatus.requiresProfileCompletion == true
-              ? {
-                  first_name: authStatus.user?.first_name,
-                  last_name: authStatus.user?.last_name,
-                  password: formData.password,
-                  country: formData.country,
-                  state: formData.city,
-                  language: formData.language,
-                  languageCode: formData.languageCode,
-                  phone_number: formData.phone,
-                  role: formData.role,
-                  level: formData.level,
-                  ...(isInstructor
-                    ? {
-                        bio: formData.bio,
-                        church_name: formData.church_name,
-                        church_role: formData.church_role,
-                        social_media: formData.social_media,
-                      }
-                    : {}),
-                }
-              : {
-                  first_name: formData.firstname,
-                  last_name: formData?.lastname,
-                  email_address: formData.email,
-                  password: formData.password,
-                  country: formData.country,
-                  state: formData.city,
-                  language: formData.language,
-                  languageCode: formData.languageCode,
-                  phone_number: formData.phone,
-                  role: formData.role,
-                  level: formData.level,
-                  ...(isInstructor
-                    ? {
-                        bio: formData.bio,
-                        church_name: formData.church_name,
-                        church_role: formData.church_role,
-                        social_media: formData.social_media,
-                      }
-                    : {}),
-                },
-          ),
+          body: JSON.stringify(payload),
           credentials: "include",
         },
       );
-
-      const data = await res.json();
+ 
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        showModal(t("Something went wrong"), getFriendlyErrorMessage(new Error(data?.message || `: ${res.status}`), "finishing your signup"), "error");
+        showModal(
+          t("Something went wrong"),
+          getFriendlyErrorMessage(
+            new Error(data?.message || `: ${res.status}`),
+            "finishing your signup",
+          ),
+          "error",
+        );
         return false;
       }
-      await saveUserProfile({ first_name: authStatus.user?.first_name as any });
+ 
+      // Mark done BEFORE touching authStatus, so the guard effect skips.
+      signupCompletedRef.current = true;
       clearOtpVerified();
-      // The account (and its language, picked earlier in this flow) now
-      // exists server-side — adopt it as the authoritative value instead of
-      // continuing to trust the in-memory pick from before submission.
-      void refreshFromBackend();
+ 
+      // Keep the tokens for the Authorization header (authHeaders reads them
+      // from IndexedDB). Never let this block the flow.
+      if (data?.accessToken || data?.refreshToken) {
+        Promise.resolve(
+          saveAuthTokens({
+            ...(data.accessToken && { accessToken: data.accessToken }),
+            ...(data.refreshToken && { refreshToken: data.refreshToken }),
+          } as any),
+        ).catch((e: any) => console.error("saveAuthTokens failed", e));
+      }
+ 
+      // Build the user that goes into authStatus: what the server returned,
+      // plus what it doesn't echo back (role, level), falling back to the
+      // existing user when this was the complete-profile path.
+      const serverUser = data?.user ?? {};
+      const userData = {
+        ...(isCompletingProfile ? authStatus.user : {}),
+        ...serverUser,
+        first_name:
+          serverUser.first_name ??
+          authStatus.user?.first_name ??
+          formData.firstname,
+        last_name:
+          serverUser.last_name ??
+          authStatus.user?.last_name ??
+          formData.lastname,
+        email_address:
+          serverUser.email_address ??
+          authStatus.user?.email_address ??
+          formData.email,
+        role: formData.role,
+        level: formData.level,
+        isProfileComplete: true,
+      };
+ 
+      // login() saves the profile, marks the session authenticated, sets
+      // authStatus (with the user), and calls refreshFromBackend() itself.
+      await login(userData);
+ 
       return true;
     } catch (error) {
-      showModal(t("Something went wrong"), getFriendlyErrorMessage(error, "finishing your signup"), "error");
+      showModal(
+        t("Something went wrong"),
+        getFriendlyErrorMessage(error, "finishing your signup"),
+        "error",
+      );
       return false;
     }
   };
-
+ 
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. openPopup stays the same as before (with the try/finally).
+// ─────────────────────────────────────────────────────────────────────────────
+  const openPopup = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const succeeded = await signupUser();
+      if (!succeeded) return;
+      localStorage.setItem("role", formData.role as any);
+      setShowMoreAuth(false);
+      setShowPopup(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+ 
+ 
   //isComplete
   const isComplete = [
     formData.country && formData.city && formData.phone,
     formData.role,
     formData.level,
-    isInstructor ? !!(formData.bio && formData.church_name && formData.church_role) : true,
+    isInstructor
+      ? !!(formData.bio && formData.church_name && formData.church_role)
+      : true,
   ];
 
   const nextStep = () => {
@@ -133,31 +201,18 @@ export default function WelcomeMoreAuth() {
     if (step > 0) setStep(step - 1);
   };
 
-  const handleSubmit = () => {
-    console.log("Final Form Data:", formData);
-    // 🟢 here you can send it to backend
-    // fetch("/api/submit", { method: "POST", body: JSON.stringify(formData) });
-    localStorage.removeItem("GOYE_FORM_DATA");
-  };
+ 
 
   const steps = [
     <Step1 formData={formData} setFormData={setFormData} />,
     <Step2 formData={formData} setFormData={setFormData} />,
     <Step3 formData={formData} setFormData={setFormData} />,
-    ...(isInstructor ? [<Step4 formData={formData} setFormData={setFormData} />] : []),
+    ...(isInstructor
+      ? [<Step4 formData={formData} setFormData={setFormData} />]
+      : []),
   ];
 
-  const openPopup = async () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    const succeeded = await signupUser();
-    setIsSubmitting(false);
-    if (!succeeded) return; // stays on the form — error already shown via showModal
-
-    localStorage.setItem("role", formData.role as any);
-    setShowMoreAuth(false);
-    setShowPopup(true);
-  };
+  
 
   return (
     <div className="flex justify-center items-center flex-col w-full">
@@ -199,7 +254,11 @@ export default function WelcomeMoreAuth() {
               </span>
               <span
                 className={`form_more text-plainColors-0 bg-primaryColors-0 ${isSubmitting ? "opacity-60 pointer-events-none" : ""}`}
-                onClick={step === totalSteps - 1 && isComplete[step] ? openPopup : nextStep}
+                onClick={
+                  step === totalSteps - 1 && isComplete[step]
+                    ? openPopup
+                    : nextStep
+                }
               >
                 {isSubmitting ? t("Please wait…") : t("Next")} <FaArrowRight />
               </span>

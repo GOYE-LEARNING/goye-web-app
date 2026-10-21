@@ -103,7 +103,7 @@ export default function SelectLanguageContext({ closeLanguage }: Props) {
               ✕
             </button>
           </div>
-          
+
           <CountryList
             onLanguageSelect={handleLanguageSelect}
             onSubmit={handleSubmit}

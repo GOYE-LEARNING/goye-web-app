@@ -64,45 +64,12 @@ export default function CreatePassword() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    try {
-      const res = await fetch(`${API_URL}/api/user/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: formData.firstname,
-          last_name: formData.lastname,
-          email_address: formData.email,
-          password: formData.password,
-          country: formData.country,
-          state: formData.city,
-          language: formData.language,
-          languageCode: formData.languageCode,
-          phone_number: formData.phone,
-          role: formData.role,
-          level: formData.level,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        // Handle specific error cases
-        if (res.status === 409 || res.status === 400) {
-          // Assuming 409 Conflict or 400 Bad Request for existing user
-          setError(data.message || "User with this email already exists");
-        } else {
-          setError(data.message || "Signup failed");
-        }
-        return;
-      }
-
-      router.push("/auth/welcome");
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      setError(error.message || "Failed to create account. Please try again.");
-    } finally {
-      setIsLoading(false);
+    if (formData.password == "" || formData == null) {
+      setIsLoading(false)
+      return setError("Password must be filled")
     }
+
+    router.push("/auth/welcome")
   };
 
   return (

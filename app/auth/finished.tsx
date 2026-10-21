@@ -26,7 +26,7 @@ export default function Finished() {
           <h1 className="form_h1 md:text-4xl text-[40px]">{t("Awesome")}</h1>
           <p className="form-p">{t("Your account has been created successfully.")}</p>
 
-          <span className="form_btn" onClick={() => router.push("../../loading")}>
+          <span className="form_btn" onClick={() => router.push("/loading")}>
             {t("Go To Dashboard")} <FaArrowRight size={13} />
           </span>
         </div>

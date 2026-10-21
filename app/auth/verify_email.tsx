@@ -10,11 +10,15 @@ import { useI18n } from "../context/I18nContext";
 
 interface Props {
   openSignup: () => void;
-  openCreateNewPassword: () => void
-  type: "fg_password" | "signing_up"
+  openCreateNewPassword: () => void;
+  type: "fg_password" | "signing_up";
 }
 
-export default function VerifyEmail({ openSignup, type, openCreateNewPassword }: Props) {
+export default function VerifyEmail({
+  openSignup,
+  type,
+  openCreateNewPassword,
+}: Props) {
   const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -61,20 +65,19 @@ export default function VerifyEmail({ openSignup, type, openCreateNewPassword }:
 
         if (!res.ok) {
           console.log("An error occured while verifying otp");
-          console.log(data)
+          console.log(data);
         }
 
-        if (data.message == "Your otp has been verified") {
+        if (data.success === true) {
+          
           pause();
           markOtpVerified();
-          setShowVerificationPage(false);
           setShowPasswordPage(true);
+          setShowVerificationPage(false);
         }
 
         setIsLoading(false);
         setMessage(data.message);
-        setShowPasswordPage(true);
-        setShowVerificationPage(false);
       } catch (error) {
         console.error(error);
         setIsLoading(false);
@@ -100,7 +103,9 @@ export default function VerifyEmail({ openSignup, type, openCreateNewPassword }:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          type == "signing_up" ? { email: email, purpose: "signup" } : { email: email },
+          type == "signing_up"
+            ? { email: email, purpose: "signup" }
+            : { email: email },
         ),
       });
 
@@ -110,7 +115,7 @@ export default function VerifyEmail({ openSignup, type, openCreateNewPassword }:
       if (type == "signing_up") {
         openSignup();
       } else {
-        openCreateNewPassword()
+        openCreateNewPassword();
       }
       reset(); // Reset timer
       start(); // Start again
@@ -157,7 +162,9 @@ export default function VerifyEmail({ openSignup, type, openCreateNewPassword }:
                   </span>
                 </div>
                 <span className="font-bold text-primaryColors-0">
-                  {message === "jwt expired" ? t("Oops Otp has expired") : message}
+                  {message === "jwt expired"
+                    ? t("Oops Otp has expired")
+                    : message}
                 </span>
               </div>
               <button
