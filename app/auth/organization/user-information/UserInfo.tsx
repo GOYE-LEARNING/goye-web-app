@@ -285,7 +285,7 @@ export default function UserInfo({ hideButton = false }: Props) {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={googleSigningIn}
-            className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl transition-all disabled:opacity-50"
+            className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl transition-all disabled:opacity-50 cursor-pointer relative z-10"
           >
             <div className="flex items-center justify-center gap-2 py-3">
               {googleSigningIn ? (

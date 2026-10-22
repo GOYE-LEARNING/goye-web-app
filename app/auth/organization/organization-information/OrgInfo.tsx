@@ -70,7 +70,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
         const fields = [
           "Organization Name",
           "Organization Type",
-          "Official Email Address",
+          "Organization Email Address",
           "Phone Number",
           "Country",
           "State/City",
@@ -191,7 +191,7 @@ export default function OrgInfo({ hideButton = false }: { hideButton?: boolean }
   const form = [
     { type: "text", name: "org_name", label: "Organization Name" },
     { type: "text", name: "org_type", label: "Organization Type" },
-    { type: "email", name: "org_email", label: "Official Email Address" },
+    { type: "email", name: "org_email", label: "Organization Email Address" },
     { type: "tel", name: "org_phone_number", label: "Phone Number" },
     { type: "text", name: "org_country", label: "Country" },
     { type: "text", name: "org_state", label: "State/City" },

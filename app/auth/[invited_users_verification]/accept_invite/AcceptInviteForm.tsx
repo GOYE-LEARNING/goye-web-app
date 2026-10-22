@@ -651,7 +651,7 @@ export function AcceptInviteForm({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999]"
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex justify-center items-center"
               onClick={() => {}}
             />
             <motion.div
@@ -659,7 +659,7 @@ export function AcceptInviteForm({
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999] w-full max-w-md"
+              className="fixed h-full z-[9999] w-full flex justify-center items-center"
             >
               <div className="bg-[#1a1d26] rounded-xl shadow-2xl overflow-hidden border border-[#252830] p-6">
                 <div className="text-center mb-6">

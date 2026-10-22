@@ -157,6 +157,10 @@ export default function PreviewVerification() {
         const checkEmail = await translate("Please check your email or paste the code below");
         setTranslatedCheckEmail(checkEmail);
 
+        const emailToCheck = await translate("Check")
+        const emailToCheck2 = await translate("for the code")
+
+
         const didntReceive = await translate("Didn't receive the code? Check your spam folder or contact support");
         setTranslatedDidntReceive(didntReceive);
 
@@ -1111,6 +1115,7 @@ console.log(orgData)
                     <p className="text-[#9CA3B0] text-xs mt-1">
                       {translatedCheckEmail}
                     </p>
+                    <p>{}</p>
                   </div>
 
                   {otpError && (
