@@ -40,10 +40,10 @@ export default function WelcomeAuth() {
       <div className="flex justify-center items-center flex-col">
         <div className="form_container">
           <div className="flex justify-center items-center flex-col  md:mt-0 md:my-[1rem] my-[7rem] w-full">
-            <h1 className="md:form_h1 font-semibold text-[40px] text-center dark:text-textSlightDark-0 text-lightBoldText-0">
+            <h1 className="md:form_h1 font-semibold text-[40px] text-center dark:text--white text-white">
               {t("Welcome to your new")} <br /> {t("experience.")}
             </h1>
-            <p className="md:form_p text-[#41415A]  text-center my-7">
+            <p className="md:form_p text-white/80  text-center my-7">
               {t("Grow deeper, walk stronger.")}
             </p>
           </div>

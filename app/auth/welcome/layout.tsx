@@ -16,8 +16,11 @@ export default function WelcomeLayout({
       <div className="flex justify-center items-center flex-col">
         <div className="md:w-[928px] w-[450px] min-h-screen py-[20px]">
           {" "}
-          <AuthWelcomeHeader openLanguage={openLanguageSelector} hasLanguage={false} />
-          {children}
+          <AuthWelcomeHeader
+            openLanguage={openLanguageSelector}
+            hasLanguage={false}
+          />
+          <div className="px-[2rem] lg:px-0">{children}</div>
         </div>
       </div>
     </>

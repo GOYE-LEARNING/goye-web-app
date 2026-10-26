@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, FormEvent } from "react";
 import { useTimer } from "use-timer";
 import OtpLength from "../component/auth_otp_input";
 import CreatePassword from "./create-password/page";
@@ -95,7 +95,8 @@ export default function VerifyEmail({
   );
 
   // Memoize sendOTP
-  const sendOTP = useCallback(async () => {
+  const sendOTP = useCallback(async (e?: React.ChangeEvent<FormEvent>) => {
+    e?.preventDefault()
     const email = localStorage.getItem("otp-email");
     setIsLoading(true);
     try {

@@ -14,10 +14,10 @@ import { useModal } from "@/app/context/SimpleModalContext";
 import { getFriendlyErrorMessage } from "@/app/utils/errorMessages";
 
 interface Props {
-  changeContentLogin: () => void
+  changeContentLogin: () => void;
 }
 
-export default function Signin({changeContentLogin} : Props) {
+export default function Signin({ changeContentLogin }: Props) {
   const [showEmail, setShowEmail] = useState<boolean>(false);
   const [showSignup, setShowSignup] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -26,7 +26,7 @@ export default function Signin({changeContentLogin} : Props) {
   const { authStatus } = useAuthContext();
   const router = useRouter();
   const { showModal } = useModal();
-  
+
   const showEmailFunc = () => {
     setShowEmail(true);
     setShowSignup(false);
@@ -37,9 +37,9 @@ export default function Signin({changeContentLogin} : Props) {
     setShowSignup(true);
     setShowRoleModal(false);
   };
-  
+
   const { formData, setFormData } = useSignup();
-  
+
   useEffect(() => {
     if (authStatus.requiresProfileCompletion) {
       setFormData((prev: any) => ({
@@ -52,7 +52,7 @@ export default function Signin({changeContentLogin} : Props) {
       console.log("No need to prefill form data");
     }
   }, [authStatus]);
-  
+
   const sendOTP = async () => {
     setIsLoading(true);
     setShowSignup(false);
@@ -64,14 +64,14 @@ export default function Signin({changeContentLogin} : Props) {
       });
 
       const data = await res.json();
-console.log("Response from sendOtp:", data);
+      console.log("Response from sendOtp:", data);
       // ✅ Handle errors from backend
       if (!res.ok) {
         // Display error using modal
         showModal(
           "Error",
           data.message || "Failed to send OTP. Please try again.",
-          "error"
+          "error",
         );
         // Show signup form again to allow user to correct email
         setShowSignup(true);
@@ -87,7 +87,7 @@ console.log("Response from sendOtp:", data);
         showModal(
           "Error",
           "Failed to save session data. Please try again.",
-          "error"
+          "error",
         );
         setShowSignup(true);
         setIsLoading(false);
@@ -102,7 +102,7 @@ console.log("Response from sendOtp:", data);
       showModal(
         "Something went wrong",
         getFriendlyErrorMessage(error, "sending your verification code"),
-        "error"
+        "error",
       );
       setShowSignup(true);
       setIsLoading(false);
@@ -114,14 +114,14 @@ console.log("Response from sendOtp:", data);
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // ✅ Basic validation
     if (!formData.email) {
       showModal("Validation Error", "Email address is required", "error");
       return;
     }
-    sendOTP();
+    await sendOTP();
   };
 
   const signinComponent = [
@@ -156,55 +156,54 @@ console.log("Response from sendOtp:", data);
     initial: { opacity: 0, y: 30 },
     animate: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: -30 },
-    transition: { duration: 0.4, ease: "easeInOut" }
+    transition: { duration: 0.4, ease: "easeInOut" },
   };
 
   const fadeInScale = {
     initial: { opacity: 0, scale: 0.95 },
     animate: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.95 },
-    transition: { duration: 0.3, ease: "easeInOut" }
+    transition: { duration: 0.3, ease: "easeInOut" },
   };
 
   const staggerContainer = {
     animate: {
       transition: {
         staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
+        delayChildren: 0.2,
+      },
+    },
   };
 
   const inputVariants = {
     initial: { opacity: 0, x: -20 },
     animate: { opacity: 1, x: 0 },
-    transition: { duration: 0.3 }
+    transition: { duration: 0.3 },
   };
 
   const buttonVariants = {
     initial: { opacity: 0, scale: 0.95 },
     animate: { opacity: 1, scale: 1 },
     hover: { scale: 1.02, transition: { duration: 0.2 } },
-    tap: { scale: 0.98 }
+    tap: { scale: 0.98 },
   };
 
   const loaderVariants = {
     initial: { opacity: 0, scale: 0.5 },
-    animate: { 
-      opacity: 1, 
+    animate: {
+      opacity: 1,
       scale: 1,
-      transition: { duration: 0.3 }
+      transition: { duration: 0.3 },
     },
-    exit: { 
-      opacity: 0, 
+    exit: {
+      opacity: 0,
       scale: 0.5,
-      transition: { duration: 0.2 }
-    }
+      transition: { duration: 0.2 },
+    },
   };
 
   return (
     <AnimatePresence mode="wait">
-  
       {/* Signup Form */}
       {showSignup && (
         <motion.div
@@ -215,16 +214,16 @@ console.log("Response from sendOtp:", data);
           exit="exit"
           className="form_container"
         >
-          <motion.h1 
+          <motion.h1
             className="form_h1"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
           >
-            <TranslatedText text="Signin" />
+            <TranslatedText text="Sign up" />
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             className="form-p"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -232,7 +231,7 @@ console.log("Response from sendOtp:", data);
           >
             <TranslatedText text="Let's get you started on your discipleship journey" />
           </motion.p>
-          
+
           <motion.form
             method="POST"
             onSubmit={handleSubmit}
@@ -243,8 +242,8 @@ console.log("Response from sendOtp:", data);
             animate="animate"
           >
             {signinComponent.map((form, index) => (
-              <motion.div 
-                key={form.id} 
+              <motion.div
+                key={form.id}
                 className="form_label"
                 variants={inputVariants}
                 custom={index}
@@ -272,8 +271,8 @@ console.log("Response from sendOtp:", data);
                 </motion.label>
               </motion.div>
             ))}
-            
-            <motion.button 
+
+            <motion.button
               className="form_btn md:mt-0 mt-[3rem]"
               type="button"
               onClick={handleSubmit}
@@ -295,6 +294,15 @@ console.log("Response from sendOtp:", data);
                 </>
               )}
             </motion.button>
+            <div
+              className="block lg:hidden"
+              onClick={() => changeContentLogin()}
+            >
+              Have an account?{" "}
+              <i className="text-primaryColors-0 not-italic cursor-pointer">
+                Login
+              </i>
+            </div>
           </motion.form>
         </motion.div>
       )}
@@ -302,7 +310,7 @@ console.log("Response from sendOtp:", data);
       {/* Loading Spinner */}
       <AnimatePresence>
         {isLoading && (
-          <motion.div 
+          <motion.div
             className="flex items-center justify-center"
             variants={loaderVariants}
             initial="initial"
@@ -324,12 +332,12 @@ console.log("Response from sendOtp:", data);
             animate="animate"
             exit="exit"
           >
-            <VerifyEmail 
-              type="signing_up" 
-              openCreateNewPassword={() => {}} 
+            <VerifyEmail
+              type="signing_up"
+              openCreateNewPassword={() => {}}
               openSignup={() => {
                 router.push("/auth/welcome");
-              }} 
+              }}
             />
           </motion.div>
         )}
@@ -345,7 +353,10 @@ console.log("Response from sendOtp:", data);
             animate="animate"
             exit="exit"
           >
-            <Intro openSignup={roleFunc} changeContentLogin={changeContentLogin}/>
+            <Intro
+              openSignup={roleFunc}
+              changeContentLogin={changeContentLogin}
+            />
           </motion.div>
         )}
       </AnimatePresence>

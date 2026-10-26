@@ -134,7 +134,7 @@ export default function DashboardTutorOverview({ viewTutorCourseBreakdown }: Pro
             <FaSync className="text-gray-400 text-sm" />
           </button>
         </div>
-        <div className="bg-shadyColor-0 p-[16px] mt-[20px] flex flex-col gap-3 text-center">
+        <div className="dark:bg-shadyColor-0 bg-lightWhite-0 border border-[#ccc]/20 p-[16px] mt-[20px] flex flex-col gap-3 text-center">
           <p className="text-textGrey-0 text-sm">{t("No courses published yet")}</p>
           <button
             onClick={() => router.push("/dashboard/tutor/course")}
