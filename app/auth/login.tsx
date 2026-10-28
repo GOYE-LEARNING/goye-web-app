@@ -14,6 +14,7 @@ import useGoogleSignupButton from "../hook/useGoogleSignupButton";
 import TranslatedText from "../hook/translateText";
 import { useAuthContext } from "../context/AuthContext";
 import { getOrCreateDeviceId, saveAuthTokens } from "../utils/database/db";
+import { resolveAdminRole } from "../utils/adminRole";
 
 interface formData {
   email: string;
@@ -90,13 +91,27 @@ export default function Login({
     setShowLoginPage(true);
   };
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const { setOrganizationId } = useOrganizationContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  // ✅ Get profile path based on role and organization ID
-  function getProfilePath(role?: string | null, orgId?: string | null) {
+  // ✅ Get profile path based on role, organization ID and (for platform
+  // admins) admin role. Async because a platform admin's destination depends
+  // on their admin role, which may need to be fetched if it isn't known yet.
+  async function getProfilePath(
+    role?: string | null,
+    orgId?: string | null,
+    adminRole?: string | null,
+  ): Promise<string> {
+    // Platform admins: a super admin gets the super-admin dashboard, any other
+    // admin type (content_admin / user_admin) gets the regular admin dashboard.
+    if (role === "goye_admin") {
+      const resolved = adminRole ?? (await resolveAdminRole());
+      return resolved === "super_admin"
+        ? "/dashboard/super-admin"
+        : "/dashboard/admin";
+    }
+
     if (role === "student") {
       return "/dashboard/student";
     } else if (role === "instructor" || role === "tutor") {
@@ -177,7 +192,17 @@ export default function Login({
 
       if (!res.ok) {
         if (res.status === 401) {
-          setMessage("Invalid email or password. Please try again.");
+          // The server sends a specific message for accounts that have no
+          // password yet (created with Google). Show it instead of the
+          // generic "invalid email or password".
+          if (responseData.code === "NO_PASSWORD_SET") {
+            setMessage(
+              responseData.message ||
+                "This account has no password. Sign in with Google, or use Forgot password.",
+            );
+          } else {
+            setMessage("Invalid email or password. Please try again.");
+          }
         } else if (res.status === 429) {
           setMessage("Too many login attempts. Please try again later.");
         } else if (res.status === 403) {
@@ -200,7 +225,7 @@ export default function Login({
       }
 
       // ✅ Extract user data from JWT token
-      let userData = null;
+      let userData: any = null;
       let orgData = null;
       let organizationId = null;
 
@@ -209,7 +234,7 @@ export default function Login({
         const decoded = decodeJWT(responseData.accessToken);
         console.log("=== DECODED JWT ===");
         console.log("Full decoded:", decoded);
-        console.log("Organization ID:", decoded.organizationId);
+        console.log("Organization ID:", decoded?.organizationId);
         console.log("===================");
 
         if (decoded) {
@@ -232,7 +257,7 @@ export default function Login({
             responseData.user?.userType ||
             responseData.organization?.userType ||
             (orgId ? "ORGANIZATION_OWNER" : "");
-          const orgName = responseData.organization?.organization_name || '';
+          const orgName = responseData.organization?.organization_name || "";
 
           userData = {
             id: decoded.userId || decoded.id,
@@ -241,6 +266,10 @@ export default function Login({
             last_name: lastName,
             role: decoded.role || (orgId ? "org_admin" : ""),
             userType: userTypeFromResponse,
+            // Platform admins only: the login response (and the token) carry
+            // the admin role. login() saves it to the local profile, and the
+            // redirect below uses it to pick super-admin vs admin.
+            adminRole: responseData.user?.adminRole ?? decoded.adminRole,
             organizationId: decoded.organizationId,
             organizationName: orgName,
             isProfileComplete: true,
@@ -346,15 +375,16 @@ export default function Login({
         return;
       }
 
-      // ✅ Redirect using ORGANIZATION ID
+      // ✅ Redirect using role, ORGANIZATION ID and admin role
       const role = userData.role || localStorage.getItem("role");
       const orgId = organizationId || localStorage.getItem("organizationId");
-      const profilePath = getProfilePath(role, orgId);
+      const profilePath = await getProfilePath(role, orgId, userData.adminRole);
 
       console.log("✅ Redirecting to:", profilePath);
       console.log("✅ User role:", role);
       console.log("✅ Organization ID:", orgId);
       console.log("✅ UserType:", userData.userType);
+      console.log("✅ AdminRole:", userData.adminRole);
 
       setTimeout(() => {
         router.replace(profilePath);
@@ -454,7 +484,13 @@ export default function Login({
         const role = userData.role || localStorage.getItem("role");
         const orgId =
           userData.organizationId || localStorage.getItem("organizationId");
-        const profilePath = getProfilePath(role, orgId);
+        // If a platform admin signs in with Google, userData may not carry
+        // adminRole; getProfilePath fetches it in that case.
+        const profilePath = await getProfilePath(
+          role,
+          orgId,
+          userData.adminRole,
+        );
 
         setTimeout(() => {
           router.replace(profilePath);

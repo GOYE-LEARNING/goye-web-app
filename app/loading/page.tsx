@@ -7,6 +7,41 @@ import { useRouter } from "next/navigation";
 import { useOrganizationContext } from "@/app/component/organization_component/organanization_context";
 import { useAuthContext } from "@/app/context/AuthContext";
 import { getUserProfile } from "@/app/utils/database/db";
+import { resolveAdminRole } from "@/app/utils/adminRole";
+
+/**
+ * Where a signed-in person should land, based on their saved profile.
+ * Platform admins are routed by their admin role; if the role isn't saved
+ * locally it is fetched from the backend (see resolveAdminRole).
+ */
+async function resolveRedirectPath(
+  profile: any,
+  orgId: string | null | undefined,
+): Promise<string> {
+  const role = profile?.role?.toLowerCase();
+
+  if (role === "goye_admin") {
+    const adminRole = await resolveAdminRole();
+    return adminRole === "super_admin"
+      ? "/dashboard/super-admin"
+      : "/dashboard/admin";
+  }
+
+  if (role === "invited" || role === "invited_user" || role === "organization_member") {
+    return orgId ? `/dashboard/${orgId}/organization` : "/dashboard/student";
+  }
+
+  if (role === "instructor" || role === "tutor") {
+    return "/dashboard/tutor";
+  }
+
+  if (role === "org_admin" || role === "admin" || role === "administrator") {
+    return orgId ? `/dashboard/${orgId}/admin` : "/dashboard/admin";
+  }
+
+  // "student" and anything unrecognised.
+  return "/dashboard/student";
+}
 
 export default function LoadingPage() {
   const { organizationId, setOrganizationId } = useOrganizationContext();
@@ -17,6 +52,16 @@ export default function LoadingPage() {
   const [error, setError] = useState<string | null>(null);
   const redirectAttempted = useRef(false);
   const authCheckedRef = useRef(false);
+  // Lets async work skip router.push() if the page was left in the meantime,
+  // without cancelling a redirect just because a dependency changed.
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const statusMessages = [
     { progress: 20, message: "Verifying credentials..." },
@@ -33,6 +78,7 @@ export default function LoadingPage() {
     }, statusMessages[0].message);
 
     setStatus(currentStatus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
 
   useEffect(() => {
@@ -40,7 +86,7 @@ export default function LoadingPage() {
       if (authCheckedRef.current) return;
       authCheckedRef.current = true;
 
-      // ✅ Read everything from Dexie — single source of truth
+      // Read everything from Dexie, the single source of truth.
       const profile = await getUserProfile();
 
       const userId = profile?.userId;
@@ -98,10 +144,9 @@ export default function LoadingPage() {
       } else {
         console.error("❌ No user data found - redirecting to login");
         setError("No user session found. Please login again.");
-        const timeout = setTimeout(() => {
-          router.push("/auth");
+        setTimeout(() => {
+          if (mountedRef.current) router.push("/auth");
         }, 3000);
-        return () => clearTimeout(timeout);
       }
     };
 
@@ -121,59 +166,36 @@ export default function LoadingPage() {
   }, [router, updateAuthStatus, checkAuth, setOrganizationId]);
 
   useEffect(() => {
-    if (progress === 100 && !redirectAttempted.current && !error) {
-      redirectAttempted.current = true;
+    if (progress !== 100 || redirectAttempted.current || error) return;
+    redirectAttempted.current = true;
 
-      const redirect = async () => {
+    const redirect = async () => {
+      try {
         const profile = await getUserProfile();
-        const role = profile?.role?.toLowerCase();
-        const userType = profile?.userType?.toLowerCase();
         const finalOrgId = organizationId || profile?.organizationId;
-        const adminRole = profile?.adminRole;
 
-        console.log("Redirecting with:", { role, userType, finalOrgId });
+        const redirectPath = await resolveRedirectPath(profile, finalOrgId);
+        console.log("Redirecting with:", {
+          role: profile?.role,
+          userType: profile?.userType,
+          finalOrgId,
+          redirectPath,
+        });
 
-        const timeout = setTimeout(() => {
-          try {
-            let redirectPath = "/dashboard";
+        // Small pause so the "Redirecting..." state is visible.
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
-            if (role === "invited") {
-              redirectPath = finalOrgId ? `/dashboard/${finalOrgId}/organization` : "/dashboard/student";
-              console.log("Redirecting as invited user to:", redirectPath);
-            } else if (role === "instructor" || role === "tutor") {
-              redirectPath = "/dashboard/tutor";
-              console.log("Redirecting as instructor/tutor to:", redirectPath);
-            } else if (role === "goye_admin") {
-              redirectPath = adminRole === "super_admin" ? "/dashboard/super-admin" : "/dashboard/admin";
-              console.log("Redirecting as goye_admin to:", redirectPath);
-            } else if (role === "org_admin" || role === "admin" || role === "administrator") {
-              redirectPath = finalOrgId ? `/dashboard/${finalOrgId}/admin` : "/dashboard/admin";
-              console.log("Redirecting as org admin to:", redirectPath);
-            } else if (role === "invited_user" || role === "organization_member") {
-              redirectPath = finalOrgId ? `/dashboard/${finalOrgId}/organization` : "/dashboard/student";
-              console.log("Redirecting as organization member to:", redirectPath);
-            } else if (role === "student") {
-              redirectPath = "/dashboard/student";
-              console.log("Redirecting as student to:", redirectPath);
-            } else {
-              redirectPath = "/dashboard/student";
-              console.log("Redirecting as default student to:", redirectPath);
-            }
+        if (mountedRef.current) router.push(redirectPath);
+      } catch (err) {
+        console.error("Redirect error:", err);
+        if (mountedRef.current) {
+          setError("Failed to redirect. Please try again.");
+        }
+        redirectAttempted.current = false;
+      }
+    };
 
-            console.log("Final redirect path:", redirectPath);
-            router.push(redirectPath);
-          } catch (err) {
-            console.error("Redirect error:", err);
-            setError("Failed to redirect. Please try again.");
-            redirectAttempted.current = false;
-          }
-        }, 500);
-
-        return () => clearTimeout(timeout);
-      };
-
-      redirect();
-    }
+    redirect();
   }, [progress, router, organizationId, error]);
 
   const handleRetry = async () => {
