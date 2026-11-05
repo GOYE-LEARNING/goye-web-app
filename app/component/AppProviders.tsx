@@ -1,11 +1,4 @@
 // app/component/AppProviders.tsx
-//
-// Everything RootLayout (app/layout.tsx) used to do directly, moved out into
-// its own client component so app/layout.tsx can become a server component
-// and export PWA metadata (manifest link, theme-color, viewport) — Next's
-// Metadata API only works in server components, and this tree needs
-// useEffect/useState/router hooks, so it can't be one file anymore. No
-// logic changed from the original RootLayout body, only moved.
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -32,7 +25,6 @@ import {
 import { isPublicRoute } from "@/app/utils/publicRoutes";
 import { reconcileStoredIdentity } from "@/app/utils/reconcileStoredIdentity";
 
-// AuthGuard component to protect routes
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -50,7 +42,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
         if (!session?.isAuthenticated) {
           console.log("❌ Not authenticated, redirecting to login from layout");
-          router.push('/auth');
+          router.push("/auth");
           return;
         }
 
@@ -64,7 +56,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
         setIsInitialized(true);
       } catch (error) {
         console.error("AuthGuard initialization error:", error);
-        router.push('/auth');
+        router.push("/auth");
       }
     };
 
@@ -82,29 +74,28 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Cross-tab sync component
 function CrossTabSync() {
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const deviceChannel = setupDeviceIdSync();
     const authChannel = setupCrossTabSync();
 
     authChannel.onmessage = async (event) => {
-      if (event.data.type === 'LOGOUT') {
-        console.log('📡 Received logout event from another tab');
-        if (!window.location.pathname.includes('/auth')) {
-          router.push('/auth');
+      if (event.data.type === "LOGOUT") {
+        console.log("📡 Received logout event from another tab");
+        if (!window.location.pathname.includes("/auth")) {
+          router.push("/auth");
         }
       }
 
-      if (event.data.type === 'LOGIN_SUCCESS') {
-        console.log('📡 Received login event from another tab');
+      if (event.data.type === "LOGIN_SUCCESS") {
+        console.log("📡 Received login event from another tab");
         await syncDeviceIdAcrossTabs();
-        if (window.location.pathname.includes('/auth')) {
-          router.push('/loading');
+        if (window.location.pathname.includes("/auth")) {
+          router.push("/loading");
         } else {
           window.location.reload();
         }
@@ -122,14 +113,13 @@ function CrossTabSync() {
   return null;
 }
 
-// Device ID sync component
 function DeviceIdSync() {
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const syncDeviceId = async () => {
       const deviceId = await getOrCreateDeviceId();
-      console.log('🔑 Device ID initialized:', deviceId);
+      console.log("🔑 Device ID initialized:", deviceId);
       await syncDeviceIdAcrossTabs();
     };
 
@@ -143,25 +133,6 @@ function DeviceIdSync() {
   return null;
 }
 
-// Explicit service worker registration — see the `register: false` note in
-// next.config.ts for why this can't be left to the plugin's own injection
-// under the App Router.
-//
-// A shipped fix is only "live" once the browser is actually running the new
-// JS bundle — the SW's own skipWaiting()/clientsClaim() only make a new
-// worker take over fetches, they don't make an already-open tab reload the
-// (already-executing, now-stale) code it loaded on its last navigation. Two
-// bugs (the i18n cache-key fix and the org-announcement fix) were reported
-// as "still happening" purely because of this: the server had the fix, but
-// nothing ever told an already-open tab/installed PWA to go get it. This
-// adds the two missing pieces:
-//  - actively ask for an update check (registration.update()) instead of
-//    waiting on the browser's own infrequent schedule — on mount and every
-//    time the tab/PWA regains focus, which is exactly when a user would
-//    otherwise wonder why yesterday's bug is still there.
-//  - reload once a new worker actually takes control, so the fix is running
-//    on the very next check instead of "next time you happen to fully close
-//    and reopen the app."
 function ServiceWorkerRegistration() {
   useEffect(() => {
     if (
@@ -197,15 +168,6 @@ function ServiceWorkerRegistration() {
   return null;
 }
 
-/**
- * One-off repair of identity values left behind by earlier builds.
- *
- * Sits here rather than inside AuthGuard because AuthGuard returns early on
- * public routes, and the residue most needs clearing exactly when someone is
- * sitting on /auth about to sign in as a different person.
- *
- * Renders nothing and never blocks startup.
- */
 function IdentityReconciler() {
   useEffect(() => {
     void reconcileStoredIdentity();
@@ -226,22 +188,9 @@ export default function AppProviders({
   const checkAll = path.some((p) => pathname == p);
 
   return (
-    <body
-      className={`${bodyClassName} ${checkAll ? "overflow-hidden" : ""}`}
-    >
+    <body className={`${bodyClassName} ${checkAll ? "overflow-hidden" : ""}`}>
       <IdentityReconciler />
       <ServiceWorkerRegistration />
-      {/*
-        LanguageProvider/I18nProvider now wrap literally everything,
-        including the error/not-found handlers. They used to sit deep
-        inside this tree (below GlobalNotFoundHandler/GlobalAPIErrorHandler),
-        which worked fine until those two handlers themselves started
-        calling useI18n() — at that point every single page crashed with
-        "useI18n must be used within I18nProvider" on mount, since a
-        consumer can never sit above its own provider. Putting the
-        providers outermost is also the more correct place for them
-        anyway: an error screen should be able to translate too.
-      */}
       <LanguageProvider>
         <I18nProvider>
           <GlobalNotFoundHandler>

@@ -6,6 +6,14 @@
  * /discussion) — a mismatch here silently either bounces a signed-in user
  * to /auth on a route that should be public, or lets an unauthenticated
  * request through to a route that should be guarded.
+ *
+ * /loading is public because it is a transitional route: flows push() there
+ * after login/signup/Google so the loader can pick the destination
+ * dashboard by role, and /loading then replace()s to that destination. It
+ * is never a guarded destination of its own — and if the underlying
+ * session is still settling (IndexedDB write for isAuthenticated racing
+ * the navigation), treating it as guarded sends a just-authenticated user
+ * straight back to /auth.
  */
 export const PUBLIC_ROUTES = [
   "/auth",
@@ -15,6 +23,7 @@ export const PUBLIC_ROUTES = [
   "/contact",
   "/discussion",
   "/forgot-password",
+  "/loading",
 ];
 
 export function isPublicRoute(pathname: string | null | undefined): boolean {

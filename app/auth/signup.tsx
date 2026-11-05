@@ -18,19 +18,25 @@ interface Props {
 }
 
 export default function Signin({ changeContentLogin }: Props) {
-  const [showEmail, setShowEmail] = useState<boolean>(false);
-  const [showSignup, setShowSignup] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showRoleModal, setShowRoleModal] = useState<boolean>(true);
+  const [showEmail, setShowEmail] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(true);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const { authStatus } = useAuthContext();
   const router = useRouter();
   const { showModal } = useModal();
+  const { formData, setFormData } = useSignup();
+
+  // True when the person's Google identity was verified (no account yet)
+  // and the signup form must show their Google name/email.
+  const isGooglePrefilled =
+    authStatus.requiresProfileCompletion === true &&
+    !!authStatus.user?.email_address;
 
   const showEmailFunc = () => {
     setShowEmail(true);
     setShowSignup(false);
-    console.log("showing email component");
   };
 
   const roleFunc = () => {
@@ -38,20 +44,17 @@ export default function Signin({ changeContentLogin }: Props) {
     setShowRoleModal(false);
   };
 
-  const { formData, setFormData } = useSignup();
-
+  // ✅ Prefill from auth context (this is where the Google profile lands)
   useEffect(() => {
-    if (authStatus.requiresProfileCompletion) {
+    if (authStatus.requiresProfileCompletion && authStatus.user) {
       setFormData((prev: any) => ({
         ...prev,
         firstname: authStatus.user?.first_name || "",
         lastname: authStatus.user?.last_name || "",
         email: authStatus.user?.email_address || "",
       }));
-    } else {
-      console.log("No need to prefill form data");
     }
-  }, [authStatus]);
+  }, [authStatus, setFormData]);
 
   const sendOTP = async () => {
     setIsLoading(true);
@@ -64,16 +67,13 @@ export default function Signin({ changeContentLogin }: Props) {
       });
 
       const data = await res.json();
-      console.log("Response from sendOtp:", data);
-      // ✅ Handle errors from backend
+
       if (!res.ok) {
-        // Display error using modal
         showModal(
           "Error",
           data.message || "Failed to send OTP. Please try again.",
           "error",
         );
-        // Show signup form again to allow user to correct email
         setShowSignup(true);
         setIsLoading(false);
         return;
@@ -82,6 +82,9 @@ export default function Signin({ changeContentLogin }: Props) {
       try {
         localStorage.setItem("otp-token", data.sessionToken);
         localStorage.setItem("otp-email", data.email);
+
+        // If Google verified this identity, pass it through to /signup
+       
       } catch (storageError) {
         console.error("Failed to store OTP data:", storageError);
         showModal(
@@ -94,7 +97,6 @@ export default function Signin({ changeContentLogin }: Props) {
         return;
       }
 
-      console.log(data);
       setIsLoading(false);
       showEmailFunc();
     } catch (error) {
@@ -116,7 +118,6 @@ export default function Signin({ changeContentLogin }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // ✅ Basic validation
     if (!formData.email) {
       showModal("Validation Error", "Email address is required", "error");
       return;
@@ -125,129 +126,49 @@ export default function Signin({ changeContentLogin }: Props) {
   };
 
   const signinComponent = [
-    {
-      id: 1,
-      label: "First name",
-      type: "text",
-      name: "firstname",
-      value: formData["firstname"] as string,
-      handlechange: handleChange,
-    },
-    {
-      id: 2,
-      label: "Last name",
-      type: "text",
-      name: "lastname",
-      value: formData["lastname"] as string,
-      handlechange: handleChange,
-    },
-    {
-      id: 3,
-      label: "Email address",
-      type: "email",
-      name: "email",
-      value: formData["email"] as string,
-      handlechange: handleChange,
-    },
+    { id: 1, label: "First name", type: "text", name: "firstname",
+      value: formData["firstname"] as string, handlechange: handleChange },
+    { id: 2, label: "Last name", type: "text", name: "lastname",
+      value: formData["lastname"] as string, handlechange: handleChange },
+    { id: 3, label: "Email address", type: "email", name: "email",
+      value: formData["email"] as string, handlechange: handleChange },
   ];
 
-  // Animation variants (unchanged)
-  const fadeInUp = {
-    initial: { opacity: 0, y: 30 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -30 },
-    transition: { duration: 0.4, ease: "easeInOut" },
-  };
-
-  const fadeInScale = {
-    initial: { opacity: 0, scale: 0.95 },
-    animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.95 },
-    transition: { duration: 0.3, ease: "easeInOut" },
-  };
-
-  const staggerContainer = {
-    animate: {
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const inputVariants = {
-    initial: { opacity: 0, x: -20 },
-    animate: { opacity: 1, x: 0 },
-    transition: { duration: 0.3 },
-  };
-
+  const fadeInUp = { initial: { opacity: 0, y: 30 }, animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -30 }, transition: { duration: 0.4, ease: "easeInOut" } };
+  const fadeInScale = { initial: { opacity: 0, scale: 0.95 }, animate: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.95 }, transition: { duration: 0.3, ease: "easeInOut" } };
+  const staggerContainer = { animate: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } } };
+  const inputVariants = { initial: { opacity: 0, x: -20 }, animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.3 } };
   const buttonVariants = {
-    initial: { opacity: 0, scale: 0.95 },
-    animate: { opacity: 1, scale: 1 },
-    hover: { scale: 1.02, transition: { duration: 0.2 } },
-    tap: { scale: 0.98 },
-  };
-
+    initial: { opacity: 0, scale: 0.95 }, animate: { opacity: 1, scale: 1 },
+    hover: { scale: 1.02, transition: { duration: 0.2 } }, tap: { scale: 0.98 } };
   const loaderVariants = {
     initial: { opacity: 0, scale: 0.5 },
-    animate: {
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 0.3 },
-    },
-    exit: {
-      opacity: 0,
-      scale: 0.5,
-      transition: { duration: 0.2 },
-    },
-  };
+    animate: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
+    exit: { opacity: 0, scale: 0.5, transition: { duration: 0.2 } } };
 
   return (
     <AnimatePresence mode="wait">
-      {/* Signup Form */}
       {showSignup && (
-        <motion.div
-          key="signup-form"
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          className="form_container"
-        >
-          <motion.h1
-            className="form_h1"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-          >
+        <motion.div key="signup-form" variants={fadeInUp}
+          initial="initial" animate="animate" exit="exit" className="form_container">
+          <motion.h1 className="form_h1" initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}>
             <TranslatedText text="Sign up" />
           </motion.h1>
 
-          <motion.p
-            className="form-p"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-          >
+          <motion.p className="form-p" initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.4 }}>
             <TranslatedText text="Let's get you started on your discipleship journey" />
           </motion.p>
 
-          <motion.form
-            method="POST"
-            onSubmit={handleSubmit}
-            noValidate
-            className="form"
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-          >
+          <motion.form method="POST" onSubmit={handleSubmit} noValidate className="form"
+            variants={staggerContainer} initial="initial" animate="animate">
             {signinComponent.map((form, index) => (
-              <motion.div
-                key={form.id}
-                className="form_label"
-                variants={inputVariants}
-                custom={index}
-              >
+              <motion.div key={form.id} className="form_label"
+                variants={inputVariants} custom={index}>
                 <input
                   type={form.type}
                   name={form.name}
@@ -255,108 +176,68 @@ export default function Signin({ changeContentLogin }: Props) {
                   onChange={handleChange}
                   placeholder=" "
                   required
-                  className={`form_input peer focus:outline-none`}
+                  readOnly={isGooglePrefilled && form.name === "email"}
+                  className="form_input peer focus:outline-none"
                 />
-                <motion.label
-                  htmlFor={form.name}
+                <motion.label htmlFor={form.name}
                   className={`absolute left-[12px] label peer-focus:text-[14px] peer-focus:top-[10px] transition-all duration-300 ease-in-out md:peer-placeholder-shown:top-[18px] peer-placeholder-shown:top-[19.8px] peer-placeholder-shown:text-[16px] ${
-                    form.value
-                      ? "top-[2px] text-[14px]"
-                      : "top-[15px] text-[16px]"
+                    form.value ? "top-[2px] text-[14px]" : "top-[15px] text-[16px]"
                   }`}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
+                  whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
                   <TranslatedText text={form.label} />
                 </motion.label>
               </motion.div>
             ))}
 
-            <motion.button
-              className="form_btn md:mt-0 mt-[3rem]"
-              type="button"
-              onClick={handleSubmit}
-              variants={buttonVariants}
-              initial="initial"
-              animate="animate"
-              whileHover="hover"
-              whileTap="tap"
-              disabled={isLoading}
-            >
+            <motion.button className="form_btn md:mt-0 mt-[3rem]" type="button"
+              onClick={handleSubmit} variants={buttonVariants}
+              initial="initial" animate="animate" whileHover="hover" whileTap="tap"
+              disabled={isLoading}>
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
                   <TranslatedText text="Sending..." />
                 </span>
               ) : (
-                <>
-                  <TranslatedText text="Next" /> <FaArrowRight size={13} />
-                </>
+                <><TranslatedText text="Next" /> <FaArrowRight size={13} /></>
               )}
             </motion.button>
-            <div
-              className="block lg:hidden"
-              onClick={() => changeContentLogin()}
-            >
+
+            <div className="block lg:hidden" onClick={() => changeContentLogin()}>
               Have an account?{" "}
-              <i className="text-primaryColors-0 not-italic cursor-pointer">
-                Login
-              </i>
+              <i className="text-primaryColors-0 not-italic cursor-pointer">Login</i>
             </div>
           </motion.form>
         </motion.div>
       )}
 
-      {/* Loading Spinner */}
       <AnimatePresence>
         {isLoading && (
-          <motion.div
-            className="flex items-center justify-center"
-            variants={loaderVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
+          <motion.div className="flex items-center justify-center"
+            variants={loaderVariants} initial="initial" animate="animate" exit="exit">
             <AuthLoader />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Email Verification Component */}
       <AnimatePresence>
         {showEmail && (
-          <motion.div
-            key="verify-email"
-            variants={fadeInScale}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
+          <motion.div key="verify-email" variants={fadeInScale}
+            initial="initial" animate="animate" exit="exit">
             <VerifyEmail
               type="signing_up"
               openCreateNewPassword={() => {}}
-              openSignup={() => {
-                router.push("/auth/welcome");
-              }}
+              openSignup={() => router.push("/auth/welcome")}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Role Modal / Intro */}
       <AnimatePresence>
         {showRoleModal && (
-          <motion.div
-            key="intro-modal"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <Intro
-              openSignup={roleFunc}
-              changeContentLogin={changeContentLogin}
-            />
+          <motion.div key="intro-modal" variants={fadeInUp}
+            initial="initial" animate="animate" exit="exit">
+            <Intro openSignup={roleFunc} changeContentLogin={changeContentLogin} />
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,12 +1,20 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo, FormEvent } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  FormEvent,
+} from "react";
 import { useTimer } from "use-timer";
 import OtpLength from "../component/auth_otp_input";
 import CreatePassword from "./create-password/page";
 import MessageComponent from "../component/message_component";
 import { markOtpVerified } from "../utils/signupFlowGuard";
 import { useI18n } from "../context/I18nContext";
+import { useAuthContext } from "../context/AuthContext";
+import { saveAuthTokens } from "../utils/database/db";
 
 interface Props {
   openSignup: () => void;
@@ -21,6 +29,7 @@ export default function VerifyEmail({
 }: Props) {
   const { t } = useI18n();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const { authStatus } = useAuthContext();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
@@ -35,47 +44,58 @@ export default function VerifyEmail({
   });
 
   const isRunning = status === "RUNNING";
-  const isStopped = status === "PAUSED";
 
-  // Fix useEffect
   useEffect(() => {
     start();
-  }, []); // Empty dependency array
+  }, []);
 
-  // Memoize formatTime
   const formatTime = useCallback((): string => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }, [time]);
 
-  // Memoize verifyOtp
   const verifyOtp = useCallback(
     async (otp: string) => {
       const token = localStorage.getItem("otp-token");
+
+
       setIsLoading(true);
       try {
         const res = await fetch(`${API_URL}/api/user/verify-otp`, {
           method: "POST",
-          headers: { "Content-type": "application/json" },
-          body: JSON.stringify({ sessionToken: token, otp: otp }),
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            sessionToken: token,
+            otp,
+
+          }),
         });
 
         const data = await res.json();
 
-        if (!res.ok) {
-          console.log("An error occured while verifying otp");
-          console.log(data);
+        if (res.status === 409 && data.code === "USER_EXISTS") {
+          setMessage(data.message);
+          setIsLoading(false);
+          return;
         }
 
-        if (data.success === true) {
-          
-          pause();
-          markOtpVerified();
-          setShowPasswordPage(true);
-          setShowVerificationPage(false);
+        if (!res.ok || !data.success) {
+          setMessage(data.message || "Invalid OTP");
+          setIsLoading(false);
+          return;
         }
 
+        // OTP verified. Advance to the next step — /signup will be called
+        // from there, using the Google identity still in AuthContext.
+        localStorage.removeItem("otp-token");
+        localStorage.removeItem("otp-email");
+
+        pause();
+        markOtpVerified();
+        setShowPasswordPage(true);
+        setShowVerificationPage(false);
         setIsLoading(false);
         setMessage(data.message);
       } catch (error) {
@@ -83,10 +103,9 @@ export default function VerifyEmail({
         setIsLoading(false);
       }
     },
-    [isRunning, pause],
+    [isRunning, pause, authStatus.user],
   );
 
-  // Memoize onComplete
   const onComplete = useCallback(
     (otp: string) => {
       verifyOtp(otp);
@@ -94,49 +113,63 @@ export default function VerifyEmail({
     [verifyOtp],
   );
 
-  // Memoize sendOTP
-  const sendOTP = useCallback(async (e?: React.ChangeEvent<FormEvent>) => {
-    e?.preventDefault()
-    const email = localStorage.getItem("otp-email");
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/user/sendOtp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          type == "signing_up"
-            ? { email: email, purpose: "signup" }
-            : { email: email },
-        ),
-      });
+  // Resend: request a new OTP, refresh the timer, stay on this page.
+  // Do NOT call openSignup / openCreateNewPassword here — those are the
+  // "advance to next step" callbacks and must only fire after a real
+  // verification (or a deliberate user click, not a resend).
+  const sendOTP = useCallback(
+    async (e?: React.ChangeEvent<FormEvent>) => {
+      e?.preventDefault();
+      const email = localStorage.getItem("otp-email");
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/user/sendOtp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            type == "signing_up"
+              ? { email: email, purpose: "signup" }
+              : { email: email },
+          ),
+        });
 
-      const data = await res.json();
-      localStorage.setItem("otp-token", data.sessionToken);
-      setIsLoading(false);
-      if (type == "signing_up") {
-        openSignup();
-      } else {
-        openCreateNewPassword();
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMessage(data.message || "Failed to resend OTP. Please try again.");
+          setIsLoading(false);
+          return;
+        }
+
+        localStorage.setItem("otp-token", data.sessionToken);
+        setMessage(""); // clear any prior "expired" / error text
+        setIsLoading(false);
+
+        // Refresh the countdown in place; stay on the verification screen.
+        reset();
+        start();
+      } catch (error) {
+        console.error(error);
+        setIsLoading(false);
       }
-      reset(); // Reset timer
-      start(); // Start again
-    } catch (error) {
-      console.error(error);
-      setIsLoading(false);
-    }
-  }, [reset, start, pause]);
+    },
+    [reset, start, type],
+  );
 
-  // Memoize handleClick
+  // Verify button: when the countdown is still running, advance to the next
+  // step; when it has hit 0, resend.
   const handleClick = useCallback(() => {
     if (time === 0) {
       sendOTP();
     } else {
-      setShowPasswordPage(true);
-      setShowVerificationPage(false);
+      if (type === "signing_up") {
+        openSignup();
+      } else {
+        openCreateNewPassword();
+      }
     }
-  }, [time, sendOTP]);
+  }, [time, sendOTP, openSignup, openCreateNewPassword, type]);
 
-  // Memoize time display
   const timeDisplay = useMemo(() => {
     if (time === 0) {
       return <span className="text-red-600">{t("Your OTP has expired")}</span>;
@@ -152,7 +185,7 @@ export default function VerifyEmail({
           <p className="form-p">
             {t("A one-time password has been sent to your email.")}
           </p>
-          <form noValidate className="form">
+          <form noValidate className="form" onSubmit={(e) => e.preventDefault()}>
             <div className="w-full">
               <OtpLength length={6} onComplete={onComplete} />
               <div className="text-[15px] w-full flex items-start justify-start flex-col my-4 gap-2">

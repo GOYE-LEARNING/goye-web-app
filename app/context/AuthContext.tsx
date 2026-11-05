@@ -151,65 +151,63 @@ export default function AuthProvider({ children }: Props) {
   }, []);
 
   const refreshToken = React.useCallback(async (): Promise<boolean> => {
-    if (isPublicRoute()) return false;
+  if (isPublicRoute()) return false;
 
-    try {
-      console.log("🔄 Attempting to refresh token...");
+  try {
+    console.log("🔄 Attempting to refresh token...");
 
-      const deviceId = await getOrCreateDeviceId();
-      const tokens = await getAuthTokens();
+    const deviceId = await getOrCreateDeviceId();
+    const tokens = await getAuthTokens();
 
-      const response = await fetch(`${API_URL}/api/verify/refresh-token`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Device-Id": deviceId,
-          ...(tokens?.refreshToken && {
-            "x-refresh-token": tokens.refreshToken,
-          }),
-        },
+    // Endpoint must match the handler's decorator:
+    //   @Route("user") + @Post("/refresh")  →  /api/user/refresh
+    // It resolves the session from the X-Device-Id header OR the cookie, and
+    // the refresh token from the cookie OR x-refresh-token header, so
+    // browsers and header-only native clients both work.
+    const response = await fetch(`${API_URL}/api/user/refresh`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Device-Id": deviceId,
+        ...(tokens?.refreshToken && {
+          "x-refresh-token": tokens.refreshToken,
+        }),
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.accessToken) {
+        await saveAuthTokens({ accessToken: data.accessToken });
+      }
+
+      console.log("✅ Token refresh successful");
+      await updateSessionState({
+        isAuthenticated: true,
+        lastActivity: new Date().toISOString(),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.accessToken) {
-          await saveAuthTokens({ accessToken: data.accessToken });
-        }
-
-        console.log("✅ Token refresh successful");
-        await updateSessionState({
-          isAuthenticated: true,
-          lastActivity: new Date().toISOString(),
-        });
-        setAuthError(null);
-        return true;
-      }
-
-      console.log("❌ Token refresh failed with status:", response.status);
-
-      // A 401/403 here is the server explicitly saying the refresh token is
-      // gone, expired, or revoked — that's a real "you are logged out."
-      // Anything else (5xx, a proxy timeout page, etc.) is the server
-      // failing to answer the question, not answering "no" — treat that as
-      // an error to retry, not as proof the session is invalid.
-      if (response.status !== 401 && response.status !== 403) {
-        setAuthError(
-          "We're having trouble reaching the server. Please try again.",
-        );
-      }
-      return false;
-    } catch (error) {
-      console.error("Token refresh failed:", error);
-      // The request itself never completed — offline, DNS, CORS, backend
-      // down. Same reasoning as a 5xx above: not evidence of a bad session.
-      setAuthError(
-        "We couldn't reach the server. Check your connection and try again.",
-      );
-      return false;
+      setAuthError(null);
+      return true;
     }
-  }, [isPublicRoute]);
+
+    console.log("❌ Token refresh failed with status:", response.status);
+
+    if (response.status !== 401 && response.status !== 403) {
+      setAuthError(
+        "We're having trouble reaching the server. Please try again.",
+      );
+    }
+    return false;
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+    setAuthError(
+      "We couldn't reach the server. Check your connection and try again.",
+    );
+    return false;
+  }
+}, [isPublicRoute]);
 
   const getUserType = React.useCallback(async (): Promise<string> => {
     const profile = await getUserProfile();

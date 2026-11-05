@@ -2,85 +2,103 @@ import { useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { auth, googleProvider, signInWithPopup } from "../config/firebase";
 import { useAuthContext } from "../context/AuthContext";
-import { saveUserProfile } from "@/app/utils/database/db";
+import {
+  saveUserProfile,
+  saveAuthTokens,
+  updateSessionState,
+  getOrCreateDeviceId,
+} from "@/app/utils/database/db";
 
-// Falls back to the known production backend so a missing/misconfigured
-// NEXT_PUBLIC_API_URL doesn't leave axios's baseURL undefined — which makes
-// every request resolve as a relative path against this app's own origin
-// (no matching route there, so it 404s) instead of the actual backend.
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Create axios instance with default config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-interface GoogleSignInResult {
-  success: boolean;
-  error?: string;
-  // Set when the user closed the Google popup themselves — a normal,
-  // deliberate action, not a failure. Callers should reset quietly instead
-  // of showing an error banner for this one.
-  cancelled?: boolean;
-  data?: any;
-  requiresProfileCompletion?: boolean;
-  isProfileComplete?: boolean;
-  userData?: any;
-  status?: {
-    isExistingUser: boolean;
-    isProfileComplete: boolean;
-    requiresProfileCompletion: boolean;
-    userStatusMessage?: string;
-  };
-  accessToken?: string;
-  refreshToken?: string;
+export interface GoogleProfile {
+  email: string;
+  first_name: string;
+  last_name: string;
+  picture: string | null;
+  email_verified: boolean;
 }
+
+export type GoogleSignInResult =
+  | { success: true; kind: "new"; googleUid: string; profile: GoogleProfile }
+  | { success: true; kind: "existing"; data: any; userData: any; status: any }
+  | { success: false; error?: string; cancelled?: boolean };
 
 const useGoogleSignupButton = () => {
   const { updateAuthStatus } = useAuthContext();
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const isSigningInRef = useRef<boolean>(false);
+  const isSigningInRef = useRef(false);
 
   const signInWithGoogle = useCallback(async (): Promise<GoogleSignInResult> => {
     if (isSigningInRef.current || loading) {
-      console.log("Sign-in already in progress, ignoring request");
-      return { 
-        success: false, 
-        error: "Sign-in already in progress. Please wait." 
-      };
+      return { success: false, error: "Sign-in already in progress. Please wait." };
     }
-
     isSigningInRef.current = true;
     setLoading(true);
     setError(null);
 
     try {
-      console.log("Starting Google sign-in...");
-      
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
-      
-      console.log("Got Google token, sending to backend...");
 
-      const response = await apiClient.post('/api/user/auth/google', { idToken });
+      // Send the client's own device ID so /auth/google keys the userSession
+      // to the same device that /refresh and /api/user/profile will query.
+      // Without this header, the server invents an ID the client never sees
+      // and refresh fails on the very next request.
+      const deviceId = await getOrCreateDeviceId();
 
-      console.log("Google auth response:", response.data);
+      const response = await apiClient.post(
+        "/api/user/auth/google",
+        { idToken },
+        { headers: { "X-Device-Id": deviceId } },
+      );
 
-      if (response.data.success) {
-        const { status, user } = response.data;
+      const data = response.data;
 
-        // ✅ ONLY save user data, NO tokens
+      // ─── NEW USER ─────────────────────────────────────────────────────
+      if (data.success && data.isNewUser) {
+        const profile: GoogleProfile = data.profile;
+
+        updateAuthStatus({
+          isExistingUser: false,
+          isProfileComplete: false,
+          requiresProfileCompletion: true,
+          user: {
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            email_address: profile.email,
+            user_pic: profile.picture,
+            firebase_uid: data.googleUid,
+            provider: "GOOGLE",
+            isProfileComplete: false,
+          } as any,
+          isLoading: false,
+        });
+
+        return {
+          success: true,
+          kind: "new",
+          googleUid: data.googleUid,
+          profile,
+        };
+      }
+
+      // ─── EXISTING USER ────────────────────────────────────────────────
+      if (data.success && !data.isNewUser) {
+        const { status, user, accessToken, refreshToken } = data;
+
+        if (accessToken || refreshToken) {
+          await saveAuthTokens({ accessToken, refreshToken });
+        }
+
         if (user) {
-          // Without userId here, /loading's `if (userId && role)` gate never
-          // passes for a Google sign-in — the auth check itself succeeds
-          // (cookies are set correctly), but the very next page bounces back
-          // to /auth with "No user data found" because it was never written.
-          // The email/password flow in login.tsx already sets this.
           await saveUserProfile({
             userId: user.id,
             first_name: user.first_name || "",
@@ -89,58 +107,65 @@ const useGoogleSignupButton = () => {
           });
           localStorage.setItem("role", user.role || "student");
           localStorage.setItem("type", user.type || "user");
-          localStorage.setItem("isProfileComplete", String(status?.isProfileComplete || false));
-          
-          if (user.organizationId) localStorage.setItem("organization_id", user.organizationId);
+          localStorage.setItem(
+            "isProfileComplete",
+            String(status?.isProfileComplete || false),
+          );
+          if (user.organizationId)
+            localStorage.setItem("organization_id", user.organizationId);
           if (user.user_pic) localStorage.setItem("user_pic", user.user_pic);
           if (user.level) localStorage.setItem("level", user.level);
-          
-          console.log("✅ Saved user data to localStorage");
         }
 
-        // Update auth context
+        // Mark the local session authenticated BEFORE returning to the
+        // caller, so AuthGuard on the next navigation reads a settled
+        // session instead of racing the IndexedDB write.
+        try {
+          await updateSessionState({
+            isAuthenticated: true,
+            lastActivity: new Date().toISOString(),
+          });
+        } catch (e) {
+          console.warn("updateSessionState failed after Google sign-in", e);
+        }
+
         updateAuthStatus({
-          isExistingUser: status.isExistingUser,
-          isProfileComplete: status.isProfileComplete,
-          requiresProfileCompletion: status.requiresProfileCompletion,
-          user: user,
+          isExistingUser: status?.isExistingUser ?? true,
+          isProfileComplete: status?.isProfileComplete ?? true,
+          requiresProfileCompletion: status?.requiresProfileCompletion ?? false,
+          user,
           isLoading: false,
         });
 
-        return { 
-          success: true, 
-          data: response.data,
-          requiresProfileCompletion: status.requiresProfileCompletion,
-          isProfileComplete: status.isProfileComplete,
-          userData: user,
-          status: status,
-        };
+        return { success: true, kind: "existing", data, userData: user, status };
       }
-      
-      return { 
-        success: false, 
-        error: response.data.message || "Authentication failed" 
-      };
-      
+
+      return { success: false, error: data.message || "Authentication failed" };
     } catch (err: any) {
       console.error("Google sign-in error:", err);
-      
-      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+
+      if (
+        err.code === "auth/popup-closed-by-user" ||
+        err.code === "auth/cancelled-popup-request"
+      ) {
         return { success: false, cancelled: true, error: "Sign-in was cancelled." };
       }
-      if (err.code === 'auth/popup-blocked') {
+      if (err.code === "auth/popup-blocked") {
         return { success: false, error: "Pop-up was blocked. Please allow popups." };
       }
-      if (err.code === 'auth/network-request-failed') {
-        return { success: false, error: "Network error. Please check your connection." };
+      if (err.code === "auth/network-request-failed") {
+        return {
+          success: false,
+          error: "Network error. Please check your connection.",
+        };
       }
-      
       if (err.response) {
-        return { success: false, error: err.response.data?.message || `Server error: ${err.response.status}` };
+        return {
+          success: false,
+          error: err.response.data?.message || `Server error: ${err.response.status}`,
+        };
       }
-      
       return { success: false, error: err.message || "An unexpected error occurred" };
-      
     } finally {
       setLoading(false);
       setTimeout(() => {

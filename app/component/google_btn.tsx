@@ -20,15 +20,11 @@ const GoogleSignInButton = ({
   onError: (error: string) => void;
   requireProfileCompletion?: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const { signInWithGoogle, loading, error } = useGoogleSignupButton();
+  const { signInWithGoogle, loading } = useGoogleSignupButton();
   const { updateAuthStatus, checkAuth } = useAuthContext();
   const router = useRouter();
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Once the timeout banner has shown, a same-flow success/failure that
-  // resolves late shouldn't also trigger the page-level error banner —
-  // that's the "two messages for one event" complaint. A late success still
-  // goes ahead (no reason to punish someone who did eventually finish).
   const timedOutRef = useRef<boolean>(false);
 
   useEffect(() => {
@@ -43,12 +39,11 @@ const GoogleSignInButton = ({
     setTimeoutError(null);
     timedOutRef.current = false;
 
-    // A single, calm message scoped to this button — not also routed through
-    // onError's page-level banner, which used to show a second, near-
-    // identical error for the exact same event.
     timeoutRef.current = setTimeout(() => {
       timedOutRef.current = true;
-      setTimeoutError("This is taking longer than usual. You can keep waiting, or try again.");
+      setTimeoutError(
+        "This is taking longer than usual. You can keep waiting, or try again.",
+      );
     }, 20000);
 
     try {
@@ -58,93 +53,78 @@ const GoogleSignInButton = ({
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
-
-      // Resolved after all, even though the timeout banner already showed —
-      // clear it and let a genuine success/cancel proceed normally instead
-      // of leaving a stale "taking too long" message on screen.
       if (timedOutRef.current) {
         setTimeoutError(null);
       }
 
-      if (result?.cancelled) {
-        // The user closed the popup themselves — a normal choice, not an
-        // error. No banner, just let them try again whenever they want.
+      // ─── Cancelled — deliberate popup close, no banner ────────────────
+      if (!result.success && result.cancelled) {
         return;
       }
 
-      if (result?.success) {
-        const { userData, status } = result;
-        
-        const isProfileComplete = status?.isProfileComplete;
-        const isExistingUser = status?.isExistingUser;
+      // ─── Backend error / unexpected shape ─────────────────────────────
+      if (!result.success) {
+        onError(result.error || "Google sign-in failed");
+        return;
+      }
 
-        console.log("Google auth result:", {
-          isProfileComplete,
-          isExistingUser,
-          userData
-        });
-
-        // Update auth context
-        updateAuthStatus({
-          isExistingUser: isExistingUser,
-          isProfileComplete: isProfileComplete,
-          requiresProfileCompletion: !isProfileComplete,
-          user: userData,
-          isLoading: false,
-        });
-
-        // ✅ Wait for cookies to be set
-        console.log("Waiting for cookies to be set...");
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // ✅ Verify authentication
-        console.log("Verifying authentication...");
-        let isAuthenticated = false;
-        let retryCount = 0;
-        const maxRetries = 3;
-        
-        while (!isAuthenticated && retryCount < maxRetries) {
-          try {
-            isAuthenticated = await checkAuth();
-            console.log(`Auth check attempt ${retryCount + 1}:`, isAuthenticated);
-            
-            if (!isAuthenticated && retryCount < maxRetries - 1) {
-              console.log("Waiting before retry...");
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-            retryCount++;
-          } catch (err) {
-            console.error(`Auth check attempt ${retryCount + 1} failed:`, err);
-            retryCount++;
-          }
+      // ─── NEW USER → hand the payload to the caller to prefill ─────────
+      // result = { success: true, kind: "new", googleUid, profile }
+      // No cookies, no auth check — the account does not exist yet.
+      if (result.kind === "new") {
+        if (requireProfileCompletion) {
+          requireProfileCompletion(true);
         }
-        
-        if (!isAuthenticated) {
-          console.error("Authentication verification failed after retries");
-          onError("Authentication failed. Please try again.");
-          return;
-        }
-
-        console.log("✅ Authentication verified successfully!");
-
-        // Now decide where to go
-        if (isProfileComplete && isExistingUser) {
-          console.log("Profile complete, redirecting to loading...");
-          router.push("/loading");
-        } else {
-          console.log("Profile incomplete, showing signup form...");
-          if (requireProfileCompletion) {
-            requireProfileCompletion(true);
-          }
-          onNewUser(result);
-        }
-        
+        onNewUser(result);
         onSuccess(result);
-        if (isExistingUser) {
-          onExistingUser(result);
+        return;
+      }
+
+      // ─── EXISTING USER → cookies set, verify auth then route ──────────
+      const { userData, status } = result;
+
+      updateAuthStatus({
+        isExistingUser: status?.isExistingUser ?? true,
+        isProfileComplete: status?.isProfileComplete ?? true,
+        requiresProfileCompletion: status?.requiresProfileCompletion ?? false,
+        user: userData,
+        isLoading: false,
+      });
+
+      // Give the browser a moment to commit Set-Cookie before checkAuth
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      let isAuthenticated = false;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (!isAuthenticated && retryCount < maxRetries) {
+        try {
+          isAuthenticated = await checkAuth();
+          if (!isAuthenticated && retryCount < maxRetries - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 800));
+          }
+        } catch (err) {
+          console.error(`Auth check attempt ${retryCount + 1} failed:`, err);
         }
-      } else if (result?.error) {
-        onError(result.error);
+        retryCount++;
+      }
+
+      if (!isAuthenticated) {
+        onError("Authentication failed. Please try again.");
+        return;
+      }
+
+      onSuccess(result);
+      onExistingUser(result);
+
+      if (status?.isProfileComplete) {
+        router.push("/loading");
+      } else {
+        if (requireProfileCompletion) {
+          requireProfileCompletion(true);
+        }
+        onNewUser(result);
       }
     } catch (err: any) {
       console.error("Google sign-in error:", err);
@@ -172,13 +152,13 @@ const GoogleSignInButton = ({
           {loading ? (
             <>
               <div className="animate-spin h-[20px] w-[20px] border-[2px] border-white border-t-transparent rounded-full"></div>
-              <span><TranslatedText text="Signing in..."/></span>
+              <span><TranslatedText text="Signing in..." /></span>
             </>
           ) : (
             <>
               <Image src={googleIcon} alt="google_icon" height={30} width={30} />
               <span className="dark:text-white text-lightBoldText-0">
-                <TranslatedText text="Sign in with Google"/>
+                <TranslatedText text="Sign in with Google" />
               </span>
             </>
           )}
