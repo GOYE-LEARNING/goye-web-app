@@ -366,6 +366,7 @@ const CreatePostModal = ({
     if (!url) throw new Error("No URL returned from upload");
     return url;
   };
+
   const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
     setIsUploading(true);
@@ -897,13 +898,15 @@ export default function GeneralPost({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  //Is submitting comment or reply state
+
+  // Is-submitting state for comments and replies
   const [isSubmittingComment, setIsSubmittingComment] = useState<{
     [id: string]: boolean;
   }>({});
   const [isSubmittingReply, setIsSubmittingReply] = useState<{
     [replyId: string]: boolean;
   }>({});
+
   // Toast state
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
 
@@ -944,6 +947,13 @@ export default function GeneralPost({
 
   const dismissToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  // Runs `fn` after each delay. Used when the moderation check is still
+  // finishing in the background: the content usually goes live a few seconds
+  // after the response, so we refresh a couple of times to pick it up.
+  const refreshLater = (fn: () => void, delays: number[] = [3000, 7000]) => {
+    delays.forEach((ms) => setTimeout(fn, ms));
   };
 
   useEffect(() => {
@@ -1156,8 +1166,6 @@ export default function GeneralPost({
         category: postData.category,
       };
 
-      console.log("📤 Creating post with payload:", payload);
-
       const response = await fetch(`${API_URL}/api/discussion/public`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1166,9 +1174,6 @@ export default function GeneralPost({
       });
 
       const responseText = await response.text();
-      console.log(responseText);
-      console.log("📥 Response status:", response.status);
-      console.log("📥 Response body:", responseText);
 
       if (!response.ok) {
         let errorMessage = t("Failed to create post");
@@ -1194,6 +1199,15 @@ export default function GeneralPost({
       if (data.success !== false) {
         setShowPost(false);
         setShowPeoplePost(true);
+
+        if (data.moderation?.background) {
+          // The check is still finishing, so the post usually goes live
+          // moments after this response. Don't call it "held".
+          showToast(t("Posting your post…"), "info", 3500);
+          refreshLater(() => fetchDiscussions(1, false, true));
+          return;
+        }
+
         const notice = moderationNotice(data);
         if (notice.held) showToast(notice.text, notice.tone, 9000);
         else showToast(t("Post shared successfully!"), "success");
@@ -1224,10 +1238,20 @@ export default function GeneralPost({
       );
       const data = await res.json();
       if (res.ok) {
+        const total = data.data?.pagination?.total;
         setDiscussions((prev) =>
           prev.map((d) =>
             d.id === discussionId
-              ? { ...d, replies: data.data.comments || [] }
+              ? {
+                  ...d,
+                  replies: data.data.comments || [],
+                  // Keep the comment count in step with what the server
+                  // actually has published.
+                  _count:
+                    typeof total === "number"
+                      ? { ...d._count, replies: total }
+                      : d._count,
+                }
               : d,
           ),
         );
@@ -1289,11 +1313,22 @@ export default function GeneralPost({
 
       if (res.ok) {
         setCommentText((prev) => ({ ...prev, [discussionId]: "" }));
+
+        if (data.moderation?.background) {
+          // The check is still finishing. Open the thread and refresh it so
+          // the comment appears as soon as it goes live.
+          showToast(t("Posting your comment…"), "info", 3500);
+          setShowReplies((prev) => ({ ...prev, [discussionId]: true }));
+          refreshLater(() => fetchDiscussionWithReplies(discussionId));
+          return;
+        }
+
         const notice = moderationNotice(data);
         if (notice.held) {
           showToast(notice.text, notice.tone, 9000);
           return;
         }
+
         setDiscussions((prev) =>
           prev.map((d) =>
             d.id === discussionId
@@ -1376,6 +1411,17 @@ export default function GeneralPost({
           return s;
         });
         cancelReply(discussionId);
+
+        if (data.moderation?.background) {
+          // The check is still finishing. Show the nested replies and
+          // refresh shortly so the new reply appears once it's live.
+          showToast(t("Posting your reply…"), "info", 3500);
+          setShowReplies((prev) => ({ ...prev, [discussionId]: true }));
+          setShowNestedReplies((prev) => ({ ...prev, [parentReplyId]: true }));
+          refreshLater(() => fetchDiscussionWithReplies(discussionId));
+          return;
+        }
+
         const notice = moderationNotice(data);
         if (notice.held) {
           showToast(notice.text, notice.tone, 9000);
@@ -1517,6 +1563,14 @@ export default function GeneralPost({
       );
       const data = await response.json();
       if (response.ok && data.success !== false) {
+        if (data.moderation?.background) {
+          // The edit is still being checked and may go live moments later.
+          // The old text stays visible until then.
+          showToast(t("Saving your changes…"), "info", 3500);
+          refreshLater(() => fetchDiscussions(1, false, true));
+          return;
+        }
+
         const notice = moderationNotice(data);
         if (notice.held) {
           // The old text stays public until the new text is approved.
