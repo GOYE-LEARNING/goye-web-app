@@ -64,6 +64,8 @@ interface Props {
   currentUserId: string;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
+   isSubmittingComment?: boolean;
+  isSubmittingReply?: { [replyId: string]: boolean };
   onVideoComplete?: (videoUrl: string) => void;
 }
 
@@ -698,6 +700,8 @@ export default function DiscussionCard({
   onDelete,
   onEdit,
   onVideoComplete,
+   isSubmittingComment = false,
+  isSubmittingReply = {},
 }: Props) {
   const { t, locale, hasLanguage } = useI18n();
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
@@ -990,37 +994,31 @@ export default function DiscussionCard({
           </div>
 
           {/* Comment input */}
-          <div className="flex items-center gap-2 md:gap-3 my-2 md:my-3">
-            <div className="h-8 w-8 md:h-[40px] md:w-[40px] rounded-full overflow-hidden flex-shrink-0">
-              {userPic ? (
-                <img
-                  src={userPic || ""}
-                  className="h-full w-full object-cover"
-                  alt={t("avatar")}
-                />
-              ) : (
-                <div className="h-full w-full bg-[#ccc]/20 rounded-full" />
-              )}
-            </div>
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder={isPrayer ? t("Type a prayer or encouragement...") : t("Write your comment...")}
-                value={commentText}
-                onChange={(e) => onCommentChange(discussion.id, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") onSubmitComment(discussion.id);
-                }}
-                className="h-9 md:h-[40px] px-3 pr-10 md:pr-12 bg-[#ccc]/20 text-textSlightDark-0 rounded-full w-full border-none outline-none text-xs md:text-[0.8rem] focus:ring-2 focus:ring-primaryColors-0"
-              />
-              <button
-                onClick={() => onSubmitComment(discussion.id)}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 flex justify-center items-center h-6 w-6 md:h-[30px] md:w-[30px] bg-primaryColors-0 text-white rounded-full hover:bg-primaryColors-0/90 transition"
-              >
-                <IoSend size={12} className="md:text-base" />
-              </button>
-            </div>
-          </div>
+          <div className="flex-1 relative">
+  <input
+    type="text"
+    placeholder={isPrayer ? t("Type a prayer or encouragement...") : t("Write your comment...")}
+    value={commentText}
+    disabled={isSubmittingComment}
+    onChange={(e) => onCommentChange(discussion.id, e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" && !isSubmittingComment) onSubmitComment(discussion.id);
+    }}
+    className="h-9 md:h-[40px] px-3 pr-10 md:pr-12 bg-[#ccc]/20 text-textSlightDark-0 rounded-full w-full border-none outline-none text-xs md:text-[0.8rem] focus:ring-2 focus:ring-primaryColors-0 disabled:opacity-70"
+  />
+  <button
+    onClick={() => onSubmitComment(discussion.id)}
+    disabled={isSubmittingComment || !commentText.trim()}
+    aria-label={t("Send comment")}
+    className="absolute right-2 top-1/2 transform -translate-y-1/2 flex justify-center items-center h-6 w-6 md:h-[30px] md:w-[30px] bg-primaryColors-0 text-white rounded-full hover:bg-primaryColors-0/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    {isSubmittingComment ? (
+      <FaSpinner className="animate-spin" size={12} />
+    ) : (
+      <IoSend size={12} className="md:text-base" />
+    )}
+  </button>
+</div>
 
           {/* Replies */}
           {showReplies && (
@@ -1047,6 +1045,7 @@ export default function DiscussionCard({
                     onSubmitNestedReply={onSubmitNestedReply}
                     onToggleNestedReplies={onToggleNestedReplies}
                     renderFormattedText={renderFormattedText}
+                     isSubmittingReply={!!isSubmittingReply[reply.id]}
                   />
                 ))
               ) : (

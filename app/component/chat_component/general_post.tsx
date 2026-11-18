@@ -28,7 +28,12 @@ import { MdAdd, MdClose } from "react-icons/md";
 import { AnimatePresence, motion } from "framer-motion";
 import { Discussion, MediaFile } from "@/app/interface/discussion";
 import DiscussionCard from "./discussion/discussion_card";
-import { FaBookBible, FaMessage, FaPen, FaRegCommentDots } from "react-icons/fa6";
+import {
+  FaBookBible,
+  FaMessage,
+  FaPen,
+  FaRegCommentDots,
+} from "react-icons/fa6";
 import { GiPrayerBeads, GiPearlNecklace } from "react-icons/gi";
 import Portal from "@/app/component/Portal";
 import { useI18n } from "@/app/context/I18nContext";
@@ -49,53 +54,180 @@ interface ToastMsg {
 
 // Post Categories for creating posts (IDs are uppercase to match backend enum)
 const postCategories = [
-  { id: "DISCUSSION", label: "General Discussion", icon: <FaMessage />, color: "from-gray-500 to-gray-600", bgColor: "bg-gray-500/10", textColor: "text-gray-500", emoji: "💬" },
-  { id: "DEVOTION", label: "Daily Devotion", icon: <FaBookBible />, color: "from-purple-500 to-pink-500", bgColor: "bg-purple-500/10", textColor: "text-purple-500", emoji: "📖" },
-  { id: "BLESSING", label: "Blessings", icon: <GiPearlNecklace />, color: "from-emerald-500 to-teal-500", bgColor: "bg-emerald-500/10", textColor: "text-emerald-500", emoji: "💎" },
-  { id: "PRAYER", label: "Prayer Request", icon: <GiPrayerBeads />, color: "from-blue-500 to-cyan-500", bgColor: "bg-blue-500/10", textColor: "text-blue-500", emoji: "🙏" },
-  { id: "TESTIMONY", label: "Testimony", icon: <FaHeart />, color: "from-rose-500 to-pink-500", bgColor: "bg-rose-500/10", textColor: "text-rose-500", emoji: "✨" },
-  { id: "QUESTION", label: "Faith Questions", icon: <FaStar />, color: "from-amber-500 to-orange-500", bgColor: "bg-amber-500/10", textColor: "text-amber-500", emoji: "❓" },
+  {
+    id: "DISCUSSION",
+    label: "General Discussion",
+    icon: <FaMessage />,
+    color: "from-gray-500 to-gray-600",
+    bgColor: "bg-gray-500/10",
+    textColor: "text-gray-500",
+    emoji: "💬",
+  },
+  {
+    id: "DEVOTION",
+    label: "Daily Devotion",
+    icon: <FaBookBible />,
+    color: "from-purple-500 to-pink-500",
+    bgColor: "bg-purple-500/10",
+    textColor: "text-purple-500",
+    emoji: "📖",
+  },
+  {
+    id: "BLESSING",
+    label: "Blessings",
+    icon: <GiPearlNecklace />,
+    color: "from-emerald-500 to-teal-500",
+    bgColor: "bg-emerald-500/10",
+    textColor: "text-emerald-500",
+    emoji: "💎",
+  },
+  {
+    id: "PRAYER",
+    label: "Prayer Request",
+    icon: <GiPrayerBeads />,
+    color: "from-blue-500 to-cyan-500",
+    bgColor: "bg-blue-500/10",
+    textColor: "text-blue-500",
+    emoji: "🙏",
+  },
+  {
+    id: "TESTIMONY",
+    label: "Testimony",
+    icon: <FaHeart />,
+    color: "from-rose-500 to-pink-500",
+    bgColor: "bg-rose-500/10",
+    textColor: "text-rose-500",
+    emoji: "✨",
+  },
+  {
+    id: "QUESTION",
+    label: "Faith Questions",
+    icon: <FaStar />,
+    color: "from-amber-500 to-orange-500",
+    bgColor: "bg-amber-500/10",
+    textColor: "text-amber-500",
+    emoji: "❓",
+  },
 ];
 
 // Filter tabs for viewing posts
 const filterTabs = [
-  { id: "ALL", label: "All", icon: <FaClipboardList />, color: "from-gray-400 to-gray-500" },
-  { id: "latest", label: "Latest Post", icon: <FaFire />, color: "from-orange-500 to-red-500" },
-  { id: "POST", label: "Post", icon: <FaRegNewspaper />, color: "from-gray-500 to-gray-600" },
-  { id: "popular", label: "Popular", icon: <FaStar />, color: "from-amber-500 to-yellow-500" },
-  { id: "trending", label: "Trending", icon: <FaChartLine />, color: "from-emerald-500 to-teal-500" },
-  { id: "DEVOTION", label: "Devotion", icon: <FaBookBible />, color: "from-purple-500 to-pink-500" },
-  { id: "QUESTION", label: "Faith Questions", icon: <FaStar />, color: "from-amber-500 to-orange-500" },
-  { id: "PRAYER", label: "Prayers", icon: <GiPrayerBeads />, color: "from-blue-500 to-cyan-500" },
-  { id: "BLESSING", label: "Blessings", icon: <GiPearlNecklace />, color: "from-rose-500 to-pink-500" },
+  {
+    id: "ALL",
+    label: "All",
+    icon: <FaClipboardList />,
+    color: "from-gray-400 to-gray-500",
+  },
+  {
+    id: "latest",
+    label: "Latest Post",
+    icon: <FaFire />,
+    color: "from-orange-500 to-red-500",
+  },
+  {
+    id: "POST",
+    label: "Post",
+    icon: <FaRegNewspaper />,
+    color: "from-gray-500 to-gray-600",
+  },
+  {
+    id: "popular",
+    label: "Popular",
+    icon: <FaStar />,
+    color: "from-amber-500 to-yellow-500",
+  },
+  {
+    id: "trending",
+    label: "Trending",
+    icon: <FaChartLine />,
+    color: "from-emerald-500 to-teal-500",
+  },
+  {
+    id: "DEVOTION",
+    label: "Devotion",
+    icon: <FaBookBible />,
+    color: "from-purple-500 to-pink-500",
+  },
+  {
+    id: "QUESTION",
+    label: "Faith Questions",
+    icon: <FaStar />,
+    color: "from-amber-500 to-orange-500",
+  },
+  {
+    id: "PRAYER",
+    label: "Prayers",
+    icon: <GiPrayerBeads />,
+    color: "from-blue-500 to-cyan-500",
+  },
+  {
+    id: "BLESSING",
+    label: "Blessings",
+    icon: <GiPearlNecklace />,
+    color: "from-rose-500 to-pink-500",
+  },
 ];
 
 // Simple Markdown Helper Functions
-const applyFormatting = (text: string, selectedText: string, format: string): string => {
+const applyFormatting = (
+  text: string,
+  selectedText: string,
+  format: string,
+): string => {
   if (!selectedText) {
     switch (format) {
-      case "bold": return text + "**bold**";
-      case "italic": return text + "*italic*";
-      case "underline": return text + "__underline__";
-      case "h1": return text + "\n# Heading 1\n";
-      case "h2": return text + "\n## Heading 2\n";
-      case "h3": return text + "\n### Heading 3\n";
-      case "ul": return text + "\n- List item\n";
-      case "ol": return text + "\n1. List item\n";
-      default: return text;
+      case "bold":
+        return text + "**bold**";
+      case "italic":
+        return text + "*italic*";
+      case "underline":
+        return text + "__underline__";
+      case "h1":
+        return text + "\n# Heading 1\n";
+      case "h2":
+        return text + "\n## Heading 2\n";
+      case "h3":
+        return text + "\n### Heading 3\n";
+      case "ul":
+        return text + "\n- List item\n";
+      case "ol":
+        return text + "\n1. List item\n";
+      default:
+        return text;
     }
   }
-  
+
   switch (format) {
-    case "bold": return text.replace(selectedText, `**${selectedText}**`);
-    case "italic": return text.replace(selectedText, `*${selectedText}*`);
-    case "underline": return text.replace(selectedText, `__${selectedText}__`);
-    case "h1": return text.replace(selectedText, `# ${selectedText}`);
-    case "h2": return text.replace(selectedText, `## ${selectedText}`);
-    case "h3": return text.replace(selectedText, `### ${selectedText}`);
-    case "ul": return text.replace(selectedText, selectedText.split("\n").map(line => `- ${line}`).join("\n"));
-    case "ol": return text.replace(selectedText, selectedText.split("\n").map((line, idx) => `${idx + 1}. ${line}`).join("\n"));
-    default: return text;
+    case "bold":
+      return text.replace(selectedText, `**${selectedText}**`);
+    case "italic":
+      return text.replace(selectedText, `*${selectedText}*`);
+    case "underline":
+      return text.replace(selectedText, `__${selectedText}__`);
+    case "h1":
+      return text.replace(selectedText, `# ${selectedText}`);
+    case "h2":
+      return text.replace(selectedText, `## ${selectedText}`);
+    case "h3":
+      return text.replace(selectedText, `### ${selectedText}`);
+    case "ul":
+      return text.replace(
+        selectedText,
+        selectedText
+          .split("\n")
+          .map((line) => `- ${line}`)
+          .join("\n"),
+      );
+    case "ol":
+      return text.replace(
+        selectedText,
+        selectedText
+          .split("\n")
+          .map((line, idx) => `${idx + 1}. ${line}`)
+          .join("\n"),
+      );
+    default:
+      return text;
   }
 };
 
@@ -112,7 +244,11 @@ const CreatePostModal = ({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { content: string; category: string; mediaFiles: MediaFile[] }) => void;
+  onSubmit: (data: {
+    content: string;
+    category: string;
+    mediaFiles: MediaFile[];
+  }) => void;
   userPic: string;
   userName: string;
   userRole: string;
@@ -158,7 +294,10 @@ const CreatePostModal = ({
   // Close category dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(e.target as Node)
+      ) {
         setShowCategoryDropdown(false);
       }
     };
@@ -179,58 +318,74 @@ const CreatePostModal = ({
 
   const handleFormat = (format: string) => {
     if (!textareaRef.current) return;
-    
+
     const newContent = applyFormatting(content, selectedText, format);
     setContent(newContent);
-    
+
     setTimeout(() => {
       textareaRef.current?.focus();
-      const newCursorPos = selectionStart + (newContent.length - content.length);
+      const newCursorPos =
+        selectionStart + (newContent.length - content.length);
       textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos);
     }, 10);
   };
 
-  const selectedCategoryInfo = postCategories.find(c => c.id === selectedCategory) || postCategories[0];
+  const selectedCategoryInfo =
+    postCategories.find((c) => c.id === selectedCategory) || postCategories[0];
 
   // ✅ Upload file to server
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]); // strip "data:image/png;base64,"
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const uploadFile = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
+    const base64 = await fileToBase64(file);
 
-    try {
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
+    const response = await fetch(`${API_URL}/api/discussion/upload/image`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        file: base64,
+        fileName: file.name,
+        mimeType: file.type,
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Upload failed");
 
-      const data = await response.json();
-      return data.url || data.fileUrl || data.data?.url;
-    } catch (error) {
-      console.error('Upload error:', error);
-      throw error;
-    }
+    const url = data.url || data.fileUrl || data.data?.url;
+    if (!url) throw new Error("No URL returned from upload");
+    return url;
   };
-
   const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
     setIsUploading(true);
-    
+
     const allowedVideoCats = ["TESTIMONY", "DISCUSSION", "DEVOTION"];
-    
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const isImage = file.type.startsWith("image/");
       const isVideo = file.type.startsWith("video/");
-      
+
       if (!isImage && !isVideo) continue;
-      
+
       if (isVideo && !allowedVideoCats.includes(selectedCategory)) {
-        showToast(t("You can only upload videos for Post, Devotion, or Testimony categories."), "error");
+        showToast(
+          t(
+            "You can only upload videos for Post, Devotion, or Testimony categories.",
+          ),
+          "error",
+        );
         continue;
       }
 
@@ -244,29 +399,31 @@ const CreatePostModal = ({
         uploadProgress: 0,
         uploadedUrl: "",
       };
-      
+
       setMediaFiles((prev) => [...prev, newMedia]);
 
       try {
         const uploadedUrl = await uploadFile(file);
-        
+
         setMediaFiles((prev) =>
           prev.map((m) =>
             m.id === newMedia.id
               ? { ...m, uploading: false, uploadProgress: 100, uploadedUrl }
-              : m
-          )
+              : m,
+          ),
         );
       } catch (error) {
         setMediaFiles((prev) =>
           prev.map((m) =>
-            m.id === newMedia.id ? { ...m, uploading: false, uploadProgress: 0 } : m
-          )
+            m.id === newMedia.id
+              ? { ...m, uploading: false, uploadProgress: 0 }
+              : m,
+          ),
         );
         showToast(`${t("Failed to upload")} ${file.name}`, "error");
       }
     }
-    
+
     setIsUploading(false);
   };
 
@@ -282,14 +439,14 @@ const CreatePostModal = ({
       return;
     }
 
-    const hasUploading = mediaFiles.some(m => m.uploading);
+    const hasUploading = mediaFiles.some((m) => m.uploading);
     if (hasUploading) {
       showToast(t("Please wait for all media to finish uploading"), "error");
       return;
     }
-    
-    const validMedia = mediaFiles.filter(m => m.uploadedUrl);
-    
+
+    const validMedia = mediaFiles.filter((m) => m.uploadedUrl);
+
     onSubmit({ content, category: selectedCategory, mediaFiles: validMedia });
   };
 
@@ -305,8 +462,13 @@ const CreatePostModal = ({
       .replace(/^### (.*?)$/gm, "<h3 class='text-lg font-bold my-2'>$1</h3>")
       .replace(/^- (.*?)$/gm, "<li class='ml-4 list-disc'>$1</li>")
       .replace(/^\d+\. (.*?)$/gm, "<li class='ml-4 list-decimal'>$1</li>");
-    
-    return <div dangerouslySetInnerHTML={{ __html: formatted }} className="prose prose-sm max-w-none" />;
+
+    return (
+      <div
+        dangerouslySetInnerHTML={{ __html: formatted }}
+        className="prose prose-sm max-w-none"
+      />
+    );
   };
 
   if (!isOpen) return null;
@@ -332,7 +494,9 @@ const CreatePostModal = ({
         >
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-900 rounded-t-2xl">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">{t("Create Post")}</h2>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+              {t("Create Post")}
+            </h2>
             <button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -347,7 +511,11 @@ const CreatePostModal = ({
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-200">
                 {userPic ? (
-                  <img src={userPic} alt={t("profile")} className="h-full w-full object-cover" />
+                  <img
+                    src={userPic}
+                    alt={t("profile")}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center bg-primaryColors-0 text-white font-bold">
                     {userName?.charAt(0) || "U"}
@@ -355,8 +523,12 @@ const CreatePostModal = ({
                 )}
               </div>
               <div>
-                <p className="font-semibold text-gray-800 dark:text-white">{userName || t("User")}</p>
-                <p className="text-xs text-gray-500 capitalize">{userRole || t("Christian")}</p>
+                <p className="font-semibold text-gray-800 dark:text-white">
+                  {userName || t("User")}
+                </p>
+                <p className="text-xs text-gray-500 capitalize">
+                  {userRole || t("Christian")}
+                </p>
               </div>
             </div>
 
@@ -369,9 +541,11 @@ const CreatePostModal = ({
               >
                 <span className="text-base">{selectedCategoryInfo.emoji}</span>
                 <span>{t(selectedCategoryInfo.label)}</span>
-                <FaAngleDown className={`text-sm transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+                <FaAngleDown
+                  className={`text-sm transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`}
+                />
               </button>
-              
+
               {showCategoryDropdown && (
                 <div className="absolute z-20 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden w-48">
                   {postCategories.map((category) => (
@@ -382,10 +556,16 @@ const CreatePostModal = ({
                         setShowCategoryDropdown(false);
                       }}
                       className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors
-                        ${selectedCategory === category.id ? category.bgColor : ''}`}
+                        ${selectedCategory === category.id ? category.bgColor : ""}`}
                     >
                       <span className="text-base">{category.emoji}</span>
-                      <span className={selectedCategory === category.id ? category.textColor : 'text-gray-700 dark:text-gray-300'}>
+                      <span
+                        className={
+                          selectedCategory === category.id
+                            ? category.textColor
+                            : "text-gray-700 dark:text-gray-300"
+                        }
+                      >
                         {t(category.label)}
                       </span>
                     </button>
@@ -398,7 +578,7 @@ const CreatePostModal = ({
             <div className="flex flex-wrap items-center gap-1 p-2 mb-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <button
                 type="button"
-                onClick={() => handleFormat('bold')}
+                onClick={() => handleFormat("bold")}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 title={t("Bold")}
               >
@@ -406,7 +586,7 @@ const CreatePostModal = ({
               </button>
               <button
                 type="button"
-                onClick={() => handleFormat('italic')}
+                onClick={() => handleFormat("italic")}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 title={t("Italic")}
               >
@@ -414,7 +594,7 @@ const CreatePostModal = ({
               </button>
               <button
                 type="button"
-                onClick={() => handleFormat('underline')}
+                onClick={() => handleFormat("underline")}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 title={t("Underline")}
               >
@@ -423,7 +603,7 @@ const CreatePostModal = ({
               <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
               <button
                 type="button"
-                onClick={() => handleFormat('h1')}
+                onClick={() => handleFormat("h1")}
                 className="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-bold"
                 title={t("Heading 1")}
               >
@@ -431,7 +611,7 @@ const CreatePostModal = ({
               </button>
               <button
                 type="button"
-                onClick={() => handleFormat('h2')}
+                onClick={() => handleFormat("h2")}
                 className="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-semibold"
                 title={t("Heading 2")}
               >
@@ -439,7 +619,7 @@ const CreatePostModal = ({
               </button>
               <button
                 type="button"
-                onClick={() => handleFormat('h3')}
+                onClick={() => handleFormat("h3")}
                 className="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
                 title={t("Heading 3")}
               >
@@ -448,7 +628,7 @@ const CreatePostModal = ({
               <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
               <button
                 type="button"
-                onClick={() => handleFormat('ul')}
+                onClick={() => handleFormat("ul")}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 title={t("Bullet List")}
               >
@@ -456,7 +636,7 @@ const CreatePostModal = ({
               </button>
               <button
                 type="button"
-                onClick={() => handleFormat('ol')}
+                onClick={() => handleFormat("ol")}
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 title={t("Numbered List")}
               >
@@ -477,7 +657,11 @@ const CreatePostModal = ({
                 className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 title={t("Upload Image or Video")}
               >
-                {isUploading ? <FaSpinner className="animate-spin" /> : <FaImage className="text-gray-600 dark:text-gray-400" />}
+                {isUploading ? (
+                  <FaSpinner className="animate-spin" />
+                ) : (
+                  <FaImage className="text-gray-600 dark:text-gray-400" />
+                )}
               </button>
             </div>
 
@@ -510,9 +694,16 @@ const CreatePostModal = ({
                 {mediaFiles.map((media) => (
                   <div key={media.id} className="relative group">
                     {media.type === "video" ? (
-                      <video src={media.preview} className="h-24 w-full object-cover rounded-lg" />
+                      <video
+                        src={media.preview}
+                        className="h-24 w-full object-cover rounded-lg"
+                      />
                     ) : (
-                      <img src={media.preview} alt={t("preview")} className="h-24 w-full object-cover rounded-lg" />
+                      <img
+                        src={media.preview}
+                        alt={t("preview")}
+                        className="h-24 w-full object-cover rounded-lg"
+                      />
                     )}
                     {media.uploading && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
@@ -535,10 +726,18 @@ const CreatePostModal = ({
           <div className="sticky bottom-0 flex justify-end p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-900 rounded-b-2xl">
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting || (!content.trim() && mediaFiles.length === 0) || isUploading}
+              disabled={
+                isSubmitting ||
+                (!content.trim() && mediaFiles.length === 0) ||
+                isUploading
+              }
               className="px-6 py-2 bg-primaryColors-0 text-white rounded-full text-sm font-medium disabled:opacity-50 hover:bg-primaryColors-0/90 transition"
             >
-              {isSubmitting ? <FaSpinner className="animate-spin" /> : t("Post")}
+              {isSubmitting ? (
+                <FaSpinner className="animate-spin" />
+              ) : (
+                t("Post")
+              )}
             </button>
           </div>
         </motion.div>
@@ -557,40 +756,47 @@ const ToastStack = ({
 }) => {
   const { t } = useI18n();
   return (
-  <Portal containerId="toast-stack-root">
-    <div className="fixed bottom-4 right-4 left-4 sm:left-auto z-[200] flex flex-col gap-2 sm:max-w-sm sm:w-full">
-      <AnimatePresence>
-        {toasts.map((toast) => (
-          <motion.div
-            key={toast.id}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 60 }}
-            transition={{ duration: 0.2 }}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg backdrop-blur-md border text-sm font-medium
-              ${toast.type === "success"
-                ? "bg-green-50/95 dark:bg-green-950/90 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300"
-                : toast.type === "error"
-                ? "bg-red-50/95 dark:bg-red-950/90 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
-                : "bg-white/95 dark:bg-gray-800/95 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+    <Portal containerId="toast-stack-root">
+      <div className="fixed bottom-4 right-4 left-4 sm:left-auto z-[200] flex flex-col gap-2 sm:max-w-sm sm:w-full">
+        <AnimatePresence>
+          {toasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 60 }}
+              transition={{ duration: 0.2 }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg backdrop-blur-md border text-sm font-medium
+              ${
+                toast.type === "success"
+                  ? "bg-green-50/95 dark:bg-green-950/90 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300"
+                  : toast.type === "error"
+                    ? "bg-red-50/95 dark:bg-red-950/90 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
+                    : "bg-white/95 dark:bg-gray-800/95 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
               }`}
-          >
-            {toast.type === "success" && <FaCheckCircle className="flex-shrink-0" />}
-            {toast.type === "error" && <FaExclamationCircle className="flex-shrink-0" />}
-            {toast.type === "info" && <FaInfoCircle className="flex-shrink-0" />}
-            <span className="flex-1">{toast.message}</span>
-            <button
-              onClick={() => onDismiss(toast.id)}
-              className="opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
-              aria-label={t("Dismiss")}
             >
-              <MdClose size={16} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  </Portal>
+              {toast.type === "success" && (
+                <FaCheckCircle className="flex-shrink-0" />
+              )}
+              {toast.type === "error" && (
+                <FaExclamationCircle className="flex-shrink-0" />
+              )}
+              {toast.type === "info" && (
+                <FaInfoCircle className="flex-shrink-0" />
+              )}
+              <span className="flex-1">{toast.message}</span>
+              <button
+                onClick={() => onDismiss(toast.id)}
+                className="opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
+                aria-label={t("Dismiss")}
+              >
+                <MdClose size={16} />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </Portal>
   );
 };
 
@@ -634,7 +840,9 @@ const ConfirmDeleteModal = ({
             {t("Delete this post?")}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-            {t("This can't be undone. The post and all its comments will be permanently removed.")}
+            {t(
+              "This can't be undone. The post and all its comments will be permanently removed.",
+            )}
           </p>
           <div className="flex gap-3">
             <button
@@ -649,7 +857,11 @@ const ConfirmDeleteModal = ({
               disabled={isDeleting}
               className="flex-1 py-2.5 rounded-full bg-red-500 text-white font-medium hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center"
             >
-              {isDeleting ? <FaSpinner className="animate-spin" /> : t("Delete")}
+              {isDeleting ? (
+                <FaSpinner className="animate-spin" />
+              ) : (
+                t("Delete")
+              )}
             </button>
           </div>
         </motion.div>
@@ -685,26 +897,44 @@ export default function GeneralPost({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-
+  //Is submitting comment or reply state
+  const [isSubmittingComment, setIsSubmittingComment] = useState<{
+    [id: string]: boolean;
+  }>({});
+  const [isSubmittingReply, setIsSubmittingReply] = useState<{
+    [replyId: string]: boolean;
+  }>({});
   // Toast state
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Filter state for viewing posts
   const [activeFilter, setActiveFilter] = useState("latest");
 
   // Per-discussion state
   const [commentText, setCommentText] = useState<{ [id: string]: string }>({});
-  const [isLoadingReplies, setIsLoadingReplies] = useState<{ [id: string]: boolean }>({});
+  const [isLoadingReplies, setIsLoadingReplies] = useState<{
+    [id: string]: boolean;
+  }>({});
   const [showReplies, setShowReplies] = useState<{ [id: string]: boolean }>({});
-  const [showNestedReplies, setShowNestedReplies] = useState<{ [id: string]: boolean }>({});
-  const [nestedCommentText, setNestedCommentText] = useState<{ [replyId: string]: string }>({});
-  const [replyingTo, setReplyingTo] = useState<{ [discussionId: string]: { replyId: string; authorName: string } }>({});
+  const [showNestedReplies, setShowNestedReplies] = useState<{
+    [id: string]: boolean;
+  }>({});
+  const [nestedCommentText, setNestedCommentText] = useState<{
+    [replyId: string]: string;
+  }>({});
+  const [replyingTo, setReplyingTo] = useState<{
+    [discussionId: string]: { replyId: string; authorName: string };
+  }>({});
 
-  const showToast = (message: string, type: ToastType = "info", durationMs = 3500) => {
+  const showToast = (
+    message: string,
+    type: ToastType = "info",
+    durationMs = 3500,
+  ) => {
     const id = `${Date.now()}-${Math.random()}`;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -789,7 +1019,9 @@ export default function GeneralPost({
       const data = await res.json();
       if (res.ok) {
         const newDiscussions: Discussion[] = data.data?.discussions || [];
-        setDiscussions((prev) => (append ? [...prev, ...newDiscussions] : newDiscussions));
+        setDiscussions((prev) =>
+          append ? [...prev, ...newDiscussions] : newDiscussions,
+        );
         setHasMore(!!data.data?.pagination?.hasMore);
         setPage(pageNum);
         backendSortRef.current = backendSort;
@@ -820,7 +1052,12 @@ export default function GeneralPost({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
+        if (
+          entries[0].isIntersecting &&
+          hasMore &&
+          !isLoadingMore &&
+          !isLoading
+        ) {
           fetchDiscussions(page + 1, true);
         }
       },
@@ -835,15 +1072,16 @@ export default function GeneralPost({
   // Filter discussions based on active filter
   const getFilteredDiscussions = () => {
     if (!discussions.length) return [];
-    
+
     switch (activeFilter) {
       case "latest":
-        return [...discussions].sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return [...discussions].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
       case "popular":
-        return [...discussions].sort((a, b) => 
-          (b._count?.likes || 0) - (a._count?.likes || 0)
+        return [...discussions].sort(
+          (a, b) => (b._count?.likes || 0) - (a._count?.likes || 0),
         );
       case "trending":
         return [...discussions].sort((a, b) => {
@@ -852,17 +1090,30 @@ export default function GeneralPost({
           return bEngagement - aEngagement;
         });
       case "POST":
-        return discussions.filter(d => (d.category || '').toUpperCase() === "DISCUSSION");
+        return discussions.filter(
+          (d) => (d.category || "").toUpperCase() === "DISCUSSION",
+        );
       case "ALL":
-        return [...discussions].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return [...discussions].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
       case "DEVOTION":
-        return discussions.filter(d => (d.category || '').toUpperCase() === "DEVOTION");
+        return discussions.filter(
+          (d) => (d.category || "").toUpperCase() === "DEVOTION",
+        );
       case "QUESTION":
-        return discussions.filter(d => (d.category || '').toUpperCase() === "QUESTION");
+        return discussions.filter(
+          (d) => (d.category || "").toUpperCase() === "QUESTION",
+        );
       case "PRAYER":
-        return discussions.filter(d => (d.category || '').toUpperCase() === "PRAYER");
+        return discussions.filter(
+          (d) => (d.category || "").toUpperCase() === "PRAYER",
+        );
       case "BLESSING":
-        return discussions.filter(d => (d.category || '').toUpperCase() === "BLESSING");
+        return discussions.filter(
+          (d) => (d.category || "").toUpperCase() === "BLESSING",
+        );
       default:
         return discussions;
     }
@@ -882,12 +1133,16 @@ export default function GeneralPost({
     return () => document.removeEventListener("mousedown", closeOutside);
   }, []);
 
-  const createPost = async (postData: { content: string; category: string; mediaFiles: MediaFile[] }) => {
+  const createPost = async (postData: {
+    content: string;
+    category: string;
+    mediaFiles: MediaFile[];
+  }) => {
     setIsSubmitting(true);
-    
+
     try {
       const mediaUrls = postData.mediaFiles
-        .filter(m => m.uploadedUrl)
+        .filter((m) => m.uploadedUrl)
         .map((m) => ({
           type: m.type,
           url: m.uploadedUrl,
@@ -898,7 +1153,7 @@ export default function GeneralPost({
         content: postData.content,
         isPublic: true,
         mediaUrls,
-        category: postData.category
+        category: postData.category,
       };
 
       console.log("📤 Creating post with payload:", payload);
@@ -911,6 +1166,7 @@ export default function GeneralPost({
       });
 
       const responseText = await response.text();
+      console.log(responseText);
       console.log("📥 Response status:", response.status);
       console.log("📥 Response body:", responseText);
 
@@ -959,30 +1215,53 @@ export default function GeneralPost({
   const fetchDiscussionWithReplies = async (discussionId: string) => {
     setIsLoadingReplies((prev) => ({ ...prev, [discussionId]: true }));
     try {
-      const res = await fetch(`${API_URL}/api/discussion/public/${discussionId}/comments?page=1&limit=50`, {
-        method: "GET", credentials: "include",
-      });
+      const res = await fetch(
+        `${API_URL}/api/discussion/public/${discussionId}/comments?page=1&limit=50`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
       const data = await res.json();
       if (res.ok) {
         setDiscussions((prev) =>
-          prev.map((d) => d.id === discussionId ? { ...d, replies: data.data.comments || [] } : d)
+          prev.map((d) =>
+            d.id === discussionId
+              ? { ...d, replies: data.data.comments || [] }
+              : d,
+          ),
         );
       }
-    } catch (err) { console.error(err); } finally {
+    } catch (err) {
+      console.error(err);
+    } finally {
       setIsLoadingReplies((prev) => ({ ...prev, [discussionId]: false }));
     }
   };
 
   const toggleLike = async (discussionId: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/discussion/${discussionId}/like`, { method: "POST", credentials: "include" });
+      const res = await fetch(
+        `${API_URL}/api/discussion/${discussionId}/like`,
+        { method: "POST", credentials: "include" },
+      );
       const data = await res.json();
       if (res.ok) {
         setDiscussions((prev) =>
-          prev.map((d) => d.id === discussionId ? { ...d, _count: { ...d._count, likes: data.data.likeCount }, liked: data.data.liked } : d)
+          prev.map((d) =>
+            d.id === discussionId
+              ? {
+                  ...d,
+                  _count: { ...d._count, likes: data.data.likeCount },
+                  liked: data.data.liked,
+                }
+              : d,
+          ),
         );
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const toggleReplies = (discussionId: string) => {
@@ -993,13 +1272,21 @@ export default function GeneralPost({
 
   const submitComment = async (discussionId: string) => {
     const content = commentText[discussionId]?.trim();
-    if (!content) return;
+    if (!content || isSubmittingComment[discussionId]) return;
+
+    setIsSubmittingComment((prev) => ({ ...prev, [discussionId]: true }));
     try {
-      const res = await fetch(`${API_URL}/api/discussion/public/${discussionId}/reply`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ content, mediaUrls: [] }),
-      });
+      const res = await fetch(
+        `${API_URL}/api/discussion/public/${discussionId}/reply`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ content, mediaUrls: [] }),
+        },
+      );
       const data = await res.json();
+
       if (res.ok) {
         setCommentText((prev) => ({ ...prev, [discussionId]: "" }));
         const notice = moderationNotice(data);
@@ -1008,78 +1295,181 @@ export default function GeneralPost({
           return;
         }
         setDiscussions((prev) =>
-          prev.map((d) => d.id === discussionId ? { ...d, _count: { ...d._count, replies: (d._count?.replies || 0) + 1 } } : d)
+          prev.map((d) =>
+            d.id === discussionId
+              ? {
+                  ...d,
+                  _count: {
+                    ...d._count,
+                    replies: (d._count?.replies || 0) + 1,
+                  },
+                }
+              : d,
+          ),
         );
+        showToast(t("Comment posted successfully!"), "success");
         if (showReplies[discussionId]) fetchDiscussionWithReplies(discussionId);
       } else {
         showToast(data.message || t("Failed to add comment"), "error");
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      showToast(t("Something went wrong while posting your comment"), "error");
+    } finally {
+      setIsSubmittingComment((prev) => ({ ...prev, [discussionId]: false }));
+    }
   };
 
-  const showReplyInput = (discussionId: string, replyId: string, authorName: string) => {
-    setReplyingTo((prev) => ({ ...prev, [discussionId]: { replyId, authorName } }));
-    setTimeout(() => document.getElementById(`reply-input-${replyId}`)?.focus(), 100);
+  const showReplyInput = (
+    discussionId: string,
+    replyId: string,
+    authorName: string,
+  ) => {
+    setReplyingTo((prev) => ({
+      ...prev,
+      [discussionId]: { replyId, authorName },
+    }));
+    setTimeout(
+      () => document.getElementById(`reply-input-${replyId}`)?.focus(),
+      100,
+    );
   };
 
   const cancelReply = (discussionId: string) => {
-    setReplyingTo((prev) => { const s = { ...prev }; delete s[discussionId]; return s; });
+    setReplyingTo((prev) => {
+      const s = { ...prev };
+      delete s[discussionId];
+      return s;
+    });
   };
 
   const handleNestedTextChange = (discussionId: string, value: string) => {
     const replyId = replyingTo[discussionId]?.replyId;
-    if (replyId) setNestedCommentText((prev) => ({ ...prev, [replyId]: value }));
+    if (replyId)
+      setNestedCommentText((prev) => ({ ...prev, [replyId]: value }));
   };
 
-  const submitNestedReply = async (discussionId: string, parentReplyId: string) => {
+  const submitNestedReply = async (
+    discussionId: string,
+    parentReplyId: string,
+  ) => {
     const content = nestedCommentText[parentReplyId]?.trim();
-    if (!content) return;
+    if (!content || isSubmittingReply[parentReplyId]) return;
+
+    setIsSubmittingReply((prev) => ({ ...prev, [parentReplyId]: true }));
     try {
-      const res = await fetch(`${API_URL}/api/discussion/reply/${parentReplyId}/nested`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ content, mediaUrls: [] }),
-      });
+      const res = await fetch(
+        `${API_URL}/api/discussion/reply/${parentReplyId}/nested`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ content, mediaUrls: [] }),
+        },
+      );
       const data = await res.json();
+
       if (res.ok) {
-        setNestedCommentText((prev) => { const s = { ...prev }; delete s[parentReplyId]; return s; });
+        setNestedCommentText((prev) => {
+          const s = { ...prev };
+          delete s[parentReplyId];
+          return s;
+        });
         cancelReply(discussionId);
         const notice = moderationNotice(data);
-        if (notice.held) showToast(notice.text, notice.tone, 9000);
+        if (notice.held) {
+          showToast(notice.text, notice.tone, 9000);
+        } else {
+          showToast(t("Reply posted successfully!"), "success");
+        }
         fetchDiscussionWithReplies(discussionId);
       } else {
         showToast(data.message || t("Failed to add reply"), "error");
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      showToast(t("Something went wrong while posting your reply"), "error");
+    } finally {
+      setIsSubmittingReply((prev) => ({ ...prev, [parentReplyId]: false }));
+    }
   };
 
   const toggleReplyLike = async (discussionId: string, replyId: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/discussion/${replyId}/like`, { method: "POST", credentials: "include" });
+      const res = await fetch(`${API_URL}/api/discussion/${replyId}/like`, {
+        method: "POST",
+        credentials: "include",
+      });
       const data = await res.json();
       if (res.ok) {
         setDiscussions((prev) =>
-          prev.map((d) => d.id === discussionId ? {
-            ...d, replies: d.replies?.map((r) => r.id === replyId ? { ...r, _count: { ...r._count, likes: data.data.likeCount }, liked: data.data.liked } : r)
-          } : d)
+          prev.map((d) =>
+            d.id === discussionId
+              ? {
+                  ...d,
+                  replies: d.replies?.map((r) =>
+                    r.id === replyId
+                      ? {
+                          ...r,
+                          _count: { ...r._count, likes: data.data.likeCount },
+                          liked: data.data.liked,
+                        }
+                      : r,
+                  ),
+                }
+              : d,
+          ),
         );
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const toggleNestedReplyLike = async (discussionId: string, replyId: string, parentReplyId: string) => {
+  const toggleNestedReplyLike = async (
+    discussionId: string,
+    replyId: string,
+    parentReplyId: string,
+  ) => {
     try {
-      const res = await fetch(`${API_URL}/api/discussion/${replyId}/like`, { method: "POST", credentials: "include" });
+      const res = await fetch(`${API_URL}/api/discussion/${replyId}/like`, {
+        method: "POST",
+        credentials: "include",
+      });
       const data = await res.json();
       if (res.ok) {
         setDiscussions((prev) =>
-          prev.map((d) => d.id === discussionId ? {
-            ...d, replies: d.replies?.map((r) => r.id === parentReplyId ? {
-              ...r, replies: r.replies?.map((nr) => nr.id === replyId ? { ...nr, _count: { ...nr._count, likes: data.data.likeCount }, liked: data.data.liked } : nr)
-            } : r)
-          } : d)
+          prev.map((d) =>
+            d.id === discussionId
+              ? {
+                  ...d,
+                  replies: d.replies?.map((r) =>
+                    r.id === parentReplyId
+                      ? {
+                          ...r,
+                          replies: r.replies?.map((nr) =>
+                            nr.id === replyId
+                              ? {
+                                  ...nr,
+                                  _count: {
+                                    ...nr._count,
+                                    likes: data.data.likeCount,
+                                  },
+                                  liked: data.data.liked,
+                                }
+                              : nr,
+                          ),
+                        }
+                      : r,
+                  ),
+                }
+              : d,
+          ),
         );
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const toggleNestedReplies = (replyId: string) => {
@@ -1097,8 +1487,13 @@ export default function GeneralPost({
       .replace(/^### (.*?)$/gm, "<h3 class='text-lg font-bold my-2'>$1</h3>")
       .replace(/^- (.*?)$/gm, "<li class='ml-4 list-disc'>$1</li>")
       .replace(/^\d+\. (.*?)$/gm, "<li class='ml-4 list-decimal'>$1</li>");
-    
-    return <div dangerouslySetInnerHTML={{ __html: formatted }} className="prose prose-sm max-w-none break-words" />;
+
+    return (
+      <div
+        dangerouslySetInnerHTML={{ __html: formatted }}
+        className="prose prose-sm max-w-none break-words"
+      />
+    );
   };
 
   const handleEditPost = async (discussionId: string) => {
@@ -1107,10 +1502,19 @@ export default function GeneralPost({
     const newContent = prompt(t("Edit your post:"), currentPost.content);
     if (!newContent || newContent === currentPost.content) return;
     try {
-      const response = await fetch(`${API_URL}/api/discussion/${discussionId}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ content: newContent, mediaUrls: currentPost.mediaUrls, category: (currentPost.category || '').toUpperCase() }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/discussion/${discussionId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            content: newContent,
+            mediaUrls: currentPost.mediaUrls,
+            category: (currentPost.category || "").toUpperCase(),
+          }),
+        },
+      );
       const data = await response.json();
       if (response.ok && data.success !== false) {
         const notice = moderationNotice(data);
@@ -1119,7 +1523,13 @@ export default function GeneralPost({
           showToast(notice.text, notice.tone, 9000);
           return;
         }
-        setDiscussions((prev) => prev.map((d) => d.id === discussionId ? { ...d, content: newContent, isEdited: true } : d));
+        setDiscussions((prev) =>
+          prev.map((d) =>
+            d.id === discussionId
+              ? { ...d, content: newContent, isEdited: true }
+              : d,
+          ),
+        );
         showToast(t("Post updated successfully!"), "success");
       } else {
         showToast(data.message || t("Failed to update post"), "error");
@@ -1139,7 +1549,10 @@ export default function GeneralPost({
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      const response = await fetch(`${API_URL}/api/discussion/${deleteTarget}`, { method: "DELETE", credentials: "include" });
+      const response = await fetch(
+        `${API_URL}/api/discussion/${deleteTarget}`,
+        { method: "DELETE", credentials: "include" },
+      );
       const data = await response.json();
       if (response.ok && data.success !== false) {
         setDiscussions((prev) => prev.filter((d) => d.id !== deleteTarget));
@@ -1174,9 +1587,13 @@ export default function GeneralPost({
       case "BLESSING":
         return t("No Blessings yet — be the first to share a blessing.");
       case "TESTIMONY":
-        return t("No Testimonies yet — be the first to share your story of faith.");
+        return t(
+          "No Testimonies yet — be the first to share your story of faith.",
+        );
       case "QUESTION":
-        return t("No Faith Questions yet — be the first to ask or seek an answer.");
+        return t(
+          "No Faith Questions yet — be the first to ask or seek an answer.",
+        );
       case "POST":
       case "DISCUSSION":
         return t("No Posts yet — be the first to start a conversation.");
@@ -1200,22 +1617,25 @@ export default function GeneralPost({
                 key={filter.id}
                 onClick={() => setActiveFilter(filter.id)}
                 className={`group relative overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95
-                  ${activeFilter === filter.id 
-                    ? `bg-gradient-to-r ${filter.color} text-white shadow-lg` 
-                    : 'bg-white/80 dark:bg-secondaryColors-0/50 backdrop-blur-sm border border-white/20 text-gray-700 dark:text-gray-300'
+                  ${
+                    activeFilter === filter.id
+                      ? `bg-gradient-to-r ${filter.color} text-white shadow-lg`
+                      : "bg-white/80 dark:bg-secondaryColors-0/50 backdrop-blur-sm border border-white/20 text-gray-700 dark:text-gray-300"
                   }
                   rounded-full px-3 py-1.5 md:px-4 md:py-2 shadow-md`}
               >
                 <div className="flex items-center gap-1.5 relative z-10">
                   <span className="text-sm">{filter.icon}</span>
-                  <span className={`font-medium text-xs md:text-sm ${activeFilter === filter.id ? 'text-white' : ''}`}>
+                  <span
+                    className={`font-medium text-xs md:text-sm ${activeFilter === filter.id ? "text-white" : ""}`}
+                  >
                     {t(filter.label)}
                   </span>
                 </div>
               </button>
             ))}
           </div>
-          
+
           {/* Refresh Button */}
           <button
             onClick={handleRefresh}
@@ -1225,8 +1645,8 @@ export default function GeneralPost({
               disabled:opacity-50 disabled:cursor-not-allowed`}
             title={t("Refresh posts")}
           >
-            <FaSync 
-              className={`text-sm md:text-base ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} 
+            <FaSync
+              className={`text-sm md:text-base ${isRefreshing ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`}
             />
           </button>
         </div>
@@ -1242,8 +1662,18 @@ export default function GeneralPost({
           className="flex flex-col gap-3 z-10 pb-20"
         >
           {(() => {
-            if (isLoading) return <div className="flex justify-center py-12"><FaSpinner className="animate-spin text-2xl text-primaryColors-0" /></div>;
-            if (filteredDiscussions.length === 0) return <div className="text-center py-12 text-textGrey-0">{getEmptyMessage(activeFilter)}</div>;
+            if (isLoading)
+              return (
+                <div className="flex justify-center py-12">
+                  <FaSpinner className="animate-spin text-2xl text-primaryColors-0" />
+                </div>
+              );
+            if (filteredDiscussions.length === 0)
+              return (
+                <div className="text-center py-12 text-textGrey-0">
+                  {getEmptyMessage(activeFilter)}
+                </div>
+              );
             return filteredDiscussions.map((discussion) => (
               <DiscussionCard
                 key={discussion.id}
@@ -1257,7 +1687,9 @@ export default function GeneralPost({
                 showNestedReplies={showNestedReplies}
                 onToggleLike={toggleLike}
                 onToggleReplies={toggleReplies}
-                onCommentChange={(id: any, val: any) => setCommentText((prev) => ({ ...prev, [id]: val }))}
+                onCommentChange={(id: any, val: any) =>
+                  setCommentText((prev) => ({ ...prev, [id]: val }))
+                }
                 onSubmitComment={submitComment}
                 onToggleReplyLike={toggleReplyLike}
                 onToggleNestedReplyLike={toggleNestedReplyLike}
@@ -1270,6 +1702,8 @@ export default function GeneralPost({
                 currentUserId={currentUserId}
                 onDelete={confirmDeletePost}
                 onEdit={handleEditPost}
+                isSubmittingComment={!!isSubmittingComment[discussion.id]}
+                isSubmittingReply={isSubmittingReply}
               />
             ));
           })()}
@@ -1280,11 +1714,15 @@ export default function GeneralPost({
               {isLoadingMore && (
                 <div className="flex items-center gap-2 text-primaryColors-0">
                   <FaSpinner className="animate-spin text-lg" />
-                  <span className="text-sm text-gray-500 dark:text-gray-400">{t("Loading more...")}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {t("Loading more...")}
+                  </span>
                 </div>
               )}
               {!hasMore && !isLoadingMore && (
-                <span className="text-xs text-gray-400 dark:text-gray-500">{t("You're all caught up")} 🎉</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {t("You're all caught up")} 🎉
+                </span>
               )}
             </div>
           )}

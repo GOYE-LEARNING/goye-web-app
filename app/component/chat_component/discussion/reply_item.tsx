@@ -1,6 +1,6 @@
 // app/component/chat_component/discussion/reply_item.tsx
 "use client";
-
+import { FaSpinner } from "react-icons/fa";
 import { BiHeart } from "react-icons/bi";
 import { BsHeartFill } from "react-icons/bs";
 import { IoSend } from "react-icons/io5";
@@ -31,6 +31,7 @@ interface Props {
   onSubmitNestedReply: (discussionId: string, replyId: string) => void;
   onToggleNestedReplies: (replyId: string) => void;
   renderFormattedText: (text: string) => any;
+  isSubmittingReply?: boolean;
 }
 
 export default function ReplyItem({
@@ -48,6 +49,7 @@ export default function ReplyItem({
   onSubmitNestedReply,
   onToggleNestedReplies,
   renderFormattedText,
+  isSubmittingReply = false,
 }: Props) {
   const { t } = useI18n();
   const hasNested = reply.replies && reply.replies.length > 0;
@@ -133,25 +135,33 @@ export default function ReplyItem({
                   type="text"
                   placeholder={`${t("Reply to")} ${replyingTo.authorName}...`}
                   value={nestedCommentText}
+                  disabled={isSubmittingReply}
                   onChange={(e) =>
                     onNestedTextChange(discussionId, e.target.value)
                   }
                   onKeyDown={(e) => {
-                    if (e.key === "Enter")
+                    if (e.key === "Enter" && !isSubmittingReply)
                       onSubmitNestedReply(discussionId, reply.id);
                   }}
-                  className="h-[35px] px-3 bg-[#ccc]/20 text-textSlightDark-0 rounded-full w-full border-none outline-none text-[0.8rem] pr-10"
+                  className="h-[35px] px-3 bg-[#ccc]/20 text-textSlightDark-0 rounded-full w-full border-none outline-none text-[0.8rem] pr-10 disabled:opacity-70"
                   autoFocus
                 />
                 <button
                   onClick={() => onSubmitNestedReply(discussionId, reply.id)}
-                  className="absolute right-10 top-[2.5px] flex justify-center items-center h-[30px] w-[30px] bg-primaryColors-0 text-white rounded-full text-sm hover:bg-primaryColors-0/90 transition"
+                  disabled={isSubmittingReply || !nestedCommentText.trim()}
+                  aria-label={t("Send reply")}
+                  className="absolute right-10 top-[2.5px] flex justify-center items-center h-[30px] w-[30px] bg-primaryColors-0 text-white rounded-full text-sm hover:bg-primaryColors-0/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <IoSend size={12} />
+                  {isSubmittingReply ? (
+                    <FaSpinner className="animate-spin" size={12} />
+                  ) : (
+                    <IoSend size={12} />
+                  )}
                 </button>
                 <button
                   onClick={() => onCancelReply(discussionId)}
-                  className="text-xs text-gray-400 hover:text-red-500 whitespace-nowrap"
+                  disabled={isSubmittingReply}
+                  className="text-xs text-gray-400 hover:text-red-500 whitespace-nowrap disabled:opacity-50"
                 >
                   {t("Cancel")}
                 </button>
